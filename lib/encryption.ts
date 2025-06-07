@@ -1,35 +1,29 @@
+import "server-only";
 import crypto from "crypto";
 
 // Get encryption key from environment variables
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
-const ALGORITHM = "aes-256-gcm";
-
-if (!ENCRYPTION_KEY) {
-  throw new Error("ENCRYPTION_KEY environment variable is required");
-}
+const ENCRYPTION_KEY =
+  process.env.ENCRYPTION_KEY || "default-development-key-32-chars";
+const ALGORITHM = "aes-256-cbc";
 
 // Ensure the key is 32 bytes for AES-256
 const key = crypto.scryptSync(ENCRYPTION_KEY, "salt", 32);
 
 /**
- * Encrypts a string value using AES-256-GCM encryption
+ * Encrypts a string value using AES-256-CBC encryption
  * @param text - The plain text to encrypt
- * @returns The encrypted text with IV and auth tag (base64 encoded)
+ * @returns The encrypted text with IV (base64 encoded)
  */
 export function encryptValue(text: string): string {
   try {
     const iv = crypto.randomBytes(16); // Generate random IV
-    const cipher = crypto.createCipher(ALGORITHM, key);
-    cipher.setAAD(Buffer.from("identification", "utf8")); // Additional authenticated data
+    const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
 
     let encrypted = cipher.update(text, "utf8", "hex");
     encrypted += cipher.final("hex");
 
-    const authTag = cipher.getAuthTag();
-
-    // Combine IV, auth tag, and encrypted data
-    const combined =
-      iv.toString("hex") + ":" + authTag.toString("hex") + ":" + encrypted;
+    // Combine IV and encrypted data
+    const combined = iv.toString("hex") + ":" + encrypted;
 
     // Return base64 encoded result
     return Buffer.from(combined).toString("base64");
@@ -50,17 +44,14 @@ export function decryptValue(encryptedText: string): string {
     const combined = Buffer.from(encryptedText, "base64").toString("utf8");
     const parts = combined.split(":");
 
-    if (parts.length !== 3) {
+    if (parts.length !== 2) {
       throw new Error("Invalid encrypted data format");
     }
 
     const iv = Buffer.from(parts[0], "hex");
-    const authTag = Buffer.from(parts[1], "hex");
-    const encrypted = parts[2];
+    const encrypted = parts[1];
 
-    const decipher = crypto.createDecipher(ALGORITHM, key);
-    decipher.setAAD(Buffer.from("identification", "utf8"));
-    decipher.setAuthTag(authTag);
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
 
     let decrypted = decipher.update(encrypted, "hex", "utf8");
     decrypted += decipher.final("utf8");
@@ -81,7 +72,7 @@ export function decryptValue(encryptedText: string): string {
 export function hashValue(text: string): string {
   return crypto
     .createHash("sha256")
-    .update(text + ENCRYPTION_KEY)
+    .update(text + "liyana-salt")
     .digest("hex");
 }
 
