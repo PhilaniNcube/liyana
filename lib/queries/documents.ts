@@ -2,6 +2,24 @@ import { createClient } from "@/lib/server";
 import { z } from "zod";
 import type { Database } from "@/lib/types";
 
+// Document types enum
+export const DOCUMENT_TYPES = {
+  ID: "id",
+  BANK_STATEMENT: "bank_statement",
+  PAYSLIP: "payslip",
+  PROOF_OF_RESIDENCE: "proof_of_residence",
+} as const;
+
+export type DocumentType = (typeof DOCUMENT_TYPES)[keyof typeof DOCUMENT_TYPES];
+
+export interface DocumentUploadState {
+  errors?: {
+    [key: string]: string[];
+  };
+  success?: boolean;
+  documentId?: string;
+}
+
 type Document = Database["public"]["Tables"]["documents"]["Row"];
 type DocumentInsert = Database["public"]["Tables"]["documents"]["Insert"];
 
@@ -206,6 +224,38 @@ export async function getRequiredDocumentsForApplication(
     missing: missingDocuments,
     isComplete: missingDocuments.length === 0,
   };
+}
+
+// Function to get uploaded documents for an application (with user authentication)
+export async function getApplicationDocuments(applicationId: string) {
+  const supabase = await createClient();
+
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      throw new Error("User not authenticated");
+    }
+
+    const { data, error } = await supabase
+      .from("documents")
+      .select("*")
+      .eq("application_id", parseInt(applicationId))
+      .eq("user_id", user.id)
+      .order("uploaded_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching documents:", error);
+    return null;
+  }
 }
 
 export async function getDocumentStats() {

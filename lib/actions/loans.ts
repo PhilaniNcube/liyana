@@ -86,6 +86,7 @@ export interface LoanApplicationState {
     [key: string]: string[];
   };
   success?: boolean;
+  applicationId?: string;
 }
 
 export async function submitLoanApplication(
@@ -170,12 +171,12 @@ export async function submitLoanApplication(
       term: parseInt(result.data.repaymentPeriod),
       status: "pre_qualifier" as const,
       created_at: new Date().toISOString(),
-    };
-
-    // Insert loan application into database
-    const { error } = await supabase
+    }; // Insert loan application into database
+    const { data: insertedApplication, error } = await supabase
       .from("applications")
-      .insert(applicationData);
+      .insert(applicationData)
+      .select("id")
+      .single();
 
     if (error) {
       console.error("Database error:", error);
@@ -185,9 +186,9 @@ export async function submitLoanApplication(
         },
       };
     }
-
     return {
       success: true,
+      applicationId: insertedApplication.id.toString(),
     };
   } catch (error) {
     console.error("Unexpected error:", error);

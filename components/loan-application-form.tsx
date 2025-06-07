@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useActionState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import {
   submitLoanApplication,
@@ -212,7 +213,12 @@ interface LoanApplicationFormProps {
 }
 
 export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
+  const [currentPhase, setCurrentPhase] = useState<"application" | "complete">(
+    "application"
+  );
+  const [applicationId, setApplicationId] = useState<string | null>(null);
   const [state, formAction] = useActionState<LoanApplicationState, FormData>(
     submitLoanApplication,
     {}
@@ -221,7 +227,18 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
   const [isKYCChecking, setIsKYCChecking] = useState(false);
   const [kycResults, setKycResults] = useState<KYCResults | null>(null);
   const [kycErrors, setKycErrors] = useState<string[]>([]);
-  const errorSectionRef = useRef<HTMLDivElement>(null);
+  const errorSectionRef = useRef<HTMLDivElement>(null); // When application is successfully submitted, redirect to document upload page
+  useEffect(() => {
+    if (
+      state.success &&
+      state.applicationId &&
+      currentPhase === "application"
+    ) {
+      setApplicationId(state.applicationId);
+      // Redirect to the documents page
+      router.push(`/profile/${state.applicationId}`);
+    }
+  }, [state.success, state.applicationId, currentPhase, router]);
 
   // Scroll to error section when KYC errors occur
   useEffect(() => {
@@ -357,21 +374,33 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
       <Card>
         <CardHeader>
           <div className="space-y-4">
+            {" "}
             <div>
-              <CardTitle className="text-2xl">Loan Application</CardTitle>
+              {" "}
+              <CardTitle className="text-2xl">
+                {currentPhase === "application" && "Loan Application"}
+                {currentPhase === "complete" && "Application Complete"}
+              </CardTitle>
               <CardDescription>
-                {state.success
-                  ? "Application Submitted"
-                  : `Step ${currentStep} of ${STEPS.length}: ${
-                      STEPS[currentStep - 1]?.description
-                    }`}
+                {currentPhase === "application" &&
+                  !state.success &&
+                  `Step ${currentStep} of ${STEPS.length}: ${
+                    STEPS[currentStep - 1]?.description
+                  }`}
+                {currentPhase === "application" &&
+                  state.success &&
+                  "Application Submitted - Redirecting to Document Upload..."}
+                {currentPhase === "complete" &&
+                  "Your loan application is now complete and under review"}
               </CardDescription>
             </div>
-            {!state.success && <Progress value={progress} className="w-full" />}
+            {currentPhase === "application" && !state.success && (
+              <Progress value={progress} className="w-full" />
+            )}
           </div>
-        </CardHeader>
+        </CardHeader>{" "}
         <CardContent>
-          {state.success ? (
+          {currentPhase === "complete" ? (
             <div className="text-center space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-center w-16 h-16 mx-auto bg-green-100 rounded-full">
@@ -391,11 +420,11 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-green-800">
-                    Application Submitted Successfully!
+                    Application Complete!
                   </h3>
                   <p className="text-green-600 mt-2">
-                    Your loan application has been submitted and is now being
-                    reviewed. We'll contact you within 24 hours with an update.
+                    Your loan application has been submitted successfully. You
+                    will be redirected to upload the required documents.
                   </p>
                 </div>
               </div>
