@@ -1,6 +1,4 @@
 import { redirect } from "next/navigation";
-
-import { LogoutButton } from "@/components/logout-button";
 import { LoanApplicationForm } from "@/components/loan-application-form";
 import { createClient } from "@/lib/server";
 

@@ -1,6 +1,5 @@
 import { SignUpForm } from "@/components/sign-up-form";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,9 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+
 import { CheckCircle } from "lucide-react";
-import { DM_Sans } from "next/font/google";
 
 export default function Home() {
   return (
