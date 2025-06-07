@@ -17,6 +17,10 @@
 /.next/
 /out/
 
+# Github Copilot
+/.github/copilot
+/.github
+
 # production
 /build
 
