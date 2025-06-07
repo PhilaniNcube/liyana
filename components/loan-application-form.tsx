@@ -93,14 +93,25 @@ const employmentLoanSchema = z.object({
   jobTitle: z.string().min(1, "Job title is required"),
   monthlyIncome: z.string().min(1, "Monthly income is required"),
   workExperience: z.string().min(1, "Work experience is required"),
-  loanAmount: z.string().min(1, "Loan amount is required"),
+  loanAmount: z
+    .string()
+    .min(1, "Loan amount is required")
+    .refine(
+      (val) => {
+        const amount = parseFloat(val);
+        return !isNaN(amount) && amount > 0 && amount <= 5000;
+      },
+      {
+        message: "Loan amount must be between R1 and R5,000",
+      }
+    ),
   loanPurpose: z.enum(
     ["debt_consolidation", "home_improvement", "education", "medical", "other"],
     {
       required_error: "Loan purpose is required",
     }
   ),
-  repaymentPeriod: z.enum(["6", "12", "24", "36"], {
+  repaymentPeriod: z.enum(["7", "14", "21", "30"], {
     required_error: "Repayment period is required",
   }),
 });
@@ -134,7 +145,18 @@ const loanApplicationSchema = z
     jobTitle: z.string().min(1, "Job title is required"),
     monthlyIncome: z.string().min(1, "Monthly income is required"),
     workExperience: z.string().min(1, "Work experience is required"),
-    loanAmount: z.string().min(1, "Loan amount is required"),
+    loanAmount: z
+      .string()
+      .min(1, "Loan amount is required")
+      .refine(
+        (val) => {
+          const amount = parseFloat(val);
+          return !isNaN(amount) && amount > 0 && amount <= 5000;
+        },
+        {
+          message: "Loan amount must be between R1 and R5,000",
+        }
+      ),
     loanPurpose: z.enum(
       [
         "debt_consolidation",
@@ -147,7 +169,7 @@ const loanApplicationSchema = z
         required_error: "Loan purpose is required",
       }
     ),
-    repaymentPeriod: z.enum(["6", "12", "24", "36"], {
+    repaymentPeriod: z.enum(["7", "14", "21", "30"], {
       required_error: "Repayment period is required",
     }),
   })
@@ -743,7 +765,6 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         </FormItem>
                       )}
                     />
-
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <FormField
                         control={employmentLoanForm.control}
@@ -775,7 +796,6 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         )}
                       />
                     </div>
-
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <FormField
                         control={employmentLoanForm.control}
@@ -807,18 +827,18 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                           </FormItem>
                         )}
                       />
-                    </div>
-
+                    </div>{" "}
                     <FormField
                       control={employmentLoanForm.control}
                       name="loanAmount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Loan Amount (ZAR)</FormLabel>
+                          <FormLabel>Loan Amount (ZAR) - Max R5,000</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="50000"
+                              placeholder="5000"
                               type="number"
+                              max="5000"
                               {...field}
                             />
                           </FormControl>
@@ -826,7 +846,6 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       control={employmentLoanForm.control}
                       name="loanPurpose"
@@ -862,7 +881,6 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       control={employmentLoanForm.control}
                       name="repaymentPeriod"
@@ -876,12 +894,12 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select repayment period" />
-                              </SelectTrigger>
+                              </SelectTrigger>{" "}
                               <SelectContent>
-                                <SelectItem value="6">6 months</SelectItem>
-                                <SelectItem value="12">12 months</SelectItem>
-                                <SelectItem value="24">24 months</SelectItem>
-                                <SelectItem value="36">36 months</SelectItem>
+                                <SelectItem value="7">7 days</SelectItem>
+                                <SelectItem value="14">14 days</SelectItem>
+                                <SelectItem value="21">21 days</SelectItem>
+                                <SelectItem value="30">30 days</SelectItem>
                               </SelectContent>
                             </Select>
                           </FormControl>
@@ -889,7 +907,6 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         </FormItem>
                       )}
                     />
-
                     {state.errors?._form && (
                       <div className="text-sm text-red-500">
                         {state.errors._form.map((error, index) => (
@@ -897,7 +914,6 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         ))}
                       </div>
                     )}
-
                     <div className="flex justify-between">
                       <Button
                         type="button"

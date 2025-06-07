@@ -34,7 +34,18 @@ const loanApplicationSchema = z
     jobTitle: z.string().min(1, "Job title is required"),
     monthlyIncome: z.string().min(1, "Monthly income is required"),
     workExperience: z.string().min(1, "Work experience is required"),
-    loanAmount: z.string().min(1, "Loan amount is required"),
+    loanAmount: z
+      .string()
+      .min(1, "Loan amount is required")
+      .refine(
+        (val) => {
+          const amount = parseFloat(val);
+          return !isNaN(amount) && amount > 0 && amount <= 5000;
+        },
+        {
+          message: "Loan amount must be between R1 and R5,000",
+        }
+      ),
     loanPurpose: z.enum(
       [
         "debt_consolidation",
@@ -47,7 +58,7 @@ const loanApplicationSchema = z
         required_error: "Loan purpose is required",
       }
     ),
-    repaymentPeriod: z.enum(["6", "12", "24", "36"], {
+    repaymentPeriod: z.enum(["7", "14", "21", "30"], {
       required_error: "Repayment period is required",
     }),
   })
