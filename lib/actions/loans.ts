@@ -66,12 +66,16 @@ const loanApplicationSchema = z
       {
         message: "Repayment period must be between 7 and 30 days",
       }
-    ),
-
-    // Next of Kin Information
+    ), // Next of Kin Information
     nextOfKinName: z.string().optional(),
     nextOfKinPhone: z.string().optional(),
     nextOfKinEmail: z.string().optional(),
+
+    // Banking Information
+    bankName: z.string().min(1, "Bank name is required"),
+    bankAccountNumber: z
+      .string()
+      .min(8, "Bank account number must be at least 8 digits"),
   })
   .refine(
     (data) => {
@@ -130,6 +134,8 @@ export async function submitLoanApplication(
     nextOfKinName: formData.get("nextOfKinName"),
     nextOfKinPhone: formData.get("nextOfKinPhone"),
     nextOfKinEmail: formData.get("nextOfKinEmail"),
+    bankName: formData.get("bankName"),
+    bankAccountNumber: formData.get("bankAccountNumber"),
   });
 
   if (!result.success) {
@@ -198,12 +204,14 @@ export async function submitLoanApplication(
       job_title: result.data.jobTitle,
       monthly_income: parseFloat(result.data.monthlyIncome),
       work_experience: result.data.workExperience,
-      loan_purpose: result.data.loanPurpose,
-
-      // Next of kin information
+      loan_purpose: result.data.loanPurpose, // Next of kin information
       next_of_kin_name: result.data.nextOfKinName || null,
       next_of_kin_phone_number: result.data.nextOfKinPhone || null,
       next_of_kin_email: result.data.nextOfKinEmail || null,
+
+      // Banking information
+      bank_name: result.data.bankName,
+      bank_account_number: result.data.bankAccountNumber,
 
       created_at: new Date().toISOString(),
     }; // Insert loan application into database

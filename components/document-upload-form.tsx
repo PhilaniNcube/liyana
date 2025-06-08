@@ -22,11 +22,12 @@ import {
   X,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { uploadDocument } from "@/lib/client-actions/documents";
 import { revalidateDocuments } from "@/lib/actions/revalidate";
 import type { DocumentUploadState } from "@/lib/queries/documents";
 import type { Database } from "@/lib/types";
+import { DocumentCompletionModal } from "./document-completion-modal";
 
 export const DOCUMENT_TYPES = {
   ID: "id",
@@ -331,6 +332,7 @@ export function DocumentUploadForm({
   className,
 }: DocumentUploadFormProps) {
   const [localDocuments, setLocalDocuments] = useState(documents);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   // Get existing documents by type
   const getDocumentByType = (type: DocumentType) =>
@@ -342,6 +344,7 @@ export function DocumentUploadForm({
     getDocumentByType(type)
   ).length;
   const overallProgress = (uploadedDocuments / totalDocuments) * 100;
+
   const handleUploadSuccess = async (
     uploadedDocument?: Database["public"]["Tables"]["documents"]["Row"]
   ) => {
@@ -353,6 +356,13 @@ export function DocumentUploadForm({
     // Revalidate the path to ensure fresh data on next navigation
     await revalidateDocuments();
   };
+
+  // Check if all documents are uploaded and show modal
+  useEffect(() => {
+    if (uploadedDocuments === totalDocuments && uploadedDocuments > 0) {
+      setShowCompletionModal(true);
+    }
+  }, [uploadedDocuments, totalDocuments]);
 
   return (
     <div className={cn("w-full max-w-4xl mx-auto space-y-6", className)}>
@@ -425,9 +435,16 @@ export function DocumentUploadForm({
           <AlertDescription>
             Please upload all {totalDocuments} required documents to proceed
             with your loan application.
-          </AlertDescription>
+          </AlertDescription>{" "}
         </Alert>
       )}
+
+      {/* Document Completion Modal */}
+      <DocumentCompletionModal
+        isOpen={showCompletionModal}
+        onClose={() => setShowCompletionModal(false)}
+        applicationId={applicationId}
+      />
     </div>
   );
 }

@@ -155,11 +155,15 @@ const employmentLoanSchema = z.object({
   repaymentPeriod: z
     .number()
     .min(7, "Minimum repayment period is 7 days")
-    .max(30, "Maximum repayment period is 30 days"),
-  // Next of kin information
+    .max(60, "Maximum repayment period is 60 days"), // Next of kin information
   nextOfKinName: z.string().optional(),
   nextOfKinPhone: z.string().optional(),
   nextOfKinEmail: z.string().optional(),
+  // Banking information
+  bankName: z.string().min(1, "Bank name is required"),
+  bankAccountNumber: z
+    .string()
+    .min(8, "Bank account number must be at least 8 digits"),
 });
 
 // Combined schema for validation
@@ -212,11 +216,15 @@ const loanApplicationSchema = z
     repaymentPeriod: z
       .number()
       .min(7, "Minimum repayment period is 7 days")
-      .max(30, "Maximum repayment period is 30 days"),
-    // Next of kin information
+      .max(60, "Maximum repayment period is 60 days"), // Next of kin information
     nextOfKinName: z.string().optional(),
     nextOfKinPhone: z.string().optional(),
     nextOfKinEmail: z.string().optional(),
+    // Banking information
+    bankName: z.string().min(1, "Bank name is required"),
+    bankAccountNumber: z
+      .string()
+      .min(8, "Bank account number must be at least 8 digits"),
   })
   .refine(
     (data) => {
@@ -331,6 +339,8 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
       nextOfKinName: "",
       nextOfKinPhone: "",
       nextOfKinEmail: "",
+      bankName: "",
+      bankAccountNumber: "",
     },
   });
 
@@ -1105,6 +1115,77 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         )}
                       />
                     </div>
+                    {/* Banking Information */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">
+                        Banking Information
+                      </h3>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <FormField
+                          control={employmentLoanForm.control}
+                          name="bankName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Bank Name</FormLabel>
+                              <FormControl>
+                                <Select
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select your bank" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="absa">
+                                      ABSA Bank
+                                    </SelectItem>
+                                    <SelectItem value="standard">
+                                      Standard Bank
+                                    </SelectItem>
+                                    <SelectItem value="fnb">
+                                      First National Bank (FNB)
+                                    </SelectItem>
+                                    <SelectItem value="nedbank">
+                                      Nedbank
+                                    </SelectItem>
+                                    <SelectItem value="capitec">
+                                      Capitec Bank
+                                    </SelectItem>
+                                    <SelectItem value="investec">
+                                      Investec Bank
+                                    </SelectItem>
+                                    <SelectItem value="african_bank">
+                                      African Bank
+                                    </SelectItem>
+                                    <SelectItem value="discovery">
+                                      Discovery Bank
+                                    </SelectItem>
+                                    <SelectItem value="tymebank">
+                                      TymeBank
+                                    </SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={employmentLoanForm.control}
+                          name="bankAccountNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Bank Account Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="1234567890" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
                     <FormField
                       control={employmentLoanForm.control}
                       name="repaymentPeriod"
@@ -1117,7 +1198,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                             <div className="px-3">
                               <Slider
                                 min={7}
-                                max={30}
+                                max={60}
                                 step={1}
                                 value={[field.value]}
                                 onValueChange={(value) =>
@@ -1127,7 +1208,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                               />
                               <div className="flex justify-between text-sm text-muted-foreground mt-1">
                                 <span>7 days</span>
-                                <span>30 days</span>
+                                <span>60 days</span>
                               </div>
                             </div>
                           </FormControl>

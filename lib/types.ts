@@ -75,6 +75,8 @@ export type Database = {
       applications: {
         Row: {
           application_amount: number | null;
+          bank_account_number: string | null;
+          bank_name: string | null;
           city: string | null;
           created_at: string;
           date_of_birth: string | null;
@@ -102,6 +104,8 @@ export type Database = {
         };
         Insert: {
           application_amount?: number | null;
+          bank_account_number?: string | null;
+          bank_name?: string | null;
           city?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
@@ -129,6 +133,8 @@ export type Database = {
         };
         Update: {
           application_amount?: number | null;
+          bank_account_number?: string | null;
+          bank_name?: string | null;
           city?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
