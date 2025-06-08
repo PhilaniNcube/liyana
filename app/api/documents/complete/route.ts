@@ -99,6 +99,9 @@ export async function POST(request: NextRequest) {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background-color: #10b981; color: white; padding: 20px; text-align: center;">
+              <img src="https://${
+                process.env.VERCEL_URL
+              }/logo.webp" alt="Liyana Loans" style="height: 40px; margin-bottom: 15px;" />
               <h1 style="margin: 0;">Documents Uploaded Successfully!</h1>
             </div>
             
@@ -139,7 +142,7 @@ export async function POST(request: NextRequest) {
                 If you have any questions about your application, please don't hesitate to contact our support team.
               </p>
                 <div style="text-align: center; margin: 30px 0;">
-                <a href="${process.env.VERCEL_URL}/profile" 
+                <a href="https://${process.env.VERCEL_URL}/profile" 
                    style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
                   View Application Status
                 </a>
