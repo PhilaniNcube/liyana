@@ -75,39 +75,84 @@ export type Database = {
       applications: {
         Row: {
           application_amount: number | null;
+          city: string | null;
           created_at: string;
           date_of_birth: string | null;
           decline_reason: Json | null;
+          employer_address: string | null;
+          employer_contact_number: string | null;
+          employer_name: string | null;
+          employment_type:
+            | Database["public"]["Enums"]["employment_type"]
+            | null;
+          home_address: string | null;
           id: number;
           id_number: string;
+          job_title: string | null;
+          loan_purpose: string | null;
+          monthly_income: number | null;
+          next_of_kin_email: string | null;
+          next_of_kin_name: string | null;
+          next_of_kin_phone_number: string | null;
           status: Database["public"]["Enums"]["application_status"];
           term: number;
           updated_at: string;
           user_id: string;
+          work_experience: string | null;
         };
         Insert: {
           application_amount?: number | null;
+          city?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
           decline_reason?: Json | null;
+          employer_address?: string | null;
+          employer_contact_number?: string | null;
+          employer_name?: string | null;
+          employment_type?:
+            | Database["public"]["Enums"]["employment_type"]
+            | null;
+          home_address?: string | null;
           id?: number;
           id_number: string;
+          job_title?: string | null;
+          loan_purpose?: string | null;
+          monthly_income?: number | null;
+          next_of_kin_email?: string | null;
+          next_of_kin_name?: string | null;
+          next_of_kin_phone_number?: string | null;
           status: Database["public"]["Enums"]["application_status"];
           term: number;
           updated_at?: string;
           user_id: string;
+          work_experience?: string | null;
         };
         Update: {
           application_amount?: number | null;
+          city?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
           decline_reason?: Json | null;
+          employer_address?: string | null;
+          employer_contact_number?: string | null;
+          employer_name?: string | null;
+          employment_type?:
+            | Database["public"]["Enums"]["employment_type"]
+            | null;
+          home_address?: string | null;
           id?: number;
           id_number?: string;
+          job_title?: string | null;
+          loan_purpose?: string | null;
+          monthly_income?: number | null;
+          next_of_kin_email?: string | null;
+          next_of_kin_name?: string | null;
+          next_of_kin_phone_number?: string | null;
           status?: Database["public"]["Enums"]["application_status"];
           term?: number;
           updated_at?: string;
           user_id?: string;
+          work_experience?: string | null;
         };
         Relationships: [];
       };
@@ -192,6 +237,12 @@ export type Database = {
         | "approved"
         | "declined";
       document_type: "id" | "bank_statement" | "payslip" | "proof_of_residence";
+      employment_type:
+        | "employed"
+        | "self_employed"
+        | "contract"
+        | "unemployed"
+        | "retired";
       user_role: "customer" | "admin" | "editor";
     };
     CompositeTypes: {
@@ -327,6 +378,13 @@ export const Constants = {
         "declined",
       ],
       document_type: ["id", "bank_statement", "payslip", "proof_of_residence"],
+      employment_type: [
+        "employed",
+        "self_employed",
+        "contract",
+        "unemployed",
+        "retired",
+      ],
       user_role: ["customer", "admin", "editor"],
     },
   },

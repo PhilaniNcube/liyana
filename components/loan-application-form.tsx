@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
 import {
   ChevronLeft,
   ChevronRight,
@@ -46,6 +47,51 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+// Utility function to extract date of birth from SA ID number
+const extractDateOfBirthFromSAID = (idNumber: string): string | null => {
+  if (!idNumber || idNumber.length !== 13) {
+    return null;
+  }
+
+  // Extract YYMMDD from the first 6 digits
+  const yearDigits = idNumber.substring(0, 2);
+  const month = idNumber.substring(2, 4);
+  const day = idNumber.substring(4, 6);
+
+  // Convert YY to full year (assuming current century for years 00-30, previous century for 31-99)
+  const currentYear = new Date().getFullYear();
+  const currentCentury = Math.floor(currentYear / 100) * 100;
+  const yearNumber = parseInt(yearDigits);
+
+  let fullYear: number;
+  if (yearNumber <= 30) {
+    fullYear = currentCentury + yearNumber;
+  } else {
+    fullYear = currentCentury - 100 + yearNumber;
+  }
+
+  // Validate month and day
+  const monthNumber = parseInt(month);
+  const dayNumber = parseInt(day);
+
+  if (monthNumber < 1 || monthNumber > 12 || dayNumber < 1 || dayNumber > 31) {
+    return null;
+  }
+
+  // Create date and validate it exists (handles leap years, etc.)
+  const date = new Date(fullYear, monthNumber - 1, dayNumber);
+  if (
+    date.getFullYear() !== fullYear ||
+    date.getMonth() !== monthNumber - 1 ||
+    date.getDate() !== dayNumber
+  ) {
+    return null;
+  }
+
+  // Return in YYYY-MM-DD format for HTML date input
+  return `${fullYear}-${month}-${day}`;
+};
 
 // Step 1: Personal Information Schema
 const personalInfoSchema = z
@@ -85,36 +131,35 @@ const personalInfoSchema = z
 // Step 2: Employment and Loan Information Schema
 const employmentLoanSchema = z.object({
   employmentStatus: z.enum(
-    ["employed", "self_employed", "unemployed", "retired"],
+    ["employed", "self_employed", "unemployed", "retired", "contract"],
     {
       required_error: "Employment status is required",
     }
   ),
   employer: z.string().min(1, "Employer is required"),
+  employerAddress: z.string().optional(),
+  employerContactNumber: z.string().optional(),
   jobTitle: z.string().min(1, "Job title is required"),
   monthlyIncome: z.string().min(1, "Monthly income is required"),
   workExperience: z.string().min(1, "Work experience is required"),
   loanAmount: z
-    .string()
-    .min(1, "Loan amount is required")
-    .refine(
-      (val) => {
-        const amount = parseFloat(val);
-        return !isNaN(amount) && amount > 0 && amount <= 5000;
-      },
-      {
-        message: "Loan amount must be between R1 and R5,000",
-      }
-    ),
+    .number()
+    .min(500, "Minimum loan amount is R500")
+    .max(5000, "Maximum loan amount is R5,000"),
   loanPurpose: z.enum(
     ["debt_consolidation", "home_improvement", "education", "medical", "other"],
     {
       required_error: "Loan purpose is required",
     }
   ),
-  repaymentPeriod: z.enum(["7", "14", "21", "30"], {
-    required_error: "Repayment period is required",
-  }),
+  repaymentPeriod: z
+    .number()
+    .min(7, "Minimum repayment period is 7 days")
+    .max(30, "Maximum repayment period is 30 days"),
+  // Next of kin information
+  nextOfKinName: z.string().optional(),
+  nextOfKinPhone: z.string().optional(),
+  nextOfKinEmail: z.string().optional(),
 });
 
 // Combined schema for validation
@@ -137,27 +182,21 @@ const loanApplicationSchema = z
     postalCode: z.string().min(4, "Postal code is required"),
     // Employment and Loan Information
     employmentStatus: z.enum(
-      ["employed", "self_employed", "unemployed", "retired"],
+      ["employed", "self_employed", "contract", "unemployed", "retired"],
       {
         required_error: "Employment status is required",
       }
     ),
     employer: z.string().min(1, "Employer is required"),
+    employerAddress: z.string().optional(),
+    employerContactNumber: z.string().optional(),
     jobTitle: z.string().min(1, "Job title is required"),
     monthlyIncome: z.string().min(1, "Monthly income is required"),
     workExperience: z.string().min(1, "Work experience is required"),
     loanAmount: z
-      .string()
-      .min(1, "Loan amount is required")
-      .refine(
-        (val) => {
-          const amount = parseFloat(val);
-          return !isNaN(amount) && amount > 0 && amount <= 5000;
-        },
-        {
-          message: "Loan amount must be between R1 and R5,000",
-        }
-      ),
+      .number()
+      .min(500, "Minimum loan amount is R500")
+      .max(5000, "Maximum loan amount is R5,000"),
     loanPurpose: z.enum(
       [
         "debt_consolidation",
@@ -170,9 +209,14 @@ const loanApplicationSchema = z
         required_error: "Loan purpose is required",
       }
     ),
-    repaymentPeriod: z.enum(["7", "14", "21", "30"], {
-      required_error: "Repayment period is required",
-    }),
+    repaymentPeriod: z
+      .number()
+      .min(7, "Minimum repayment period is 7 days")
+      .max(30, "Maximum repayment period is 30 days"),
+    // Next of kin information
+    nextOfKinName: z.string().optional(),
+    nextOfKinPhone: z.string().optional(),
+    nextOfKinEmail: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -270,21 +314,38 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
       postalCode: "",
     },
   });
-
   // Form for step 2 (Employment & Loan)
   const employmentLoanForm = useForm<EmploymentLoanData>({
     resolver: zodResolver(employmentLoanSchema),
     defaultValues: {
       employmentStatus: undefined,
       employer: "",
+      employerAddress: "",
+      employerContactNumber: "",
       jobTitle: "",
       monthlyIncome: "",
       workExperience: "",
-      loanAmount: "",
+      loanAmount: 500,
       loanPurpose: undefined,
-      repaymentPeriod: undefined,
+      repaymentPeriod: 7,
+      nextOfKinName: "",
+      nextOfKinPhone: "",
+      nextOfKinEmail: "",
     },
   });
+
+  // Clear date of birth when switching from ID to passport
+  useEffect(() => {
+    const subscription = personalInfoForm.watch((data, { name }) => {
+      if (
+        name === "identificationType" &&
+        data.identificationType === "passport"
+      ) {
+        personalInfoForm.setValue("dateOfBirth", "");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [personalInfoForm]);
 
   const progress = (currentStep / STEPS.length) * 100;
   const handleNext = async () => {
@@ -345,7 +406,6 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
     setKycErrors([]);
     setIsKYCChecking(false);
   };
-
   const handleSubmit = async (data: EmploymentLoanData) => {
     // Combine data from both forms
     const personalData = personalInfoForm.getValues();
@@ -361,7 +421,10 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
 
     const formData = new FormData();
     Object.entries(combinedData).forEach(([key, value]) => {
-      formData.append(key, value);
+      // Convert numbers to strings for FormData
+      const stringValue =
+        typeof value === "number" ? value.toString() : value || "";
+      formData.append(key, stringValue);
     });
 
     startTransition(() => {
@@ -495,7 +558,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                           <FormMessage />
                         </FormItem>
                       )}
-                    />
+                    />{" "}
                     {personalInfoForm.watch("identificationType") === "id" && (
                       <FormField
                         control={personalInfoForm.control}
@@ -508,8 +571,33 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                                 placeholder="1234567890123"
                                 maxLength={13}
                                 {...field}
+                                onChange={(e) => {
+                                  field.onChange(e);
+                                  // Auto-fill date of birth when ID number is complete
+                                  const idNumber = e.target.value;
+                                  if (idNumber.length === 13) {
+                                    const extractedDate =
+                                      extractDateOfBirthFromSAID(idNumber);
+                                    if (extractedDate) {
+                                      personalInfoForm.setValue(
+                                        "dateOfBirth",
+                                        extractedDate
+                                      );
+                                    }
+                                  } else if (idNumber.length < 13) {
+                                    // Clear date of birth if ID number is incomplete
+                                    personalInfoForm.setValue(
+                                      "dateOfBirth",
+                                      ""
+                                    );
+                                  }
+                                }}
                               />
                             </FormControl>
+                            <p className="text-sm text-muted-foreground">
+                              Your date of birth will be automatically extracted
+                              from your ID number
+                            </p>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -540,6 +628,14 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
+                          {personalInfoForm.watch("identificationType") ===
+                            "id" && (
+                            <p className="text-sm text-muted-foreground">
+                              {field.value
+                                ? "✓ Auto-filled from ID number"
+                                : "Will be auto-filled when you enter your ID number"}
+                            </p>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -783,6 +879,9 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                                 <SelectItem value="self_employed">
                                   Self Employed
                                 </SelectItem>
+                                <SelectItem value="contract">
+                                  Contract
+                                </SelectItem>
                                 <SelectItem value="unemployed">
                                   Unemployed
                                 </SelectItem>
@@ -793,7 +892,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                           <FormMessage />
                         </FormItem>
                       )}
-                    />
+                    />{" "}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <FormField
                         control={employmentLoanForm.control}
@@ -819,6 +918,39 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                                 placeholder="Software Developer"
                                 {...field}
                               />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={employmentLoanForm.control}
+                        name="employerAddress"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Employer Address (Optional)</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="123 Business St, City"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={employmentLoanForm.control}
+                        name="employerContactNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              Employer Contact Number (Optional)
+                            </FormLabel>
+                            <FormControl>
+                              <Input placeholder="021 123 4567" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -862,19 +994,31 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                       name="loanAmount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Loan Amount (ZAR) - Max R5,000</FormLabel>
+                          <FormLabel>
+                            Loan Amount: R{field.value.toLocaleString()}
+                          </FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="5000"
-                              type="number"
-                              max="5000"
-                              {...field}
-                            />
+                            <div className="px-3">
+                              <Slider
+                                min={500}
+                                max={5000}
+                                step={50}
+                                value={[field.value]}
+                                onValueChange={(value) =>
+                                  field.onChange(value[0])
+                                }
+                                className="w-full"
+                              />
+                              <div className="flex justify-between text-sm text-muted-foreground mt-1">
+                                <span>R500</span>
+                                <span>R5,000</span>
+                              </div>
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
-                    />
+                    />{" "}
                     <FormField
                       control={employmentLoanForm.control}
                       name="loanPurpose"
@@ -910,27 +1054,82 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         </FormItem>
                       )}
                     />
+                    {/* Next of Kin Information */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">
+                        Next of Kin Information (Optional)
+                      </h3>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <FormField
+                          control={employmentLoanForm.control}
+                          name="nextOfKinName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Next of Kin Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="John Doe" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={employmentLoanForm.control}
+                          name="nextOfKinPhone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Next of Kin Phone Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="082 123 4567" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <FormField
+                        control={employmentLoanForm.control}
+                        name="nextOfKinEmail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Next of Kin Email</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="nextofkin@example.com"
+                                type="email"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     <FormField
                       control={employmentLoanForm.control}
                       name="repaymentPeriod"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Repayment Period</FormLabel>
+                          <FormLabel>
+                            Repayment Period: {field.value} days
+                          </FormLabel>
                           <FormControl>
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select repayment period" />
-                              </SelectTrigger>{" "}
-                              <SelectContent>
-                                <SelectItem value="7">7 days</SelectItem>
-                                <SelectItem value="14">14 days</SelectItem>
-                                <SelectItem value="21">21 days</SelectItem>
-                                <SelectItem value="30">30 days</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <div className="px-3">
+                              <Slider
+                                min={7}
+                                max={30}
+                                step={1}
+                                value={[field.value]}
+                                onValueChange={(value) =>
+                                  field.onChange(value[0])
+                                }
+                                className="w-full"
+                              />
+                              <div className="flex justify-between text-sm text-muted-foreground mt-1">
+                                <span>7 days</span>
+                                <span>30 days</span>
+                              </div>
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>

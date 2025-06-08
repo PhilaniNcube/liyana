@@ -21,16 +21,16 @@ const loanApplicationSchema = z
     address: z.string().min(1, "Address is required"),
     city: z.string().min(1, "City is required"),
     province: z.string().min(1, "Province is required"),
-    postalCode: z.string().min(4, "Postal code is required"),
-
-    // Employment and Loan Information
+    postalCode: z.string().min(4, "Postal code is required"), // Employment and Loan Information
     employmentStatus: z.enum(
-      ["employed", "self_employed", "unemployed", "retired"],
+      ["employed", "self_employed", "contract", "unemployed", "retired"],
       {
         required_error: "Employment status is required",
       }
     ),
     employer: z.string().min(1, "Employer is required"),
+    employerAddress: z.string().optional(),
+    employerContactNumber: z.string().optional(),
     jobTitle: z.string().min(1, "Job title is required"),
     monthlyIncome: z.string().min(1, "Monthly income is required"),
     workExperience: z.string().min(1, "Work experience is required"),
@@ -40,10 +40,10 @@ const loanApplicationSchema = z
       .refine(
         (val) => {
           const amount = parseFloat(val);
-          return !isNaN(amount) && amount > 0 && amount <= 5000;
+          return !isNaN(amount) && amount >= 500 && amount <= 5000;
         },
         {
-          message: "Loan amount must be between R1 and R5,000",
+          message: "Loan amount must be between R500 and R5,000",
         }
       ),
     loanPurpose: z.enum(
@@ -58,9 +58,20 @@ const loanApplicationSchema = z
         required_error: "Loan purpose is required",
       }
     ),
-    repaymentPeriod: z.enum(["7", "14", "21", "30"], {
-      required_error: "Repayment period is required",
-    }),
+    repaymentPeriod: z.string().refine(
+      (val) => {
+        const period = parseInt(val);
+        return !isNaN(period) && period >= 7 && period <= 30;
+      },
+      {
+        message: "Repayment period must be between 7 and 30 days",
+      }
+    ),
+
+    // Next of Kin Information
+    nextOfKinName: z.string().optional(),
+    nextOfKinPhone: z.string().optional(),
+    nextOfKinEmail: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -108,12 +119,17 @@ export async function submitLoanApplication(
     postalCode: formData.get("postalCode"),
     employmentStatus: formData.get("employmentStatus"),
     employer: formData.get("employer"),
+    employerAddress: formData.get("employerAddress"),
+    employerContactNumber: formData.get("employerContactNumber"),
     jobTitle: formData.get("jobTitle"),
     monthlyIncome: formData.get("monthlyIncome"),
     workExperience: formData.get("workExperience"),
     loanAmount: formData.get("loanAmount"),
     loanPurpose: formData.get("loanPurpose"),
     repaymentPeriod: formData.get("repaymentPeriod"),
+    nextOfKinName: formData.get("nextOfKinName"),
+    nextOfKinPhone: formData.get("nextOfKinPhone"),
+    nextOfKinEmail: formData.get("nextOfKinEmail"),
   });
 
   if (!result.success) {
@@ -162,7 +178,6 @@ export async function submitLoanApplication(
         },
       };
     }
-
     const applicationData = {
       user_id: user.id,
       id_number: encryptedIdNumber,
@@ -170,6 +185,26 @@ export async function submitLoanApplication(
       application_amount: parseFloat(result.data.loanAmount),
       term: parseInt(result.data.repaymentPeriod),
       status: "pre_qualifier" as const,
+
+      // Personal information
+      home_address: result.data.address,
+      city: result.data.city,
+
+      // Employment information
+      employment_type: result.data.employmentStatus as any,
+      employer_name: result.data.employer,
+      employer_address: result.data.employerAddress || null,
+      employer_contact_number: result.data.employerContactNumber || null,
+      job_title: result.data.jobTitle,
+      monthly_income: parseFloat(result.data.monthlyIncome),
+      work_experience: result.data.workExperience,
+      loan_purpose: result.data.loanPurpose,
+
+      // Next of kin information
+      next_of_kin_name: result.data.nextOfKinName || null,
+      next_of_kin_phone_number: result.data.nextOfKinPhone || null,
+      next_of_kin_email: result.data.nextOfKinEmail || null,
+
       created_at: new Date().toISOString(),
     }; // Insert loan application into database
     const { data: insertedApplication, error } = await supabase
