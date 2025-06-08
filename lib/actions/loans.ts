@@ -61,10 +61,10 @@ const loanApplicationSchema = z
     repaymentPeriod: z.string().refine(
       (val) => {
         const period = parseInt(val);
-        return !isNaN(period) && period >= 7 && period <= 30;
+        return !isNaN(period) && period >= 7 && period <= 61;
       },
       {
-        message: "Repayment period must be between 7 and 30 days",
+        message: "Repayment period must be between 7 and 60 days",
       }
     ), // Next of Kin Information
     nextOfKinName: z.string().optional(),
@@ -139,6 +139,7 @@ export async function submitLoanApplication(
   });
 
   if (!result.success) {
+    console.log("Validation errors:", result.error.flatten().fieldErrors);
     return {
       errors: result.error.flatten().fieldErrors,
     };

@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     // Send email notification
     try {
       const { data: emailData, error: emailError } = await resend.emails.send({
-        from: "Liyana Loans <noreply@liyana.co.za>",
+        from: "Liyana Loans <noreply@liyanafinance.co.za>",
         to: [user.email!],
         subject: "Documents Uploaded Successfully - Application Under Review",
         html: `

@@ -9,7 +9,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Mail, Loader2, ArrowRight } from "lucide-react";
+import {
+  CheckCircle,
+  Mail,
+  Loader2,
+  ArrowRight,
+  XCircleIcon,
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DocumentCompletionModalProps {
@@ -159,8 +165,8 @@ export function DocumentCompletionModal({
               </>
             ) : (
               <Button onClick={handleClose} className="w-full">
-                <ArrowRight className="mr-2 h-4 w-4" />
-                Continue to Dashboard
+                <XCircleIcon className="mr-2 h-4 w-4" />
+                Close
               </Button>
             )}
           </div>

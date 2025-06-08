@@ -93,80 +93,7 @@ const extractDateOfBirthFromSAID = (idNumber: string): string | null => {
   return `${fullYear}-${month}-${day}`;
 };
 
-// Step 1: Personal Information Schema
-const personalInfoSchema = z
-  .object({
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
-    identificationType: z.enum(["id", "passport"], {
-      required_error: "Identification type is required",
-    }),
-    idNumber: z.string().optional(),
-    passportNumber: z.string().optional(),
-    dateOfBirth: z.string().min(1, "Date of birth is required"),
-    phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
-    email: z.string().email("Please enter a valid email address"),
-    address: z.string().min(1, "Address is required"),
-    city: z.string().min(1, "City is required"),
-    province: z.string().min(1, "Province is required"),
-    postalCode: z.string().min(4, "Postal code is required"),
-  })
-  .refine(
-    (data) => {
-      // Validate that either ID number or passport number is provided based on identification type
-      if (data.identificationType === "id") {
-        return data.idNumber && data.idNumber.length === 13;
-      } else if (data.identificationType === "passport") {
-        return data.passportNumber && data.passportNumber.length >= 6;
-      }
-      return false;
-    },
-    {
-      message:
-        "Please provide a valid ID number (13 digits) or passport number (min 6 characters)",
-      path: ["idNumber"], // This will show the error on the ID number field
-    }
-  );
-
-// Step 2: Employment and Loan Information Schema
-const employmentLoanSchema = z.object({
-  employmentStatus: z.enum(
-    ["employed", "self_employed", "unemployed", "retired", "contract"],
-    {
-      required_error: "Employment status is required",
-    }
-  ),
-  employer: z.string().min(1, "Employer is required"),
-  employerAddress: z.string().optional(),
-  employerContactNumber: z.string().optional(),
-  jobTitle: z.string().min(1, "Job title is required"),
-  monthlyIncome: z.string().min(1, "Monthly income is required"),
-  workExperience: z.string().min(1, "Work experience is required"),
-  loanAmount: z
-    .number()
-    .min(500, "Minimum loan amount is R500")
-    .max(5000, "Maximum loan amount is R5,000"),
-  loanPurpose: z.enum(
-    ["debt_consolidation", "home_improvement", "education", "medical", "other"],
-    {
-      required_error: "Loan purpose is required",
-    }
-  ),
-  repaymentPeriod: z
-    .number()
-    .min(7, "Minimum repayment period is 7 days")
-    .max(60, "Maximum repayment period is 60 days"), // Next of kin information
-  nextOfKinName: z.string().optional(),
-  nextOfKinPhone: z.string().optional(),
-  nextOfKinEmail: z.string().optional(),
-  // Banking information
-  bankName: z.string().min(1, "Bank name is required"),
-  bankAccountNumber: z
-    .string()
-    .min(8, "Bank account number must be at least 8 digits"),
-});
-
-// Combined schema for validation
+// Unified schema for loan application
 const loanApplicationSchema = z
   .object({
     // Personal Information
@@ -216,7 +143,8 @@ const loanApplicationSchema = z
     repaymentPeriod: z
       .number()
       .min(7, "Minimum repayment period is 7 days")
-      .max(60, "Maximum repayment period is 60 days"), // Next of kin information
+      .max(60, "Maximum repayment period is 60 days"),
+    // Next of kin information
     nextOfKinName: z.string().optional(),
     nextOfKinPhone: z.string().optional(),
     nextOfKinEmail: z.string().optional(),
@@ -243,8 +171,6 @@ const loanApplicationSchema = z
     }
   );
 
-type PersonalInfoData = z.infer<typeof personalInfoSchema>;
-type EmploymentLoanData = z.infer<typeof employmentLoanSchema>;
 type LoanApplicationData = z.infer<typeof loanApplicationSchema>;
 
 const STEPS = [
@@ -303,10 +229,9 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
       errorSectionRef.current.focus();
     }
   }, [kycErrors, isKYCChecking]);
-
-  // Form for step 1 (Personal Information)
-  const personalInfoForm = useForm<PersonalInfoData>({
-    resolver: zodResolver(personalInfoSchema),
+  // Form for all steps (unified form)
+  const form = useForm<LoanApplicationData>({
+    resolver: zodResolver(loanApplicationSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -320,12 +245,6 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
       city: "",
       province: "",
       postalCode: "",
-    },
-  });
-  // Form for step 2 (Employment & Loan)
-  const employmentLoanForm = useForm<EmploymentLoanData>({
-    resolver: zodResolver(employmentLoanSchema),
-    defaultValues: {
       employmentStatus: undefined,
       employer: "",
       employerAddress: "",
@@ -343,27 +262,42 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
       bankAccountNumber: "",
     },
   });
-
   // Clear date of birth when switching from ID to passport
   useEffect(() => {
-    const subscription = personalInfoForm.watch((data, { name }) => {
+    const subscription = form.watch((data, { name }) => {
       if (
         name === "identificationType" &&
         data.identificationType === "passport"
       ) {
-        personalInfoForm.setValue("dateOfBirth", "");
+        form.setValue("dateOfBirth", "");
       }
     });
     return () => subscription.unsubscribe();
-  }, [personalInfoForm]);
+  }, [form]);
 
   const progress = (currentStep / STEPS.length) * 100;
   const handleNext = async () => {
     if (currentStep === 1) {
-      const isValid = await personalInfoForm.trigger();
+      // Validate only step 1 fields
+      const step1Fields = [
+        "firstName",
+        "lastName",
+        "identificationType",
+        "idNumber",
+        "passportNumber",
+        "dateOfBirth",
+        "phoneNumber",
+        "email",
+        "address",
+        "city",
+        "province",
+        "postalCode",
+      ] as const;
+
+      const isValid = await form.trigger(step1Fields);
       if (isValid) {
         // Get the ID number for KYC checks
-        const formData = personalInfoForm.getValues();
+        const formData = form.getValues();
         const idNumber =
           formData.identificationType === "id"
             ? formData.idNumber
@@ -373,7 +307,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
           !idNumber ||
           (formData.identificationType === "id" && idNumber.length !== 13)
         ) {
-          personalInfoForm.setError("idNumber", {
+          form.setError("idNumber", {
             message: "Please provide a valid ID number",
           });
           return;
@@ -416,21 +350,10 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
     setKycErrors([]);
     setIsKYCChecking(false);
   };
-  const handleSubmit = async (data: EmploymentLoanData) => {
-    // Combine data from both forms
-    const personalData = personalInfoForm.getValues();
-    const combinedData = { ...personalData, ...data };
-
-    // Validate combined data
-    const result = loanApplicationSchema.safeParse(combinedData);
-    if (!result.success) {
-      // Handle validation errors
-      console.error("Validation errors:", result.error);
-      return;
-    }
-
+  const handleSubmit = async (data: LoanApplicationData) => {
+    // Data is already validated by the unified form schema
     const formData = new FormData();
-    Object.entries(combinedData).forEach(([key, value]) => {
+    Object.entries(data).forEach(([key, value]) => {
       // Convert numbers to strings for FormData
       const stringValue =
         typeof value === "number" ? value.toString() : value || "";
@@ -510,12 +433,13 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
             </div>
           ) : (
             <>
+              {" "}
               {currentStep === 1 && (
-                <Form {...personalInfoForm}>
+                <Form {...form}>
                   <form className="space-y-6">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <FormField
-                        control={personalInfoForm.control}
+                        control={form.control}
                         name="firstName"
                         render={({ field }) => (
                           <FormItem>
@@ -528,7 +452,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         )}
                       />{" "}
                       <FormField
-                        control={personalInfoForm.control}
+                        control={form.control}
                         name="lastName"
                         render={({ field }) => (
                           <FormItem>
@@ -542,7 +466,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                       />
                     </div>
                     <FormField
-                      control={personalInfoForm.control}
+                      control={form.control}
                       name="identificationType"
                       render={({ field }) => (
                         <FormItem>
@@ -569,9 +493,9 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         </FormItem>
                       )}
                     />{" "}
-                    {personalInfoForm.watch("identificationType") === "id" && (
+                    {form.watch("identificationType") === "id" && (
                       <FormField
-                        control={personalInfoForm.control}
+                        control={form.control}
                         name="idNumber"
                         render={({ field }) => (
                           <FormItem>
@@ -589,17 +513,14 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                                     const extractedDate =
                                       extractDateOfBirthFromSAID(idNumber);
                                     if (extractedDate) {
-                                      personalInfoForm.setValue(
+                                      form.setValue(
                                         "dateOfBirth",
                                         extractedDate
                                       );
                                     }
                                   } else if (idNumber.length < 13) {
                                     // Clear date of birth if ID number is incomplete
-                                    personalInfoForm.setValue(
-                                      "dateOfBirth",
-                                      ""
-                                    );
+                                    form.setValue("dateOfBirth", "");
                                   }
                                 }}
                               />
@@ -613,10 +534,9 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         )}
                       />
                     )}
-                    {personalInfoForm.watch("identificationType") ===
-                      "passport" && (
+                    {form.watch("identificationType") === "passport" && (
                       <FormField
-                        control={personalInfoForm.control}
+                        control={form.control}
                         name="passportNumber"
                         render={({ field }) => (
                           <FormItem>
@@ -630,7 +550,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                       />
                     )}{" "}
                     <FormField
-                      control={personalInfoForm.control}
+                      control={form.control}
                       name="dateOfBirth"
                       render={({ field }) => (
                         <FormItem>
@@ -638,8 +558,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
-                          {personalInfoForm.watch("identificationType") ===
-                            "id" && (
+                          {form.watch("identificationType") === "id" && (
                             <p className="text-sm text-muted-foreground">
                               {field.value
                                 ? "✓ Auto-filled from ID number"
@@ -652,7 +571,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                     />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <FormField
-                        control={personalInfoForm.control}
+                        control={form.control}
                         name="phoneNumber"
                         render={({ field }) => (
                           <FormItem>
@@ -665,7 +584,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         )}
                       />
                       <FormField
-                        control={personalInfoForm.control}
+                        control={form.control}
                         name="email"
                         render={({ field }) => (
                           <FormItem>
@@ -683,7 +602,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                       />
                     </div>
                     <FormField
-                      control={personalInfoForm.control}
+                      control={form.control}
                       name="address"
                       render={({ field }) => (
                         <FormItem>
@@ -697,7 +616,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                     />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                       <FormField
-                        control={personalInfoForm.control}
+                        control={form.control}
                         name="city"
                         render={({ field }) => (
                           <FormItem>
@@ -710,7 +629,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         )}
                       />
                       <FormField
-                        control={personalInfoForm.control}
+                        control={form.control}
                         name="province"
                         render={({ field }) => (
                           <FormItem>
@@ -759,7 +678,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         )}
                       />
                       <FormField
-                        control={personalInfoForm.control}
+                        control={form.control}
                         name="postalCode"
                         render={({ field }) => (
                           <FormItem>
@@ -860,16 +779,15 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                     </div>
                   </form>
                 </Form>
-              )}
-
+              )}{" "}
               {currentStep === 2 && (
-                <Form {...employmentLoanForm}>
+                <Form {...form}>
                   <form
-                    onSubmit={employmentLoanForm.handleSubmit(handleSubmit)}
+                    onSubmit={form.handleSubmit(handleSubmit)}
                     className="space-y-6"
                   >
                     <FormField
-                      control={employmentLoanForm.control}
+                      control={form.control}
                       name="employmentStatus"
                       render={({ field }) => (
                         <FormItem>
@@ -905,7 +823,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                     />{" "}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <FormField
-                        control={employmentLoanForm.control}
+                        control={form.control}
                         name="employer"
                         render={({ field }) => (
                           <FormItem>
@@ -918,7 +836,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         )}
                       />
                       <FormField
-                        control={employmentLoanForm.control}
+                        control={form.control}
                         name="jobTitle"
                         render={({ field }) => (
                           <FormItem>
@@ -936,7 +854,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <FormField
-                        control={employmentLoanForm.control}
+                        control={form.control}
                         name="employerAddress"
                         render={({ field }) => (
                           <FormItem>
@@ -952,7 +870,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         )}
                       />
                       <FormField
-                        control={employmentLoanForm.control}
+                        control={form.control}
                         name="employerContactNumber"
                         render={({ field }) => (
                           <FormItem>
@@ -969,7 +887,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <FormField
-                        control={employmentLoanForm.control}
+                        control={form.control}
                         name="monthlyIncome"
                         render={({ field }) => (
                           <FormItem>
@@ -986,7 +904,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         )}
                       />
                       <FormField
-                        control={employmentLoanForm.control}
+                        control={form.control}
                         name="workExperience"
                         render={({ field }) => (
                           <FormItem>
@@ -1000,7 +918,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                       />
                     </div>{" "}
                     <FormField
-                      control={employmentLoanForm.control}
+                      control={form.control}
                       name="loanAmount"
                       render={({ field }) => (
                         <FormItem>
@@ -1030,7 +948,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                       )}
                     />{" "}
                     <FormField
-                      control={employmentLoanForm.control}
+                      control={form.control}
                       name="loanPurpose"
                       render={({ field }) => (
                         <FormItem>
@@ -1071,7 +989,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                       </h3>
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <FormField
-                          control={employmentLoanForm.control}
+                          control={form.control}
                           name="nextOfKinName"
                           render={({ field }) => (
                             <FormItem>
@@ -1084,7 +1002,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                           )}
                         />
                         <FormField
-                          control={employmentLoanForm.control}
+                          control={form.control}
                           name="nextOfKinPhone"
                           render={({ field }) => (
                             <FormItem>
@@ -1098,7 +1016,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         />
                       </div>
                       <FormField
-                        control={employmentLoanForm.control}
+                        control={form.control}
                         name="nextOfKinEmail"
                         render={({ field }) => (
                           <FormItem>
@@ -1122,7 +1040,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                       </h3>
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <FormField
-                          control={employmentLoanForm.control}
+                          control={form.control}
                           name="bankName"
                           render={({ field }) => (
                             <FormItem>
@@ -1172,7 +1090,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                           )}
                         />
                         <FormField
-                          control={employmentLoanForm.control}
+                          control={form.control}
                           name="bankAccountNumber"
                           render={({ field }) => (
                             <FormItem>
@@ -1187,7 +1105,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                       </div>
                     </div>
                     <FormField
-                      control={employmentLoanForm.control}
+                      control={form.control}
                       name="repaymentPeriod"
                       render={({ field }) => (
                         <FormItem>
