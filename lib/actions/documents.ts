@@ -41,9 +41,16 @@ function validateFileType(file: File): boolean {
   return ALLOWED_FILE_TYPES.includes(file.type);
 }
 
-// Helper function to validate file size (max 5MB)
-function validateFileSize(file: File): boolean {
-  const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+// Helper function to validate file size based on document type
+function validateFileSize(file: File, documentType: DocumentType): boolean {
+  const maxSizes = {
+    [DOCUMENT_TYPES.ID]: 10 * 1024 * 1024, // 10MB
+    [DOCUMENT_TYPES.BANK_STATEMENT]: 15 * 1024 * 1024, // 15MB
+    [DOCUMENT_TYPES.PAYSLIP]: 10 * 1024 * 1024, // 10MB
+    [DOCUMENT_TYPES.PROOF_OF_RESIDENCE]: 10 * 1024 * 1024, // 10MB
+  };
+
+  const maxSize = maxSizes[documentType] || 5 * 1024 * 1024; // Default 5MB
   return file.size <= maxSize;
 }
 
@@ -89,12 +96,19 @@ export async function uploadDocument(
       },
     };
   }
-
   // Validate file size
-  if (!validateFileSize(file)) {
+  if (!validateFileSize(file, documentType)) {
+    const maxSizes = {
+      [DOCUMENT_TYPES.ID]: "10MB",
+      [DOCUMENT_TYPES.BANK_STATEMENT]: "15MB",
+      [DOCUMENT_TYPES.PAYSLIP]: "10MB",
+      [DOCUMENT_TYPES.PROOF_OF_RESIDENCE]: "10MB",
+    };
+    const maxSize = maxSizes[documentType] || "5MB";
+
     return {
       errors: {
-        file: ["File size must be less than 5MB"],
+        file: [`File size must be less than ${maxSize}`],
       },
     };
   }

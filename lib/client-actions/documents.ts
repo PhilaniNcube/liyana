@@ -2,11 +2,15 @@
 
 import { createClient } from "@/lib/client";
 import { v4 as uuidv4 } from "uuid";
-import {
-  DOCUMENT_TYPES,
-  DocumentUploadState,
-  type DocumentType,
-} from "../queries";
+import { DocumentUploadState, type DocumentType } from "../queries";
+
+// Document types - matching the component
+export const DOCUMENT_TYPES = {
+  ID: "id",
+  BANK_STATEMENT: "bank_statement",
+  PAYSLIP: "payslip",
+  PROOF_OF_RESIDENCE: "proof_of_residence",
+} as const;
 
 // Helper function to generate random file names
 function generateRandomFileName(originalName: string): string {
@@ -28,9 +32,16 @@ function validateFileType(file: File): boolean {
   return ALLOWED_FILE_TYPES.includes(file.type);
 }
 
-// Helper function to validate file size (max 5MB)
-function validateFileSize(file: File): boolean {
-  const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+// Helper function to validate file size based on document type
+function validateFileSize(file: File, documentType: DocumentType): boolean {
+  const maxSizes = {
+    [DOCUMENT_TYPES.ID]: 10 * 1024 * 1024, // 10MB
+    [DOCUMENT_TYPES.BANK_STATEMENT]: 15 * 1024 * 1024, // 15MB
+    [DOCUMENT_TYPES.PAYSLIP]: 10 * 1024 * 1024, // 10MB
+    [DOCUMENT_TYPES.PROOF_OF_RESIDENCE]: 10 * 1024 * 1024, // 10MB
+  };
+
+  const maxSize = maxSizes[documentType] || 10 * 1024 * 1024; // Default to 10MB
   return file.size <= maxSize;
 }
 
@@ -74,12 +85,18 @@ export async function uploadDocument(
       },
     };
   }
-
-  // Validate file size
-  if (!validateFileSize(file)) {
+  // Validate file size based on document type
+  if (!validateFileSize(file, documentType)) {
+    const maxSizes = {
+      [DOCUMENT_TYPES.ID]: "10MB",
+      [DOCUMENT_TYPES.BANK_STATEMENT]: "15MB",
+      [DOCUMENT_TYPES.PAYSLIP]: "10MB",
+      [DOCUMENT_TYPES.PROOF_OF_RESIDENCE]: "10MB",
+    };
+    const maxSize = maxSizes[documentType] || "10MB";
     return {
       errors: {
-        file: ["File size must be less than 5MB"],
+        file: [`File size must be less than ${maxSize}`],
       },
     };
   }
@@ -136,9 +153,7 @@ export async function uploadDocument(
           _form: ["Failed to upload file. Please try again."],
         },
       };
-    }
-
-    // Save document metadata to database
+    } // Save document metadata to database
     const { data: documentData, error: docError } = await supabase
       .from("documents")
       .insert({
@@ -148,7 +163,7 @@ export async function uploadDocument(
         storage_path: uploadData.path,
         uploaded_at: new Date().toISOString(),
       })
-      .select("id")
+      .select("*")
       .single();
 
     if (docError) {
@@ -165,6 +180,7 @@ export async function uploadDocument(
     return {
       success: true,
       documentId: documentData.id.toString(),
+      document: documentData,
     };
   } catch (error) {
     console.error("Unexpected error:", error);

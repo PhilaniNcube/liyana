@@ -18,6 +18,7 @@ export interface DocumentUploadState {
   };
   success?: boolean;
   documentId?: string;
+  document?: Database["public"]["Tables"]["documents"]["Row"];
 }
 
 type Document = Database["public"]["Tables"]["documents"]["Row"];
