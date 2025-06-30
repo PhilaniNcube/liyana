@@ -23,24 +23,16 @@ export default function Home() {
                   <span className="text-xs">NCRCP18217</span>
                 </Badge>
                 <h1 className="text-3xl font-bold tracking-tighter font-sans sm:text-5xl xl:text-6xl/none">
-                  Quick solutions for life's unexpected moments
+                  Quick solutions for{" "}
+                  <span className="text-slate-500">
+                    life's unexpected moments
+                  </span>
                 </h1>
                 <p className="max-w-[600px] text-gray-500 md:text-xl">
                   Liyana Finance specialises in providing quick and convenient
                   payday loans to help you navigate life’s unexpected financial
                   challenges.
                 </p>
-              </div>
-
-              <div className="flex items-center space-x-4 text-sm text-gray-500">
-                <div className="flex items-center space-x-1">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>No hidden fees</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Secure & confidential</span>
-                </div>
               </div>
             </div>
 
