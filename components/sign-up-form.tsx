@@ -76,7 +76,9 @@ export function SignUpForm({
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Sign up</CardTitle>
-          <CardDescription>Create a new account</CardDescription>
+          <CardDescription className="text-xs">
+            Create a new account
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>

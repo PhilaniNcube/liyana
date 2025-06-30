@@ -147,7 +147,7 @@ const loanApplicationSchema = z
     ),
     repaymentPeriod: z
       .number()
-      .min(7, "Minimum repayment period is 7 days")
+      .min(5, "Minimum repayment period is 5 days")
       .max(60, "Maximum repayment period is 60 days"),
     // Next of kin information
     nextOfKinName: z.string().optional(),
@@ -267,7 +267,7 @@ export function LoanApplicationForm({
       workExperience: "",
       loanAmount: 500,
       loanPurpose: undefined,
-      repaymentPeriod: 7,
+      repaymentPeriod: 5,
       nextOfKinName: "",
       nextOfKinPhone: "",
       nextOfKinEmail: "",
@@ -938,7 +938,7 @@ export function LoanApplicationForm({
                           <FormItem>
                             <FormLabel>Work Experience (years)</FormLabel>
                             <FormControl>
-                              <Input placeholder="5" type="number" {...field} />
+                              <Input placeholder="0" type="number" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -986,7 +986,7 @@ export function LoanApplicationForm({
                           <FormControl>
                             <div className="px-3">
                               <Slider
-                                min={7}
+                                min={5}
                                 max={60}
                                 step={1}
                                 value={[field.value]}
@@ -996,7 +996,7 @@ export function LoanApplicationForm({
                                 className="w-full"
                               />
                               <div className="flex justify-between text-sm text-muted-foreground mt-1">
-                                <span>7 days</span>
+                                <span>5 days</span>
                                 <span>60 days</span>
                               </div>
                             </div>

@@ -61,7 +61,7 @@ const loanApplicationSchema = z
     repaymentPeriod: z.string().refine(
       (val) => {
         const period = parseInt(val);
-        return !isNaN(period) && period >= 7 && period <= 61;
+        return !isNaN(period) && period >= 5 && period <= 61;
       },
       {
         message: "Repayment period must be between 7 and 60 days",
