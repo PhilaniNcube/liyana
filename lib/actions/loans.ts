@@ -216,18 +216,13 @@ export async function submitLoanApplication(
     const applicationData = {
       user_id: user.id,
 
-      // Personal Information
-      first_name: result.data.firstName,
-      last_name: result.data.lastName,
-      identification_type: result.data.identificationType,
+      // Personal Information (only fields that exist in the database)
       id_number: encryptedIdNumber,
       date_of_birth: result.data.dateOfBirth,
-      phone_number: result.data.phoneNumber,
-      email: result.data.email,
       home_address: result.data.address,
       city: result.data.city,
-      province: result.data.province,
-      postal_code: result.data.postalCode,
+      // Note: first_name, last_name, email, phone_number, postal_code, province, identification_type
+      // are not in the current database schema
 
       // Loan Information
       application_amount: parseFloat(result.data.loanAmount),
@@ -257,6 +252,9 @@ export async function submitLoanApplication(
       bank_account_type: result.data.bankAccountType as any,
       bank_account_number: result.data.bankAccountNumber,
       branch_code: result.data.branchCode,
+
+      // Affordability data (new field for JSONB storage)
+      affordability: (result.data as any).affordability || null,
 
       created_at: new Date().toISOString(),
     }; // Insert loan application into database
