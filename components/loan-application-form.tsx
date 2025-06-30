@@ -950,8 +950,11 @@ export function LoanApplicationForm({
     const loanAmount = form.watch("loanAmount");
     const repaymentPeriod = form.watch("repaymentPeriod");
     const interestRate = 0.05; // 5% monthly interest rate
+    const initiationFee = 150; // R150 initiation fee
+    const serviceCharge = 75; // R75 service charge
+    const interestAmount = loanAmount * interestRate * (repaymentPeriod / 30);
     const totalAmount =
-      loanAmount * (1 + interestRate * (repaymentPeriod / 30));
+      loanAmount + interestAmount + initiationFee + serviceCharge;
     const dailyPayment = totalAmount / repaymentPeriod;
 
     return (
@@ -1082,24 +1085,32 @@ export function LoanApplicationForm({
                 <span className="font-semibold">{repaymentPeriod} days</span>
               </div>
               <div className="flex justify-between">
-                <span>Interest Rate:</span>
-                <span className="font-semibold">5% per month</span>
-              </div>
-              <div className="flex justify-between border-t pt-2">
-                <span>Total Repayment:</span>
-                <span className="font-semibold text-lg">
+                <span>Interest (5% per month):</span>
+                <span className="font-semibold">
                   R
-                  {totalAmount.toLocaleString("en-ZA", {
+                  {interestAmount.toLocaleString("en-ZA", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span>Interest:</span>
+                <span>Initiation Fee:</span>
                 <span className="font-semibold">
+                  R{initiationFee.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Service Charge:</span>
+                <span className="font-semibold">
+                  R{serviceCharge.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between border-t pt-2">
+                <span>Total Repayment:</span>
+                <span className="font-semibold text-lg">
                   R
-                  {dailyPayment.toLocaleString("en-ZA", {
+                  {totalAmount.toLocaleString("en-ZA", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
