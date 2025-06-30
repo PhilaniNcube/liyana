@@ -51,20 +51,6 @@ const MobileNavigation = ({ currentUser }: MobileNavigationProps) => {
             </SheetHeader>
             <nav className="flex flex-col space-y-4 mt-6">
               <Link
-                href="#how-it-works"
-                className="block text-sm font-medium hover:text-primary transition-colors py-2"
-                onClick={closeSheet}
-              >
-                How It Works
-              </Link>
-              <Link
-                href="#benefits"
-                className="block text-sm font-medium hover:text-primary transition-colors py-2"
-                onClick={closeSheet}
-              >
-                Benefits
-              </Link>{" "}
-              <Link
                 href="#contact"
                 className="block text-sm font-medium hover:text-primary transition-colors py-2"
                 onClick={closeSheet}

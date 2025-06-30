@@ -77,6 +77,7 @@ export type Database = {
           application_amount: number | null;
           bank_account_number: string | null;
           bank_name: string | null;
+          branch_code: string | null;
           city: string | null;
           created_at: string;
           date_of_birth: string | null;
@@ -106,6 +107,7 @@ export type Database = {
           application_amount?: number | null;
           bank_account_number?: string | null;
           bank_name?: string | null;
+          branch_code?: string | null;
           city?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
@@ -135,6 +137,7 @@ export type Database = {
           application_amount?: number | null;
           bank_account_number?: string | null;
           bank_name?: string | null;
+          branch_code?: string | null;
           city?: string | null;
           created_at?: string;
           date_of_birth?: string | null;

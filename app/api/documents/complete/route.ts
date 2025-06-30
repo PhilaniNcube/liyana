@@ -98,11 +98,9 @@ export async function POST(request: NextRequest) {
         subject: "Documents Uploaded Successfully - Application Under Review",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background-color: #10b981; color: white; padding: 20px; text-align: center;">
-              <img src="https://${
-                process.env.VERCEL_URL
-              }/logo.webp" alt="Liyana Loans" style="height: 40px; margin-bottom: 15px;" />
-              <h1 style="margin: 0;">Documents Uploaded Successfully!</h1>
+            <div style="color: white; padding: 20px; text-align: center;">
+              <img src="https://liyana.vercel.app/logo.webp" alt="Liyana Loans" style="height: 40px; margin-bottom: 15px;" />
+              <h1 style="margin: 0; color: #000000">Documents Uploaded Successfully!</h1>
             </div>
             
             <div style="padding: 20px; background-color: #f9fafb;">
@@ -114,8 +112,8 @@ export async function POST(request: NextRequest) {
                 We're pleased to confirm that all required documents for your loan application have been successfully uploaded.
               </p>
               
-              <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-                <h3 style="margin-top: 0; color: #059669;">Application Details:</h3>
+              <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f8e306;">
+                <h3 style="margin-top: 0; color: #000000;">Application Details:</h3>
                 <ul style="color: #6b7280;">
                   <li><strong>Application ID:</strong> ${applicationId}</li>
                   <li><strong>Loan Amount:</strong> R${application.application_amount?.toLocaleString()}</li>
@@ -142,8 +140,8 @@ export async function POST(request: NextRequest) {
                 If you have any questions about your application, please don't hesitate to contact our support team.
               </p>
                 <div style="text-align: center; margin: 30px 0;">
-                <a href="https://${process.env.VERCEL_URL}/profile" 
-                   style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                <a href="https://liyana.vercel.app/profile" 
+                   style="background-color: #f8e306; color: black; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
                   View Application Status
                 </a>
               </div>

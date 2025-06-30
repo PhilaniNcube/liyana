@@ -28,18 +28,6 @@ export async function Navigation() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
           <Link
-            href="#how-it-works"
-            className="text-sm font-medium hover:text-blue-600 transition-colors"
-          >
-            How It Works
-          </Link>
-          <Link
-            href="#benefits"
-            className="text-sm font-medium hover:text-blue-600 transition-colors"
-          >
-            Benefits
-          </Link>
-          <Link
             href="#contact"
             className="text-sm font-medium hover:text-blue-600 transition-colors"
           >

@@ -39,6 +39,11 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
 import {
+  ApplicationProgress,
+  type ApplicationStep,
+} from "@/components/application-progress";
+import { useApplicationStep } from "@/components/application-layout";
+import {
   ChevronLeft,
   ChevronRight,
   AlertCircle,
@@ -147,12 +152,15 @@ const loanApplicationSchema = z
     // Next of kin information
     nextOfKinName: z.string().optional(),
     nextOfKinPhone: z.string().optional(),
-    nextOfKinEmail: z.string().optional(),
-    // Banking information
+    nextOfKinEmail: z.string().optional(), // Banking information
     bankName: z.string().min(1, "Bank name is required"),
     bankAccountNumber: z
       .string()
       .min(8, "Bank account number must be at least 8 digits"),
+    branchCode: z
+      .string()
+      .min(6, "Branch code must be at least 6 digits")
+      .max(6, "Branch code must be exactly 6 digits"),
   })
   .refine(
     (data) => {
@@ -188,10 +196,15 @@ const STEPS = [
 
 interface LoanApplicationFormProps {
   className?: string;
+  showProgress?: boolean;
 }
 
-export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
+export function LoanApplicationForm({
+  className,
+  showProgress = false,
+}: LoanApplicationFormProps) {
   const router = useRouter();
+  const { onStepChange } = useApplicationStep();
   const [currentStep, setCurrentStep] = useState(1);
   const [currentPhase, setCurrentPhase] = useState<"application" | "complete">(
     "application"
@@ -260,6 +273,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
       nextOfKinEmail: "",
       bankName: "",
       bankAccountNumber: "",
+      branchCode: "",
     },
   });
   // Clear date of birth when switching from ID to passport
@@ -275,7 +289,15 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
     return () => subscription.unsubscribe();
   }, [form]);
 
-  const progress = (currentStep / STEPS.length) * 100;
+  // Notify parent component of step changes
+  useEffect(() => {
+    if (onStepChange) {
+      const applicationStep: ApplicationStep =
+        currentStep === 1 ? "personal-info" : "employment-loan";
+      onStepChange(applicationStep);
+    }
+  }, [currentStep, onStepChange]);
+
   const handleNext = async () => {
     if (currentStep === 1) {
       // Validate only step 1 fields
@@ -368,11 +390,10 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
   return (
     <div className={cn("w-full max-w-2xl mx-auto", className)}>
       <Card>
+        {" "}
         <CardHeader>
           <div className="space-y-4">
-            {" "}
             <div>
-              {" "}
               <CardTitle className="text-2xl">
                 {currentPhase === "application" && "Loan Application"}
                 {currentPhase === "complete" && "Application Complete"}
@@ -390,9 +411,16 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                   "Your loan application is now complete and under review"}
               </CardDescription>
             </div>
-            {currentPhase === "application" && !state.success && (
-              <Progress value={progress} className="w-full" />
-            )}
+            {/* Show progress only if explicitly requested */}
+            {showProgress &&
+              currentPhase === "application" &&
+              !state.success && (
+                <ApplicationProgress
+                  currentStep={
+                    currentStep === 1 ? "personal-info" : "employment-loan"
+                  }
+                />
+              )}
           </div>
         </CardHeader>{" "}
         <CardContent>
@@ -946,6 +974,36 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                           <FormMessage />
                         </FormItem>
                       )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="repaymentPeriod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Repayment Period: {field.value} days
+                          </FormLabel>
+                          <FormControl>
+                            <div className="px-3">
+                              <Slider
+                                min={7}
+                                max={60}
+                                step={1}
+                                value={[field.value]}
+                                onValueChange={(value) =>
+                                  field.onChange(value[0])
+                                }
+                                className="w-full"
+                              />
+                              <div className="flex justify-between text-sm text-muted-foreground mt-1">
+                                <span>7 days</span>
+                                <span>60 days</span>
+                              </div>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />{" "}
                     <FormField
                       control={form.control}
@@ -985,7 +1043,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                     {/* Next of Kin Information */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">
-                        Next of Kin Information (Optional)
+                        Next of Kin Information
                       </h3>
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <FormField
@@ -1032,7 +1090,7 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                           </FormItem>
                         )}
                       />
-                    </div>
+                    </div>{" "}
                     {/* Banking Information */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">
@@ -1091,49 +1149,36 @@ export function LoanApplicationForm({ className }: LoanApplicationFormProps) {
                         />
                         <FormField
                           control={form.control}
-                          name="bankAccountNumber"
+                          name="branchCode"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Bank Account Number</FormLabel>
+                              <FormLabel>Branch Code</FormLabel>
                               <FormControl>
-                                <Input placeholder="1234567890" {...field} />
+                                <Input
+                                  placeholder="123456"
+                                  maxLength={6}
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                       </div>
+                      <FormField
+                        control={form.control}
+                        name="bankAccountNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Bank Account Number</FormLabel>
+                            <FormControl>
+                              <Input placeholder="1234567890" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />{" "}
                     </div>
-                    <FormField
-                      control={form.control}
-                      name="repaymentPeriod"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Repayment Period: {field.value} days
-                          </FormLabel>
-                          <FormControl>
-                            <div className="px-3">
-                              <Slider
-                                min={7}
-                                max={60}
-                                step={1}
-                                value={[field.value]}
-                                onValueChange={(value) =>
-                                  field.onChange(value[0])
-                                }
-                                className="w-full"
-                              />
-                              <div className="flex justify-between text-sm text-muted-foreground mt-1">
-                                <span>7 days</span>
-                                <span>60 days</span>
-                              </div>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                     {state.errors?._form && (
                       <div className="text-sm text-red-500">
                         {state.errors._form.map((error, index) => (

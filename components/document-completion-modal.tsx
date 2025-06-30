@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useApplicationStep } from "@/components/application-layout";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +31,8 @@ export function DocumentCompletionModal({
   onClose,
   applicationId,
 }: DocumentCompletionModalProps) {
+  const router = useRouter();
+  const { onStepChange } = useApplicationStep();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +57,14 @@ export function DocumentCompletionModal({
       }
 
       setIsCompleted(true);
+
+      // Update the application step to complete
+      onStepChange("complete");
+
+      // Redirect to profile page after a short delay to show success message
+      setTimeout(() => {
+        router.push("/profile");
+      }, 3000);
     } catch (err) {
       console.error("Error completing application:", err);
       setError(
@@ -62,10 +74,10 @@ export function DocumentCompletionModal({
       setIsSubmitting(false);
     }
   };
-
   const handleClose = () => {
     setIsCompleted(false);
     setError(null);
+    setIsSubmitting(false); // Reset submitting state
     onClose();
   };
 
@@ -92,7 +104,6 @@ export function DocumentCompletionModal({
               review by our team.
             </AlertDescription>
           </Alert>
-
           {/* What happens next */}
           <div className="space-y-3">
             <h4 className="font-medium text-sm">What happens next?</h4>
@@ -115,25 +126,22 @@ export function DocumentCompletionModal({
               </li>
             </ul>
           </div>
-
           {/* Error Display */}
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
-          )}
-
+          )}{" "}
           {/* Success Message after completion */}
           {isCompleted && (
             <Alert className="border-green-200 bg-green-50">
               <Mail className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-700">
-                Application submitted successfully! Check your email for
-                confirmation details.
+                Application completed successfully! Check your email for
+                confirmation details. Redirecting to your profile...
               </AlertDescription>
             </Alert>
           )}
-
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
             {!isCompleted ? (
