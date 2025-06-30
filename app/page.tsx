@@ -39,10 +39,6 @@ export default function Home() {
             {/* Sign Up Form */}
             <div className="w-full">
               <div className="">
-                <h3 className="text-2xl font-bold">Get Started Today</h3>
-                <p className="font-medium">
-                  Sign up to begin your loan application process
-                </p>
                 <SignUpForm className="w-full" />
               </div>
             </div>
