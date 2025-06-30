@@ -18,9 +18,12 @@ export default function Home() {
           <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
             <div className="flex flex-col justify-center space-y-4 text-center">
               <div className="space-y-2">
-                <Badge variant="outline" className="w-fit ">
+                <Badge
+                  variant="outline"
+                  className="w-fit text-xl px-4 rounded-full"
+                >
                   Registered Credit Provider |
-                  <span className="text-xs">NCRCP18217</span>
+                  <span className="font-extralight">NCRCP18217</span>
                 </Badge>
                 <h1 className="text-3xl font-bold tracking-tighter font-sans sm:text-5xl xl:text-6xl/none">
                   Quick solutions for{" "}
