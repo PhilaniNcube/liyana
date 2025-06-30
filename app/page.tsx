@@ -24,7 +24,7 @@ export default function Home() {
                 </Badge>
                 <h1 className="text-3xl font-bold tracking-tighter font-sans sm:text-5xl xl:text-6xl/none">
                   Quick solutions for{" "}
-                  <span className="text-slate-500">
+                  <span className="text-[#f8e306]">
                     life's unexpected moments
                   </span>
                 </h1>
