@@ -74,26 +74,39 @@ export type Database = {
       };
       applications: {
         Row: {
+          affordability: Json | null;
           application_amount: number | null;
+          bank_account_holder: string | null;
           bank_account_number: string | null;
+          bank_account_type:
+            | Database["public"]["Enums"]["bank_account_type"]
+            | null;
           bank_name: string | null;
           branch_code: string | null;
           city: string | null;
           created_at: string;
           date_of_birth: string | null;
           decline_reason: Json | null;
+          dependants: number | null;
           employer_address: string | null;
           employer_contact_number: string | null;
           employer_name: string | null;
+          employment_end_date: string | null;
           employment_type:
             | Database["public"]["Enums"]["employment_type"]
             | null;
+          gender: Database["public"]["Enums"]["gender"] | null;
+          gender_other: string | null;
           home_address: string | null;
           id: number;
           id_number: string;
           job_title: string | null;
+          language: string | null;
           loan_purpose: string | null;
+          loan_purpose_reason: string | null;
+          marital_status: Database["public"]["Enums"]["marital_status"] | null;
           monthly_income: number | null;
+          nationality: string | null;
           next_of_kin_email: string | null;
           next_of_kin_name: string | null;
           next_of_kin_phone_number: string | null;
@@ -104,26 +117,39 @@ export type Database = {
           work_experience: string | null;
         };
         Insert: {
+          affordability?: Json | null;
           application_amount?: number | null;
+          bank_account_holder?: string | null;
           bank_account_number?: string | null;
+          bank_account_type?:
+            | Database["public"]["Enums"]["bank_account_type"]
+            | null;
           bank_name?: string | null;
           branch_code?: string | null;
           city?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
           decline_reason?: Json | null;
+          dependants?: number | null;
           employer_address?: string | null;
           employer_contact_number?: string | null;
           employer_name?: string | null;
+          employment_end_date?: string | null;
           employment_type?:
             | Database["public"]["Enums"]["employment_type"]
             | null;
+          gender?: Database["public"]["Enums"]["gender"] | null;
+          gender_other?: string | null;
           home_address?: string | null;
           id?: number;
           id_number: string;
           job_title?: string | null;
+          language?: string | null;
           loan_purpose?: string | null;
+          loan_purpose_reason?: string | null;
+          marital_status?: Database["public"]["Enums"]["marital_status"] | null;
           monthly_income?: number | null;
+          nationality?: string | null;
           next_of_kin_email?: string | null;
           next_of_kin_name?: string | null;
           next_of_kin_phone_number?: string | null;
@@ -134,26 +160,39 @@ export type Database = {
           work_experience?: string | null;
         };
         Update: {
+          affordability?: Json | null;
           application_amount?: number | null;
+          bank_account_holder?: string | null;
           bank_account_number?: string | null;
+          bank_account_type?:
+            | Database["public"]["Enums"]["bank_account_type"]
+            | null;
           bank_name?: string | null;
           branch_code?: string | null;
           city?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
           decline_reason?: Json | null;
+          dependants?: number | null;
           employer_address?: string | null;
           employer_contact_number?: string | null;
           employer_name?: string | null;
+          employment_end_date?: string | null;
           employment_type?:
             | Database["public"]["Enums"]["employment_type"]
             | null;
+          gender?: Database["public"]["Enums"]["gender"] | null;
+          gender_other?: string | null;
           home_address?: string | null;
           id?: number;
           id_number?: string;
           job_title?: string | null;
+          language?: string | null;
           loan_purpose?: string | null;
+          loan_purpose_reason?: string | null;
+          marital_status?: Database["public"]["Enums"]["marital_status"] | null;
           monthly_income?: number | null;
+          nationality?: string | null;
           next_of_kin_email?: string | null;
           next_of_kin_name?: string | null;
           next_of_kin_phone_number?: string | null;
@@ -245,6 +284,7 @@ export type Database = {
         | "in_review"
         | "approved"
         | "declined";
+      bank_account_type: "savings" | "transaction" | "current" | "business";
       document_type: "id" | "bank_statement" | "payslip" | "proof_of_residence";
       employment_type:
         | "employed"
@@ -252,6 +292,13 @@ export type Database = {
         | "contract"
         | "unemployed"
         | "retired";
+      gender: "male" | "female" | "rather not say" | "other";
+      marital_status:
+        | "single"
+        | "married"
+        | "divorced"
+        | "widowed"
+        | "life_partner";
       user_role: "customer" | "admin" | "editor";
     };
     CompositeTypes: {
@@ -386,6 +433,7 @@ export const Constants = {
         "approved",
         "declined",
       ],
+      bank_account_type: ["savings", "transaction", "current", "business"],
       document_type: ["id", "bank_statement", "payslip", "proof_of_residence"],
       employment_type: [
         "employed",
@@ -393,6 +441,14 @@ export const Constants = {
         "contract",
         "unemployed",
         "retired",
+      ],
+      gender: ["male", "female", "rather not say", "other"],
+      marital_status: [
+        "single",
+        "married",
+        "divorced",
+        "widowed",
+        "life_partner",
       ],
       user_role: ["customer", "admin", "editor"],
     },

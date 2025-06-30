@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/navigation";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -34,7 +35,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${dmSans.variable} ${geistMono.variable} antialiased`}>
         <Navigation />
-        {children}
+        <NuqsAdapter>{children}</NuqsAdapter>
       </body>
     </html>
   );

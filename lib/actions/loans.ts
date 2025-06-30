@@ -31,6 +31,7 @@ const loanApplicationSchema = z
     employer: z.string().min(1, "Employer is required"),
     employerAddress: z.string().optional(),
     employerContactNumber: z.string().optional(),
+    employmentEndDate: z.string().optional(),
     jobTitle: z.string().min(1, "Job title is required"),
     monthlyIncome: z.string().min(1, "Monthly income is required"),
     workExperience: z.string().min(1, "Work experience is required"),
@@ -58,6 +59,7 @@ const loanApplicationSchema = z
         required_error: "Loan purpose is required",
       }
     ),
+    loanPurposeReason: z.string().optional(),
     repaymentPeriod: z.string().refine(
       (val) => {
         const period = parseInt(val);
@@ -71,6 +73,10 @@ const loanApplicationSchema = z
     nextOfKinPhone: z.string().optional(),
     nextOfKinEmail: z.string().optional(), // Banking Information
     bankName: z.string().min(1, "Bank name is required"),
+    bankAccountHolder: z.string().min(1, "Account holder name is required"),
+    bankAccountType: z.enum(["savings", "transaction", "current", "business"], {
+      required_error: "Account type is required",
+    }),
     bankAccountNumber: z
       .string()
       .min(8, "Bank account number must be at least 8 digits"),
@@ -93,6 +99,21 @@ const loanApplicationSchema = z
       message:
         "Please provide a valid ID number (13 digits) or passport number (min 6 characters)",
       path: ["idNumber"], // This will show the error on the ID number field
+    }
+  )
+  .refine(
+    (data) => {
+      // Validate loan purpose reason is required when loan purpose is "other"
+      if (data.loanPurpose === "other") {
+        return (
+          data.loanPurposeReason && data.loanPurposeReason.trim().length > 0
+        );
+      }
+      return true; // Not required for other loan purposes
+    },
+    {
+      message: "Please specify the reason for your loan",
+      path: ["loanPurposeReason"],
     }
   );
 
@@ -127,16 +148,20 @@ export async function submitLoanApplication(
     employer: formData.get("employer"),
     employerAddress: formData.get("employerAddress"),
     employerContactNumber: formData.get("employerContactNumber"),
+    employmentEndDate: formData.get("employmentEndDate"),
     jobTitle: formData.get("jobTitle"),
     monthlyIncome: formData.get("monthlyIncome"),
     workExperience: formData.get("workExperience"),
     loanAmount: formData.get("loanAmount"),
     loanPurpose: formData.get("loanPurpose"),
+    loanPurposeReason: formData.get("loanPurposeReason"),
     repaymentPeriod: formData.get("repaymentPeriod"),
     nextOfKinName: formData.get("nextOfKinName"),
     nextOfKinPhone: formData.get("nextOfKinPhone"),
     nextOfKinEmail: formData.get("nextOfKinEmail"),
     bankName: formData.get("bankName"),
+    bankAccountHolder: formData.get("bankAccountHolder"),
+    bankAccountType: formData.get("bankAccountType"),
     bankAccountNumber: formData.get("bankAccountNumber"),
     branchCode: formData.get("branchCode"),
   });
@@ -190,29 +215,46 @@ export async function submitLoanApplication(
     }
     const applicationData = {
       user_id: user.id,
+
+      // Personal Information
+      first_name: result.data.firstName,
+      last_name: result.data.lastName,
+      identification_type: result.data.identificationType,
       id_number: encryptedIdNumber,
       date_of_birth: result.data.dateOfBirth,
-      application_amount: parseFloat(result.data.loanAmount),
-      term: parseInt(result.data.repaymentPeriod),
-      status: "pre_qualifier" as const,
-
-      // Personal information
+      phone_number: result.data.phoneNumber,
+      email: result.data.email,
       home_address: result.data.address,
       city: result.data.city,
+      province: result.data.province,
+      postal_code: result.data.postalCode,
+
+      // Loan Information
+      application_amount: parseFloat(result.data.loanAmount),
+      loan_purpose: result.data.loanPurpose,
+      loan_purpose_reason: result.data.loanPurposeReason || null,
+      term: parseInt(result.data.repaymentPeriod),
+      status: "pre_qualifier" as const,
 
       // Employment information
       employment_type: result.data.employmentStatus as any,
       employer_name: result.data.employer,
       employer_address: result.data.employerAddress || null,
       employer_contact_number: result.data.employerContactNumber || null,
+      employment_end_date: result.data.employmentEndDate || null,
       job_title: result.data.jobTitle,
       monthly_income: parseFloat(result.data.monthlyIncome),
       work_experience: result.data.workExperience,
-      loan_purpose: result.data.loanPurpose, // Next of kin information
+
+      // Next of kin information
       next_of_kin_name: result.data.nextOfKinName || null,
       next_of_kin_phone_number: result.data.nextOfKinPhone || null,
-      next_of_kin_email: result.data.nextOfKinEmail || null, // Banking information
+      next_of_kin_email: result.data.nextOfKinEmail || null,
+
+      // Banking information
       bank_name: result.data.bankName,
+      bank_account_holder: result.data.bankAccountHolder,
+      bank_account_type: result.data.bankAccountType as any,
       bank_account_number: result.data.bankAccountNumber,
       branch_code: result.data.branchCode,
 
