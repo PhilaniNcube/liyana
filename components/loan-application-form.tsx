@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useActionState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -52,6 +52,8 @@ import {
   Briefcase,
   Calculator,
   FileText,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -170,6 +172,29 @@ const loanApplicationSchema = z
       .string()
       .min(6, "Branch code must be at least 6 digits")
       .max(6, "Branch code must be exactly 6 digits"),
+    // Affordability information
+    affordability: z
+      .object({
+        income: z.array(
+          z.object({
+            type: z.string(),
+            amount: z.number().min(0),
+          })
+        ),
+        deductions: z.array(
+          z.object({
+            type: z.string(),
+            amount: z.number().min(0),
+          })
+        ),
+        expenses: z.array(
+          z.object({
+            type: z.string(),
+            amount: z.number().min(0),
+          })
+        ),
+      })
+      .optional(),
   })
   .refine(
     (data) => {
@@ -411,6 +436,39 @@ export function LoanApplicationForm({
       bankAccountType: undefined,
       bankAccountNumber: "",
       branchCode: "",
+      affordability: {
+        income: [
+          { type: "Gross Income", amount: 0 },
+          { type: "Bonus", amount: 0 },
+          { type: "Rental Income", amount: 0 },
+          { type: "Business Income", amount: 0 },
+          { type: "Maintenance/spousal support", amount: 0 },
+          { type: "Other", amount: 0 },
+        ],
+        deductions: [
+          { type: "PAYE", amount: 0 },
+          { type: "UIF", amount: 0 },
+          { type: "SDL", amount: 0 },
+          { type: "Other", amount: 0 },
+        ],
+        expenses: [
+          { type: "Levies", amount: 0 },
+          { type: "Municipal rates and taxes", amount: 0 },
+          { type: "Car repayment", amount: 0 },
+          { type: "Mortgage", amount: 0 },
+          { type: "Rent", amount: 0 },
+          { type: "DSTV", amount: 0 },
+          { type: "School fees", amount: 0 },
+          { type: "Groceries", amount: 0 },
+          { type: "Fuel", amount: 0 },
+          { type: "Airtime/Cellphone contract", amount: 0 },
+          { type: "Medical Expenses", amount: 0 },
+          { type: "Insurance", amount: 0 },
+          { type: "Uniform", amount: 0 },
+          { type: "Domestic services", amount: 0 },
+          { type: "Other", amount: 0 },
+        ],
+      },
     },
   });
 
@@ -949,13 +1007,42 @@ export function LoanApplicationForm({
   const renderStep3 = () => {
     const loanAmount = form.watch("loanAmount");
     const repaymentPeriod = form.watch("repaymentPeriod");
-    const interestRate = 0.05; // 5% monthly interest rate
-    const initiationFee = 150; // R150 initiation fee
-    const serviceCharge = 75; // R75 service charge
-    const interestAmount = loanAmount * interestRate * (repaymentPeriod / 30);
-    const totalAmount =
-      loanAmount + interestAmount + initiationFee + serviceCharge;
-    const dailyPayment = totalAmount / repaymentPeriod;
+
+    // Field arrays for affordability
+    const incomeFields = useFieldArray({
+      control: form.control,
+      name: "affordability.income",
+    });
+
+    const deductionFields = useFieldArray({
+      control: form.control,
+      name: "affordability.deductions",
+    });
+
+    const expenseFields = useFieldArray({
+      control: form.control,
+      name: "affordability.expenses",
+    });
+
+    // Calculate totals
+    const totalIncome = incomeFields.fields.reduce((sum, _, index) => {
+      const amount = form.watch(`affordability.income.${index}.amount`) || 0;
+      return sum + amount;
+    }, 0);
+
+    const totalDeductions = deductionFields.fields.reduce((sum, _, index) => {
+      const amount =
+        form.watch(`affordability.deductions.${index}.amount`) || 0;
+      return sum + amount;
+    }, 0);
+
+    const totalExpenses = expenseFields.fields.reduce((sum, _, index) => {
+      const amount = form.watch(`affordability.expenses.${index}.amount`) || 0;
+      return sum + amount;
+    }, 0);
+
+    const netIncome = totalIncome - totalDeductions;
+    const disposableIncome = netIncome - totalExpenses;
 
     return (
       <div className="space-y-6">
@@ -1068,53 +1155,265 @@ export function LoanApplicationForm({
             )}
           />
 
-          {/* Loan Summary */}
+          {/* Affordability Assessment */}
           <Card className="bg-muted/50">
             <CardHeader>
-              <CardTitle className="text-lg">Loan Summary</CardTitle>
+              <CardTitle className="text-lg">
+                Affordability Assessment
+              </CardTitle>
+              <CardDescription>
+                Please provide your monthly income sources, deductions, and
+                expenses
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between">
-                <span>Loan Amount:</span>
-                <span className="font-semibold">
-                  R{loanAmount.toLocaleString()}
-                </span>
+            <CardContent className="space-y-6">
+              {/* Income Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-green-600">Income</h4>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => incomeFields.append({ type: "", amount: 0 })}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Income
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {incomeFields.fields.map((field, index) => (
+                    <div
+                      key={field.id}
+                      className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end"
+                    >
+                      <FormField
+                        control={form.control}
+                        name={`affordability.income.${index}.type`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input placeholder="Income type" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`affordability.income.${index}.amount`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="Amount"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(Number(e.target.value))
+                                }
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => incomeFields.remove(index)}
+                        disabled={incomeFields.fields.length <= 1}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="flex justify-between border-t pt-2">
+                    <span className="font-semibold">Total Income:</span>
+                    <span className="font-semibold text-green-600">
+                      R{totalIncome.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Repayment Period:</span>
-                <span className="font-semibold">{repaymentPeriod} days</span>
+
+              {/* Deductions Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-orange-600">Deductions</h4>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      deductionFields.append({ type: "", amount: 0 })
+                    }
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Deduction
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {deductionFields.fields.map((field, index) => (
+                    <div
+                      key={field.id}
+                      className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end"
+                    >
+                      <FormField
+                        control={form.control}
+                        name={`affordability.deductions.${index}.type`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input placeholder="Deduction type" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`affordability.deductions.${index}.amount`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="Amount"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(Number(e.target.value))
+                                }
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deductionFields.remove(index)}
+                        disabled={deductionFields.fields.length <= 1}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="flex justify-between border-t pt-2">
+                    <span className="font-semibold">Total Deductions:</span>
+                    <span className="font-semibold text-orange-600">
+                      R{totalDeductions.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Interest (5% per month):</span>
-                <span className="font-semibold">
-                  R
-                  {interestAmount.toLocaleString("en-ZA", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </span>
+
+              {/* Expenses Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-red-600">Expenses</h4>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      expenseFields.append({ type: "", amount: 0 })
+                    }
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Expense
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {expenseFields.fields.map((field, index) => (
+                    <div
+                      key={field.id}
+                      className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end"
+                    >
+                      <FormField
+                        control={form.control}
+                        name={`affordability.expenses.${index}.type`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input placeholder="Expense type" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`affordability.expenses.${index}.amount`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="Amount"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(Number(e.target.value))
+                                }
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => expenseFields.remove(index)}
+                        disabled={expenseFields.fields.length <= 1}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="flex justify-between border-t pt-2">
+                    <span className="font-semibold">Total Expenses:</span>
+                    <span className="font-semibold text-red-600">
+                      R{totalExpenses.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Initiation Fee:</span>
-                <span className="font-semibold">
-                  R{initiationFee.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Service Charge:</span>
-                <span className="font-semibold">
-                  R{serviceCharge.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between border-t pt-2">
-                <span>Total Repayment:</span>
-                <span className="font-semibold text-lg">
-                  R
-                  {totalAmount.toLocaleString("en-ZA", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </span>
+
+              {/* Summary */}
+              <div className="bg-background rounded-lg p-4 space-y-2">
+                <div className="flex justify-between">
+                  <span>Total Income:</span>
+                  <span className="font-semibold text-green-600">
+                    R{totalIncome.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total Deductions:</span>
+                  <span className="font-semibold text-orange-600">
+                    -R{totalDeductions.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between border-t pt-2">
+                  <span>Net Income:</span>
+                  <span className="font-semibold">
+                    R{netIncome.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total Expenses:</span>
+                  <span className="font-semibold text-red-600">
+                    -R{totalExpenses.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between border-t pt-2">
+                  <span className="font-semibold">Disposable Income:</span>
+                  <span
+                    className={`font-bold text-lg ${
+                      disposableIncome >= 0 ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    R{disposableIncome.toLocaleString()}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
