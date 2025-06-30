@@ -57,6 +57,14 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+// Helper function to format currency consistently (prevents hydration mismatch)
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat("en-ZA", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
 // Utility function to extract date of birth from SA ID number
 const extractDateOfBirthFromSAID = (idNumber: string): string | null => {
   if (!idNumber || idNumber.length !== 13) {
@@ -470,6 +478,22 @@ export function LoanApplicationForm({
         ],
       },
     },
+  });
+
+  // Field arrays for affordability (must be at component level, not in render function)
+  const incomeFields = useFieldArray({
+    control: form.control,
+    name: "affordability.income",
+  });
+
+  const deductionFields = useFieldArray({
+    control: form.control,
+    name: "affordability.deductions",
+  });
+
+  const expenseFields = useFieldArray({
+    control: form.control,
+    name: "affordability.expenses",
   });
 
   // Watch for ID number changes to auto-populate date of birth and bank name changes to auto-populate branch code
@@ -1008,23 +1032,7 @@ export function LoanApplicationForm({
     const loanAmount = form.watch("loanAmount");
     const repaymentPeriod = form.watch("repaymentPeriod");
 
-    // Field arrays for affordability
-    const incomeFields = useFieldArray({
-      control: form.control,
-      name: "affordability.income",
-    });
-
-    const deductionFields = useFieldArray({
-      control: form.control,
-      name: "affordability.deductions",
-    });
-
-    const expenseFields = useFieldArray({
-      control: form.control,
-      name: "affordability.expenses",
-    });
-
-    // Calculate totals
+    // Calculate totals (using the component-level field arrays)
     const totalIncome = incomeFields.fields.reduce((sum, _, index) => {
       const amount = form.watch(`affordability.income.${index}.amount`) || 0;
       return sum + amount;
@@ -1055,7 +1063,7 @@ export function LoanApplicationForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  Loan Amount: R{loanAmount.toLocaleString()}
+                  Loan Amount: R{formatCurrency(loanAmount)}
                 </FormLabel>
                 <FormControl>
                   <Slider
@@ -1230,7 +1238,7 @@ export function LoanApplicationForm({
                   <div className="flex justify-between border-t pt-2">
                     <span className="font-semibold">Total Income:</span>
                     <span className="font-semibold text-green-600">
-                      R{totalIncome.toLocaleString()}
+                      R{formatCurrency(totalIncome)}
                     </span>
                   </div>
                 </div>
@@ -1301,7 +1309,7 @@ export function LoanApplicationForm({
                   <div className="flex justify-between border-t pt-2">
                     <span className="font-semibold">Total Deductions:</span>
                     <span className="font-semibold text-orange-600">
-                      R{totalDeductions.toLocaleString()}
+                      R{formatCurrency(totalDeductions)}
                     </span>
                   </div>
                 </div>
@@ -1372,7 +1380,7 @@ export function LoanApplicationForm({
                   <div className="flex justify-between border-t pt-2">
                     <span className="font-semibold">Total Expenses:</span>
                     <span className="font-semibold text-red-600">
-                      R{totalExpenses.toLocaleString()}
+                      R{formatCurrency(totalExpenses)}
                     </span>
                   </div>
                 </div>
@@ -1383,25 +1391,25 @@ export function LoanApplicationForm({
                 <div className="flex justify-between">
                   <span>Total Income:</span>
                   <span className="font-semibold text-green-600">
-                    R{totalIncome.toLocaleString()}
+                    R{formatCurrency(totalIncome)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Total Deductions:</span>
                   <span className="font-semibold text-orange-600">
-                    -R{totalDeductions.toLocaleString()}
+                    -R{formatCurrency(totalDeductions)}
                   </span>
                 </div>
                 <div className="flex justify-between border-t pt-2">
                   <span>Net Income:</span>
                   <span className="font-semibold">
-                    R{netIncome.toLocaleString()}
+                    R{formatCurrency(netIncome)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Total Expenses:</span>
                   <span className="font-semibold text-red-600">
-                    -R{totalExpenses.toLocaleString()}
+                    -R{formatCurrency(totalExpenses)}
                   </span>
                 </div>
                 <div className="flex justify-between border-t pt-2">
@@ -1411,7 +1419,7 @@ export function LoanApplicationForm({
                       disposableIncome >= 0 ? "text-green-600" : "text-red-600"
                     }`}
                   >
-                    R{disposableIncome.toLocaleString()}
+                    R{formatCurrency(disposableIncome)}
                   </span>
                 </div>
               </div>

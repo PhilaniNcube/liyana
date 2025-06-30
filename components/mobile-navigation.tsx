@@ -59,11 +59,23 @@ const MobileNavigation = ({ currentUser }: MobileNavigationProps) => {
               </Link>
               <div className="pt-4 border-t">
                 {currentUser ? (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <p className="text-sm text-muted-foreground">
                       Welcome, {currentUser.full_name}!
                     </p>
-                    <LogoutButton />
+                    <div className="flex flex-col space-y-2">
+                      <Link href="/apply" onClick={closeSheet}>
+                        <Button variant="outline" size="sm" className="w-full">
+                          Apply for Loan
+                        </Button>
+                      </Link>
+                      <Link href="/profile" onClick={closeSheet}>
+                        <Button variant="outline" size="sm" className="w-full">
+                          My Profile
+                        </Button>
+                      </Link>
+                      <LogoutButton />
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-col space-y-2">

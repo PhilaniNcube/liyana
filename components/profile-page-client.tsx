@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { LoanApplicationForm } from "@/components/loan-application-form";
-import { type ApplicationStep } from "@/components/application-progress";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -10,74 +8,30 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CheckCircle, Clock, FileText, Plus, ArrowLeft } from "lucide-react";
+import { CheckCircle, Clock, FileText, Plus } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { Database } from "@/lib/types";
 
 interface ProfilePageClientProps {
   applications: Database["public"]["Tables"]["applications"]["Row"][] | null;
-  showCompletedApplication: boolean;
-  initialCurrentStep: ApplicationStep;
 }
 
-export function ProfilePageClient({
-  applications,
-  showCompletedApplication,
-  initialCurrentStep,
-}: ProfilePageClientProps) {
-  const [showNewApplicationForm, setShowNewApplicationForm] = useState(false);
-  const [currentStep, setCurrentStep] =
-    useState<ApplicationStep>(initialCurrentStep);
-
-  // If user wants to create a new application, always show the form
-  if (showNewApplicationForm) {
-    return (
-      <div className="space-y-8 max-w-2xl mx-auto">
-        <section>
-          <div className="flex items-center gap-4 mb-4">
-            {showCompletedApplication && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowNewApplicationForm(false)}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Applications
-              </Button>
-            )}
-            <div>
-              <h2 className="text-2xl font-semibold">
-                {showCompletedApplication
-                  ? "New Loan Application"
-                  : "Apply for a Payday Cash Loan"}
-              </h2>
-            </div>
-          </div>
-          <p className="text-muted-foreground mb-6">
-            Complete the application form below to apply for a payday cash loan.
-            The process takes just a few minutes and requires basic personal and
-            employment information.
-          </p>
-          <LoanApplicationForm />
-        </section>
-      </div>
-    );
-  }
+export function ProfilePageClient({ applications }: ProfilePageClientProps) {
+  const hasApplications = applications && applications.length > 0;
 
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
-      {showCompletedApplication && applications ? (
-        // Show completed application status with option to create new
+      {hasApplications ? (
+        // Show applications with option to create new
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold">Application Status</h2>
-            <Button
-              onClick={() => setShowNewApplicationForm(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              New Application
+            <h2 className="text-2xl font-semibold">My Applications</h2>
+            <Button asChild className="flex items-center gap-2">
+              <Link href="/apply">
+                <Plus className="h-4 w-4" />
+                New Application
+              </Link>
             </Button>
           </div>
 
@@ -187,17 +141,19 @@ export function ProfilePageClient({
           </div>
         </section>
       ) : (
-        // Show loan application form for new users
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            Apply for a Payday Cash Loan
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            Complete the application form below to apply for a payday cash loan.
-            The process takes just a few minutes and requires basic personal and
-            employment information.
+        // Show welcome message for new users
+        <section className="text-center space-y-6">
+          <h2 className="text-2xl font-semibold">Welcome to Liyana</h2>
+          <p className="text-muted-foreground max-w-lg mx-auto">
+            You haven't submitted any loan applications yet. Get started by
+            applying for a payday cash loan. The process is quick and easy.
           </p>
-          <LoanApplicationForm />
+          <Button asChild size="lg" className="flex items-center gap-2 mx-auto">
+            <Link href="/apply">
+              <Plus className="h-4 w-4" />
+              Apply for a Loan
+            </Link>
+          </Button>
         </section>
       )}
     </div>

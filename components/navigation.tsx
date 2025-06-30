@@ -35,6 +35,18 @@ export async function Navigation() {
           </Link>
           {currentUser ? (
             <>
+              <Link
+                href="/apply"
+                className="text-sm font-medium hover:text-blue-600 transition-colors"
+              >
+                Apply
+              </Link>
+              <Link
+                href="/profile"
+                className="text-sm font-medium hover:text-blue-600 transition-colors"
+              >
+                Profile
+              </Link>
               <LogoutButton />
             </>
           ) : (
