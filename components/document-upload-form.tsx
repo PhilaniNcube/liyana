@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useState, useRef, useEffect } from "react";
+import { useQueryState, parseAsBoolean } from "nuqs";
 import { uploadDocument } from "@/lib/client-actions/documents";
 import { revalidateDocuments } from "@/lib/actions/revalidate";
 import { useOptimisticDocumentUpdate } from "@/hooks/use-documents";
@@ -131,6 +132,9 @@ function DocumentUploadSection({
 
         // Optimistically update the React Query cache
         optimisticUpdate(applicationId, result.document);
+
+        // Revalidate routes to ensure UI is updated everywhere
+        await revalidateDocuments(applicationId);
 
         // Also call the callback for local state updates
         onUploadSuccess(result.document);
@@ -390,7 +394,11 @@ export function DocumentUploadForm({
   documents,
   className,
 }: DocumentUploadFormProps) {
-  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  // Use nuqs to manage modal state via URL params
+  const [showCompletionModal, setShowCompletionModal] = useQueryState(
+    "showCompletionModal",
+    parseAsBoolean.withDefault(false)
+  );
 
   // Get existing documents by type (returns all documents of a type)
   const getDocumentsByType = (type: DocumentType) =>
@@ -399,6 +407,11 @@ export function DocumentUploadForm({
   // Check if a document type has at least one upload
   const hasDocumentType = (type: DocumentType) =>
     getDocumentsByType(type).length > 0;
+
+  // Check if all document types are complete
+  const allTypesHaveDocuments = Object.values(DOCUMENT_TYPES).every((type) =>
+    hasDocumentType(type)
+  );
 
   // Calculate overall progress
   const totalDocuments = Object.keys(DOCUMENT_TYPES).length;
@@ -411,22 +424,38 @@ export function DocumentUploadForm({
     uploadedDocument?: Database["public"]["Tables"]["documents"]["Row"]
   ) => {
     // React Query handles the state updates automatically through optimistic updates
-    // No need to manually update local state
+
+    // Check if all documents are now complete and show modal if needed
+    // We need to check the updated state after the upload
+    setTimeout(() => {
+      const updatedDocuments = uploadedDocument
+        ? [...documents, uploadedDocument]
+        : documents;
+
+      const allComplete = Object.values(DOCUMENT_TYPES).every((type) => {
+        const docsOfType = updatedDocuments.filter(
+          (doc) => doc.document_type === type
+        );
+        return docsOfType.length > 0;
+      });
+
+      if (allComplete && !showCompletionModal) {
+        setShowCompletionModal(true);
+      }
+    }, 100); // Small delay to ensure state is updated
   };
 
-  const handleModalClose = () => {
-    setShowCompletionModal(false);
-  };
-
-  // Check if all document types have at least one upload and show modal
+  // Automatically show modal when all documents are complete
   useEffect(() => {
-    const allTypesHaveDocuments = Object.values(DOCUMENT_TYPES).every((type) =>
-      hasDocumentType(type)
-    );
     if (allTypesHaveDocuments && documents.length > 0 && !showCompletionModal) {
       setShowCompletionModal(true);
     }
-  }, [documents, hasDocumentType, showCompletionModal]);
+  }, [
+    allTypesHaveDocuments,
+    documents.length,
+    showCompletionModal,
+    setShowCompletionModal,
+  ]);
 
   return (
     <div className={cn("w-full max-w-4xl mx-auto space-y-6", className)}>
@@ -505,11 +534,7 @@ export function DocumentUploadForm({
         </Alert>
       )}{" "}
       {/* Document Completion Modal */}
-      <DocumentCompletionModal
-        isOpen={showCompletionModal}
-        onClose={handleModalClose}
-        applicationId={applicationId}
-      />
+      <DocumentCompletionModal applicationId={applicationId} />
     </div>
   );
 }

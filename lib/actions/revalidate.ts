@@ -2,13 +2,24 @@
 
 import { revalidatePath } from "next/cache";
 
-export async function revalidateDocuments() {
+export async function revalidateDocuments(applicationId?: string) {
   try {
     // Revalidate the demo documents page
     revalidatePath("/demo/documents");
 
     // Revalidate any profile pages that might show documents
     revalidatePath("/profile", "layout");
+
+    // Revalidate the apply page
+    revalidatePath("/apply");
+
+    // Revalidate the specific loan application page if applicationId is provided
+    if (applicationId) {
+      revalidatePath(`/profile/${applicationId}`);
+    }
+
+    // Revalidate all profile pages to ensure consistency
+    revalidatePath("/profile");
 
     return { success: true };
   } catch (error) {

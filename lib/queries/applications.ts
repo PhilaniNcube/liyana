@@ -47,12 +47,7 @@ export async function getApplicationById(id: number) {
 
   const { data, error } = await supabase
     .from("applications")
-    .select(
-      `
-      *,
-      profile:profiles(id, full_name, role)
-    `
-    )
+    .select("*")
     .eq("id", id)
     .single();
 
@@ -103,12 +98,7 @@ export async function getApplicationsByStatus(
 
   let query = supabase
     .from("applications")
-    .select(
-      `
-      *,
-      profile:profiles(id, full_name, role)
-    `
-    )
+    .select("*")
     .eq("status", status)
     .order("created_at", { ascending: false });
 
@@ -132,12 +122,7 @@ export async function getAllApplications(
 
   let query = supabase
     .from("applications")
-    .select(
-      `
-      *,
-      profile:profiles(id, full_name, role)
-    `
-    )
+    .select("*")
     .order("created_at", { ascending: false });
 
   if (options.limit) {
@@ -168,7 +153,6 @@ export async function getApplicationsWithDocuments(applicationId: number) {
     .select(
       `
       *,
-      profile:profiles(id, full_name, role),
       documents(*)
     `
     )
@@ -192,7 +176,6 @@ export async function getApplicationsWithApiChecks(applicationId: number) {
     .select(
       `
       *,
-      profile:profiles(id, full_name, role),
       api_checks(*)
     `
     )

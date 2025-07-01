@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -8,25 +9,69 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CheckCircle, Clock, FileText, Plus } from "lucide-react";
+import { CheckCircle, Clock, FileText, Plus, ArrowRight } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { Database } from "@/lib/types";
 
 interface ProfilePageClientProps {
   applications: Database["public"]["Tables"]["applications"]["Row"][] | null;
 }
 
+// Helper function to get status color
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "approved":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "declined":
+      return "bg-red-100 text-red-800 border-red-200";
+    case "in_review":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "pending_documents":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "pre_qualifier":
+      return "bg-gray-100 text-gray-800 border-gray-200";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200";
+  }
+};
+
+// Helper function to get status icon
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case "approved":
+      return <CheckCircle className="h-4 w-4" />;
+    case "in_review":
+      return <Clock className="h-4 w-4" />;
+    case "declined":
+    case "pending_documents":
+      return <FileText className="h-4 w-4" />;
+    default:
+      return <Clock className="h-4 w-4" />;
+  }
+};
+
 export function ProfilePageClient({ applications }: ProfilePageClientProps) {
+  const router = useRouter();
   const hasApplications = applications && applications.length > 0;
 
+  const handleApplicationClick = (applicationId: number) => {
+    router.push(`/profile/${applicationId}`);
+  };
+
   return (
-    <div className="space-y-8 max-w-2xl mx-auto">
+    <div className="space-y-8">
       {hasApplications ? (
         // Show applications with option to create new
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold">My Applications</h2>
+            <div>
+              <h1 className="text-3xl font-bold">My Applications</h1>
+              <p className="text-muted-foreground mt-1">
+                Manage and track your loan applications
+              </p>
+            </div>
             <Button asChild className="flex items-center gap-2">
               <Link href="/apply">
                 <Plus className="h-4 w-4" />
@@ -35,106 +80,96 @@ export function ProfilePageClient({ applications }: ProfilePageClientProps) {
             </Button>
           </div>
 
-          {/* Show all applications */}
-          <div className="space-y-4">
+          {/* Responsive grid of applications */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {applications.map((application, index) => (
-              <Card key={application.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
-                    Application #{application.id}
-                    {index === 0 && (
-                      <span className="text-sm font-normal text-muted-foreground ml-2">
-                        (Latest)
+              <Card
+                key={application.id}
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] group"
+                onClick={() => handleApplicationClick(application.id)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">
+                      Application #{application.id}
+                    </CardTitle>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="secondary"
+                      className={getStatusColor(application.status)}
+                    >
+                      {getStatusIcon(application.status)}
+                      <span className="ml-1 capitalize">
+                        {application.status.replace("_", " ")}
                       </span>
+                    </Badge>
+                    {index === 0 && (
+                      <Badge variant="outline" className="text-xs">
+                        Latest
+                      </Badge>
                     )}
-                  </CardTitle>
-                  <CardDescription>
-                    {application.status === "in_review" &&
-                      "Your application is being reviewed"}
-                    {application.status === "approved" &&
-                      "Your application has been approved"}
-                    {application.status === "declined" &&
-                      "Application was declined"}
-                    {application.status === "pre_qualifier" &&
-                      "Application in progress"}
-                    {application.status === "pending_documents" &&
-                      "Documents required"}
-                  </CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Loan Amount
-                      </p>
-                      <p className="font-medium">
-                        R{application.application_amount?.toLocaleString()}
-                      </p>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">
+                        Amount
+                      </span>
+                      <span className="font-semibold text-lg">
+                        R
+                        {application.application_amount?.toLocaleString() ||
+                          "0"}
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Status</p>
-                      <p className="font-medium capitalize">
-                        {application.status.replace("_", " ")}
-                      </p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">
+                        Term
+                      </span>
+                      <span className="font-medium">
+                        {application.term || "N/A"} days
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Term</p>
-                      <p className="font-medium">{application.term} days</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Submitted</p>
-                      <p className="font-medium">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">
+                        Submitted
+                      </span>
+                      <span className="font-medium text-sm">
                         {new Date(application.created_at).toLocaleDateString()}
-                      </p>
+                      </span>
                     </div>
                   </div>
 
-                  <Alert>
+                  {/* Status-specific message */}
+                  <div className="pt-2 border-t">
                     {application.status === "in_review" && (
-                      <>
-                        <Clock className="h-4 w-4" />
-                        <AlertTitle>Under Review</AlertTitle>
-                        <AlertDescription>
-                          Our team is currently reviewing your application and
-                          documents. You'll receive an email notification once
-                          the review is complete.
-                        </AlertDescription>
-                      </>
+                      <p className="text-sm text-blue-600">
+                        Under review by our team
+                      </p>
                     )}
                     {application.status === "approved" && (
-                      <>
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <AlertTitle>Application Approved</AlertTitle>
-                        <AlertDescription>
-                          Congratulations! Your loan application has been
-                          approved. Check your email for the loan agreement and
-                          next steps.
-                        </AlertDescription>
-                      </>
+                      <p className="text-sm text-green-600">
+                        ✓ Application approved
+                      </p>
                     )}
                     {application.status === "declined" && (
-                      <>
-                        <FileText className="h-4 w-4 text-red-600" />
-                        <AlertTitle>Application Declined</AlertTitle>
-                        <AlertDescription>
-                          Unfortunately, your loan application was not approved
-                          at this time. Please check your email for more
-                          information. You can apply again.
-                        </AlertDescription>
-                      </>
+                      <p className="text-sm text-red-600">
+                        Application declined
+                      </p>
+                    )}
+                    {application.status === "pre_qualifier" && (
+                      <p className="text-sm text-gray-600">
+                        Application in progress
+                      </p>
                     )}
                     {application.status === "pending_documents" && (
-                      <>
-                        <FileText className="h-4 w-4 text-blue-600" />
-                        <AlertTitle>Documents Required</AlertTitle>
-                        <AlertDescription>
-                          Please upload the required documents to complete your
-                          application.
-                        </AlertDescription>
-                      </>
+                      <p className="text-sm text-yellow-600">
+                        Documents required
+                      </p>
                     )}
-                  </Alert>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -142,12 +177,14 @@ export function ProfilePageClient({ applications }: ProfilePageClientProps) {
         </section>
       ) : (
         // Show welcome message for new users
-        <section className="text-center space-y-6">
-          <h2 className="text-2xl font-semibold">Welcome to Liyana</h2>
-          <p className="text-muted-foreground max-w-lg mx-auto">
-            You haven't submitted any loan applications yet. Get started by
-            applying for a payday cash loan. The process is quick and easy.
-          </p>
+        <section className="text-center space-y-6 py-12">
+          <div className="max-w-md mx-auto">
+            <h1 className="text-3xl font-bold mb-4">Welcome to Liyana</h1>
+            <p className="text-muted-foreground">
+              You haven't submitted any loan applications yet. Get started by
+              applying for a payday cash loan. The process is quick and easy.
+            </p>
+          </div>
           <Button asChild size="lg" className="flex items-center gap-2 mx-auto">
             <Link href="/apply">
               <Plus className="h-4 w-4" />

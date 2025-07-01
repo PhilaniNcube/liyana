@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryState, parseAsBoolean } from "nuqs";
 import { useApplicationStep } from "@/components/application-layout";
+import { revalidateDocuments } from "@/lib/actions/revalidate";
 import {
   Dialog,
   DialogContent,
@@ -21,18 +23,21 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DocumentCompletionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
   applicationId: string;
 }
 
 export function DocumentCompletionModal({
-  isOpen,
-  onClose,
   applicationId,
 }: DocumentCompletionModalProps) {
   const router = useRouter();
   const { onStepChange } = useApplicationStep();
+
+  // Use search params to manage modal state
+  const [showModal, setShowModal] = useQueryState(
+    "showCompletionModal",
+    parseAsBoolean.withDefault(false)
+  );
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +66,9 @@ export function DocumentCompletionModal({
       // Update the application step to complete
       onStepChange("complete");
 
+      // Revalidate routes to ensure all pages show updated status
+      await revalidateDocuments(applicationId);
+
       // Redirect to profile page after a short delay to show success message
       setTimeout(() => {
         router.push("/profile");
@@ -74,15 +82,16 @@ export function DocumentCompletionModal({
       setIsSubmitting(false);
     }
   };
-  const handleClose = () => {
-    setIsCompleted(false);
-    setError(null);
-    setIsSubmitting(false); // Reset submitting state
-    onClose();
+  const handleClose = async () => {
+    if (isCompleted) {
+      router.push("/profile");
+    } else {
+      await setShowModal(false);
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={showModal} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
