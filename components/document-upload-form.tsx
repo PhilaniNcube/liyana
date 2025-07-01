@@ -25,6 +25,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useState, useRef, useEffect } from "react";
 import { uploadDocument } from "@/lib/client-actions/documents";
 import { revalidateDocuments } from "@/lib/actions/revalidate";
+import { useOptimisticDocumentUpdate } from "@/hooks/use-documents";
 import type { DocumentUploadState } from "@/lib/queries/documents";
 import type { Database } from "@/lib/types";
 import { DocumentCompletionModal } from "./document-completion-modal";
@@ -53,22 +54,25 @@ const DOCUMENT_CONFIGS = {
     icon: FileText,
     allowedTypes: ["image/*", "application/pdf"] as string[],
     maxFileSize: 10 * 1024 * 1024, // 10MB
+    requiredCount: 1,
   },
   [DOCUMENT_TYPES.BANK_STATEMENT]: {
     title: "Bank Statement",
     description:
-      "Upload your latest 3-month bank statement (you can upload multiple files for different months or pages)",
+      "Upload your latest 3 bank statements (one for each of the last 3 months)",
     icon: CreditCard,
     allowedTypes: ["application/pdf", "image/*"] as string[],
     maxFileSize: 15 * 1024 * 1024, // 15MB
+    requiredCount: 3,
   },
   [DOCUMENT_TYPES.PAYSLIP]: {
     title: "Payslip",
     description:
-      "Upload your most recent 3 months payslip (you can upload multiple files for different months)",
+      "Upload your most recent 3 payslips (one for each of the last 3 months)",
     icon: Receipt,
     allowedTypes: ["application/pdf", "image/*"] as string[],
     maxFileSize: 10 * 1024 * 1024, // 10MB
+    requiredCount: 3,
   },
   [DOCUMENT_TYPES.PROOF_OF_RESIDENCE]: {
     title: "Proof of Residence",
@@ -77,6 +81,7 @@ const DOCUMENT_CONFIGS = {
     icon: Home,
     allowedTypes: ["application/pdf", "image/*"] as string[],
     maxFileSize: 10 * 1024 * 1024, // 10MB
+    requiredCount: 1,
   },
 } as const;
 
@@ -96,40 +101,38 @@ function DocumentUploadSection({
   const config = DOCUMENT_CONFIGS[documentType];
   const IconComponent = config.icon;
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadState, setUploadState] = useState<DocumentUploadState>({});
   const [isUploading, setIsUploading] = useState(false);
-  const [showUploadArea, setShowUploadArea] = useState(
-    existingDocuments.length === 0
-  );
-  const hasUploads = existingDocuments.length > 0; // Handle file upload
-  const handleUpload = async () => {
-    if (!selectedFile) return;
 
+  // React Query optimistic update hook
+  const optimisticUpdate = useOptimisticDocumentUpdate();
+
+  const hasRequiredCount = existingDocuments.length >= config.requiredCount;
+  const canUploadMore = existingDocuments.length < config.requiredCount;
+  const remainingCount = Math.max(
+    0,
+    config.requiredCount - existingDocuments.length
+  );
+
+  // Auto-upload function that triggers immediately when file is selected
+  const handleAutoUpload = async (file: File) => {
     setIsUploading(true);
     setUploadState({});
 
     try {
-      const result = await uploadDocument(
-        selectedFile,
-        documentType,
-        applicationId
-      );
+      const result = await uploadDocument(file, documentType, applicationId);
       setUploadState(result);
-      if (result.success) {
-        setSelectedFile(null);
+
+      if (result.success && result.document) {
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
 
-        // Hide upload area after successful upload if there are already files
-        if (existingDocuments.length > 0) {
-          setShowUploadArea(false);
-        }
+        // Optimistically update the React Query cache
+        optimisticUpdate(applicationId, result.document);
 
-        // Revalidate the path instead of reloading the page
-        await revalidateDocuments();
+        // Also call the callback for local state updates
         onUploadSuccess(result.document);
       }
     } catch (error) {
@@ -143,7 +146,7 @@ function DocumentUploadSection({
     }
   };
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     // Validate file type
     if (
       !config.allowedTypes.some((type) => {
@@ -152,44 +155,67 @@ function DocumentUploadSection({
         return file.type === type;
       })
     ) {
+      setUploadState({
+        errors: {
+          _form: ["Please select a valid file type (PDF or image)."],
+        },
+      });
       return;
     }
 
     // Validate file size
     if (file.size > config.maxFileSize) {
+      setUploadState({
+        errors: {
+          _form: [
+            `File size must be less than ${(
+              config.maxFileSize /
+              1024 /
+              1024
+            ).toFixed(0)}MB.`,
+          ],
+        },
+      });
       return;
     }
 
-    setSelectedFile(file);
+    // Check if we can upload more files
+    if (!canUploadMore) {
+      setUploadState({
+        errors: {
+          _form: [
+            `You have already uploaded the required ${config.requiredCount} files for this document type.`,
+          ],
+        },
+      });
+      return;
+    }
+
+    // Auto-upload the file immediately
+    await handleAutoUpload(file);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
-      handleFileSelect(files[0]);
+      await handleFileSelect(files[0]);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      handleFileSelect(files[0]);
+      await handleFileSelect(files[0]);
     }
   };
 
-  const removeFile = () => {
-    setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
   return (
     <Card
       className={cn(
         "transition-colors",
-        hasUploads && "border-green-200 bg-green-50/50"
+        hasRequiredCount && "border-green-200 bg-green-50/50"
       )}
     >
       <CardHeader className="pb-3">
@@ -197,7 +223,7 @@ function DocumentUploadSection({
           <div
             className={cn(
               "p-2 rounded-lg",
-              hasUploads
+              hasRequiredCount
                 ? "bg-green-100 text-green-600"
                 : "bg-muted text-muted-foreground"
             )}
@@ -207,7 +233,7 @@ function DocumentUploadSection({
           <div className="flex-1">
             <CardTitle className="text-lg flex items-center gap-2">
               {config.title}
-              {hasUploads && (
+              {hasRequiredCount && (
                 <CheckCircle size={16} className="text-green-600" />
               )}
             </CardTitle>
@@ -216,11 +242,35 @@ function DocumentUploadSection({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
+        {/* Progress indicator for required documents */}
+        <div className="mb-4">
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-muted-foreground">Progress</span>
+            <span
+              className={cn(
+                "font-medium",
+                hasRequiredCount ? "text-green-600" : "text-muted-foreground"
+              )}
+            >
+              {existingDocuments.length}/{config.requiredCount} uploaded
+            </span>
+          </div>
+          <Progress
+            value={(existingDocuments.length / config.requiredCount) * 100}
+            className="h-2"
+          />
+          {remainingCount > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {remainingCount} more file{remainingCount > 1 ? "s" : ""} required
+            </p>
+          )}
+        </div>
+
         {/* Display existing documents */}
         {existingDocuments.length > 0 && (
           <div className="space-y-3 mb-4">
             <h4 className="text-sm font-medium text-green-800">
-              Uploaded Files ({existingDocuments.length})
+              Uploaded Files ({existingDocuments.length}/{config.requiredCount})
             </h4>
             {existingDocuments.map((doc, index) => (
               <Alert key={doc.id} className="border-green-200 bg-green-50">
@@ -234,30 +284,18 @@ function DocumentUploadSection({
                 </AlertDescription>
               </Alert>
             ))}
-
-            {/* Toggle button to show upload area */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowUploadArea(!showUploadArea)}
-              className="w-full"
-            >
-              {showUploadArea ? "Hide Upload" : "Upload Additional File"}
-            </Button>
           </div>
         )}
 
-        {/* Upload area - show if no uploads or user wants to add more */}
-        {showUploadArea && (
+        {/* Upload area - show if more files are needed */}
+        {canUploadMore && (
           <div className="space-y-4">
-            {" "}
             {/* File Drop Zone */}
             <div
               className={cn(
                 "border-2 border-dashed rounded-lg p-6 transition-colors text-center cursor-pointer hover:border-primary hover:bg-primary/5",
                 isDragOver ? "border-primary bg-primary/10" : "border-gray-300",
-                selectedFile && "border-solid border-green-500 bg-green-50"
+                isUploading && "pointer-events-none opacity-50"
               )}
               onDrop={handleDrop}
               onDragOver={(e) => {
@@ -265,7 +303,7 @@ function DocumentUploadSection({
                 setIsDragOver(true);
               }}
               onDragLeave={() => setIsDragOver(false)}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => !isUploading && fileInputRef.current?.click()}
             >
               <input
                 ref={fileInputRef}
@@ -273,51 +311,48 @@ function DocumentUploadSection({
                 accept={config.allowedTypes.join(",")}
                 onChange={handleInputChange}
                 className="hidden"
+                disabled={isUploading}
               />
 
-              {selectedFile ? (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <FileText size={20} className="text-green-600" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium text-sm">{selectedFile.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+              <div className="space-y-2">
+                {isUploading ? (
+                  <>
+                    <Loader2
+                      size={24}
+                      className="mx-auto text-primary animate-spin"
+                    />
+                    <p className="text-sm font-medium">Uploading...</p>
+                  </>
+                ) : (
+                  <>
+                    <Upload
+                      size={24}
+                      className="mx-auto text-muted-foreground"
+                    />
+                    <div>
+                      <p className="text-sm font-medium">
+                        Drop your file here or{" "}
+                        <span className="text-primary hover:underline">
+                          browse
+                        </span>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Maximum file size:{" "}
+                        {(config.maxFileSize / 1024 / 1024).toFixed(0)}MB
+                        {remainingCount > 0 && (
+                          <>
+                            {" "}
+                            • {remainingCount} more file
+                            {remainingCount > 1 ? "s" : ""} needed
+                          </>
+                        )}
                       </p>
                     </div>
-                  </div>{" "}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={removeFile}
-                    disabled={isUploading}
-                  >
-                    <X size={16} />
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Upload size={24} className="mx-auto text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">
-                      Drop your file here or{" "}
-                      <span className="text-primary hover:underline">
-                        browse
-                      </span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Maximum file size:{" "}
-                      {(config.maxFileSize / 1024 / 1024).toFixed(0)}MB
-                      {hasUploads &&
-                        " • You can upload multiple files for this document type"}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>{" "}
+                  </>
+                )}
+              </div>
+            </div>
+
             {/* Error Messages */}
             {uploadState.errors && (
               <div className="space-y-2">
@@ -330,28 +365,20 @@ function DocumentUploadSection({
                   </Alert>
                 ))}
               </div>
-            )}{" "}
-            {/* Upload Button */}
-            {selectedFile && (
-              <Button
-                onClick={handleUpload}
-                disabled={isUploading}
-                className="w-full"
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload {hasUploads ? "Additional " : ""}Document
-                  </>
-                )}
-              </Button>
             )}
           </div>
+        )}
+
+        {/* Completion message */}
+        {hasRequiredCount && (
+          <Alert className="border-green-200 bg-green-50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertTitle className="text-green-800">Complete</AlertTitle>
+            <AlertDescription className="text-green-700">
+              All required {config.title.toLowerCase()} files have been
+              uploaded.
+            </AlertDescription>
+          </Alert>
         )}
       </CardContent>
     </Card>
@@ -363,12 +390,11 @@ export function DocumentUploadForm({
   documents,
   className,
 }: DocumentUploadFormProps) {
-  const [localDocuments, setLocalDocuments] = useState(documents);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   // Get existing documents by type (returns all documents of a type)
   const getDocumentsByType = (type: DocumentType) =>
-    localDocuments.filter((doc) => doc.document_type === type);
+    documents.filter((doc) => doc.document_type === type);
 
   // Check if a document type has at least one upload
   const hasDocumentType = (type: DocumentType) =>
@@ -380,33 +406,27 @@ export function DocumentUploadForm({
     hasDocumentType(type)
   ).length;
   const overallProgress = (uploadedDocuments / totalDocuments) * 100;
+
   const handleUploadSuccess = async (
     uploadedDocument?: Database["public"]["Tables"]["documents"]["Row"]
   ) => {
-    // If we have the uploaded document data, update local state
-    if (uploadedDocument) {
-      setLocalDocuments((prev) => [...prev, uploadedDocument]);
-    }
-
-    // Revalidate the path to ensure fresh data on next navigation
-    await revalidateDocuments();
+    // React Query handles the state updates automatically through optimistic updates
+    // No need to manually update local state
   };
 
   const handleModalClose = () => {
     setShowCompletionModal(false);
-  }; // Check if all document types have at least one upload and show modal
+  };
+
+  // Check if all document types have at least one upload and show modal
   useEffect(() => {
     const allTypesHaveDocuments = Object.values(DOCUMENT_TYPES).every((type) =>
       hasDocumentType(type)
     );
-    if (
-      allTypesHaveDocuments &&
-      localDocuments.length > 0 &&
-      !showCompletionModal
-    ) {
+    if (allTypesHaveDocuments && documents.length > 0 && !showCompletionModal) {
       setShowCompletionModal(true);
     }
-  }, [localDocuments]); // Remove hasDocumentType from dependencies
+  }, [documents, hasDocumentType, showCompletionModal]);
 
   return (
     <div className={cn("w-full max-w-4xl mx-auto space-y-6", className)}>
@@ -434,7 +454,7 @@ export function DocumentUploadForm({
               </div>
               <Progress value={overallProgress} className="h-2" />
               <p className="text-xs text-muted-foreground">
-                Total files uploaded: {localDocuments.length}
+                Total files uploaded: {documents.length}
               </p>
             </div>
           </div>

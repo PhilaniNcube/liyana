@@ -254,3 +254,25 @@ export async function deleteDocument(
     };
   }
 }
+
+// Client-side function to fetch documents by application ID
+export async function fetchDocumentsByApplication(applicationId: string) {
+  const supabase = createClient();
+
+  const numericId = parseInt(applicationId, 10);
+  if (isNaN(numericId)) {
+    throw new Error("Invalid application ID");
+  }
+
+  const { data, error } = await supabase
+    .from("documents")
+    .select("*")
+    .eq("application_id", numericId)
+    .order("uploaded_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to fetch documents: ${error.message}`);
+  }
+
+  return data || [];
+}

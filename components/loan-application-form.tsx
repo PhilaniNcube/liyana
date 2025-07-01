@@ -5,13 +5,15 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useActionState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useQueryState, parseAsInteger } from "nuqs";
+import { useQueryState, parseAsInteger, parseAsString } from "nuqs";
 import { z } from "zod";
 import {
   submitLoanApplication,
   type LoanApplicationState,
 } from "@/lib/actions/loans";
 import { performKYCChecks, type KYCResults } from "@/lib/kyc-checks";
+import { useDocuments } from "@/hooks/use-documents";
+import type { Database } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -369,14 +371,15 @@ export function LoanApplicationForm({
 }: LoanApplicationFormProps) {
   const router = useRouter();
 
-  // Use nuqs for step management via search params
+  // Use nuqs for step management and applicationId via search params
   const [currentStep, setCurrentStep] = useQueryState(
     "step",
     parseAsInteger.withDefault(1)
   );
 
-  const [applicationId, setApplicationId] = useState<string | null>(
-    propApplicationId || null
+  const [applicationId, setApplicationId] = useQueryState(
+    "applicationId",
+    parseAsString.withDefault(propApplicationId || "")
   );
   const [state, formAction] = useActionState<LoanApplicationState, FormData>(
     submitLoanApplication,
@@ -388,13 +391,23 @@ export function LoanApplicationForm({
   const [kycErrors, setKycErrors] = useState<string[]>([]);
   const errorSectionRef = useRef<HTMLDivElement>(null);
 
+  // Use React Query to fetch documents
+  const { data: documents = [], isLoading: isLoadingDocuments } =
+    useDocuments(applicationId);
+
   // When application is successfully submitted, move to document upload step
   useEffect(() => {
     if (state.success && state.applicationId && currentStep < 4) {
       setApplicationId(state.applicationId);
       setCurrentStep(4); // Move to document upload step
     }
-  }, [state.success, state.applicationId, currentStep, setCurrentStep]);
+  }, [
+    state.success,
+    state.applicationId,
+    currentStep,
+    setCurrentStep,
+    setApplicationId,
+  ]);
 
   // Scroll to error section when KYC errors occur
   useEffect(() => {
@@ -1603,7 +1616,10 @@ export function LoanApplicationForm({
           </p>
         </div>
 
-        <DocumentUploadForm applicationId={applicationId} documents={[]} />
+        <DocumentUploadForm
+          applicationId={applicationId}
+          documents={documents}
+        />
       </div>
     );
   };
