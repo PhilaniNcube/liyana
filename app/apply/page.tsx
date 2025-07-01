@@ -48,21 +48,19 @@ export default async function ApplyPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <ApplicationLayout currentStep={currentStep}>
-          <div className="space-y-8 max-w-2xl mx-auto">
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">
-                Apply for a Payday Cash Loan
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Complete the application form below to apply for a payday cash
-                loan. The process takes just a few minutes and requires basic
-                personal and employment information.
-              </p>
-              <LoanApplicationForm />
-            </section>
-          </div>
-        </ApplicationLayout>
+        <div className="space-y-8 max-w-2xl mx-auto">
+          <section>
+            <h2 className="text-2xl font-semibold mb-4">
+              Apply for a Payday Cash Loan
+            </h2>
+            <p className="text-muted-foreground mb-2 text-sm">
+              Complete the application form below to apply for a payday cash
+              loan. The process takes just a few minutes and requires basic
+              personal and employment information.
+            </p>
+            <LoanApplicationForm />
+          </section>
+        </div>
       </div>
     </div>
   );
