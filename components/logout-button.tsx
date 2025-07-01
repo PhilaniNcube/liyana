@@ -1,23 +1,23 @@
 "use client";
 
-import { createClient } from "@/lib/client";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 import { LogOutIcon } from "lucide-react";
+import { logoutAction } from "@/lib/actions/auth";
+import { useTransition } from "react";
 
 export function LogoutButton() {
-  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  const logout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/");
+  const handleLogout = () => {
+    startTransition(() => {
+      logoutAction();
+    });
   };
 
   return (
-    <Button onClick={logout}>
+    <Button onClick={handleLogout} disabled={isPending}>
       <LogOutIcon className="h-4 w-4 mr-1" />
-      Logout
+      {isPending ? "Logging out..." : "Logout"}
     </Button>
   );
 }

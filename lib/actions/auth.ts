@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const SITE_URL =
@@ -148,4 +149,36 @@ export async function loginAction(
     };
   }
   redirect("/profile");
+}
+
+export async function logoutAction(): Promise<void> {
+  try {
+    const supabase = await createClient();
+
+    // Sign out the user
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error("Supabase logout error:", error);
+      // Continue with revalidation and redirect even if logout fails
+    }
+
+    // Revalidate the layout to clear any cached user data
+    revalidatePath("/", "layout");
+
+    // Revalidate specific paths that might show user-specific content
+    revalidatePath("/profile");
+    revalidatePath("/apply");
+    revalidatePath("/profile", "layout");
+
+    // Clear any additional cached routes
+    revalidatePath("/auth/login");
+    revalidatePath("/auth/sign-up");
+  } catch (error) {
+    console.error("Logout action error:", error);
+    // Even if there's an error, we should still redirect
+  }
+
+  // Always redirect to home page
+  redirect("/");
 }
