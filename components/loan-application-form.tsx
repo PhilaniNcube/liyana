@@ -126,6 +126,22 @@ const loanApplicationSchema = z
     dateOfBirth: z.string().min(1, "Date of birth is required"),
     phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
     email: z.string().email("Please enter a valid email address"),
+    gender: z.enum(["male", "female", "rather not say", "other"], {
+      required_error: "Gender is required",
+    }),
+    genderOther: z.string().optional(),
+    language: z.string().min(1, "Language is required"),
+    dependants: z
+      .number()
+      .min(0, "Number of dependants must be 0 or more")
+      .max(20, "Number of dependants cannot exceed 20"),
+    maritalStatus: z.enum(
+      ["single", "married", "divorced", "widowed", "life_partner"],
+      {
+        required_error: "Marital status is required",
+      }
+    ),
+    nationality: z.string().min(1, "Nationality is required"),
     address: z.string().min(1, "Address is required"),
     city: z.string().min(1, "City is required"),
     province: z.string().min(1, "Province is required"),
@@ -252,6 +268,19 @@ const loanApplicationSchema = z
     {
       message: "Please specify the reason for your loan",
       path: ["loanPurposeReason"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Validate gender other is required when gender is "other"
+      if (data.gender === "other") {
+        return data.genderOther && data.genderOther.trim().length > 0;
+      }
+      return true; // Not required for other gender options
+    },
+    {
+      message: "Please specify your gender",
+      path: ["genderOther"],
     }
   );
 
@@ -433,6 +462,12 @@ export function LoanApplicationForm({
       dateOfBirth: "",
       phoneNumber: "",
       email: "",
+      gender: undefined,
+      genderOther: "",
+      language: "",
+      dependants: 0,
+      maritalStatus: undefined,
+      nationality: "",
       address: "",
       city: "",
       province: "",
@@ -566,6 +601,12 @@ export function LoanApplicationForm({
         errors.dateOfBirth ||
         errors.phoneNumber ||
         errors.email ||
+        errors.gender ||
+        errors.genderOther ||
+        errors.language ||
+        errors.dependants ||
+        errors.maritalStatus ||
+        errors.nationality ||
         errors.address ||
         errors.city ||
         errors.province ||
@@ -625,11 +666,26 @@ export function LoanApplicationForm({
       // If KYC passed, submit the application
       startTransition(() => {
         const formDataObj = new FormData();
+
+        // Add all form fields except affordability
         Object.entries(formData).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
+          if (
+            key !== "affordability" &&
+            value !== undefined &&
+            value !== null
+          ) {
             formDataObj.append(key, value.toString());
           }
         });
+
+        // Handle affordability object separately by serializing it
+        if (formData.affordability) {
+          formDataObj.append(
+            "affordability",
+            JSON.stringify(formData.affordability)
+          );
+        }
+
         formAction(formDataObj);
       });
     } catch (error) {
@@ -775,6 +831,153 @@ export function LoanApplicationForm({
           )}
         />
       </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="gender"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Gender *</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your gender" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="rather not say">Rather not say</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="language"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Preferred Language *</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your preferred language" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="english">English</SelectItem>
+                  <SelectItem value="afrikaans">Afrikaans</SelectItem>
+                  <SelectItem value="zulu">isiZulu</SelectItem>
+                  <SelectItem value="xhosa">isiXhosa</SelectItem>
+                  <SelectItem value="sotho">Sesotho</SelectItem>
+                  <SelectItem value="tswana">Setswana</SelectItem>
+                  <SelectItem value="pedi">Sepedi</SelectItem>
+                  <SelectItem value="venda">Tshivenda</SelectItem>
+                  <SelectItem value="tsonga">Xitsonga</SelectItem>
+                  <SelectItem value="ndebele">isiNdebele</SelectItem>
+                  <SelectItem value="swati">siSwati</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      {/* Conditional Gender Other field */}
+      {form.watch("gender") === "other" && (
+        <FormField
+          control={form.control}
+          name="genderOther"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Please specify your gender *</FormLabel>
+              <FormControl>
+                <Input placeholder="Please specify" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+
+      <FormField
+        control={form.control}
+        name="dependants"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Number of Dependants *</FormLabel>
+            <FormControl>
+              <Input
+                type="number"
+                min="0"
+                max="20"
+                placeholder="Enter number of dependants"
+                {...field}
+                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="maritalStatus"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Marital Status *</FormLabel>
+            <FormControl>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your marital status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single">Single</SelectItem>
+                  <SelectItem value="married">Married</SelectItem>
+                  <SelectItem value="divorced">Divorced</SelectItem>
+                  <SelectItem value="widowed">Widowed</SelectItem>
+                  <SelectItem value="life_partner">Life Partner</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="nationality"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Nationality *</FormLabel>
+            <FormControl>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your nationality" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="south_african">South African</SelectItem>
+                  <SelectItem value="zimbabwean">Zimbabwean</SelectItem>
+                  <SelectItem value="botswanan">Botswanan</SelectItem>
+                  <SelectItem value="namibian">Namibian</SelectItem>
+                  <SelectItem value="mozambican">Mozambican</SelectItem>
+                  <SelectItem value="lesotho">Lesotho</SelectItem>
+                  <SelectItem value="eswatini">Eswatini</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
       <FormField
         control={form.control}

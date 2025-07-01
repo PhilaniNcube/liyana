@@ -18,6 +18,22 @@ const loanApplicationSchema = z
     dateOfBirth: z.string().min(1, "Date of birth is required"),
     phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
     email: z.string().email("Please enter a valid email address"),
+    gender: z.enum(["male", "female", "rather not say", "other"], {
+      required_error: "Gender is required",
+    }),
+    genderOther: z.string().optional(),
+    language: z.string().min(1, "Language is required"),
+    dependants: z
+      .number()
+      .min(0, "Number of dependants must be 0 or more")
+      .max(20, "Number of dependants cannot exceed 20"),
+    maritalStatus: z.enum(
+      ["single", "married", "divorced", "widowed", "life_partner"],
+      {
+        required_error: "Marital status is required",
+      }
+    ),
+    nationality: z.string().min(1, "Nationality is required"),
     address: z.string().min(1, "Address is required"),
     city: z.string().min(1, "City is required"),
     province: z.string().min(1, "Province is required"),
@@ -84,6 +100,29 @@ const loanApplicationSchema = z
       .string()
       .min(6, "Branch code must be at least 6 digits")
       .max(6, "Branch code must be exactly 6 digits"),
+    // Affordability Information
+    affordability: z
+      .object({
+        income: z.array(
+          z.object({
+            type: z.string(),
+            amount: z.number(),
+          })
+        ),
+        deductions: z.array(
+          z.object({
+            type: z.string(),
+            amount: z.number(),
+          })
+        ),
+        expenses: z.array(
+          z.object({
+            type: z.string(),
+            amount: z.number(),
+          })
+        ),
+      })
+      .optional(),
   })
   .refine(
     (data) => {
@@ -115,6 +154,19 @@ const loanApplicationSchema = z
       message: "Please specify the reason for your loan",
       path: ["loanPurposeReason"],
     }
+  )
+  .refine(
+    (data) => {
+      // Validate gender other is required when gender is "other"
+      if (data.gender === "other") {
+        return data.genderOther && data.genderOther.trim().length > 0;
+      }
+      return true; // Not required for other gender options
+    },
+    {
+      message: "Please specify your gender",
+      path: ["genderOther"],
+    }
   );
 
 export type LoanApplicationFormData = z.infer<typeof loanApplicationSchema>;
@@ -131,6 +183,17 @@ export async function submitLoanApplication(
   prevState: LoanApplicationState,
   formData: FormData
 ): Promise<LoanApplicationState> {
+  // Parse affordability data from FormData if present
+  let affordabilityData = null;
+  const affordabilityStr = formData.get("affordability") as string;
+  if (affordabilityStr) {
+    try {
+      affordabilityData = JSON.parse(affordabilityStr);
+    } catch (error) {
+      console.error("Failed to parse affordability data:", error);
+    }
+  }
+
   const result = loanApplicationSchema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
@@ -140,6 +203,14 @@ export async function submitLoanApplication(
     dateOfBirth: formData.get("dateOfBirth"),
     phoneNumber: formData.get("phoneNumber"),
     email: formData.get("email"),
+    gender: formData.get("gender"),
+    genderOther: formData.get("genderOther"),
+    language: formData.get("language"),
+    dependants: formData.get("dependants")
+      ? parseInt(formData.get("dependants") as string)
+      : 0,
+    maritalStatus: formData.get("maritalStatus"),
+    nationality: formData.get("nationality"),
     address: formData.get("address"),
     city: formData.get("city"),
     province: formData.get("province"),
@@ -164,6 +235,7 @@ export async function submitLoanApplication(
     bankAccountType: formData.get("bankAccountType"),
     bankAccountNumber: formData.get("bankAccountNumber"),
     branchCode: formData.get("branchCode"),
+    affordability: affordabilityData,
   });
 
   if (!result.success) {
@@ -219,6 +291,12 @@ export async function submitLoanApplication(
       // Personal Information (only fields that exist in the database)
       id_number: encryptedIdNumber,
       date_of_birth: result.data.dateOfBirth,
+      gender: result.data.gender as any,
+      gender_other: result.data.genderOther || null,
+      language: result.data.language,
+      dependants: result.data.dependants,
+      marital_status: result.data.maritalStatus as any,
+      nationality: result.data.nationality,
       home_address: result.data.address,
       city: result.data.city,
       // Note: first_name, last_name, email, phone_number, postal_code, province, identification_type
@@ -254,7 +332,7 @@ export async function submitLoanApplication(
       branch_code: result.data.branchCode,
 
       // Affordability data (new field for JSONB storage)
-      affordability: (result.data as any).affordability || null,
+      affordability: result.data.affordability || null,
 
       created_at: new Date().toISOString(),
     }; // Insert loan application into database
