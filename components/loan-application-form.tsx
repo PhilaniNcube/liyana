@@ -567,7 +567,10 @@ export function LoanApplicationForm({
   }, [form]);
 
   const handleNext = async () => {
-    if (currentStep < 4) {
+    // If we're on step 3, submit the application before moving to step 4
+    if (currentStep === 3) {
+      await handleSubmitApplication();
+    } else if (currentStep < 4) {
       await setCurrentStep(currentStep + 1);
     }
   };
@@ -1719,7 +1722,9 @@ export function LoanApplicationForm({
                       <SelectItem value="transaction">
                         Transaction Account
                       </SelectItem>
-                      <SelectItem value="current">Current Account</SelectItem>
+                      <SelectItem value="current">
+                        Current/Cheque Account
+                      </SelectItem>
                       <SelectItem value="business">Business Account</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1916,21 +1921,36 @@ export function LoanApplicationForm({
 
       {/* Navigation Buttons */}
       <div className="flex justify-between">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handlePrevious}
-          disabled={currentStep === 1}
-        >
-          <ChevronLeft className="w-4 h-4 mr-2" />
-          Previous
-        </Button>
+        {currentStep > 1 && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={currentStep === 1 || isPending || isKYCChecking}
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Previous
+          </Button>
+        )}
 
-        <div className="flex gap-2">
+        <div className={`flex gap-2 ${currentStep === 1 ? "ml-auto" : ""}`}>
           {currentStep < 4 && (
-            <Button type="button" onClick={handleNext}>
-              Next
-              <ChevronRight className="w-4 h-4 ml-2" />
+            <Button
+              type="button"
+              onClick={handleNext}
+              disabled={isPending || isKYCChecking}
+            >
+              {currentStep === 3 && (isPending || isKYCChecking) ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {isKYCChecking ? "Verifying..." : "Submitting..."}
+                </>
+              ) : (
+                <>
+                  {currentStep === 3 ? "Submit Application" : "Next"}
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </>
+              )}
             </Button>
           )}
         </div>

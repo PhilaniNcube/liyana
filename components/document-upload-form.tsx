@@ -102,7 +102,6 @@ function DocumentUploadSection({
   const config = DOCUMENT_CONFIGS[documentType];
   const IconComponent = config.icon;
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
   const [uploadState, setUploadState] = useState<DocumentUploadState>({});
   const [isUploading, setIsUploading] = useState(false);
 
@@ -199,15 +198,6 @@ function DocumentUploadSection({
     await handleAutoUpload(file);
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      await handleFileSelect(files[0]);
-    }
-  };
-
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
@@ -222,33 +212,35 @@ function DocumentUploadSection({
         hasRequiredCount && "border-green-200 bg-green-50/50"
       )}
     >
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <div className="flex items-center gap-3">
           <div
             className={cn(
-              "p-2 rounded-lg",
+              "p-1.5 rounded-lg",
               hasRequiredCount
                 ? "bg-green-100 text-green-600"
                 : "bg-muted text-muted-foreground"
             )}
           >
-            <IconComponent size={20} />
+            <IconComponent size={18} />
           </div>
           <div className="flex-1">
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="text-base flex items-center gap-2">
               {config.title}
               {hasRequiredCount && (
-                <CheckCircle size={16} className="text-green-600" />
+                <CheckCircle size={14} className="text-green-600" />
               )}
             </CardTitle>
-            <CardDescription>{config.description}</CardDescription>
+            <CardDescription className="text-xs">
+              {config.description}
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 space-y-3">
         {/* Progress indicator for required documents */}
-        <div className="mb-4">
-          <div className="flex justify-between text-sm mb-2">
+        <div className="mb-3">
+          <div className="flex justify-between text-xs mb-1">
             <span className="text-muted-foreground">Progress</span>
             <span
               className={cn(
@@ -261,7 +253,7 @@ function DocumentUploadSection({
           </div>
           <Progress
             value={(existingDocuments.length / config.requiredCount) * 100}
-            className="h-2"
+            className="h-1.5"
           />
           {remainingCount > 0 && (
             <p className="text-xs text-muted-foreground mt-1">
@@ -272,101 +264,85 @@ function DocumentUploadSection({
 
         {/* Display existing documents */}
         {existingDocuments.length > 0 && (
-          <div className="space-y-3 mb-4">
-            <h4 className="text-sm font-medium text-green-800">
+          <div className="space-y-2 mb-4">
+            <h4 className="text-sm font-medium text-green-800 flex items-center gap-2">
+              <CheckCircle size={14} className="text-green-600" />
               Uploaded Files ({existingDocuments.length}/{config.requiredCount})
             </h4>
-            {existingDocuments.map((doc, index) => (
-              <Alert key={doc.id} className="border-green-200 bg-green-50">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertTitle className="text-green-800">
-                  File {index + 1} Uploaded
-                </AlertTitle>
-                <AlertDescription className="text-green-700">
-                  Uploaded on {new Date(doc.uploaded_at).toLocaleDateString()}{" "}
-                  at {new Date(doc.uploaded_at).toLocaleTimeString()}
-                </AlertDescription>
-              </Alert>
-            ))}
+            <div className="space-y-1">
+              {existingDocuments.map((doc, index) => (
+                <div
+                  key={doc.id}
+                  className="flex items-center gap-2 text-xs text-green-700 bg-green-50 rounded px-2 py-1"
+                >
+                  <FileText size={12} />
+                  <span>File {index + 1}</span>
+                  <span className="text-green-600">•</span>
+                  <span>{new Date(doc.uploaded_at).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
         {/* Upload area - show if more files are needed */}
         {canUploadMore && (
-          <div className="space-y-4">
-            {/* File Drop Zone */}
-            <div
-              className={cn(
-                "border-2 border-dashed rounded-lg p-6 transition-colors text-center cursor-pointer hover:border-primary hover:bg-primary/5",
-                isDragOver ? "border-primary bg-primary/10" : "border-gray-300",
-                isUploading && "pointer-events-none opacity-50"
-              )}
-              onDrop={handleDrop}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragOver(true);
-              }}
-              onDragLeave={() => setIsDragOver(false)}
-              onClick={() => !isUploading && fileInputRef.current?.click()}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={config.allowedTypes.join(",")}
-                onChange={handleInputChange}
-                className="hidden"
+          <div className="space-y-3">
+            {/* Compact file upload button */}
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
                 disabled={isUploading}
-              />
-
-              <div className="space-y-2">
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2"
+              >
                 {isUploading ? (
-                  <>
-                    <Loader2
-                      size={24}
-                      className="mx-auto text-primary animate-spin"
-                    />
-                    <p className="text-sm font-medium">Uploading...</p>
-                  </>
+                  <Loader2 size={16} className="animate-spin" />
                 ) : (
-                  <>
-                    <Upload
-                      size={24}
-                      className="mx-auto text-muted-foreground"
-                    />
-                    <div>
-                      <p className="text-sm font-medium">
-                        Drop your file here or{" "}
-                        <span className="text-primary hover:underline">
-                          browse
-                        </span>
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Maximum file size:{" "}
-                        {(config.maxFileSize / 1024 / 1024).toFixed(0)}MB
-                        {remainingCount > 0 && (
-                          <>
-                            {" "}
-                            • {remainingCount} more file
-                            {remainingCount > 1 ? "s" : ""} needed
-                          </>
-                        )}
-                      </p>
-                    </div>
-                  </>
+                  <Upload size={16} />
+                )}
+                {isUploading ? "Uploading..." : "Choose File"}
+              </Button>
+
+              <div className="text-sm text-muted-foreground">
+                {remainingCount > 0 && (
+                  <span className="font-medium text-foreground">
+                    {remainingCount} more file{remainingCount > 1 ? "s" : ""}{" "}
+                    needed
+                  </span>
                 )}
               </div>
             </div>
 
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={config.allowedTypes.join(",")}
+              onChange={handleInputChange}
+              className="hidden"
+              disabled={isUploading}
+            />
+
+            <p className="text-xs text-muted-foreground">
+              Max file size: {(config.maxFileSize / 1024 / 1024).toFixed(0)}MB •
+              PDF or image files only
+            </p>
+
             {/* Error Messages */}
             {uploadState.errors && (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {Object.entries(uploadState.errors).map(([field, errors]) => (
-                  <Alert key={field} variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
+                  <div
+                    key={field}
+                    className="flex items-center gap-2 text-xs text-red-700 bg-red-50 rounded px-2 py-1.5 border border-red-200"
+                  >
+                    <AlertCircle size={14} />
+                    <span>
                       {Array.isArray(errors) ? errors.join(", ") : errors}
-                    </AlertDescription>
-                  </Alert>
+                    </span>
+                  </div>
                 ))}
               </div>
             )}
@@ -375,14 +351,11 @@ function DocumentUploadSection({
 
         {/* Completion message */}
         {hasRequiredCount && (
-          <Alert className="border-green-200 bg-green-50">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertTitle className="text-green-800">Complete</AlertTitle>
-            <AlertDescription className="text-green-700">
-              All required {config.title.toLowerCase()} files have been
-              uploaded.
-            </AlertDescription>
-          </Alert>
+          <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 rounded px-2 py-1.5 border border-green-200">
+            <CheckCircle size={14} className="text-green-600" />
+            <span className="font-medium">Complete:</span>
+            <span>All required files uploaded</span>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -458,22 +431,22 @@ export function DocumentUploadForm({
   ]);
 
   return (
-    <div className={cn("w-full max-w-4xl mx-auto space-y-6", className)}>
+    <div className={cn("w-full max-w-4xl mx-auto space-y-4", className)}>
       <Card>
-        <CardHeader>
-          <div className="space-y-4">
+        <CardHeader className="pb-3">
+          <div className="space-y-3">
             <div>
-              <CardTitle className="text-2xl">
+              <CardTitle className="text-xl">
                 Upload Required Documents
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Please upload the following documents to complete your loan
                 application
               </CardDescription>
-            </div>{" "}
+            </div>
             {/* Progress Indicator */}
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">
                   Document Types Progress
                 </span>
@@ -481,16 +454,16 @@ export function DocumentUploadForm({
                   {uploadedDocuments}/{totalDocuments} types completed
                 </span>
               </div>
-              <Progress value={overallProgress} className="h-2" />
+              <Progress value={overallProgress} className="h-1.5" />
               <p className="text-xs text-muted-foreground">
                 Total files uploaded: {documents.length}
               </p>
             </div>
           </div>
         </CardHeader>
-      </Card>{" "}
+      </Card>
       {/* Document Upload Sections */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-2 md:grid-cols-1">
         {Object.values(DOCUMENT_TYPES).map((documentType) => (
           <DocumentUploadSection
             key={documentType}
@@ -503,36 +476,36 @@ export function DocumentUploadForm({
       </div>
       {/* Summary Alert */}
       {uploadedDocuments === totalDocuments ? (
-        <Alert className="border-green-200 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-800">
-            All Documents Uploaded
-          </AlertTitle>
-          <AlertDescription className="text-green-700">
-            You have successfully uploaded all required documents. Your
-            application can now proceed to the next stage.
-          </AlertDescription>
-        </Alert>
+        <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 border border-green-200">
+          <CheckCircle size={16} className="text-green-600" />
+          <div>
+            <span className="font-medium">All Documents Uploaded:</span>
+            <span className="ml-1">
+              Your application can now proceed to the next stage.
+            </span>
+          </div>
+        </div>
       ) : uploadedDocuments > 0 ? (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Partial Upload Complete</AlertTitle>
-          <AlertDescription>
-            You have uploaded {uploadedDocuments} out of {totalDocuments}{" "}
-            required documents. Please upload the remaining documents to
-            complete your application.
-          </AlertDescription>
-        </Alert>
+        <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2 border border-blue-200">
+          <AlertCircle size={16} className="text-blue-600" />
+          <div>
+            <span className="font-medium">Partial Upload:</span>
+            <span className="ml-1">
+              {uploadedDocuments} of {totalDocuments} document types completed.
+            </span>
+          </div>
+        </div>
       ) : (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Documents Required</AlertTitle>
-          <AlertDescription>
-            Please upload all {totalDocuments} required documents to proceed
-            with your loan application.
-          </AlertDescription>{" "}
-        </Alert>
-      )}{" "}
+        <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
+          <AlertCircle size={16} className="text-amber-600" />
+          <div>
+            <span className="font-medium">Documents Required:</span>
+            <span className="ml-1">
+              Please upload all {totalDocuments} required documents to proceed.
+            </span>
+          </div>
+        </div>
+      )}
       {/* Document Completion Modal */}
       <DocumentCompletionModal applicationId={applicationId} />
     </div>
