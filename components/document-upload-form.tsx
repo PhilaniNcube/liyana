@@ -212,7 +212,7 @@ function DocumentUploadSection({
         hasRequiredCount && "border-green-200 bg-green-50/50"
       )}
     >
-      <CardHeader className="pb-2">
+      <CardHeader className="">
         <div className="flex items-center gap-3">
           <div
             className={cn(
@@ -433,10 +433,10 @@ export function DocumentUploadForm({
   return (
     <div className={cn("w-full max-w-4xl mx-auto space-y-4", className)}>
       <Card>
-        <CardHeader className="pb-3">
-          <div className="space-y-3">
+        <CardHeader className="">
+          <div className="space-y-2">
             <div>
-              <CardTitle className="text-xl">
+              <CardTitle className="text-lg">
                 Upload Required Documents
               </CardTitle>
               <CardDescription className="text-sm">

@@ -23,6 +23,8 @@ export async function POST(request: NextRequest) {
       error: userError,
     } = await supabase.auth.getUser();
 
+    console.log("User data:", user);
+
     if (userError || !user) {
       return NextResponse.json(
         { error: "User not authenticated" },
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="color: white; padding: 20px; text-align: center;">
-              <img src="https://liyana.vercel.app/logo.webp" alt="Liyana Loans" style="height: 40px; margin-bottom: 15px;" />
+              <img src="https://liyana.vercel.app/logo.webp" alt="Liyana Finance" style="height: 40px; margin-bottom: 15px;" />
               <h1 style="margin: 0; color: #000000">Documents Uploaded Successfully!</h1>
             </div>
             
@@ -140,14 +142,14 @@ export async function POST(request: NextRequest) {
                 If you have any questions about your application, please don't hesitate to contact our support team.
               </p>
                 <div style="text-align: center; margin: 30px 0;">
-                <a href="https://liyana.vercel.app/profile" 
-                   style="background-color: #f8e306; color: black; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                <a href="https://apply.liyanafinance.co.za/profile" 
+                   style="background-color: black; color: #f8e306; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
                   View Application Status
                 </a>
               </div>
             </div>
             
-            <div style="background-color: #374151; color: #d1d5db; padding: 20px; text-align: center; font-size: 14px;">
+            <div style="background-color: #000000; color: #d1d5db; padding: 20px; text-align: center; font-size: 14px;">
               <p style="margin: 0;">Thank you for choosing Liyana Loans</p>
               <p style="margin: 5px 0 0 0;">This is an automated message, please do not reply.</p>
             </div>

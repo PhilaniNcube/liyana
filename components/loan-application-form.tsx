@@ -11,7 +11,6 @@ import {
   submitLoanApplication,
   type LoanApplicationState,
 } from "@/lib/actions/loans";
-import { performKYCChecks, type KYCResults } from "@/lib/kyc-checks";
 import { useDocuments } from "@/hooks/use-documents";
 import type { Database } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -415,9 +414,6 @@ export function LoanApplicationForm({
     {}
   );
   const [isPending, startTransition] = useTransition();
-  const [isKYCChecking, setIsKYCChecking] = useState(false);
-  const [kycResults, setKycResults] = useState<KYCResults | null>(null);
-  const [kycErrors, setKycErrors] = useState<string[]>([]);
   const errorSectionRef = useRef<HTMLDivElement>(null);
 
   // Use React Query to fetch documents
@@ -429,6 +425,8 @@ export function LoanApplicationForm({
     if (state.success && state.applicationId && currentStep < 4) {
       setApplicationId(state.applicationId);
       setCurrentStep(4); // Move to document upload step
+      // Scroll to top after successful submission
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [
     state.success,
@@ -437,17 +435,6 @@ export function LoanApplicationForm({
     setCurrentStep,
     setApplicationId,
   ]);
-
-  // Scroll to error section when KYC errors occur
-  useEffect(() => {
-    if (kycErrors.length > 0 && !isKYCChecking && errorSectionRef.current) {
-      errorSectionRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-      errorSectionRef.current.focus();
-    }
-  }, [kycErrors, isKYCChecking]);
 
   // Form for all steps (unified form)
   const form = useForm<LoanApplicationData>({
@@ -572,17 +559,23 @@ export function LoanApplicationForm({
       await handleSubmitApplication();
     } else if (currentStep < 4) {
       await setCurrentStep(currentStep + 1);
+      // Scroll to top after navigation
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handlePrevious = async () => {
     if (currentStep > 1) {
       await setCurrentStep(currentStep - 1);
+      // Scroll to top after navigation
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleStepClick = async (step: number) => {
     await setCurrentStep(step);
+    // Scroll to top after navigation
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSubmitApplication = async () => {
@@ -646,57 +639,28 @@ export function LoanApplicationForm({
       return;
     }
 
-    // Perform KYC checks
-    setIsKYCChecking(true);
-    setKycErrors([]);
-    setKycResults(null);
-
-    try {
+    // Submit the application directly without KYC checks
+    startTransition(() => {
       const formData = form.getValues();
-      const idNumber =
-        formData.identificationType === "id" ? formData.idNumber || "" : "";
+      const formDataObj = new FormData();
 
-      const results = await performKYCChecks(idNumber);
+      // Add all form fields except affordability
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key !== "affordability" && value !== undefined && value !== null) {
+          formDataObj.append(key, value.toString());
+        }
+      });
 
-      setKycResults(results);
-
-      if (!results.overall) {
-        setKycErrors(results.errors);
-        setIsKYCChecking(false);
-        return;
+      // Handle affordability object separately by serializing it
+      if (formData.affordability) {
+        formDataObj.append(
+          "affordability",
+          JSON.stringify(formData.affordability)
+        );
       }
 
-      // If KYC passed, submit the application
-      startTransition(() => {
-        const formDataObj = new FormData();
-
-        // Add all form fields except affordability
-        Object.entries(formData).forEach(([key, value]) => {
-          if (
-            key !== "affordability" &&
-            value !== undefined &&
-            value !== null
-          ) {
-            formDataObj.append(key, value.toString());
-          }
-        });
-
-        // Handle affordability object separately by serializing it
-        if (formData.affordability) {
-          formDataObj.append(
-            "affordability",
-            JSON.stringify(formData.affordability)
-          );
-        }
-
-        formAction(formDataObj);
-      });
-    } catch (error) {
-      console.error("KYC check failed:", error);
-      setKycErrors(["Failed to perform KYC checks. Please try again."]);
-    } finally {
-      setIsKYCChecking(false);
-    }
+      formAction(formDataObj);
+    });
   };
 
   const renderStep1 = () => (
@@ -729,64 +693,65 @@ export function LoanApplicationForm({
           )}
         />
       </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="identificationType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Identification Type *</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select identification type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="id">South African ID</SelectItem>
+                  <SelectItem value="passport">Passport</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <FormField
-        control={form.control}
-        name="identificationType"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Identification Type *</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select identification type" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="id">South African ID</SelectItem>
-                <SelectItem value="passport">Passport</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
+        {form.watch("identificationType") === "id" && (
+          <FormField
+            control={form.control}
+            name="idNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>ID Number *</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter your 13-digit ID number"
+                    maxLength={13}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         )}
-      />
 
-      {form.watch("identificationType") === "id" && (
-        <FormField
-          control={form.control}
-          name="idNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>ID Number *</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Enter your 13-digit ID number"
-                  maxLength={13}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      )}
-
-      {form.watch("identificationType") === "passport" && (
-        <FormField
-          control={form.control}
-          name="passportNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Passport Number *</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter your passport number" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      )}
+        {form.watch("identificationType") === "passport" && (
+          <FormField
+            control={form.control}
+            name="passportNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Passport Number *</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter your passport number" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+      </div>
 
       <FormField
         control={form.control}
@@ -844,7 +809,7 @@ export function LoanApplicationForm({
               <FormLabel>Gender *</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select your gender" />
                   </SelectTrigger>
                 </FormControl>
@@ -867,7 +832,7 @@ export function LoanApplicationForm({
               <FormLabel>Preferred Language *</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select your preferred language" />
                   </SelectTrigger>
                 </FormControl>
@@ -908,79 +873,85 @@ export function LoanApplicationForm({
         />
       )}
 
-      <FormField
-        control={form.control}
-        name="dependants"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Number of Dependants *</FormLabel>
-            <FormControl>
-              <Input
-                type="number"
-                min="0"
-                max="20"
-                placeholder="Enter number of dependants"
-                {...field}
-                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="dependants"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Number of Dependants *</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  min="0"
+                  max="20"
+                  placeholder="Enter number of dependants"
+                  {...field}
+                  onChange={(e) =>
+                    field.onChange(parseInt(e.target.value) || 0)
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <FormField
-        control={form.control}
-        name="maritalStatus"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Marital Status *</FormLabel>
-            <FormControl>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your marital status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="single">Single</SelectItem>
-                  <SelectItem value="married">Married</SelectItem>
-                  <SelectItem value="divorced">Divorced</SelectItem>
-                  <SelectItem value="widowed">Widowed</SelectItem>
-                  <SelectItem value="life_partner">Life Partner</SelectItem>
-                </SelectContent>
-              </Select>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+        <FormField
+          control={form.control}
+          name="maritalStatus"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Marital Status *</FormLabel>
+              <FormControl>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select your marital status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="single">Single</SelectItem>
+                    <SelectItem value="married">Married</SelectItem>
+                    <SelectItem value="divorced">Divorced</SelectItem>
+                    <SelectItem value="widowed">Widowed</SelectItem>
+                    <SelectItem value="life_partner">Life Partner</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
 
-      <FormField
-        control={form.control}
-        name="nationality"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Nationality *</FormLabel>
-            <FormControl>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your nationality" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="south_african">South African</SelectItem>
-                  <SelectItem value="zimbabwean">Zimbabwean</SelectItem>
-                  <SelectItem value="botswanan">Botswanan</SelectItem>
-                  <SelectItem value="namibian">Namibian</SelectItem>
-                  <SelectItem value="mozambican">Mozambican</SelectItem>
-                  <SelectItem value="lesotho">Lesotho</SelectItem>
-                  <SelectItem value="eswatini">Eswatini</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="nationality"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nationality *</FormLabel>
+              <FormControl>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select your nationality" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="south_african">South African</SelectItem>
+                    <SelectItem value="zimbabwean">Zimbabwean</SelectItem>
+                    <SelectItem value="botswanan">Botswanan</SelectItem>
+                    <SelectItem value="namibian">Namibian</SelectItem>
+                    <SelectItem value="mozambican">Mozambican</SelectItem>
+                    <SelectItem value="lesotho">Lesotho</SelectItem>
+                    <SelectItem value="eswatini">Eswatini</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
 
       <FormField
         control={form.control}
@@ -1143,7 +1114,11 @@ export function LoanApplicationForm({
           <FormItem>
             <FormLabel>Employer Address</FormLabel>
             <FormControl>
-              <Input placeholder="Enter your employer's address" {...field} />
+              <Input
+                placeholder="Enter your employer's address"
+                autoComplete="address-line1"
+                {...field}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -1824,15 +1799,6 @@ export function LoanApplicationForm({
 
     return (
       <div className="space-y-6">
-        <div className="text-center">
-          <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Application Submitted!</h3>
-          <p className="text-muted-foreground mb-6">
-            Your loan application has been submitted successfully. Please upload
-            the required documents to complete the process.
-          </p>
-        </div>
-
         <DocumentUploadForm
           applicationId={applicationId}
           documents={documents}
@@ -1860,28 +1826,6 @@ export function LoanApplicationForm({
     <div className={cn("w-full max-w-4xl mx-auto space-y-6", className)}>
       {/* Step Indicator */}
       <StepIndicator currentStep={currentStep} />
-
-      {/* KYC Error Section */}
-      {kycErrors.length > 0 && (
-        <div ref={errorSectionRef} tabIndex={-1} className="space-y-4">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>KYC Checks Failed</AlertTitle>
-            <AlertDescription>
-              Please review the following issues and try again:
-            </AlertDescription>
-          </Alert>
-          {kycErrors.map((error, index) => (
-            <Alert key={index} variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          ))}
-          <Button onClick={() => setKycErrors([])} variant="outline" size="sm">
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Try Again
-          </Button>
-        </div>
-      )}
 
       {/* Form Errors */}
       {state.errors && Object.keys(state.errors).length > 0 && (
@@ -1926,7 +1870,7 @@ export function LoanApplicationForm({
             type="button"
             variant="outline"
             onClick={handlePrevious}
-            disabled={currentStep === 1 || isPending || isKYCChecking}
+            disabled={currentStep === 1 || isPending}
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
             Previous
@@ -1935,15 +1879,11 @@ export function LoanApplicationForm({
 
         <div className={`flex gap-2 ${currentStep === 1 ? "ml-auto" : ""}`}>
           {currentStep < 4 && (
-            <Button
-              type="button"
-              onClick={handleNext}
-              disabled={isPending || isKYCChecking}
-            >
-              {currentStep === 3 && (isPending || isKYCChecking) ? (
+            <Button type="button" onClick={handleNext} disabled={isPending}>
+              {currentStep === 3 && isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {isKYCChecking ? "Verifying..." : "Submitting..."}
+                  Submitting...
                 </>
               ) : (
                 <>
@@ -1955,17 +1895,6 @@ export function LoanApplicationForm({
           )}
         </div>
       </div>
-
-      {/* KYC Results Display */}
-      {kycResults && kycResults.overall && (
-        <Alert>
-          <CheckCircle className="h-4 w-4" />
-          <AlertTitle>Verification Successful</AlertTitle>
-          <AlertDescription>
-            All verification checks have passed successfully.
-          </AlertDescription>
-        </Alert>
-      )}
     </div>
   );
 }
