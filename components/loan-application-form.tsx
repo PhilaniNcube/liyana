@@ -1198,7 +1198,7 @@ export function LoanApplicationForm({
 
       {/* Next of Kin Information */}
       <div className="space-y-4 mt-8">
-        <h3 className="text-lg font-semibold">Next of Kin (Optional)</h3>
+        <h3 className="text-lg font-semibold">Next of Kin</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
