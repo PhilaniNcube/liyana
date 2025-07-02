@@ -1933,25 +1933,6 @@ export function LoanApplicationForm({
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           )}
-
-          {currentStep === 3 && (
-            <Button
-              type="button"
-              onClick={handleSubmitApplication}
-              disabled={isPending || isKYCChecking}
-              variant="secondary"
-              className="ml-2"
-            >
-              {isPending || isKYCChecking ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {isKYCChecking ? "Verifying..." : "Submitting..."}
-                </>
-              ) : (
-                "Submit Application"
-              )}
-            </Button>
-          )}
         </div>
       </div>
 
