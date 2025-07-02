@@ -1140,10 +1140,7 @@ export function LoanApplicationForm({
           <FormItem>
             <FormLabel>Employer Address</FormLabel>
             <FormControl>
-              <Input
-                placeholder="Enter your employer's address (optional)"
-                {...field}
-              />
+              <Input placeholder="Enter your employer's address" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -1158,10 +1155,7 @@ export function LoanApplicationForm({
             <FormItem>
               <FormLabel>Employer Contact Number</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="Employer's phone number (optional)"
-                  {...field}
-                />
+                <Input placeholder="Employer's phone number" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -1794,16 +1788,31 @@ export function LoanApplicationForm({
   };
 
   const renderStep4 = () => {
+    // Allow access to document upload step even without applicationId for testing
     if (!applicationId) {
       return (
-        <div className="text-center py-8">
-          <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Application Required</h3>
-          <p className="text-muted-foreground mb-4">
-            Please complete your loan application first before uploading
-            documents.
-          </p>
-          <Button onClick={() => setCurrentStep(1)}>Go to Application</Button>
+        <div className="space-y-6">
+          <div className="text-center">
+            <AlertCircle className="mx-auto h-12 w-12 text-orange-500 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">
+              Document Upload (Demo Mode)
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              You can test the document upload functionality even without
+              submitting an application. In demo mode, documents won't be saved
+              to a real application.
+            </p>
+            <Alert className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Demo Mode</AlertTitle>
+              <AlertDescription>
+                To save documents to a real application, please complete and
+                submit your loan application first.
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          <DocumentUploadForm applicationId="demo" documents={[]} />
         </div>
       );
     }
@@ -1918,7 +1927,7 @@ export function LoanApplicationForm({
         </Button>
 
         <div className="flex gap-2">
-          {currentStep < 3 && (
+          {currentStep < 4 && (
             <Button type="button" onClick={handleNext}>
               Next
               <ChevronRight className="w-4 h-4 ml-2" />
@@ -1930,6 +1939,8 @@ export function LoanApplicationForm({
               type="button"
               onClick={handleSubmitApplication}
               disabled={isPending || isKYCChecking}
+              variant="secondary"
+              className="ml-2"
             >
               {isPending || isKYCChecking ? (
                 <>
@@ -1937,7 +1948,7 @@ export function LoanApplicationForm({
                   {isKYCChecking ? "Verifying..." : "Submitting..."}
                 </>
               ) : (
-                "Next"
+                "Submit Application"
               )}
             </Button>
           )}

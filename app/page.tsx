@@ -20,10 +20,10 @@ export default function Home() {
               <div className="space-y-2">
                 <Badge
                   variant="outline"
-                  className="w-fit text-xl px-4 rounded-full"
+                  className="w-fit text-xl px-4 rounded-full my-4"
                 >
                   Registered Credit Provider |
-                  <span className="font-extralight">NCRCP18217</span>
+                  <span className="font-medium">NCRCP18217</span>
                 </Badge>
                 <h1 className="text-3xl font-bold tracking-tighter font-sans sm:text-5xl xl:text-6xl/none">
                   Quick solutions for{" "}
