@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="color: white; padding: 20px; text-align: center;">
-              <img src="https://liyana.vercel.app/logo.webp" alt="Liyana Finance" style="height: 40px; margin-bottom: 15px;" />
+              <img src="https://liyana.vercel.app/logo.webp" alt="Liyana Finance Logo" style="height: 40px; width: auto; max-width: 200px; margin-bottom: 15px;" />
               <h1 style="margin: 0; color: #000000">Documents Uploaded Successfully!</h1>
             </div>
             
