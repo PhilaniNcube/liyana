@@ -23,14 +23,10 @@ export async function GET(request: NextRequest) {
 
   // experian url: https://apis-uat.experian.co.za:9443/PersonScoreService
 
-  const apiUrl = `https://apis-uat.experian.co.za:9443/PersonScoreService/getScore/?pUsername=${process.env.EXPERIAN_USERNAME}&pPassword=${process.env.EXPERIAN_PASSWORD}&pIdNumber=${idNumber}&pMyOrigin=Liyana&pMyVersion=2.0&pResultType=json`;
+  const apiUrl = `https://apis-uat.experian.co.za:9443/PersonScoreService/getScore/?pUsername=${process.env.EXPERIAN_USERNAME}&pPassword=${process.env.EXPERIAN_PASSWORD}&pMyOrigin=TestApp&pMyVersion=2.0&pResultType=json&pIdNumber=${idNumber}`;
 
   const response = await fetch(apiUrl, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
   });
 
   console.log("Response status:", response);
