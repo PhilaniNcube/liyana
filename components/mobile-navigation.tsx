@@ -26,7 +26,7 @@ const MobileNavigation = ({ currentUser }: MobileNavigationProps) => {
   return (
     <div className="md:hidden w-full">
       <div className="flex items-center justify-between w-full px-4 py-3 border-b bg-background">
-        <Link href="/" className="flex items-center">
+        <Link href="https://liyanafinance.co.za" className="flex items-center">
           <Image
             src="/square.jpg"
             alt="Liyana Logo"

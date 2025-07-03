@@ -13,9 +13,12 @@ export async function Navigation() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="hidden mx-auto container md:flex h-16 items-center justify-between px-4 md:px-6">
+      <div className="hidden mx-auto max-w-7xl md:flex h-16 items-center justify-between px-4 md:px-0">
         <div className="flex items-center space-x-2">
-          <Link href="/" className="flex flex-col items-center space-x-2">
+          <Link
+            href="https://liyanafinance.co.za"
+            className="flex flex-col items-center space-x-2"
+          >
             <Image
               src="/logo.webp"
               alt="Liyana Finance"
@@ -28,7 +31,7 @@ export async function Navigation() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
           <Link
-            href="#contact"
+            href="/contact"
             className="text-sm font-medium hover:text-blue-600 transition-colors"
           >
             Contact
