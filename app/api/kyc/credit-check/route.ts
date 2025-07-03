@@ -27,6 +27,10 @@ export async function GET(request: NextRequest) {
 
   const response = await fetch(apiUrl, {
     method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
   });
 
   console.log("Response status:", response);
