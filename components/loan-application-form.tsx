@@ -330,6 +330,12 @@ interface LoanApplicationFormProps {
   className?: string;
   showProgress?: boolean;
   applicationId?: string | null;
+  previousApplicationData?:
+    | Database["public"]["Tables"]["applications"]["Row"]
+    | null;
+  hasPreviousApplication?: boolean;
+  userEmail?: string;
+  userFullName?: string;
 }
 
 // Step Indicator Component
@@ -396,6 +402,10 @@ export function LoanApplicationForm({
   className,
   showProgress = false,
   applicationId: propApplicationId,
+  previousApplicationData,
+  hasPreviousApplication = false,
+  userEmail,
+  userFullName,
 }: LoanApplicationFormProps) {
   const router = useRouter();
 
@@ -443,23 +453,23 @@ export function LoanApplicationForm({
     defaultValues: {
       firstName: "",
       lastName: "",
-      identificationType: undefined,
+      identificationType: "id" as const,
       idNumber: "",
       passportNumber: "",
       dateOfBirth: "",
       phoneNumber: "",
       email: "",
-      gender: undefined,
+      gender: "male" as const,
       genderOther: "",
       language: "",
       dependants: 0,
-      maritalStatus: undefined,
+      maritalStatus: "single" as const,
       nationality: "",
       address: "",
       city: "",
       province: "",
       postalCode: "",
-      employmentStatus: undefined,
+      employmentStatus: "employed" as const,
       employer: "",
       employerAddress: "",
       employerContactNumber: "",
@@ -468,7 +478,7 @@ export function LoanApplicationForm({
       monthlyIncome: "",
       workExperience: "",
       loanAmount: 1000,
-      loanPurpose: undefined,
+      loanPurpose: "debt_consolidation" as const,
       loanPurposeReason: "",
       repaymentPeriod: 30,
       nextOfKinName: "",
@@ -476,7 +486,7 @@ export function LoanApplicationForm({
       nextOfKinEmail: "",
       bankName: "",
       bankAccountHolder: "",
-      bankAccountType: undefined,
+      bankAccountType: "savings" as const,
       bankAccountNumber: "",
       branchCode: "",
       affordability: {
@@ -514,6 +524,42 @@ export function LoanApplicationForm({
       },
     },
   });
+
+  // Populate form with previous application data if available
+  useEffect(() => {
+    if (hasPreviousApplication && previousApplicationData) {
+      const previousFormData = convertApplicationToFormData(
+        previousApplicationData,
+        userEmail,
+        userFullName
+      );
+
+      // Reset form with previous data
+      Object.entries(previousFormData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          form.setValue(key as keyof LoanApplicationData, value as any);
+        }
+      });
+    } else if (userEmail || userFullName) {
+      // Even without previous application, pre-fill user info
+      if (userEmail) {
+        form.setValue("email", userEmail);
+      }
+      if (userFullName) {
+        const nameParts = userFullName.split(" ");
+        const firstName = nameParts[0] || "";
+        const lastName = nameParts.slice(1).join(" ") || "";
+        if (firstName) form.setValue("firstName", firstName);
+        if (lastName) form.setValue("lastName", lastName);
+      }
+    }
+  }, [
+    hasPreviousApplication,
+    previousApplicationData,
+    userEmail,
+    userFullName,
+    form,
+  ]);
 
   // Field arrays for affordability (must be at component level, not in render function)
   const incomeFields = useFieldArray({
@@ -1827,6 +1873,22 @@ export function LoanApplicationForm({
       {/* Step Indicator */}
       <StepIndicator currentStep={currentStep} />
 
+      {/* Previous Application Notice */}
+      {hasPreviousApplication && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Previous Application Data Loaded</AlertTitle>
+          <AlertDescription>
+            We've pre-filled the form with information from your previous loan
+            application submitted on{" "}
+            {previousApplicationData?.created_at &&
+              new Date(previousApplicationData.created_at).toLocaleDateString()}
+            . Please review and update any information that may have changed
+            since your last application.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Form Errors */}
       {state.errors && Object.keys(state.errors).length > 0 && (
         <Alert variant="destructive">
@@ -1897,4 +1959,127 @@ export function LoanApplicationForm({
       </div>
     </div>
   );
+}
+
+// Utility function to convert database application data to form data
+// Note: ID number should already be decrypted on the server side before passing to this function
+function convertApplicationToFormData(
+  appData: Database["public"]["Tables"]["applications"]["Row"],
+  fallbackEmail?: string,
+  fallbackFullName?: string
+): Partial<LoanApplicationData> {
+  if (!appData) return {};
+
+  // Parse affordability JSON if it exists
+  let affordabilityData = {
+    income: [
+      { type: "Gross Income", amount: 0 },
+      { type: "Bonus", amount: 0 },
+      { type: "Rental Income", amount: 0 },
+      { type: "Business Income", amount: 0 },
+      { type: "Maintenance/spousal support", amount: 0 },
+      { type: "Other", amount: 0 },
+    ],
+    deductions: [
+      { type: "PAYE", amount: 0 },
+      { type: "UIF", amount: 0 },
+      { type: "SDL", amount: 0 },
+      { type: "Other", amount: 0 },
+    ],
+    expenses: [
+      { type: "Levies", amount: 0 },
+      { type: "Municipal rates and taxes", amount: 0 },
+      { type: "Car repayment", amount: 0 },
+      { type: "Mortgage", amount: 0 },
+      { type: "Rent", amount: 0 },
+      { type: "DSTV", amount: 0 },
+      { type: "School fees", amount: 0 },
+      { type: "Groceries", amount: 0 },
+      { type: "Fuel", amount: 0 },
+      { type: "Airtime/Cellphone contract", amount: 0 },
+      { type: "Medical Expenses", amount: 0 },
+      { type: "Insurance", amount: 0 },
+      { type: "Uniform", amount: 0 },
+      { type: "Domestic services", amount: 0 },
+      { type: "Other", amount: 0 },
+    ],
+  };
+
+  if (appData.affordability) {
+    try {
+      const parsedAffordability =
+        typeof appData.affordability === "string"
+          ? JSON.parse(appData.affordability)
+          : appData.affordability;
+      affordabilityData = { ...affordabilityData, ...parsedAffordability };
+    } catch (e) {
+      console.warn("Failed to parse affordability data:", e);
+    }
+  }
+
+  // Extract first and last names from stored data or use fallbacks
+  const fullName = appData.bank_account_holder || fallbackFullName || "";
+  const nameParts = fullName.split(" ");
+  const firstName = nameParts[0] || "";
+  const lastName = nameParts.slice(1).join(" ") || "";
+
+  // Helper function to safely get enum values
+  const getEnumValue = <T extends string>(
+    value: T | null | undefined,
+    defaultValue: T
+  ): T => {
+    return value || defaultValue;
+  };
+
+  return {
+    firstName,
+    lastName,
+    identificationType: appData.id_number
+      ? ("id" as const)
+      : ("passport" as const),
+    idNumber: appData.id_number || "",
+    dateOfBirth: appData.date_of_birth || "",
+    phoneNumber: appData.next_of_kin_phone_number || "",
+    email: appData.next_of_kin_email || fallbackEmail || "",
+    gender: getEnumValue(appData.gender, "male" as const),
+    genderOther: appData.gender_other || "",
+    language: appData.language || "",
+    dependants: appData.dependants || 0,
+    maritalStatus: getEnumValue(appData.marital_status, "single" as const),
+    nationality: appData.nationality || "",
+    address: appData.home_address || "",
+    city: appData.city || "",
+    province: "",
+    postalCode: "",
+    employmentStatus: getEnumValue(
+      appData.employment_type,
+      "employed" as const
+    ),
+    employer: appData.employer_name || "",
+    employerAddress: appData.employer_address || "",
+    employerContactNumber: appData.employer_contact_number || "",
+    employmentEndDate: appData.employment_end_date || "",
+    jobTitle: appData.job_title || "",
+    monthlyIncome: appData.monthly_income?.toString() || "",
+    workExperience: appData.work_experience || "",
+    loanAmount: appData.application_amount || 1000,
+    loanPurpose: getEnumValue(
+      appData.loan_purpose as any,
+      "debt_consolidation" as const
+    ),
+    loanPurposeReason: appData.loan_purpose_reason || "",
+    repaymentPeriod: appData.term || 30,
+    nextOfKinName: appData.next_of_kin_name || "",
+    nextOfKinPhone: appData.next_of_kin_phone_number || "",
+    nextOfKinEmail: appData.next_of_kin_email || "",
+    bankName: appData.bank_name || "",
+    bankAccountHolder: appData.bank_account_holder || "",
+    bankAccountType: getEnumValue(
+      appData.bank_account_type,
+      "savings" as const
+    ),
+    bankAccountNumber: appData.bank_account_number || "",
+    branchCode: appData.branch_code || "",
+    affordability: affordabilityData,
+  };
 }
