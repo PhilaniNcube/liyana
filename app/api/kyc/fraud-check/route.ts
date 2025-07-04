@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const encodedPassword = encodeURIComponent(password);
 
     const apiURL = new URL(
-      `${process.env.NORMAL_ENQUIRY_URL}/DoNormalEnquiry/${encodedUserName}/${encodedPassword}/QATEST/3.0/Json/${idNumber}`
+      `${process.env.NORMAL_ENQUIRY_URL}/${encodedUserName}/${encodedPassword}/QATEST/3.0/Json/${idNumber}`
     );
 
     if (!userName || !password) {
