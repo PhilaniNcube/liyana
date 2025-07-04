@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const { idNumber } = await request.json();
+    // const { idNumber } = await request.json();
+
+    // get the id number from the query parameters
+    const { searchParams } = new URL(request.url);
+    const idNumber = searchParams.get("idNumber"); // Default for testing
+
+    console.log("Received ID number:", idNumber);
 
     if (!idNumber) {
       return NextResponse.json(
@@ -11,54 +17,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mock fraud check logic
-    // In production, this would call Experian fraud prevention API
+    const userName = process.env.EXPERIAN_USERNAME!;
+    const password = process.env.EXPERIAN_PASSWORD!;
 
-    // Simulate some IDs with fraud flags
-    const fraudIds = [
-      "2222222222222", // Fraud flag
-      "3333333333333", // Identity theft flag
-      "4444444444444", // Suspicious activity flag
-    ];
+    // encode the username and password into url parameters
+    const encodedUserName = encodeURIComponent(userName);
+    const encodedPassword = encodeURIComponent(password);
 
-    // Simulate API processing delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    const apiURL = new URL(
+      `${process.env.NORMAL_ENQUIRY_URL}/DoNormalEnquiry/${encodedUserName}/${encodedPassword}/QATEST/3.0/Json/${idNumber}`
+    );
 
-    if (fraudIds.includes(idNumber)) {
-      const fraudType =
-        idNumber === "2222222222222"
-          ? "FRAUD_ALERT"
-          : idNumber === "3333333333333"
-          ? "IDENTITY_THEFT"
-          : "SUSPICIOUS_ACTIVITY";
-
+    if (!userName || !password) {
+      console.error(
+        "Experian credentials are not set in environment variables."
+      );
       return NextResponse.json(
-        {
-          success: false,
-          error: "Fraud alert detected",
-          message:
-            "This ID number has been flagged for potential fraudulent activity",
-          data: {
-            fraudType,
-            alertLevel: "HIGH",
-            dateReported: "2024-01-15",
-            reportingAgency: "Experian Fraud Prevention",
-          },
-        },
-        { status: 200 }
+        { error: "Experian credentials are not configured" },
+        { status: 500 }
       );
     }
 
-    // For demo purposes, all other IDs pass fraud check
-    return NextResponse.json({
-      success: true,
-      message: "No fraud flags detected",
-      data: {
-        fraudStatus: "CLEAR",
-        riskLevel: "LOW",
-        lastScanned: new Date().toISOString(),
-      },
+    console.log("Fetching fraud check data from:", apiURL.toString());
+
+    const response = await fetch(apiURL.toString(), {
+      method: "GET",
     });
+
+    if (!response.ok) {
+      console.error(response);
+      console.error("Error fetching fraud check data:", response.statusText);
+      return NextResponse.json(
+        { error: "Failed to fetch fraud check data" },
+        { status: response.status }
+      );
+    }
+
+    // Check if the response is empty
+
+    const data = await response.text();
+    console.log("Fraud check data received:", data);
+
+    return NextResponse.json(
+      {
+        results: data,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Fraud check error:", error);
     return NextResponse.json(
