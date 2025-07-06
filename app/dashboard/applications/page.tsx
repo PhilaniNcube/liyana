@@ -12,6 +12,8 @@ import {
   getAllApplications,
   type ApplicationWithProfile,
 } from "@/lib/queries/applications";
+import { decryptValue } from "@/lib/encryption";
+import Link from "next/link";
 
 function getStatusBadge(status: string) {
   const statusConfig = {
@@ -53,7 +55,7 @@ export default async function ApplicationsPage() {
               <TableRow>
                 <TableHead>ID</TableHead>
                 <TableHead>Applicant</TableHead>
-                <TableHead>User ID</TableHead>
+                <TableHead>ID Number</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
@@ -65,18 +67,57 @@ export default async function ApplicationsPage() {
                 const displayName = profile?.full_name || "Unknown User";
 
                 return (
-                  <TableRow key={app.id}>
-                    <TableCell className="font-medium">#{app.id}</TableCell>
-                    <TableCell>{displayName}</TableCell>
+                  <TableRow
+                    key={app.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                  >
+                    <TableCell className="font-medium">
+                      <Link
+                        href={`/dashboard/applications/${app.id}`}
+                        className="block"
+                      >
+                        #{app.id}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/dashboard/applications/${app.id}`}
+                        className="block"
+                      >
+                        {displayName}
+                      </Link>
+                    </TableCell>
                     <TableCell className="font-mono text-sm text-muted-foreground">
-                      {app.user_id.slice(0, 8)}...
+                      <Link
+                        href={`/dashboard/applications/${app.id}`}
+                        className="block"
+                      >
+                        {decryptValue(app.id_number)}
+                      </Link>
                     </TableCell>
                     <TableCell>
-                      R{app.application_amount?.toLocaleString() || "0"}
+                      <Link
+                        href={`/dashboard/applications/${app.id}`}
+                        className="block"
+                      >
+                        R{app.application_amount?.toLocaleString() || "0"}
+                      </Link>
                     </TableCell>
-                    <TableCell>{getStatusBadge(app.status)}</TableCell>
                     <TableCell>
-                      {new Date(app.created_at).toLocaleDateString()}
+                      <Link
+                        href={`/dashboard/applications/${app.id}`}
+                        className="block"
+                      >
+                        {getStatusBadge(app.status)}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/dashboard/applications/${app.id}`}
+                        className="block"
+                      >
+                        {new Date(app.created_at).toLocaleDateString()}
+                      </Link>
                     </TableCell>
                   </TableRow>
                 );

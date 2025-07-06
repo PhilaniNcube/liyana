@@ -69,6 +69,11 @@ export const loanApplicationSchema = z
       }
     ),
     residential_address: z.string().min(1, "Address is required"),
+    postal_code: z
+      .string()
+      .min(4, "Postal code must be at least 4 digits")
+      .max(4, "Postal code must be exactly 4 digits")
+      .regex(/^\d{4}$/, "Postal code must be 4 digits"),
     // Employment and Loan Information
     employment_type: z.enum(
       ["employed", "self_employed", "contract", "unemployed", "retired"],

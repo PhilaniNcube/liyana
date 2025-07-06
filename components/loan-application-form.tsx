@@ -62,6 +62,7 @@ const convertApplicationToFormData = (
     marital_status: appData.marital_status || undefined,
     dependants: appData.dependants || 0,
     residential_address: appData.home_address || "",
+    postal_code: appData.postal_code || "",
     employment_type: appData.employment_type || undefined,
     employer_name: appData.employer_name || "",
     job_title: appData.job_title || "",
@@ -297,6 +298,7 @@ export function LoanApplicationForm({
       dependants: 0,
       marital_status: "single",
       residential_address: "",
+      postal_code: "",
       employment_type: "employed",
       employer_name: "",
       job_title: "",
@@ -416,7 +418,8 @@ export function LoanApplicationForm({
         errors.email ||
         errors.dependants ||
         errors.marital_status ||
-        errors.residential_address
+        errors.residential_address ||
+        errors.postal_code
       ) {
         errorStep = 2;
       }

@@ -135,6 +135,19 @@ export function PersonalInfoStep({ form }: PersonalInfoStepProps) {
           </FormItem>
         )}
       />
+      <FormField
+        control={form.control}
+        name="postal_code"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Postal Code</FormLabel>
+            <FormControl>
+              <Input placeholder="1234" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 }

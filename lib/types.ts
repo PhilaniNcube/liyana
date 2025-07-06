@@ -111,6 +111,7 @@ export type Database = {
           next_of_kin_name: string | null;
           next_of_kin_phone_number: string | null;
           phone_number: string | null;
+          postal_code: string | null;
           status: Database["public"]["Enums"]["application_status"];
           term: number;
           updated_at: string;
@@ -155,6 +156,7 @@ export type Database = {
           next_of_kin_name?: string | null;
           next_of_kin_phone_number?: string | null;
           phone_number?: string | null;
+          postal_code?: string | null;
           status: Database["public"]["Enums"]["application_status"];
           term: number;
           updated_at?: string;
@@ -199,6 +201,7 @@ export type Database = {
           next_of_kin_name?: string | null;
           next_of_kin_phone_number?: string | null;
           phone_number?: string | null;
+          postal_code?: string | null;
           status?: Database["public"]["Enums"]["application_status"];
           term?: number;
           updated_at?: string;
@@ -321,7 +324,7 @@ export type Tables<
   }
     ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {

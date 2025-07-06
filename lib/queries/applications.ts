@@ -65,6 +65,36 @@ export async function getApplicationById(id: number) {
   return data;
 }
 
+export async function getApplicationByIdWithProfile(
+  id: number
+): Promise<ApplicationWithProfile> {
+  const supabase = await createClient();
+
+  const { data: application, error } = await supabase
+    .from("applications")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to fetch application: ${error.message}`);
+  }
+
+  // Fetch profile data
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", application.user_id)
+    .single();
+
+  if (profileError) {
+    console.warn("Failed to fetch profile details:", profileError.message);
+    return { ...application, profile: null };
+  }
+
+  return { ...application, profile };
+}
+
 export async function getApplicationsByUser(
   userId: string,
   options: { limit?: number; offset?: number } = {}

@@ -3,171 +3,7 @@
 import { createClient } from "@/lib/server";
 import { encryptValue } from "@/lib/encryption";
 import { z } from "zod";
-
-// Loan Application Schema
-const loanApplicationSchema = z
-  .object({
-    // Personal Information
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
-    identificationType: z.enum(["id", "passport"], {
-      required_error: "Identification type is required",
-    }),
-    idNumber: z.string().optional(),
-    passportNumber: z.string().optional(),
-    dateOfBirth: z.string().min(1, "Date of birth is required"),
-    phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
-    email: z.string().email("Please enter a valid email address"),
-    gender: z.enum(["male", "female", "rather not say", "other"], {
-      required_error: "Gender is required",
-    }),
-    genderOther: z.string().optional(),
-    language: z.string().min(1, "Language is required"),
-    dependants: z
-      .number()
-      .min(0, "Number of dependants must be 0 or more")
-      .max(20, "Number of dependants cannot exceed 20"),
-    maritalStatus: z.enum(
-      ["single", "married", "divorced", "widowed", "life_partner"],
-      {
-        required_error: "Marital status is required",
-      }
-    ),
-    nationality: z.string().min(1, "Nationality is required"),
-    address: z.string().min(1, "Address is required"),
-    city: z.string().min(1, "City is required"),
-    province: z.string().min(1, "Province is required"),
-    postalCode: z.string().min(4, "Postal code is required"), // Employment and Loan Information
-    employmentStatus: z.enum(
-      ["employed", "self_employed", "contract", "unemployed", "retired"],
-      {
-        required_error: "Employment status is required",
-      }
-    ),
-    employer: z.string().min(1, "Employer is required"),
-    employerAddress: z.string().optional(),
-    employerContactNumber: z.string().optional(),
-    employmentEndDate: z.string().optional(),
-    jobTitle: z.string().min(1, "Job title is required"),
-    monthlyIncome: z.string().min(1, "Monthly income is required"),
-    workExperience: z.string().min(1, "Work experience is required"),
-    loanAmount: z
-      .string()
-      .min(1, "Loan amount is required")
-      .refine(
-        (val) => {
-          const amount = parseFloat(val);
-          return !isNaN(amount) && amount >= 500 && amount <= 5000;
-        },
-        {
-          message: "Loan amount must be between R500 and R5,000",
-        }
-      ),
-    loanPurpose: z.enum(
-      [
-        "debt_consolidation",
-        "home_improvement",
-        "education",
-        "medical",
-        "other",
-      ],
-      {
-        required_error: "Loan purpose is required",
-      }
-    ),
-    loanPurposeReason: z.string().optional(),
-    repaymentPeriod: z.string().refine(
-      (val) => {
-        const period = parseInt(val);
-        return !isNaN(period) && period >= 5 && period <= 61;
-      },
-      {
-        message: "Repayment period must be between 7 and 60 days",
-      }
-    ), // Next of Kin Information
-    nextOfKinName: z.string().optional(),
-    nextOfKinPhone: z.string().optional(),
-    nextOfKinEmail: z.string().optional(), // Banking Information
-    bankName: z.string().min(1, "Bank name is required"),
-    bankAccountHolder: z.string().min(1, "Account holder name is required"),
-    bankAccountType: z.enum(["savings", "transaction", "current", "business"], {
-      required_error: "Account type is required",
-    }),
-    bankAccountNumber: z
-      .string()
-      .min(8, "Bank account number must be at least 8 digits"),
-    branchCode: z
-      .string()
-      .min(6, "Branch code must be at least 6 digits")
-      .max(6, "Branch code must be exactly 6 digits"),
-    // Affordability Information
-    affordability: z
-      .object({
-        income: z.array(
-          z.object({
-            type: z.string(),
-            amount: z.number(),
-          })
-        ),
-        deductions: z.array(
-          z.object({
-            type: z.string(),
-            amount: z.number(),
-          })
-        ),
-        expenses: z.array(
-          z.object({
-            type: z.string(),
-            amount: z.number(),
-          })
-        ),
-      })
-      .optional(),
-  })
-  .refine(
-    (data) => {
-      // Validate that either ID number or passport number is provided based on identification type
-      if (data.identificationType === "id") {
-        return data.idNumber && data.idNumber.length === 13;
-      } else if (data.identificationType === "passport") {
-        return data.passportNumber && data.passportNumber.length >= 6;
-      }
-      return false;
-    },
-    {
-      message:
-        "Please provide a valid ID number (13 digits) or passport number (min 6 characters)",
-      path: ["idNumber"], // This will show the error on the ID number field
-    }
-  )
-  .refine(
-    (data) => {
-      // Validate loan purpose reason is required when loan purpose is "other"
-      if (data.loanPurpose === "other") {
-        return (
-          data.loanPurposeReason && data.loanPurposeReason.trim().length > 0
-        );
-      }
-      return true; // Not required for other loan purposes
-    },
-    {
-      message: "Please specify the reason for your loan",
-      path: ["loanPurposeReason"],
-    }
-  )
-  .refine(
-    (data) => {
-      // Validate gender other is required when gender is "other"
-      if (data.gender === "other") {
-        return data.genderOther && data.genderOther.trim().length > 0;
-      }
-      return true; // Not required for other gender options
-    },
-    {
-      message: "Please specify your gender",
-      path: ["genderOther"],
-    }
-  );
+import { loanApplicationSchema } from "@/lib/schemas";
 
 export type LoanApplicationFormData = z.infer<typeof loanApplicationSchema>;
 
@@ -195,47 +31,34 @@ export async function submitLoanApplication(
   }
 
   const result = loanApplicationSchema.safeParse({
-    firstName: formData.get("firstName"),
-    lastName: formData.get("lastName"),
-    identificationType: formData.get("identificationType"),
-    idNumber: formData.get("idNumber"),
-    passportNumber: formData.get("passportNumber"),
-    dateOfBirth: formData.get("dateOfBirth"),
-    phoneNumber: formData.get("phoneNumber"),
+    first_name: formData.get("first_name"),
+    last_name: formData.get("last_name"),
+    id_number: formData.get("id_number"),
+    date_of_birth: formData.get("date_of_birth"),
+    phone_number: formData.get("phone_number"),
     email: formData.get("email"),
-    gender: formData.get("gender"),
-    genderOther: formData.get("genderOther"),
-    language: formData.get("language"),
     dependants: formData.get("dependants")
       ? parseInt(formData.get("dependants") as string)
       : 0,
-    maritalStatus: formData.get("maritalStatus"),
-    nationality: formData.get("nationality"),
-    address: formData.get("address"),
-    city: formData.get("city"),
-    province: formData.get("province"),
-    postalCode: formData.get("postalCode"),
-    employmentStatus: formData.get("employmentStatus"),
-    employer: formData.get("employer"),
-    employerAddress: formData.get("employerAddress"),
-    employerContactNumber: formData.get("employerContactNumber"),
-    employmentEndDate: formData.get("employmentEndDate"),
-    jobTitle: formData.get("jobTitle"),
-    monthlyIncome: formData.get("monthlyIncome"),
-    workExperience: formData.get("workExperience"),
-    loanAmount: formData.get("loanAmount"),
-    loanPurpose: formData.get("loanPurpose"),
-    loanPurposeReason: formData.get("loanPurposeReason"),
-    repaymentPeriod: formData.get("repaymentPeriod"),
-    nextOfKinName: formData.get("nextOfKinName"),
-    nextOfKinPhone: formData.get("nextOfKinPhone"),
-    nextOfKinEmail: formData.get("nextOfKinEmail"),
-    bankName: formData.get("bankName"),
-    bankAccountHolder: formData.get("bankAccountHolder"),
-    bankAccountType: formData.get("bankAccountType"),
-    bankAccountNumber: formData.get("bankAccountNumber"),
-    branchCode: formData.get("branchCode"),
-    affordability: affordabilityData,
+    marital_status: formData.get("marital_status"),
+    residential_address: formData.get("residential_address"),
+    postal_code: formData.get("postal_code"),
+    employment_type: formData.get("employment_type"),
+    employer_name: formData.get("employer_name"),
+    job_title: formData.get("job_title"),
+    monthly_income: formData.get("monthly_income")
+      ? parseFloat(formData.get("monthly_income") as string)
+      : 0,
+    application_amount: formData.get("application_amount")
+      ? parseFloat(formData.get("application_amount") as string)
+      : 1000,
+    loan_purpose: formData.get("loan_purpose"),
+    term: formData.get("term") ? parseInt(formData.get("term") as string) : 1,
+    bank_name: formData.get("bank_name"),
+    bank_account_holder: formData.get("bank_account_holder"),
+    bank_account_type: formData.get("bank_account_type"),
+    bank_account_number: formData.get("bank_account_number"),
+    branch_code: formData.get("branch_code"),
   });
 
   if (!result.success) {
@@ -260,15 +83,12 @@ export async function submitLoanApplication(
         },
       };
     } // Map form data to database schema
-    const identificationNumber =
-      result.data.identificationType === "id"
-        ? result.data.idNumber
-        : result.data.passportNumber;
+    const identificationNumber = result.data.id_number;
 
     if (!identificationNumber) {
       return {
         errors: {
-          _form: ["Identification number is required"],
+          _form: ["ID number is required"],
         },
       };
     }
@@ -285,58 +105,40 @@ export async function submitLoanApplication(
         },
       };
     }
+
     const applicationData = {
       user_id: user.id,
 
-      // Personal Information (only fields that exist in the database)
+      // Personal Information
       id_number: encryptedIdNumber,
-      phone_number: result.data.phoneNumber,
-      date_of_birth: result.data.dateOfBirth,
-      gender: result.data.gender as any,
-      gender_other: result.data.genderOther || null,
-      language: result.data.language,
+      phone_number: result.data.phone_number,
+      date_of_birth: result.data.date_of_birth,
       dependants: result.data.dependants,
-      marital_status: result.data.maritalStatus as any,
-      nationality: result.data.nationality,
-      home_address: result.data.address,
-      city: result.data.city,
-      // Note: first_name, last_name, email, phone_number, postal_code, province, identification_type
-      // are not in the current database schema
+      marital_status: result.data.marital_status as any,
+      home_address: result.data.residential_address,
+      postal_code: result.data.postal_code || null,
 
       // Loan Information
-      application_amount: parseFloat(result.data.loanAmount),
-      loan_purpose: result.data.loanPurpose,
-      loan_purpose_reason: result.data.loanPurposeReason || null,
-      term: parseInt(result.data.repaymentPeriod),
+      application_amount: result.data.application_amount,
+      loan_purpose: result.data.loan_purpose,
+      term: result.data.term,
       status: "pre_qualifier" as const,
 
       // Employment information
-      employment_type: result.data.employmentStatus as any,
-      employer_name: result.data.employer,
-      employer_address: result.data.employerAddress || null,
-      employer_contact_number: result.data.employerContactNumber || null,
-      employment_end_date: result.data.employmentEndDate || null,
-      job_title: result.data.jobTitle,
-      monthly_income: parseFloat(result.data.monthlyIncome),
-      work_experience: result.data.workExperience,
-
-      // Next of kin information
-      next_of_kin_name: result.data.nextOfKinName || null,
-      next_of_kin_phone_number: result.data.nextOfKinPhone || null,
-      next_of_kin_email: result.data.nextOfKinEmail || null,
+      employment_type: result.data.employment_type as any,
+      employer_name: result.data.employer_name,
+      job_title: result.data.job_title,
+      monthly_income: result.data.monthly_income,
 
       // Banking information
-      bank_name: result.data.bankName,
-      bank_account_holder: result.data.bankAccountHolder,
-      bank_account_type: result.data.bankAccountType as any,
-      bank_account_number: result.data.bankAccountNumber,
-      branch_code: result.data.branchCode,
+      bank_name: result.data.bank_name,
+      bank_account_holder: result.data.bank_account_holder,
+      bank_account_type: result.data.bank_account_type as any,
+      bank_account_number: result.data.bank_account_number,
+      branch_code: result.data.branch_code,
+    };
 
-      // Affordability data (new field for JSONB storage)
-      affordability: result.data.affordability || null,
-
-      created_at: new Date().toISOString(),
-    }; // Insert loan application into database
+    // Insert loan application into database
     const { data: insertedApplication, error } = await supabase
       .from("applications")
       .insert(applicationData)
