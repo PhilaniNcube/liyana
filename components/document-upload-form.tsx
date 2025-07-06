@@ -19,9 +19,7 @@ import {
   Home,
   Upload,
   Loader2,
-  X,
 } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useState, useRef, useEffect } from "react";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import { uploadDocument } from "@/lib/client-actions/documents";

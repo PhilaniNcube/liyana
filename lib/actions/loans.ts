@@ -290,6 +290,7 @@ export async function submitLoanApplication(
 
       // Personal Information (only fields that exist in the database)
       id_number: encryptedIdNumber,
+      phone_number: result.data.phoneNumber,
       date_of_birth: result.data.dateOfBirth,
       gender: result.data.gender as any,
       gender_other: result.data.genderOther || null,
