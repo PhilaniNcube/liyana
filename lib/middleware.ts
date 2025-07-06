@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { Database } from "@/lib/types";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -38,6 +39,35 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Protect dashboard routes - only allow admin users
+  if (request.nextUrl.pathname.startsWith("/dashboard")) {
+    if (!user) {
+      // Redirect to login if not authenticated
+      const url = request.nextUrl.clone();
+      url.pathname = "/auth/login";
+      const redirectResponse = NextResponse.redirect(url);
+      // Copy cookies from the supabaseResponse to maintain session
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+      });
+      return redirectResponse;
+    }
+
+    // Check if user is admin (has liyanafinance.co.za email)
+    const isAdmin = user.email?.endsWith("@liyanafinance.co.za");
+    if (!isAdmin) {
+      // Redirect to home if not admin
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      const redirectResponse = NextResponse.redirect(url);
+      // Copy cookies from the supabaseResponse to maintain session
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+      });
+      return redirectResponse;
+    }
+  }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   // If you're creating a new response object with NextResponse.next() make sure to:

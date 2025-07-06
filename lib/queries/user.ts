@@ -135,3 +135,20 @@ export async function updateUserProfile(
 
   return data;
 }
+
+// write a function to get the current session of the user
+export async function getCurrentSession() {
+  const supabase = await createClient();
+
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+
+  if (error) {
+    console.error("Error fetching current session:", error);
+    return null;
+  }
+
+  return session;
+}
