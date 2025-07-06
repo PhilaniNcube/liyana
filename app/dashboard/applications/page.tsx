@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,23 +8,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-async function getApplications() {
-  const supabase = await createClient();
-
-  const { data: applications, error } = await supabase
-    .from("applications")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  if (error) {
-    console.error("Error fetching applications:", error);
-    return [];
-  }
-
-  return applications || [];
-}
+import {
+  getAllApplications,
+  type ApplicationWithProfile,
+} from "@/lib/queries/applications";
 
 function getStatusBadge(status: string) {
   const statusConfig = {
@@ -48,7 +34,7 @@ function getStatusBadge(status: string) {
 }
 
 export default async function ApplicationsPage() {
-  const applications = await getApplications();
+  const applications = await getAllApplications({ limit: 50 });
 
   return (
     <div className="space-y-6">
@@ -66,26 +52,35 @@ export default async function ApplicationsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
-                <TableHead>User</TableHead>
+                <TableHead>Applicant</TableHead>
+                <TableHead>User ID</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {applications.map((app) => (
-                <TableRow key={app.id}>
-                  <TableCell className="font-medium">#{app.id}</TableCell>
-                  <TableCell>{app.user_id}</TableCell>
-                  <TableCell>
-                    R{app.application_amount?.toLocaleString() || "0"}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(app.status)}</TableCell>
-                  <TableCell>
-                    {new Date(app.created_at).toLocaleDateString()}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {applications.map((app) => {
+                const profile = app.profile;
+                const displayName = profile?.full_name || "Unknown User";
+
+                return (
+                  <TableRow key={app.id}>
+                    <TableCell className="font-medium">#{app.id}</TableCell>
+                    <TableCell>{displayName}</TableCell>
+                    <TableCell className="font-mono text-sm text-muted-foreground">
+                      {app.user_id.slice(0, 8)}...
+                    </TableCell>
+                    <TableCell>
+                      R{app.application_amount?.toLocaleString() || "0"}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(app.status)}</TableCell>
+                    <TableCell>
+                      {new Date(app.created_at).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>

@@ -3,6 +3,13 @@ import { z } from "zod";
 import type { Database } from "@/lib/types";
 
 type ApplicationUpdate = Database["public"]["Tables"]["applications"]["Update"];
+type Application = Database["public"]["Tables"]["applications"]["Row"];
+type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+
+// Enhanced application type with profile data
+export type ApplicationWithProfile = Application & {
+  profile: Profile | null;
+};
 
 // Application query schemas
 export const getApplicationByIdSchema = z.object({
@@ -117,7 +124,7 @@ export async function getApplicationsByStatus(
 
 export async function getAllApplications(
   options: { limit?: number; offset?: number } = {}
-) {
+): Promise<ApplicationWithProfile[]> {
   const supabase = await createClient();
 
   let query = supabase
@@ -136,13 +143,43 @@ export async function getAllApplications(
     );
   }
 
-  const { data, error } = await query;
+  const { data: applications, error } = await query;
 
   if (error) {
     throw new Error(`Failed to fetch applications: ${error.message}`);
   }
 
-  return data;
+  // If we have applications, fetch profile details separately
+  if (applications && applications.length > 0) {
+    const userIds = [...new Set(applications.map((app) => app.user_id))];
+
+    // Fetch profile details
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("*")
+      .in("id", userIds);
+
+    if (profilesError) {
+      console.warn("Failed to fetch profile details:", profilesError.message);
+      // Return applications with null profile data if profile fetch fails
+      return applications.map((app) => ({ ...app, profile: null }));
+    }
+
+    // Create a map of profile data for quick lookup
+    const profileMap = new Map(
+      profiles?.map((profile) => [profile.id, profile]) || []
+    );
+
+    // Enhance applications with profile data
+    const enhancedApplications = applications.map((app) => ({
+      ...app,
+      profile: profileMap.get(app.user_id) || null,
+    }));
+
+    return enhancedApplications;
+  }
+
+  return [];
 }
 
 export async function getApplicationsWithDocuments(applicationId: number) {
