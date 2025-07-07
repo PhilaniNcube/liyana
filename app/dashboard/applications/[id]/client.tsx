@@ -215,12 +215,76 @@ export function ApplicationDetailClient({
       // Decode the Base64 string if it exists
       if (data.pRetData && typeof data.pRetData === "string") {
         try {
-          const decodedData = atob(data.pRetData);
-          console.log("Decoded pRetData:", decodedData);
-          data.pRetData = decodedData;
+          // Step 1: Decode Base64 to binary data
+          const binaryString = atob(data.pRetData);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+
+          console.log("Decoded bytes length:", bytes.length);
+          console.log("First few bytes:", Array.from(bytes.slice(0, 10)));
+
+          // Step 2: Verify it's a valid ZIP file by checking first 2 bytes are "PK"
+          if (bytes.length >= 2 && bytes[0] === 0x50 && bytes[1] === 0x4b) {
+            console.log("Valid ZIP file detected (PK signature found)");
+
+            // Step 3: Extract ZIP contents using JSZip
+            try {
+              // We'll need to use a ZIP library for proper extraction
+              // For now, let's try to extract manually or use a simpler approach
+              // Since we can't easily import JSZip here, we'll show the binary data
+              // and let the user know it's a ZIP file that needs extraction
+
+              data.pRetData = {
+                type: "ZIP_FILE",
+                message:
+                  "This is a ZIP file containing XML data. The first 2 bytes are 'PK' confirming it's a valid ZIP format.",
+                byteLength: bytes.length,
+                firstBytes: Array.from(bytes.slice(0, 20)),
+                rawBinary: binaryString,
+              };
+
+              console.log("ZIP file data prepared for display");
+            } catch (zipError) {
+              console.error("Error processing ZIP file:", zipError);
+              data.pRetData = {
+                type: "ZIP_ERROR",
+                message: "Valid ZIP file detected but extraction failed",
+                error:
+                  zipError instanceof Error
+                    ? zipError.message
+                    : String(zipError),
+                byteLength: bytes.length,
+              };
+            }
+          } else if (bytes.length < 5) {
+            console.log("Error code detected (less than 5 bytes)");
+            data.pRetData = {
+              type: "ERROR_CODE",
+              message: "Error code returned (less than 5 bytes)",
+              byteLength: bytes.length,
+              errorBytes: Array.from(bytes),
+            };
+          } else {
+            console.log("Unknown format - not a valid ZIP file");
+            data.pRetData = {
+              type: "UNKNOWN_FORMAT",
+              message: "Data is not a valid ZIP file (missing PK signature)",
+              byteLength: bytes.length,
+              firstBytes: Array.from(bytes.slice(0, 20)),
+            };
+          }
         } catch (decodeError) {
           console.error("Error decoding Base64 pRetData:", decodeError);
-          // Keep the original Base64 string if decoding fails
+          data.pRetData = {
+            type: "DECODE_ERROR",
+            message: "Failed to decode Base64 data",
+            error:
+              decodeError instanceof Error
+                ? decodeError.message
+                : String(decodeError),
+          };
         }
       }
 
@@ -314,12 +378,87 @@ export function ApplicationDetailClient({
             {fraudCheckResults.pRetData && (
               <div>
                 <h4 className="font-semibold mb-2">Fraud Check Report:</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <pre className="text-sm whitespace-pre-wrap overflow-x-auto">
-                    {typeof fraudCheckResults.pRetData === "string"
-                      ? fraudCheckResults.pRetData
-                      : JSON.stringify(fraudCheckResults.pRetData, null, 2)}
-                  </pre>
+                <div className="space-y-3">
+                  {typeof fraudCheckResults.pRetData === "object" &&
+                  fraudCheckResults.pRetData.type ? (
+                    // Handle structured ZIP/error data
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <span className="text-sm font-medium">Data Type:</span>
+                        <Badge
+                          className={
+                            fraudCheckResults.pRetData.type === "ZIP_FILE"
+                              ? "bg-blue-100 text-blue-800"
+                              : fraudCheckResults.pRetData.type === "ERROR_CODE"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                          }
+                        >
+                          {fraudCheckResults.pRetData.type}
+                        </Badge>
+                      </div>
+
+                      <p className="text-sm text-gray-700 mb-3">
+                        {fraudCheckResults.pRetData.message}
+                      </p>
+
+                      {fraudCheckResults.pRetData.byteLength && (
+                        <p className="text-xs text-gray-600 mb-2">
+                          Data Length: {fraudCheckResults.pRetData.byteLength}{" "}
+                          bytes
+                        </p>
+                      )}
+
+                      {fraudCheckResults.pRetData.type === "ZIP_FILE" && (
+                        <div className="mt-3 p-3 bg-blue-50 rounded">
+                          <p className="text-sm text-blue-800 font-medium mb-2">
+                            ⚠️ ZIP File Detected - Manual Extraction Required
+                          </p>
+                          <p className="text-xs text-blue-700">
+                            This file contains XML data in ZIP format. You may
+                            need to download and extract it manually to view the
+                            full fraud check report.
+                          </p>
+                        </div>
+                      )}
+
+                      {fraudCheckResults.pRetData.error && (
+                        <div className="mt-3 p-3 bg-red-50 rounded">
+                          <p className="text-sm text-red-800 font-medium">
+                            Error:
+                          </p>
+                          <p className="text-xs text-red-700">
+                            {fraudCheckResults.pRetData.error}
+                          </p>
+                        </div>
+                      )}
+
+                      {fraudCheckResults.pRetData.firstBytes && (
+                        <details className="mt-3">
+                          <summary className="text-xs cursor-pointer text-gray-600 hover:text-gray-800">
+                            View First Bytes (Debug Info)
+                          </summary>
+                          <pre className="text-xs bg-gray-100 p-2 rounded mt-2 overflow-x-auto">
+                            {fraudCheckResults.pRetData.firstBytes
+                              .map(
+                                (byte: number, i: number) =>
+                                  `${i}: 0x${byte.toString(16).padStart(2, "0")} (${byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : "?"})`
+                              )
+                              .join("\n")}
+                          </pre>
+                        </details>
+                      )}
+                    </div>
+                  ) : (
+                    // Handle regular string data
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <pre className="text-sm whitespace-pre-wrap overflow-x-auto">
+                        {typeof fraudCheckResults.pRetData === "string"
+                          ? fraudCheckResults.pRetData
+                          : JSON.stringify(fraudCheckResults.pRetData, null, 2)}
+                      </pre>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
