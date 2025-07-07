@@ -101,52 +101,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await response.text();
+    const data = await response.json();
     console.log("Fraud check data received:", data);
 
-    try {
-      // Parse the JSON response
-      const parsedData = JSON.parse(data);
-
-      // Check if pRetData exists and is a Base64 string
-      if (parsedData.pRetData && typeof parsedData.pRetData === "string") {
-        // Decode the Base64 string
-        const decodedData = Buffer.from(parsedData.pRetData, "base64").toString(
-          "utf-8"
-        );
-        console.log("Decoded pRetData:", decodedData);
-
-        // Replace the Base64 string with the decoded data
-        parsedData.pRetData = decodedData;
-
-        return NextResponse.json(
-          {
-            results: parsedData,
-          },
-          { status: 200 }
-        );
-      } else {
-        // If no pRetData or it's not a string, return as is
-        return NextResponse.json(
-          {
-            results: parsedData,
-          },
-          { status: 200 }
-        );
-      }
-    } catch (parseError) {
-      console.warn(
-        "Could not parse response as JSON, returning as text:",
-        parseError
-      );
-      // If parsing fails, return the original text response
-      return NextResponse.json(
-        {
-          results: data,
-        },
-        { status: 200 }
-      );
+    if (data.error) {
+      console.error("Fraud check error:", data.error);
+      return NextResponse.json({ error: data.error }, { status: 400 });
     }
+
+    // Check if the response contains a PDF URL
+    if (data.resultType === "PDF2" && data.pdfUrl) {
+      console.log("PDF URL received:", data.pdfUrl);
+      return NextResponse.json({ pdfUrl: data.pdfUrl }, { status: 200 });
+    }
+
+    // If no PDF URL, return the JSON data
+    return NextResponse.json(data, { status: 200 });
   } catch (error) {
     console.error("Fraud check error:", error);
     return NextResponse.json(
