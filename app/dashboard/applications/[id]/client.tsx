@@ -23,6 +23,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import JSZip from "jszip";
 
 interface Application {
   id: number;
@@ -231,21 +232,56 @@ export function ApplicationDetailClient({
 
             // Step 3: Extract ZIP contents using JSZip
             try {
-              // We'll need to use a ZIP library for proper extraction
-              // For now, let's try to extract manually or use a simpler approach
-              // Since we can't easily import JSZip here, we'll show the binary data
-              // and let the user know it's a ZIP file that needs extraction
+              const zip = new JSZip();
+              const zipContents = await zip.loadAsync(bytes);
+
+              console.log("ZIP loaded successfully");
+              console.log("Files in ZIP:", Object.keys(zipContents.files));
+
+              const extractedFiles: any[] = [];
+
+              // Extract all files from the ZIP
+              for (const fileName of Object.keys(zipContents.files)) {
+                const file = zipContents.files[fileName];
+                if (!file.dir) {
+                  // Skip directories
+                  try {
+                    const content = await file.async("string");
+                    console.log(
+                      `Extracted file: ${fileName}, size: ${content.length}`
+                    );
+
+                    extractedFiles.push({
+                      name: fileName,
+                      content: content,
+                      size: content.length,
+                    });
+                  } catch (fileError) {
+                    console.error(
+                      `Error extracting file ${fileName}:`,
+                      fileError
+                    );
+                    extractedFiles.push({
+                      name: fileName,
+                      error:
+                        fileError instanceof Error
+                          ? fileError.message
+                          : String(fileError),
+                      size: 0,
+                    });
+                  }
+                }
+              }
 
               data.pRetData = {
-                type: "ZIP_FILE",
-                message:
-                  "This is a ZIP file containing XML data. The first 2 bytes are 'PK' confirming it's a valid ZIP format.",
+                type: "ZIP_EXTRACTED",
+                message: `ZIP file successfully extracted. Found ${extractedFiles.length} file(s).`,
                 byteLength: bytes.length,
-                firstBytes: Array.from(bytes.slice(0, 20)),
-                rawBinary: binaryString,
+                extractedFiles: extractedFiles,
+                fileCount: extractedFiles.length,
               };
 
-              console.log("ZIP file data prepared for display");
+              console.log("ZIP extraction completed successfully");
             } catch (zipError) {
               console.error("Error processing ZIP file:", zipError);
               data.pRetData = {
@@ -387,11 +423,14 @@ export function ApplicationDetailClient({
                         <span className="text-sm font-medium">Data Type:</span>
                         <Badge
                           className={
-                            fraudCheckResults.pRetData.type === "ZIP_FILE"
-                              ? "bg-blue-100 text-blue-800"
-                              : fraudCheckResults.pRetData.type === "ERROR_CODE"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-yellow-100 text-yellow-800"
+                            fraudCheckResults.pRetData.type === "ZIP_EXTRACTED"
+                              ? "bg-green-100 text-green-800"
+                              : fraudCheckResults.pRetData.type === "ZIP_FILE"
+                                ? "bg-blue-100 text-blue-800"
+                                : fraudCheckResults.pRetData.type ===
+                                    "ERROR_CODE"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-yellow-100 text-yellow-800"
                           }
                         >
                           {fraudCheckResults.pRetData.type}
@@ -407,6 +446,77 @@ export function ApplicationDetailClient({
                           Data Length: {fraudCheckResults.pRetData.byteLength}{" "}
                           bytes
                         </p>
+                      )}
+
+                      {fraudCheckResults.pRetData.type === "ZIP_EXTRACTED" && (
+                        <div className="mt-3 space-y-4">
+                          <div className="p-3 bg-green-50 rounded">
+                            <p className="text-sm text-green-800 font-medium mb-2">
+                              ✅ ZIP File Successfully Extracted
+                            </p>
+                            <p className="text-xs text-green-700">
+                              Found {fraudCheckResults.pRetData.fileCount}{" "}
+                              file(s) in the ZIP archive.
+                            </p>
+                          </div>
+
+                          {fraudCheckResults.pRetData.extractedFiles?.map(
+                            (file: any, index: number) => (
+                              <div
+                                key={index}
+                                className="border rounded-lg p-4"
+                              >
+                                <div className="flex items-center justify-between mb-3">
+                                  <h5 className="font-medium text-gray-900">
+                                    {file.name}
+                                  </h5>
+                                  <Badge variant="outline">
+                                    {file.size ? `${file.size} chars` : "Error"}
+                                  </Badge>
+                                </div>
+
+                                {file.error ? (
+                                  <div className="p-3 bg-red-50 rounded">
+                                    <p className="text-sm text-red-800">
+                                      Error extracting file:
+                                    </p>
+                                    <p className="text-xs text-red-700">
+                                      {file.error}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-3">
+                                    {/* Check if content looks like XML */}
+                                    {file.content &&
+                                    file.content.trim().startsWith("<") ? (
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-700 mb-2">
+                                          XML Content:
+                                        </p>
+                                        <div className="bg-gray-50 rounded p-3 max-h-96 overflow-auto">
+                                          <pre className="text-xs whitespace-pre-wrap">
+                                            {file.content}
+                                          </pre>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-700 mb-2">
+                                          File Content:
+                                        </p>
+                                        <div className="bg-gray-50 rounded p-3 max-h-96 overflow-auto">
+                                          <pre className="text-xs whitespace-pre-wrap">
+                                            {file.content}
+                                          </pre>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          )}
+                        </div>
                       )}
 
                       {fraudCheckResults.pRetData.type === "ZIP_FILE" && (
