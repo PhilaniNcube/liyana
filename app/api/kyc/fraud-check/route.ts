@@ -115,6 +115,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ pdfUrl: data.pdfUrl }, { status: 200 });
     }
 
+    // the type of the response is a JSON object that looks like this:
+    // {
+    // "pTransactionCompleted": true/false,
+    // "pRetData": Base64 encoded string,
+    // }
+
+    // decode the Base64 string if it exists
+    if (data.pRetData) {
+      try {
+        const decodedData = Buffer.from(data.pRetData, "base64").toString(
+          "utf-8"
+        );
+        data.pRetData = JSON.parse(decodedData);
+      } catch (decodeError) {
+        console.error("Error decoding pRetData:", decodeError);
+        return NextResponse.json(
+          { error: "Failed to decode pRetData" },
+          { status: 500 }
+        );
+      }
+    }
+
     // If no PDF URL, return the JSON data
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
