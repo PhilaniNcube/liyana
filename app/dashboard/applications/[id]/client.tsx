@@ -211,6 +211,19 @@ export function ApplicationDetailClient({
       }
 
       const data = await response.json();
+
+      // Decode the Base64 string if it exists
+      if (data.pRetData && typeof data.pRetData === "string") {
+        try {
+          const decodedData = atob(data.pRetData);
+          console.log("Decoded pRetData:", decodedData);
+          data.pRetData = decodedData;
+        } catch (decodeError) {
+          console.error("Error decoding Base64 pRetData:", decodeError);
+          // Keep the original Base64 string if decoding fails
+        }
+      }
+
       setFraudCheckResults(data);
       toast.success("Fraud check completed successfully");
     } catch (error) {
@@ -280,10 +293,45 @@ export function ApplicationDetailClient({
               Fraud Check Results
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <pre className="text-sm bg-gray-50 p-4 rounded overflow-x-auto">
-              {JSON.stringify(fraudCheckResults, null, 2)}
-            </pre>
+          <CardContent className="space-y-4">
+            {fraudCheckResults.pTransactionCompleted !== undefined && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium">Transaction Status:</span>
+                <Badge
+                  className={
+                    fraudCheckResults.pTransactionCompleted
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }
+                >
+                  {fraudCheckResults.pTransactionCompleted
+                    ? "Completed"
+                    : "Failed"}
+                </Badge>
+              </div>
+            )}
+
+            {fraudCheckResults.pRetData && (
+              <div>
+                <h4 className="font-semibold mb-2">Fraud Check Report:</h4>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <pre className="text-sm whitespace-pre-wrap overflow-x-auto">
+                    {typeof fraudCheckResults.pRetData === "string"
+                      ? fraudCheckResults.pRetData
+                      : JSON.stringify(fraudCheckResults.pRetData, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            )}
+
+            <details className="text-sm">
+              <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                View Full Raw Response
+              </summary>
+              <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto mt-2">
+                {JSON.stringify(fraudCheckResults, null, 2)}
+              </pre>
+            </details>
           </CardContent>
         </Card>
       )}

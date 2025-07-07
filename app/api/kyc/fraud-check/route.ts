@@ -109,38 +109,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: data.error }, { status: 400 });
     }
 
-    // Check if the response contains a PDF URL
-    if (data.resultType === "PDF2" && data.pdfUrl) {
-      console.log("PDF URL received:", data.pdfUrl);
-      return NextResponse.json({ pdfUrl: data.pdfUrl }, { status: 200 });
-    }
-
     // the type of the response is a JSON object that looks like this:
     // {
     // "pTransactionCompleted": true/false,
-    // "pRetData": Base64 encoded string,
+    // "pRetData": Base64 encoded string (to be decoded on client),
     // }
 
-    // decode the Base64 string if it exists
-    if (data.pRetData) {
-      try {
-        const decodedData = Buffer.from(data.pRetData, "base64").toString(
-          "utf-8"
-        );
-        data.pRetData = JSON.parse(decodedData);
-        console.log("Decoded pRetData:", data.pRetData);
-        // return the decoded data
-        return NextResponse.json(data.pRetData, { status: 200 });
-      } catch (decodeError) {
-        console.error("Error decoding pRetData:", decodeError);
-        return NextResponse.json(
-          { error: "Failed to decode pRetData" },
-          { status: 500 }
-        );
-      }
-    }
-
-    // If no PDF URL, return the JSON data
+    // Return the data as-is, including the Base64 encoded pRetData
+    // Client will handle the Base64 decoding
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
     console.error("Fraud check error:", error);
