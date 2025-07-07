@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         workTelCode: workTelCode || "",
         clientConsent: "Y",
         adrs_Mandatory: "Y",
-        resultType: "PDF2",
+        resultType: "JSON",
         enqPurpose: "12",
       },
     };
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await response.text();
+    const data = await response.json();
     console.log("Fraud check data received:", data);
 
     try {
