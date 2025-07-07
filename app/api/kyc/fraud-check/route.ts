@@ -128,6 +128,9 @@ export async function POST(request: NextRequest) {
           "utf-8"
         );
         data.pRetData = JSON.parse(decodedData);
+        console.log("Decoded pRetData:", data.pRetData);
+        // return the decoded data
+        return NextResponse.json(data.pRetData, { status: 200 });
       } catch (decodeError) {
         console.error("Error decoding pRetData:", decodeError);
         return NextResponse.json(
