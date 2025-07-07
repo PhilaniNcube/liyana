@@ -50,12 +50,12 @@ export async function POST(request: NextRequest) {
       dllVersion: "1",
       searchCriteria: {
         publicDomainSearch: "Y",
-        csData: "Y",
-        cpaPlusNLRData: "Y",
-        deeds: "Y",
-        directors: "Y",
+        csData: "N",
+        cpaPlusNLRData: "N",
+        deeds: "N",
+        directors: "N",
         runCompuScore: "Y",
-        runCodix: "Y",
+        runCodix: "N",
         codixParams:
           "<PARAMS><PARAM_NAME>MonthsSinceEmployed</PARAM_NAME><PARAM_VALUE>12</PARAM_VALUE></PARAMS><PARAMS><PARAM_NAME>IncomePM</PARAM_NAME><PARAM_VALUE>7000</PARAM_VALUE></PARAMS><PARAMS><PARAM_NAME>RunBehaviourScore</PARAM_NAME><PARAM_VALUE>N</PARAM_VALUE></PARAMS>",
         passportFlag: "N",
