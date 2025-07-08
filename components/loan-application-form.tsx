@@ -59,16 +59,16 @@ const convertApplicationToFormData = (
     id_number: appData.id_number || "",
     phone_number: appData.phone_number || "",
     date_of_birth: appData.date_of_birth || "",
-    gender: appData.gender || undefined,
+    gender: appData.gender || "male",
     gender_other: appData.gender_other || "",
-    language: appData.language || "",
-    nationality: appData.nationality || "",
-    marital_status: appData.marital_status || undefined,
+    language: appData.language || "English",
+    nationality: appData.nationality || "South African",
+    marital_status: appData.marital_status || "single",
     dependants: appData.dependants || 0,
     residential_address: appData.home_address || "",
     city: appData.city || "",
     postal_code: appData.postal_code || "",
-    employment_type: appData.employment_type || undefined,
+    employment_type: appData.employment_type || "employed",
     employer_name: appData.employer_name || "",
     job_title: appData.job_title || "",
     monthly_income: appData.monthly_income || 0,
@@ -114,7 +114,7 @@ const convertApplicationToFormData = (
     bank_name: appData.bank_name || "",
     bank_account_holder: appData.bank_account_holder || "",
     bank_account_number: appData.bank_account_number || "",
-    bank_account_type: appData.bank_account_type || undefined,
+    bank_account_type: appData.bank_account_type || "savings",
     branch_code: appData.branch_code || "",
   };
 };
@@ -338,8 +338,8 @@ export function LoanApplicationForm({
       email: "",
       gender: "male",
       gender_other: "",
-      language: "",
-      nationality: "",
+      language: "English",
+      nationality: "South African",
       dependants: 0,
       marital_status: "single",
       residential_address: "",
@@ -545,6 +545,21 @@ export function LoanApplicationForm({
           if (key === "affordability") {
             // Serialize affordability object as JSON
             formDataObj.append(key, JSON.stringify(value));
+          } else if (key === "date_of_birth" || key === "employment_end_date") {
+            // Handle date fields specially - don't submit empty strings
+            if (value && value.toString().trim() !== "") {
+              formDataObj.append(key, value.toString());
+            }
+          } else if (
+            key === "gender_other" ||
+            key === "employer_address" ||
+            key === "employer_contact_number" ||
+            key === "loan_purpose_reason"
+          ) {
+            // Handle optional fields - don't submit empty strings
+            if (value && value.toString().trim() !== "") {
+              formDataObj.append(key, value.toString());
+            }
           } else {
             formDataObj.append(key, value.toString());
           }

@@ -7,6 +7,31 @@ import { loanApplicationSchema } from "@/lib/schemas";
 
 export type LoanApplicationFormData = z.infer<typeof loanApplicationSchema>;
 
+// Helper function to handle date fields - converts empty strings to null
+const formatDateForDB = (
+  dateString: string | undefined | null
+): string | null => {
+  if (!dateString || dateString.trim() === "") {
+    return null;
+  }
+
+  // Validate date format (YYYY-MM-DD)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(dateString)) {
+    console.warn(`Invalid date format: ${dateString}`);
+    return null;
+  }
+
+  // Additional validation - check if date is valid
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    console.warn(`Invalid date value: ${dateString}`);
+    return null;
+  }
+
+  return dateString;
+};
+
 export interface LoanApplicationState {
   errors?: {
     [key: string]: string[];
@@ -37,11 +62,16 @@ export async function submitLoanApplication(
     date_of_birth: formData.get("date_of_birth"),
     phone_number: formData.get("phone_number"),
     email: formData.get("email"),
+    gender: formData.get("gender"),
+    gender_other: formData.get("gender_other") || undefined,
+    language: formData.get("language"),
+    nationality: formData.get("nationality"),
     dependants: formData.get("dependants")
       ? parseInt(formData.get("dependants") as string)
       : 0,
     marital_status: formData.get("marital_status"),
     residential_address: formData.get("residential_address"),
+    city: formData.get("city"),
     postal_code: formData.get("postal_code"),
     employment_type: formData.get("employment_type"),
     employer_name: formData.get("employer_name"),
@@ -49,14 +79,15 @@ export async function submitLoanApplication(
     monthly_income: formData.get("monthly_income")
       ? parseFloat(formData.get("monthly_income") as string)
       : 0,
-    employer_address: formData.get("employer_address"),
-    employer_contact_number: formData.get("employer_contact_number"),
-    employment_end_date: formData.get("employment_end_date"),
+    employer_address: formData.get("employer_address") || undefined,
+    employer_contact_number:
+      formData.get("employer_contact_number") || undefined,
+    employment_end_date: formData.get("employment_end_date") || undefined,
     application_amount: formData.get("application_amount")
       ? parseFloat(formData.get("application_amount") as string)
       : 1000,
     loan_purpose: formData.get("loan_purpose"),
-    loan_purpose_reason: formData.get("loan_purpose_reason"),
+    loan_purpose_reason: formData.get("loan_purpose_reason") || undefined,
     affordability: affordabilityData,
     term: formData.get("term") ? parseInt(formData.get("term") as string) : 1,
     bank_name: formData.get("bank_name"),
@@ -68,6 +99,10 @@ export async function submitLoanApplication(
 
   if (!result.success) {
     console.log("Validation errors:", result.error.flatten().fieldErrors);
+    console.log("Form data received:", {
+      date_of_birth: formData.get("date_of_birth"),
+      employment_end_date: formData.get("employment_end_date"),
+    });
     return {
       errors: result.error.flatten().fieldErrors,
     };
@@ -117,7 +152,7 @@ export async function submitLoanApplication(
       // Personal Information
       id_number: encryptedIdNumber,
       phone_number: result.data.phone_number,
-      date_of_birth: result.data.date_of_birth,
+      date_of_birth: formatDateForDB(result.data.date_of_birth),
       gender: result.data.gender as any,
       gender_other: result.data.gender_other || null,
       language: result.data.language || null,
@@ -142,7 +177,7 @@ export async function submitLoanApplication(
       monthly_income: result.data.monthly_income,
       employer_address: result.data.employer_address,
       employer_contact_number: result.data.employer_contact_number,
-      employment_end_date: result.data.employment_end_date,
+      employment_end_date: formatDateForDB(result.data.employment_end_date),
 
       // Banking information
       bank_name: result.data.bank_name,
