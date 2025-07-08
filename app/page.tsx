@@ -45,8 +45,8 @@ export default async function Home() {
             </div>
 
             {/* Conditional Sign Up Form or Apply Now Button */}
-            <div className="w-full">
-              <div className="">
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="w-full">
                 {currentUser ? (
                   <Card className="w-full">
                     <CardHeader>
