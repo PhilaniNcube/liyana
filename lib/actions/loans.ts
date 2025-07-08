@@ -49,10 +49,15 @@ export async function submitLoanApplication(
     monthly_income: formData.get("monthly_income")
       ? parseFloat(formData.get("monthly_income") as string)
       : 0,
+    employer_address: formData.get("employer_address"),
+    employer_contact_number: formData.get("employer_contact_number"),
+    employment_end_date: formData.get("employment_end_date"),
     application_amount: formData.get("application_amount")
       ? parseFloat(formData.get("application_amount") as string)
       : 1000,
     loan_purpose: formData.get("loan_purpose"),
+    loan_purpose_reason: formData.get("loan_purpose_reason"),
+    affordability: affordabilityData,
     term: formData.get("term") ? parseInt(formData.get("term") as string) : 1,
     bank_name: formData.get("bank_name"),
     bank_account_holder: formData.get("bank_account_holder"),
@@ -113,14 +118,20 @@ export async function submitLoanApplication(
       id_number: encryptedIdNumber,
       phone_number: result.data.phone_number,
       date_of_birth: result.data.date_of_birth,
+      gender: result.data.gender as any,
+      gender_other: result.data.gender_other || null,
+      language: result.data.language || null,
+      nationality: result.data.nationality || null,
       dependants: result.data.dependants,
       marital_status: result.data.marital_status as any,
       home_address: result.data.residential_address,
+      city: result.data.city || null,
       postal_code: result.data.postal_code || null,
 
       // Loan Information
       application_amount: result.data.application_amount,
       loan_purpose: result.data.loan_purpose,
+      loan_purpose_reason: result.data.loan_purpose_reason,
       term: result.data.term,
       status: "pre_qualifier" as const,
 
@@ -129,6 +140,9 @@ export async function submitLoanApplication(
       employer_name: result.data.employer_name,
       job_title: result.data.job_title,
       monthly_income: result.data.monthly_income,
+      employer_address: result.data.employer_address,
+      employer_contact_number: result.data.employer_contact_number,
+      employment_end_date: result.data.employment_end_date,
 
       // Banking information
       bank_name: result.data.bank_name,
@@ -136,6 +150,9 @@ export async function submitLoanApplication(
       bank_account_type: result.data.bank_account_type as any,
       bank_account_number: result.data.bank_account_number,
       branch_code: result.data.branch_code,
+
+      // Affordability information
+      affordability: affordabilityData,
     };
 
     // Insert loan application into database

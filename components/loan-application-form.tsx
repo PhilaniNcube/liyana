@@ -59,17 +59,58 @@ const convertApplicationToFormData = (
     id_number: appData.id_number || "",
     phone_number: appData.phone_number || "",
     date_of_birth: appData.date_of_birth || "",
+    gender: appData.gender || undefined,
+    gender_other: appData.gender_other || "",
+    language: appData.language || "",
+    nationality: appData.nationality || "",
     marital_status: appData.marital_status || undefined,
     dependants: appData.dependants || 0,
     residential_address: appData.home_address || "",
+    city: appData.city || "",
     postal_code: appData.postal_code || "",
     employment_type: appData.employment_type || undefined,
     employer_name: appData.employer_name || "",
     job_title: appData.job_title || "",
     monthly_income: appData.monthly_income || 0,
+    employer_address: appData.employer_address || "",
+    employer_contact_number: appData.employer_contact_number || "",
+    employment_end_date: appData.employment_end_date || "",
     application_amount: appData.application_amount || 1000,
-    term: appData.term || 1,
+    term: appData.term || 5,
     loan_purpose: appData.loan_purpose || "",
+    loan_purpose_reason: appData.loan_purpose_reason || "",
+    affordability: (appData.affordability as any) || {
+      income: [
+        { type: "Bonus", amount: 0 },
+        { type: "Rental Income", amount: 0 },
+        { type: "Business Income", amount: 0 },
+        { type: "Maintenance/spousal support", amount: 0 },
+        { type: "Other", amount: 0 },
+      ],
+      expenses: [
+        { type: "Levies", amount: 0 },
+        { type: "Municipal rates and taxes", amount: 0 },
+        { type: "Car repayment", amount: 0 },
+        { type: "Mortgage", amount: 0 },
+        { type: "Rent", amount: 0 },
+        { type: "DSTV", amount: 0 },
+        { type: "School fees", amount: 0 },
+        { type: "Groceries", amount: 0 },
+        { type: "Fuel", amount: 0 },
+        { type: "Airtime/Cellphone contract", amount: 0 },
+        { type: "Medical Expenses", amount: 0 },
+        { type: "Insurance", amount: 0 },
+        { type: "Uniform", amount: 0 },
+        { type: "Domestic services", amount: 0 },
+        { type: "Other", amount: 0 },
+      ],
+      deductions: [
+        { type: "PAYE", amount: 0 },
+        { type: "UIF", amount: 0 },
+        { type: "SDL", amount: 0 },
+        { type: "Other", amount: 0 },
+      ],
+    },
     bank_name: appData.bank_name || "",
     bank_account_holder: appData.bank_account_holder || "",
     bank_account_number: appData.bank_account_number || "",
@@ -213,7 +254,7 @@ export function LoanApplicationForm({
   // Use nuqs for step management and applicationId via search params
   const [currentStep, setCurrentStep] = useQueryState(
     "step",
-    parseAsInteger.withDefault(1)
+    parseAsInteger.withDefault(1) // Start from step 1 (Credit Check)
   );
 
   const [applicationId, setApplicationId] = useQueryState(
@@ -295,17 +336,58 @@ export function LoanApplicationForm({
       date_of_birth: "",
       phone_number: "",
       email: "",
+      gender: "male",
+      gender_other: "",
+      language: "",
+      nationality: "",
       dependants: 0,
       marital_status: "single",
       residential_address: "",
+      city: "",
       postal_code: "",
       employment_type: "employed",
       employer_name: "",
       job_title: "",
       monthly_income: 0,
+      employer_address: "",
+      employer_contact_number: "",
+      employment_end_date: "",
       application_amount: 1000,
-      term: 1,
+      term: 5,
       loan_purpose: "",
+      loan_purpose_reason: "",
+      affordability: {
+        income: [
+          { type: "Bonus", amount: 0 },
+          { type: "Rental Income", amount: 0 },
+          { type: "Business Income", amount: 0 },
+          { type: "Maintenance/spousal support", amount: 0 },
+          { type: "Other", amount: 0 },
+        ],
+        expenses: [
+          { type: "Levies", amount: 0 },
+          { type: "Municipal rates and taxes", amount: 0 },
+          { type: "Car repayment", amount: 0 },
+          { type: "Mortgage", amount: 0 },
+          { type: "Rent", amount: 0 },
+          { type: "DSTV", amount: 0 },
+          { type: "School fees", amount: 0 },
+          { type: "Groceries", amount: 0 },
+          { type: "Fuel", amount: 0 },
+          { type: "Airtime/Cellphone contract", amount: 0 },
+          { type: "Medical Expenses", amount: 0 },
+          { type: "Insurance", amount: 0 },
+          { type: "Uniform", amount: 0 },
+          { type: "Domestic services", amount: 0 },
+          { type: "Other", amount: 0 },
+        ],
+        deductions: [
+          { type: "PAYE", amount: 0 },
+          { type: "UIF", amount: 0 },
+          { type: "SDL", amount: 0 },
+          { type: "Other", amount: 0 },
+        ],
+      },
       bank_name: "",
       bank_account_holder: "",
       bank_account_number: "",
@@ -397,8 +479,9 @@ export function LoanApplicationForm({
       console.log("Form validation errors:", errors);
 
       // Determine which step contains the first error
-      let errorStep = 2; // Default to first form step
+      let errorStep = 1; // Default to first step
 
+      // Step 1 is credit check (no specific form errors, proceed to step 2)
       // Step 2 fields (Personal Info)
       if (
         errors.first_name ||
@@ -407,9 +490,14 @@ export function LoanApplicationForm({
         errors.date_of_birth ||
         errors.phone_number ||
         errors.email ||
+        errors.gender ||
+        errors.gender_other ||
+        errors.language ||
+        errors.nationality ||
         errors.dependants ||
         errors.marital_status ||
         errors.residential_address ||
+        errors.city ||
         errors.postal_code
       ) {
         errorStep = 2;
@@ -419,7 +507,10 @@ export function LoanApplicationForm({
         errors.employment_type ||
         errors.employer_name ||
         errors.job_title ||
-        errors.monthly_income
+        errors.monthly_income ||
+        errors.employer_address ||
+        errors.employer_contact_number ||
+        errors.employment_end_date
       ) {
         errorStep = 3;
       }
@@ -427,6 +518,8 @@ export function LoanApplicationForm({
       else if (
         errors.application_amount ||
         errors.loan_purpose ||
+        errors.loan_purpose_reason ||
+        errors.affordability ||
         errors.term ||
         errors.bank_name ||
         errors.bank_account_holder ||
@@ -449,7 +542,12 @@ export function LoanApplicationForm({
       // Add all form fields
       Object.entries(formData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          formDataObj.append(key, value.toString());
+          if (key === "affordability") {
+            // Serialize affordability object as JSON
+            formDataObj.append(key, JSON.stringify(value));
+          } else {
+            formDataObj.append(key, value.toString());
+          }
         }
       });
 
@@ -560,7 +658,7 @@ export function LoanApplicationForm({
         )}
 
         <div className={`flex gap-2 ${currentStep === 1 ? "ml-auto" : ""}`}>
-          {currentStep < 5 && currentStep !== 1 && (
+          {currentStep < 5 && ( // Allow all steps except step 5 to show Next button
             <Button type="button" onClick={handleNext} disabled={isPending}>
               {currentStep === 4 && isPending ? (
                 <>
