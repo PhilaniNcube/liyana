@@ -74,6 +74,16 @@ const MobileNavigation = ({ currentUser }: MobileNavigationProps) => {
                           My Profile
                         </Button>
                       </Link>
+                      {currentUser.role === "admin" && (
+                        <Link href="/dashboard" onClick={closeSheet}>
+                          <Button
+                            size="sm"
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            Dashboard
+                          </Button>
+                        </Link>
+                      )}
                       <LogoutButton />
                     </div>
                   </div>

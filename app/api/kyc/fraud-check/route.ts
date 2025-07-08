@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         workTelCode: workTelCode || "",
         clientConsent: "Y",
         adrs_Mandatory: "Y",
-        resultType: "JSON",
+        resultType: "JPDF2",
         enqPurpose: "12",
       },
     };

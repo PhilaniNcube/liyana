@@ -166,6 +166,22 @@ export function ApplicationDetailClient({
     return date.toISOString().split("T")[0].replace(/-/g, "");
   };
 
+  const getFileMimeType = (fileName: string) => {
+    const extension = fileName.split(".").pop()?.toLowerCase();
+    switch (extension) {
+      case "pdf":
+        return "application/pdf";
+      case "json":
+        return "application/json";
+      case "xml":
+        return "application/xml";
+      case "txt":
+        return "text/plain";
+      default:
+        return "text/plain";
+    }
+  };
+
   const handleFraudCheck = async () => {
     setIsRunningFraudCheck(true);
     try {
@@ -246,16 +262,42 @@ export function ApplicationDetailClient({
                 if (!file.dir) {
                   // Skip directories
                   try {
-                    const content = await file.async("string");
-                    console.log(
-                      `Extracted file: ${fileName}, size: ${content.length}`
-                    );
+                    const fileExtension = fileName
+                      .split(".")
+                      .pop()
+                      ?.toLowerCase();
 
-                    extractedFiles.push({
-                      name: fileName,
-                      content: content,
-                      size: content.length,
-                    });
+                    // Handle different file types
+                    if (fileExtension === "pdf") {
+                      // Extract PDF as binary data
+                      const content = await file.async("base64");
+                      const binarySize = content.length * 0.75; // Approximate binary size
+                      console.log(
+                        `Extracted PDF file: ${fileName}, size: ${binarySize} bytes`
+                      );
+
+                      extractedFiles.push({
+                        name: fileName,
+                        content: content,
+                        size: Math.round(binarySize),
+                        type: "pdf",
+                        mimeType: "application/pdf",
+                      });
+                    } else {
+                      // Extract other files as text
+                      const content = await file.async("string");
+                      console.log(
+                        `Extracted file: ${fileName}, size: ${content.length}`
+                      );
+
+                      extractedFiles.push({
+                        name: fileName,
+                        content: content,
+                        size: content.length,
+                        type: fileExtension || "text",
+                        mimeType: getFileMimeType(fileName),
+                      });
+                    }
                   } catch (fileError) {
                     console.error(
                       `Error extracting file ${fileName}:`,
@@ -268,6 +310,7 @@ export function ApplicationDetailClient({
                           ? fileError.message
                           : String(fileError),
                       size: 0,
+                      type: "error",
                     });
                   }
                 }
@@ -470,9 +513,16 @@ export function ApplicationDetailClient({
                                   <h5 className="font-medium text-gray-900">
                                     {file.name}
                                   </h5>
-                                  <Badge variant="outline">
-                                    {file.size ? `${file.size} chars` : "Error"}
-                                  </Badge>
+                                  <div className="flex items-center space-x-2">
+                                    <Badge variant="outline">
+                                      {file.type?.toUpperCase() || "TEXT"}
+                                    </Badge>
+                                    <Badge variant="outline">
+                                      {file.size
+                                        ? `${file.size} ${file.type === "pdf" ? "bytes" : "chars"}`
+                                        : "Error"}
+                                    </Badge>
+                                  </div>
                                 </div>
 
                                 {file.error ? (
@@ -483,6 +533,88 @@ export function ApplicationDetailClient({
                                     <p className="text-xs text-red-700">
                                       {file.error}
                                     </p>
+                                  </div>
+                                ) : file.type === "pdf" ? (
+                                  <div className="space-y-3">
+                                    <div className="p-3 bg-blue-50 rounded">
+                                      <p className="text-sm text-blue-800 font-medium mb-2">
+                                        📄 PDF Document
+                                      </p>
+                                      <p className="text-xs text-blue-700 mb-3">
+                                        This PDF contains the detailed fraud
+                                        check report.
+                                      </p>
+                                      <div className="flex items-center space-x-2">
+                                        <Button
+                                          size="sm"
+                                          onClick={() => {
+                                            const pdfBlob = new Blob(
+                                              [
+                                                new Uint8Array(
+                                                  atob(file.content)
+                                                    .split("")
+                                                    .map((char) =>
+                                                      char.charCodeAt(0)
+                                                    )
+                                                ),
+                                              ],
+                                              { type: "application/pdf" }
+                                            );
+                                            const pdfUrl =
+                                              URL.createObjectURL(pdfBlob);
+                                            window.open(pdfUrl, "_blank");
+                                          }}
+                                        >
+                                          View PDF
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => {
+                                            const pdfBlob = new Blob(
+                                              [
+                                                new Uint8Array(
+                                                  atob(file.content)
+                                                    .split("")
+                                                    .map((char) =>
+                                                      char.charCodeAt(0)
+                                                    )
+                                                ),
+                                              ],
+                                              { type: "application/pdf" }
+                                            );
+                                            const pdfUrl =
+                                              URL.createObjectURL(pdfBlob);
+                                            const link =
+                                              document.createElement("a");
+                                            link.href = pdfUrl;
+                                            link.download = file.name;
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                            URL.revokeObjectURL(pdfUrl);
+                                          }}
+                                        >
+                                          Download PDF
+                                        </Button>
+                                      </div>
+                                    </div>
+
+                                    {/* Embedded PDF Viewer */}
+                                    <div className="bg-gray-100 rounded p-4">
+                                      <p className="text-sm font-medium text-gray-700 mb-2">
+                                        PDF Preview:
+                                      </p>
+                                      <div className="bg-white rounded border">
+                                        <embed
+                                          src={`data:application/pdf;base64,${file.content}`}
+                                          type="application/pdf"
+                                          width="100%"
+                                          height="600px"
+                                          className="rounded"
+                                        />
+                                      </div>
+                                    </div>
                                   </div>
                                 ) : (
                                   <div className="space-y-3">
@@ -496,6 +628,29 @@ export function ApplicationDetailClient({
                                         <div className="bg-gray-50 rounded p-3 max-h-96 overflow-auto">
                                           <pre className="text-xs whitespace-pre-wrap">
                                             {file.content}
+                                          </pre>
+                                        </div>
+                                      </div>
+                                    ) : file.type === "json" ||
+                                      (file.content &&
+                                        file.content.trim().startsWith("{")) ? (
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-700 mb-2">
+                                          JSON Content:
+                                        </p>
+                                        <div className="bg-gray-50 rounded p-3 max-h-96 overflow-auto">
+                                          <pre className="text-xs whitespace-pre-wrap">
+                                            {(() => {
+                                              try {
+                                                return JSON.stringify(
+                                                  JSON.parse(file.content),
+                                                  null,
+                                                  2
+                                                );
+                                              } catch (e) {
+                                                return file.content;
+                                              }
+                                            })()}
                                           </pre>
                                         </div>
                                       </div>

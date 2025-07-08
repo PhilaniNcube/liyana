@@ -50,6 +50,14 @@ export async function Navigation() {
               >
                 Profile
               </Link>
+              {currentUser.role === "admin" && (
+                <Link
+                  href="/dashboard"
+                  className="text-sm font-medium bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Dashboard
+                </Link>
+              )}
               <LogoutButton />
             </>
           ) : (
