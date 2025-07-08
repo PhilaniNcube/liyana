@@ -388,15 +388,6 @@ export function LoanApplicationForm({
     }
   };
 
-  const handleStepClick = async (step: number) => {
-    // Allow navigation only to completed steps or the current step
-    if (step <= currentStep) {
-      await setCurrentStep(step);
-      // Scroll to top after navigation
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
   const handleSubmitApplication = async () => {
     // Trigger form validation for all fields
     const isValid = await form.trigger();

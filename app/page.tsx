@@ -1,5 +1,6 @@
 import { SignUpForm } from "@/components/sign-up-form";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -7,10 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getCurrentUser } from "@/lib/queries/user";
+import Link from "next/link";
 
 import { CheckCircle } from "lucide-react";
 
-export default function Home() {
+export default async function Home() {
+  const currentUser = await getCurrentUser();
+
   return (
     <div>
       <section className="w-full py-12">
@@ -39,10 +44,29 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Sign Up Form */}
+            {/* Conditional Sign Up Form or Apply Now Button */}
             <div className="w-full">
               <div className="">
-                <SignUpForm className="w-full" />
+                {currentUser ? (
+                  <Card className="w-full">
+                    <CardHeader>
+                      <CardTitle>
+                        Welcome back, {currentUser.full_name}!
+                      </CardTitle>
+                      <CardDescription>
+                        Ready to apply for a loan? Start your application
+                        process now.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button asChild size="lg" className="w-full">
+                        <Link href="/apply">Apply Now</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <SignUpForm className="w-full" />
+                )}
               </div>
             </div>
           </div>
