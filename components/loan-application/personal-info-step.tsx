@@ -255,6 +255,57 @@ export function PersonalInfoStep({ form }: PersonalInfoStepProps) {
           )}
         />
       </div>
+
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-4">Next of Kin Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="next_of_kin_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Next of Kin Name *</FormLabel>
+                <FormControl>
+                  <Input placeholder="John Doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="next_of_kin_phone_number"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Next of Kin Phone Number *</FormLabel>
+                <FormControl>
+                  <Input placeholder="0123456789" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="mt-4">
+          <FormField
+            control={form.control}
+            name="next_of_kin_email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Next of Kin Email Address *</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="nextofkin@example.com"
+                    type="email"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </div>
     </div>
   );
 }

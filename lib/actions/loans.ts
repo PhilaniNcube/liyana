@@ -73,6 +73,9 @@ export async function submitLoanApplication(
     residential_address: formData.get("residential_address"),
     city: formData.get("city"),
     postal_code: formData.get("postal_code"),
+    next_of_kin_name: formData.get("next_of_kin_name"),
+    next_of_kin_phone_number: formData.get("next_of_kin_phone_number"),
+    next_of_kin_email: formData.get("next_of_kin_email"),
     employment_type: formData.get("employment_type"),
     employer_name: formData.get("employer_name"),
     job_title: formData.get("job_title"),
@@ -162,6 +165,11 @@ export async function submitLoanApplication(
       home_address: result.data.residential_address,
       city: result.data.city || null,
       postal_code: result.data.postal_code || null,
+
+      // Next of Kin Information
+      next_of_kin_name: result.data.next_of_kin_name,
+      next_of_kin_phone_number: result.data.next_of_kin_phone_number,
+      next_of_kin_email: result.data.next_of_kin_email,
 
       // Loan Information
       application_amount: result.data.application_amount,

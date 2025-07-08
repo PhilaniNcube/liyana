@@ -81,6 +81,14 @@ export const loanApplicationSchema = z
       .min(4, "Postal code must be at least 4 digits")
       .max(4, "Postal code must be exactly 4 digits")
       .regex(/^\d{4}$/, "Postal code must be 4 digits"),
+    // Next of Kin Information
+    next_of_kin_name: z.string().min(1, "Next of kin name is required"),
+    next_of_kin_phone_number: z
+      .string()
+      .min(10, "Next of kin phone number must be at least 10 digits"),
+    next_of_kin_email: z
+      .string()
+      .email("Please enter a valid email address for next of kin"),
     // Employment and Loan Information
     employment_type: z.enum(
       ["employed", "self_employed", "contract", "unemployed", "retired"],
