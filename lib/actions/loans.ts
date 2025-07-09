@@ -4,6 +4,7 @@ import { createClient } from "@/lib/server";
 import { encryptValue } from "@/lib/encryption";
 import { z } from "zod";
 import { loanApplicationSchema } from "@/lib/schemas";
+import { sendSms } from "./sms";
 
 export type LoanApplicationFormData = z.infer<typeof loanApplicationSchema>;
 
@@ -213,6 +214,12 @@ export async function submitLoanApplication(
         },
       };
     }
+
+    await sendSms(
+      result.data.phone_number,
+      `New loan application from ${result.data.first_name} ${result.data.last_name}. Application ID: ${insertedApplication.id}`
+    );
+
     return {
       success: true,
       applicationId: insertedApplication.id.toString(),
