@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/server";
 import { z } from "zod";
+import type { Database } from "@/lib/types";
 
 // API Check query schemas
 export const getApiCheckByIdSchema = z.object({
@@ -25,6 +26,10 @@ export const getApiChecksByStatusSchema = z.object({
 
 export const getApiChecksByVendorSchema = z.object({
   vendor: z.enum(["Experian", "WhoYou", "ThisIsMe"]),
+});
+
+export const getApiChecksByIdNumberSchema = z.object({
+  idNumber: z.string().min(1),
 });
 
 // Query functions
@@ -217,6 +222,24 @@ export async function getLatestApiCheckForApplication(
 
   if (error) {
     throw new Error(`Failed to fetch latest API check: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function getApiChecksByIdNumber(idNumber: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("api_checks")
+    .select("*")
+    .eq("id_number", idNumber)
+    .order("checked_at", { ascending: false });
+
+  if (error) {
+    throw new Error(
+      `Failed to fetch API checks for ID number: ${error.message}`
+    );
   }
 
   return data;

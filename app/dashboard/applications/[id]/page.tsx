@@ -1,4 +1,5 @@
 import { getApplicationByIdWithProfile } from "@/lib/queries/applications";
+import { getApiChecksByIdNumber } from "@/lib/queries/api-checks";
 import { notFound } from "next/navigation";
 import { decryptValue } from "@/lib/encryption";
 import { ApplicationDetailClient } from "./client";
@@ -25,12 +26,22 @@ export default async function ApplicationDetailPage({
     }
 
     // Decrypt sensitive data on the server side
+    const decryptedIdNumber = decryptValue(application.id_number);
+
+    // Fetch API checks for the decrypted ID number
+    const apiChecks = await getApiChecksByIdNumber(decryptedIdNumber);
+
     const decryptedApplication = {
       ...application,
-      id_number_decrypted: decryptValue(application.id_number),
+      id_number_decrypted: decryptedIdNumber,
     };
 
-    return <ApplicationDetailClient application={decryptedApplication} />;
+    return (
+      <ApplicationDetailClient
+        application={decryptedApplication}
+        apiChecks={apiChecks}
+      />
+    );
   } catch (error) {
     console.error("Error fetching application:", error);
     notFound();
