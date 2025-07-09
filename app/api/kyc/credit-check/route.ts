@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/server";
 
 interface ScoreReason {
   reasonCode: string;
@@ -22,6 +23,34 @@ interface ExperianResponse {
   errorCode: string;
   errorDescription: string;
   returnData?: string; // This is a JSON string, and optional
+}
+
+// Helper function to save API check result to database
+async function saveApiCheckResult(
+  idNumber: string,
+  status: "passed" | "failed" | "pending",
+  responsePayload: any
+) {
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase.from("api_checks").insert({
+      id_number: idNumber,
+      check_type: "credit_bureau",
+      vendor: "Experian",
+      status: status,
+      response_payload: responsePayload,
+      checked_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.error("Error saving API check result:", error);
+    } else {
+      console.log("API check result saved successfully");
+    }
+  } catch (error) {
+    console.error("Error saving API check result:", error);
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -73,6 +102,9 @@ export async function GET(request: NextRequest) {
 
   // Check for transaction errors from the Experian API
   if (apiResponse.hasErrors || !apiResponse.transactionCompleted) {
+    // Save failed API check result
+    await saveApiCheckResult(idNumber, "failed", apiResponse);
+
     return NextResponse.json(
       {
         success: false,
@@ -87,6 +119,9 @@ export async function GET(request: NextRequest) {
   // Since we checked for errors, returnData should now be present.
   // If it's not, something is wrong with the API response contract.
   if (!apiResponse.returnData) {
+    // Save failed API check result
+    await saveApiCheckResult(idNumber, "failed", apiResponse);
+
     return NextResponse.json(
       {
         success: false,
@@ -102,6 +137,13 @@ export async function GET(request: NextRequest) {
 
   // Check for an empty result from the Experian API, which can indicate a "thin file"
   if (!data || !data.results || data.results.length === 0) {
+    // Save failed API check result
+    await saveApiCheckResult(idNumber, "failed", {
+      ...apiResponse,
+      parsedData: data,
+      reason: "No credit score information found",
+    });
+
     return NextResponse.json(
       {
         success: false,
@@ -118,6 +160,13 @@ export async function GET(request: NextRequest) {
   const score = parseInt(scoreResult.score, 10);
 
   if (isNaN(score)) {
+    // Save failed API check result
+    await saveApiCheckResult(idNumber, "failed", {
+      ...apiResponse,
+      parsedData: data,
+      reason: "Invalid score format received",
+    });
+
     return NextResponse.json(
       { success: false, message: "Invalid score format received." },
       { status: 500 }
@@ -126,6 +175,14 @@ export async function GET(request: NextRequest) {
 
   // Check if the score meets the minimum requirement
   if (score < 600) {
+    // Save failed API check result
+    await saveApiCheckResult(idNumber, "failed", {
+      ...apiResponse,
+      parsedData: data,
+      creditScore: score,
+      reason: "Score below minimum requirement",
+    });
+
     return NextResponse.json(
       {
         success: false,
@@ -138,6 +195,14 @@ export async function GET(request: NextRequest) {
   }
 
   // If the score is sufficient, return a success response
+  // Save successful API check result
+  await saveApiCheckResult(idNumber, "passed", {
+    ...apiResponse,
+    parsedData: data,
+    creditScore: score,
+    reason: "Credit check passed",
+  });
+
   return NextResponse.json(
     {
       success: true,

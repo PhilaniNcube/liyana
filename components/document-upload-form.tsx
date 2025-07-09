@@ -21,13 +21,13 @@ import {
   Loader2,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { useQueryState, parseAsBoolean } from "nuqs";
+import { useRouter } from "next/navigation";
 import { uploadDocument } from "@/lib/client-actions/documents";
 import { revalidateDocuments } from "@/lib/actions/revalidate";
 import { useOptimisticDocumentUpdate } from "@/hooks/use-documents";
+import { useApplicationStep } from "@/components/application-layout";
 import type { DocumentUploadState } from "@/lib/queries/documents";
 import type { Database } from "@/lib/types";
-import { DocumentCompletionModal } from "./document-completion-modal";
 
 export const DOCUMENT_TYPES = {
   ID: "id",
@@ -365,11 +365,9 @@ export function DocumentUploadForm({
   documents,
   className,
 }: DocumentUploadFormProps) {
-  // Use nuqs to manage modal state via URL params
-  const [showCompletionModal, setShowCompletionModal] = useQueryState(
-    "showCompletionModal",
-    parseAsBoolean.withDefault(false)
-  );
+  const router = useRouter();
+  const { onStepChange } = useApplicationStep();
+  const [isCompleting, setIsCompleting] = useState(false);
 
   // Get existing documents by type (returns all documents of a type)
   const getDocumentsByType = (type: DocumentType) =>
@@ -391,42 +389,45 @@ export function DocumentUploadForm({
   ).length;
   const overallProgress = (uploadedDocuments / totalDocuments) * 100;
 
+  const handleCompleteApplication = async () => {
+    setIsCompleting(true);
+
+    try {
+      const response = await fetch("/api/documents/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ applicationId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to complete application");
+      }
+
+      // Update the application step to complete
+      onStepChange("complete");
+
+      // Revalidate routes to ensure all pages show updated status
+      await revalidateDocuments(applicationId);
+
+      // Redirect to profile page
+      router.push("/profile");
+    } catch (error) {
+      console.error("Error completing application:", error);
+      // You might want to show an error toast here
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
   const handleUploadSuccess = async (
     uploadedDocument?: Database["public"]["Tables"]["documents"]["Row"]
   ) => {
     // React Query handles the state updates automatically through optimistic updates
-
-    // Check if all documents are now complete and show modal if needed
-    // We need to check the updated state after the upload
-    setTimeout(() => {
-      const updatedDocuments = uploadedDocument
-        ? [...documents, uploadedDocument]
-        : documents;
-
-      const allComplete = Object.values(DOCUMENT_TYPES).every((type) => {
-        const docsOfType = updatedDocuments.filter(
-          (doc) => doc.document_type === type
-        );
-        return docsOfType.length > 0;
-      });
-
-      if (allComplete && !showCompletionModal) {
-        setShowCompletionModal(true);
-      }
-    }, 100); // Small delay to ensure state is updated
   };
-
-  // Automatically show modal when all documents are complete
-  useEffect(() => {
-    if (allTypesHaveDocuments && documents.length > 0 && !showCompletionModal) {
-      setShowCompletionModal(true);
-    }
-  }, [
-    allTypesHaveDocuments,
-    documents.length,
-    showCompletionModal,
-    setShowCompletionModal,
-  ]);
 
   return (
     <div className={cn("w-full max-w-4xl mx-auto space-y-4", className)}>
@@ -504,8 +505,29 @@ export function DocumentUploadForm({
           </div>
         </div>
       )}
-      {/* Document Completion Modal */}
-      <DocumentCompletionModal applicationId={applicationId} />
+
+      {/* Complete Application Button */}
+      {allTypesHaveDocuments && (
+        <div className="flex justify-center mt-6">
+          <Button
+            onClick={handleCompleteApplication}
+            disabled={isCompleting}
+            className="min-w-[200px]"
+          >
+            {isCompleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Complete Application
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

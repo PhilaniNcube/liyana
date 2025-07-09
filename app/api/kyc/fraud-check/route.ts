@@ -1,9 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/server";
+
+// Helper function to save API check result to database
+async function saveApiCheckResult(
+  idNumber: string,
+  status: "passed" | "failed" | "pending",
+  responsePayload: any
+) {
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase.from("api_checks").insert({
+      id_number: idNumber,
+      check_type: "fraud_check",
+      vendor: "Experian",
+      status: status,
+      response_payload: responsePayload,
+      checked_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.error("Error saving API check result:", error);
+    } else {
+      console.log("API check result saved successfully");
+    }
+  } catch (error) {
+    console.error("Error saving API check result:", error);
+  }
+}
 
 export async function POST(request: NextRequest) {
+  let idNumber: string | undefined;
+
   try {
     const {
-      idNumber,
+      idNumber: extractedIdNumber,
       forename,
       surname,
       gender,
@@ -19,6 +50,8 @@ export async function POST(request: NextRequest) {
       cellTelNo,
       workTelCode,
     } = await request.json();
+
+    idNumber = extractedIdNumber;
 
     if (!idNumber) {
       return NextResponse.json(
@@ -95,6 +128,15 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       console.error("Error fetching fraud check data:", response.statusText);
+
+      // Save failed API check result
+      await saveApiCheckResult(idNumber, "failed", {
+        error: "API request failed",
+        statusText: response.statusText,
+        status: response.status,
+        requestBody: requestBody,
+      });
+
       return NextResponse.json(
         { error: "Failed to fetch fraud check data" },
         { status: response.status }
@@ -106,6 +148,14 @@ export async function POST(request: NextRequest) {
 
     if (data.error) {
       console.error("Fraud check error:", data.error);
+
+      // Save failed API check result
+      await saveApiCheckResult(idNumber, "failed", {
+        ...data,
+        requestBody: requestBody,
+        reason: "API returned error",
+      });
+
       return NextResponse.json({ error: data.error }, { status: 400 });
     }
 
@@ -115,11 +165,33 @@ export async function POST(request: NextRequest) {
     // "pRetData": Base64 encoded string (to be decoded on client),
     // }
 
+    // Determine the status based on transaction completion
+    const status = data.pTransactionCompleted ? "passed" : "failed";
+
+    // Save API check result
+    await saveApiCheckResult(idNumber, status, {
+      ...data,
+      requestBody: requestBody,
+      reason: data.pTransactionCompleted
+        ? "Fraud check completed successfully"
+        : "Transaction not completed",
+    });
+
     // Return the data as-is, including the Base64 encoded pRetData
     // Client will handle the Base64 decoding
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
     console.error("Fraud check error:", error);
+
+    // Save failed API check result for internal errors
+    if (idNumber) {
+      await saveApiCheckResult(idNumber, "failed", {
+        error: "Internal server error",
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
+        reason: "Internal server error during fraud check",
+      });
+    }
+
     return NextResponse.json(
       { error: "Internal server error during fraud check" },
       { status: 500 }
