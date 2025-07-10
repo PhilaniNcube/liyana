@@ -16,8 +16,8 @@ export async function sendSms(
   const apiCredentials = `${SMS_PORTAL_CLIENT_ID}:${SMS_PORTAL_API_SECRET}`;
 
   // basic validation
-  let buff = Buffer.from(apiCredentials);
-  let base64Credentials = buff.toString("base64");
+  const buff = Buffer.from(apiCredentials);
+  const base64Credentials = buff.toString("base64");
 
   const response = await fetch(apiUrl, {
     method: "POST",
