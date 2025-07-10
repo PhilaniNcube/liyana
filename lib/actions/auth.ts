@@ -13,6 +13,13 @@ const signUpSchema = z
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
     email: z.string().email("Please enter a valid email address"),
+    phoneNumber: z
+      .string()
+      .min(1, "Phone number is required")
+      .regex(
+        /^(\+27|0)[0-9]{9}$/,
+        "Please enter a valid South African phone number (+27xxxxxxxxx or 0xxxxxxxxx)"
+      ),
     password: z.string().min(6, "Password must be at least 6 characters"),
     repeatPassword: z.string().min(6, "Password must be at least 6 characters"),
   })
@@ -28,6 +35,7 @@ export interface SignUpState {
     firstName?: string[];
     lastName?: string[];
     email?: string[];
+    phoneNumber?: string[];
     password?: string[];
     repeatPassword?: string[];
     _form?: string[];
@@ -43,6 +51,7 @@ export async function signUpAction(
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
     email: formData.get("email"),
+    phoneNumber: formData.get("phoneNumber"),
     password: formData.get("password"),
     repeatPassword: formData.get("repeatPassword"),
   });
@@ -53,8 +62,14 @@ export async function signUpAction(
     };
   }
 
-  const { firstName, lastName, email, password } = result.data;
+  const { firstName, lastName, email, phoneNumber, password } = result.data;
   const supabase = await createClient();
+
+  // Convert phone number to international format if needed
+  let formattedPhoneNumber = phoneNumber;
+  if (phoneNumber.startsWith("0")) {
+    formattedPhoneNumber = "+27" + phoneNumber.substring(1);
+  }
 
   try {
     const { error } = await supabase.auth.signUp({
@@ -64,6 +79,7 @@ export async function signUpAction(
         emailRedirectTo: `${SITE_URL}/profile`,
         data: {
           full_name: `${firstName} ${lastName}`,
+          phone_number: formattedPhoneNumber,
         },
       },
     });

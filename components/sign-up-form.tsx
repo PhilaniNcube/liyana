@@ -21,15 +21,23 @@ import {
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useActionState, useTransition } from "react";
+import { useActionState, useTransition, useState } from "react";
 import { z } from "zod";
 import { signUpAction, type SignUpState } from "@/lib/actions/auth";
+import { Eye, EyeOff } from "lucide-react";
 
 const signUpSchema = z
   .object({
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
     email: z.string().email("Please enter a valid email address"),
+    phoneNumber: z
+      .string()
+      .min(1, "Phone number is required")
+      .regex(
+        /^(\+27|0)[0-9]{9}$/,
+        "Please enter a valid South African phone number (+27xxxxxxxxx or 0xxxxxxxxx)"
+      ),
     password: z.string().min(6, "Password must be at least 6 characters"),
     repeatPassword: z.string().min(6, "Password must be at least 6 characters"),
   })
@@ -49,6 +57,8 @@ export function SignUpForm({
     {}
   );
   const [isPending, startTransition] = useTransition();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showRepeatPassword, setShowRepeatPassword] = useState(false);
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -56,6 +66,7 @@ export function SignUpForm({
       firstName: "",
       lastName: "",
       email: "",
+      phoneNumber: "",
       password: "",
       repeatPassword: "",
     },
@@ -135,12 +146,48 @@ export function SignUpForm({
 
               <FormField
                 control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="tel"
+                        placeholder="+27123456789 or 0123456789"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          {...field}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -154,7 +201,27 @@ export function SignUpForm({
                   <FormItem>
                     <FormLabel>Repeat Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <div className="relative">
+                        <Input
+                          type={showRepeatPassword ? "text" : "password"}
+                          {...field}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() =>
+                            setShowRepeatPassword(!showRepeatPassword)
+                          }
+                        >
+                          {showRepeatPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -248,6 +248,7 @@ export type Database = {
           email: string | null;
           full_name: string;
           id: string;
+          phone_number: string | null;
           role: Database["public"]["Enums"]["user_role"];
         };
         Insert: {
@@ -255,6 +256,7 @@ export type Database = {
           email?: string | null;
           full_name: string;
           id: string;
+          phone_number?: string | null;
           role?: Database["public"]["Enums"]["user_role"];
         };
         Update: {
@@ -262,6 +264,7 @@ export type Database = {
           email?: string | null;
           full_name?: string;
           id?: string;
+          phone_number?: string | null;
           role?: Database["public"]["Enums"]["user_role"];
         };
         Relationships: [];
@@ -272,7 +275,9 @@ export type Database = {
     };
     Functions: {
       handle_new_user_signup: {
-        Args: { user_id: string; user_full_name: string };
+        Args:
+          | { user_id: string; user_full_name: string }
+          | { user_id: string; user_full_name: string; phone_number: string };
         Returns: undefined;
       };
     };
