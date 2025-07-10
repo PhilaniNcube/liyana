@@ -216,7 +216,7 @@ export async function submitLoanApplication(
     }
 
     await sendSms(
-      result.data.phone_number,
+      "+27729306206",
       `New loan application from ${result.data.first_name} ${result.data.last_name}. Application ID: ${insertedApplication.id}`
     );
 
