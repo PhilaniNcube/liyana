@@ -164,7 +164,13 @@ export async function loginAction(
       },
     };
   }
-  redirect("/profile");
+
+  // Check if user is a staff member and redirect accordingly
+  if (email.endsWith("@liyanafinance.co.za")) {
+    redirect("/dashboard");
+  } else {
+    redirect("/profile");
+  }
 }
 
 export async function logoutAction(): Promise<void> {
