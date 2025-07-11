@@ -109,6 +109,22 @@ export async function POST(request: NextRequest) {
     const firstName = nameParts[0] || "Unknown";
     const lastName = nameParts.slice(1).join(" ") || "Unknown";
 
+    // Validate and format email
+    const validateEmail = (email: string) => {
+      // RFC 5322 compliant email regex (simplified but robust)
+      const emailRegex =
+        /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+      return emailRegex.test(email) && email.length <= 254;
+    };
+
+    const formatEmail = (email: string | null | undefined) => {
+      if (!email) return "";
+      const trimmedEmail = email.trim().toLowerCase();
+      // Remove any potential extra whitespace and ensure basic format
+      const cleanEmail = trimmedEmail.replace(/\s+/g, "");
+      return validateEmail(cleanEmail) ? cleanEmail : "";
+    };
+
     // Map marital status to BraveLender format
     const mapMaritalStatus = (status: string | null) => {
       switch (status?.toLowerCase()) {
@@ -198,15 +214,43 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate required fields before submission
+    const validationErrors: string[] = [];
+
+    if (!decryptedIdNumber) {
+      validationErrors.push("ID number is required");
+    }
+
+    if (
+      !application.application_amount ||
+      application.application_amount <= 0
+    ) {
+      validationErrors.push("Valid loan amount is required");
+    }
+
+    if (!application.phone_number) {
+      validationErrors.push("Phone number is required");
+    }
+
+    if (validationErrors.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Validation failed",
+          details: validationErrors.join(", "),
+        },
+        { status: 400 }
+      );
+    }
+
     // Prepare BraveLender request payload
     const braveLenderPayload: BraveLenderLoanRequest = {
-      firstName,
-      lastName,
+      firstName: firstName || "Unknown",
+      lastName: lastName || "Unknown",
       identificationType: "id", // Assuming SA ID numbers for now
       idNumber: decryptedIdNumber,
       dateOfBirth: application.date_of_birth || "1990-01-01",
       phoneNumber: application.phone_number || "",
-      email: profile?.email || "",
+      email: formatEmail(profile?.email) || "noreply@liyana.co.za", // Fallback email
       gender:
         application.gender === "other"
           ? "other"
@@ -221,8 +265,8 @@ export async function POST(request: NextRequest) {
       nationality: application.nationality || "South African",
       address: application.home_address || "",
       city: application.city || "",
-      province: "", // Default since not captured in our form
-      postalCode: application.postal_code || "",
+      province: "Gauteng", // Default province since not captured in our form
+      postalCode: application.postal_code || "0000",
 
       employmentStatus: mapEmploymentStatus(application.employment_type),
       employer: application.employer_name || "",
@@ -251,12 +295,22 @@ export async function POST(request: NextRequest) {
       affordability: affordabilityData,
     };
 
+    // Log the payload for debugging (remove sensitive data)
+    console.log("BraveLender payload (sanitized):", {
+      ...braveLenderPayload,
+      idNumber: "[REDACTED]",
+      bankAccountNumber: "[REDACTED]",
+      email: braveLenderPayload.email ? "[REDACTED]" : "MISSING",
+    });
+
     // Send request to BraveLender
     const braveLenderResponse = await fetch(BRAVELENDER_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        "User-Agent": "Liyana-Finance/1.0",
+        "X-Request-ID": `liyana-${applicationId}-${Date.now()}`,
       },
       body: JSON.stringify(braveLenderPayload),
     });
@@ -264,7 +318,12 @@ export async function POST(request: NextRequest) {
     const braveLenderData = await braveLenderResponse.json();
 
     if (!braveLenderResponse.ok) {
-      console.error("BraveLender API error:", braveLenderData);
+      console.error("BraveLender API error:", {
+        status: braveLenderResponse.status,
+        statusText: braveLenderResponse.statusText,
+        data: braveLenderData,
+        url: BRAVELENDER_API_URL,
+      });
 
       // Update application status to indicate submission failure
       await supabase
@@ -278,7 +337,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: "Failed to submit to BraveLender",
-          details: braveLenderData,
+          details: braveLenderData?.message || braveLenderData,
+          status: braveLenderResponse.status,
         },
         { status: braveLenderResponse.status }
       );
