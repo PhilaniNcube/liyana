@@ -20,6 +20,7 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Send,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -93,6 +94,42 @@ export function ApplicationDetailClient({
   const [isRunningFraudCheck, setIsRunningFraudCheck] = useState(false);
   const [fraudCheckResults, setFraudCheckResults] = useState<any>(null);
   const [extractingZip, setExtractingZip] = useState<number | null>(null);
+  const [isSubmittingToBraveLender, setIsSubmittingToBraveLender] =
+    useState(false);
+
+  const handleBraveLenderSubmit = async () => {
+    setIsSubmittingToBraveLender(true);
+
+    try {
+      const response = await fetch("/api/bravelender/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ applicationId: application.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit to BraveLender");
+      }
+
+      toast.success("Application successfully submitted to BraveLender!");
+
+      // Optionally refresh the page or update the application status
+      window.location.reload();
+    } catch (error) {
+      console.error("Error submitting to BraveLender:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to submit to BraveLender"
+      );
+    } finally {
+      setIsSubmittingToBraveLender(false);
+    }
+  };
 
   const formatCurrency = (amount: number | null) => {
     if (!amount) return "N/A";
@@ -181,6 +218,10 @@ export function ApplicationDetailClient({
         return "bg-yellow-100 text-yellow-800";
       case "pending_documents":
         return "bg-blue-100 text-blue-800";
+      case "submitted_to_lender":
+        return "bg-purple-100 text-purple-800";
+      case "submission_failed":
+        return "bg-orange-100 text-orange-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -212,6 +253,27 @@ export function ApplicationDetailClient({
           </div>
         </div>
         <div className="flex items-center space-x-2">
+          <Button
+            onClick={handleBraveLenderSubmit}
+            disabled={
+              isSubmittingToBraveLender ||
+              application.status === "submitted_to_lender"
+            }
+            variant="default"
+            size="sm"
+          >
+            {isSubmittingToBraveLender ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-2" />
+                Submit to BraveLender
+              </>
+            )}
+          </Button>
           <Button
             onClick={() =>
               handleFraudCheck(
