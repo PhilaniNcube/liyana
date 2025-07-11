@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
       nationality: application.nationality || "South African",
       address: application.home_address || "",
       city: application.city || "",
-      province: "Western Cape", // Default since not captured in our form
+      province: "", // Default since not captured in our form
       postalCode: application.postal_code || "",
 
       employmentStatus: mapEmploymentStatus(application.employment_type),
@@ -230,10 +230,10 @@ export async function POST(request: NextRequest) {
       employerContactNumber: application.employer_contact_number || undefined,
       jobTitle: application.job_title || "",
       monthlyIncome: application.monthly_income?.toString() || "0",
-      workExperience: "1 year", // Default since not captured in our form
+      workExperience: "", // Default since not captured in our form
       employmentEndDate: application.employment_end_date || undefined,
 
-      loanAmount: application.application_amount?.toString() || "1000",
+      loanAmount: application.application_amount?.toString() || "",
       loanPurpose: mapLoanPurpose(application.loan_purpose),
       loanPurposeReason: application.loan_purpose_reason || undefined,
       repaymentPeriod: application.term?.toString() || "30",
