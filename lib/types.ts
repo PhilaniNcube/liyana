@@ -294,7 +294,9 @@ export type Database = {
         | "pending_documents"
         | "in_review"
         | "approved"
-        | "declined";
+        | "declined"
+        | "submitted_to_lender"
+        | "submission_failed";
       bank_account_type: "savings" | "transaction" | "current" | "business";
       document_type: "id" | "bank_statement" | "payslip" | "proof_of_residence";
       employment_type:
