@@ -95,6 +95,34 @@ export async function getAllUserProfiles() {
   return data;
 }
 
+export async function getUserProfilesPaginated(
+  page: number = 1,
+  pageSize: number = 5
+) {
+  const supabase = await createClient();
+
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
+    .from("profiles")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    throw new Error(`Failed to fetch user profiles: ${error.message}`);
+  }
+
+  return {
+    data: data || [],
+    total: count || 0,
+    page,
+    pageSize,
+    totalPages: Math.ceil((count || 0) / pageSize),
+  };
+}
+
 export async function getUsersByRole(
   role: Database["public"]["Enums"]["user_role"]
 ) {
