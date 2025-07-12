@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { toast } from "sonner";
 
 /**
  * Extract and download a PDF file from a base64-encoded ZIP file
@@ -117,3 +118,45 @@ export function isBase64Zip(data: string): boolean {
     return false;
   }
 }
+
+/**
+ * Handle ZIP extraction for API checks with toast notifications
+ * @param apiCheck - The API check object containing response data
+ * @param setExtractingZip - State setter function for extraction loading state
+ */
+export const handleZipExtraction = async (
+  apiCheck: any,
+  setExtractingZip: (id: number | null) => void
+) => {
+  if (!apiCheck.response_payload?.pRetData) {
+    toast.error("No ZIP data found in this API check");
+    return;
+  }
+
+  setExtractingZip(apiCheck.id);
+
+  try {
+    const zipData = apiCheck.response_payload.pRetData;
+
+    if (!isBase64Zip(zipData)) {
+      toast.error("Invalid ZIP data format");
+      return;
+    }
+
+    const success = await extractPdfFromZip(
+      zipData,
+      `fraud-check-${apiCheck.id}-${new Date(apiCheck.checked_at).toISOString().split("T")[0]}.pdf`
+    );
+
+    if (success) {
+      toast.success("Document extracted and downloaded successfully!");
+    } else {
+      toast.error("Failed to extract document from ZIP file");
+    }
+  } catch (error) {
+    console.error("Error extracting ZIP:", error);
+    toast.error("An error occurred while extracting the document");
+  } finally {
+    setExtractingZip(null);
+  }
+};

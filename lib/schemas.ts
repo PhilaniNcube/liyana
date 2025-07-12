@@ -1,5 +1,20 @@
 import { z } from "zod";
 
+// API Check interface for reuse across components
+export interface ApiCheck {
+  id: number;
+  check_type: string;
+  status: string;
+  response_payload?: {
+    pRetData?: string;
+    pTransactionCompleted?: boolean;
+    pCBVScore?: string;
+    pCurrentDebtReview?: boolean;
+  } | null;
+  vendor: string;
+  checked_at: string;
+}
+
 // Utility function to extract date of birth from SA ID number
 const extractDateOfBirthFromSAID = (idNumber: string): string | null => {
   if (!idNumber || idNumber.length !== 13) {

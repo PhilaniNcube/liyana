@@ -326,3 +326,18 @@ export async function getApiCheckStats() {
     failRate: stats.total > 0 ? (stats.failed / stats.total) * 100 : 0,
   };
 }
+
+export async function getApiChecks() {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("api_checks")
+    .select("*")
+    .order("checked_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to fetch API checks: ${error.message}`);
+  }
+
+  return data;
+}

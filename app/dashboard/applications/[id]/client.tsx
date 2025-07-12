@@ -26,7 +26,15 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { handleFraudCheck } from "@/lib/utils/fraud-check";
-import { extractPdfFromZip, isBase64Zip } from "@/lib/utils/zip-extractor";
+import {
+  extractPdfFromZip,
+  isBase64Zip,
+  handleZipExtraction,
+  getApiCheckStatusIcon,
+  getApiCheckStatusColor,
+  handleBraveLenderSubmit,
+} from "@/lib/utils";
+
 import {
   PersonalInfoCard,
   ContactInfoCard,
@@ -97,106 +105,12 @@ export function ApplicationDetailClient({
   const [isSubmittingToBraveLender, setIsSubmittingToBraveLender] =
     useState(false);
 
-  const handleBraveLenderSubmit = async () => {
-    setIsSubmittingToBraveLender(true);
-
-    try {
-      const response = await fetch("/api/bravelender/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ applicationId: application.id }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to submit to BraveLender");
-      }
-
-      toast.success("Application successfully submitted to BraveLender!");
-
-      // Optionally refresh the page or update the application status
-      window.location.reload();
-    } catch (error) {
-      console.error("Error submitting to BraveLender:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to submit to BraveLender"
-      );
-    } finally {
-      setIsSubmittingToBraveLender(false);
-    }
-  };
-
   const formatCurrency = (amount: number | null) => {
     if (!amount) return "N/A";
     return new Intl.NumberFormat("en-ZA", {
       style: "currency",
       currency: "ZAR",
     }).format(amount);
-  };
-
-  const handleZipExtraction = async (apiCheck: any) => {
-    if (!apiCheck.response_payload?.pRetData) {
-      toast.error("No ZIP data found in this API check");
-      return;
-    }
-
-    setExtractingZip(apiCheck.id);
-
-    try {
-      const zipData = apiCheck.response_payload.pRetData;
-
-      if (!isBase64Zip(zipData)) {
-        toast.error("Invalid ZIP data format");
-        return;
-      }
-
-      const success = await extractPdfFromZip(
-        zipData,
-        `fraud-check-${apiCheck.id}-${new Date(apiCheck.checked_at).toISOString().split("T")[0]}.pdf`
-      );
-
-      if (success) {
-        toast.success("Document extracted and downloaded successfully!");
-      } else {
-        toast.error("Failed to extract document from ZIP file");
-      }
-    } catch (error) {
-      console.error("Error extracting ZIP:", error);
-      toast.error("An error occurred while extracting the document");
-    } finally {
-      setExtractingZip(null);
-    }
-  };
-
-  const getApiCheckStatusIcon = (status: string) => {
-    switch (status) {
-      case "passed":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "failed":
-        return <XCircle className="h-4 w-4 text-red-600" />;
-      case "pending":
-        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-600" />;
-    }
-  };
-
-  const getApiCheckStatusColor = (status: string) => {
-    switch (status) {
-      case "passed":
-        return "bg-green-100 text-green-800";
-      case "failed":
-        return "bg-red-100 text-red-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
   };
 
   const formatDate = (date: string | null) => {
@@ -254,7 +168,9 @@ export function ApplicationDetailClient({
         </div>
         <div className="flex items-center space-x-2">
           <Button
-            onClick={handleBraveLenderSubmit}
+            onClick={() =>
+              handleBraveLenderSubmit(application, setIsSubmittingToBraveLender)
+            }
             disabled={
               isSubmittingToBraveLender ||
               application.status === "submitted_to_lender"
@@ -345,7 +261,9 @@ export function ApplicationDetailClient({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleZipExtraction(check)}
+                            onClick={() =>
+                              handleZipExtraction(check, setExtractingZip)
+                            }
                             disabled={extractingZip === check.id}
                             className="flex items-center space-x-1"
                           >

@@ -14,7 +14,9 @@ import {
   Home,
   CreditCard,
   LogOut,
+  Code,
 } from "lucide-react";
+import Image from "next/image";
 
 interface DashboardSidebarProps {
   user: User;
@@ -35,6 +37,11 @@ const sidebarItems = [
     title: "Users",
     href: "/dashboard/users",
     icon: Users,
+  },
+  {
+    title: "API Checks",
+    href: "/dashboard/api-checks",
+    icon: Code,
   },
   {
     title: "Loans",
@@ -61,10 +68,14 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
       {/* Header */}
       <div className="flex items-center gap-2 p-6 border-b">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-            <span className="text-primary-foreground font-semibold text-sm">
-              L
-            </span>
+          <div className="w-8 h-8 rounded-md flex items-center justify-center">
+            <Image
+              src="/images/square.jpg"
+              alt=""
+              width={32}
+              height={32}
+              className="object-cover"
+            />
           </div>
           <span className="font-semibold text-lg">Liyana Finance</span>
         </div>
