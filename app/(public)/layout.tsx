@@ -1,3 +1,4 @@
+import { Navigation } from "@/components/navigation";
 import type { Metadata } from "next";
 import { Geist_Mono, DM_Sans } from "next/font/google";
 
@@ -34,6 +35,7 @@ export default function PublicLayout({
   return (
     <html lang="en">
       <body className={`${dmSans.variable} ${geistMono.variable} antialiased`}>
+        <Navigation />
         {children}
       </body>
     </html>
