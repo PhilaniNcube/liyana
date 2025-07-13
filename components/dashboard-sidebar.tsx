@@ -15,6 +15,7 @@ import {
   CreditCard,
   LogOut,
   Code,
+  Shield,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -42,6 +43,11 @@ const sidebarItems = [
     title: "API Checks",
     href: "/dashboard/api-checks",
     icon: Code,
+  },
+  {
+    title: "Fraud Check",
+    href: "/dashboard/fraud-check",
+    icon: Shield,
   },
   {
     title: "Loans",
