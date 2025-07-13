@@ -82,7 +82,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-md flex items-center justify-center">
             <Image
-              src="/images/square.jpg"
+              src="/square.jpg"
               alt=""
               width={32}
               height={32}

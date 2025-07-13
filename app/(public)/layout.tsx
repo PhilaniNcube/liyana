@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
 import { Geist_Mono, DM_Sans } from "next/font/google";
-import "./globals.css";
-import { Navigation } from "@/components/navigation";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { Providers } from "@/components/providers";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -30,7 +26,7 @@ export const metadata: Metadata = {
 // Force dynamic rendering to ensure fresh auth state
 export const dynamic = "force-dynamic";
 
-export default function RootLayout({
+export default function PublicLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -38,9 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${dmSans.variable} ${geistMono.variable} antialiased`}>
-        <Providers>
-          <NuqsAdapter>{children}</NuqsAdapter>
-        </Providers>
+        {children}
       </body>
     </html>
   );
