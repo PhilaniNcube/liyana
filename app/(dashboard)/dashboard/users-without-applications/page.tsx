@@ -231,39 +231,6 @@ export default async function UsersWithoutApplicationsPage(props: {
           )}
         </CardContent>
       </Card>
-
-      {/* Insights */}
-      {total > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Insights & Recommendations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-semibold mb-2">User Engagement</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>
-                    • {total} users (
-                    {((total / totalProfiles) * 100).toFixed(1)}%) haven't
-                    applied yet
-                  </li>
-                  <li>• Consider email campaigns to encourage applications</li>
-                  <li>• Focus on users registered more than 7 days ago</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-2">Action Items</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Send follow-up emails to recent registrations</li>
-                  <li>• Offer incentives for first-time applicants</li>
-                  <li>• Analyze registration vs application barriers</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
