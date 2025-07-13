@@ -168,15 +168,108 @@ export async function updateUserProfile(
 export async function getCurrentSession() {
   const supabase = await createClient();
 
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
+  const { data, error } = await supabase.auth.getSession();
 
   if (error) {
-    console.error("Error fetching current session:", error);
-    return null;
+    throw new Error(`Failed to get current session: ${error.message}`);
   }
 
-  return session;
+  return data;
+}
+
+export async function getUsersWithoutApplications() {
+  const supabase = await createClient();
+
+  // Get all user profiles
+  const { data: allProfiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (profilesError) {
+    throw new Error(`Failed to fetch user profiles: ${profilesError.message}`);
+  }
+
+  // Get all unique user IDs who have submitted applications
+  const { data: applications, error: applicationsError } = await supabase
+    .from("applications")
+    .select("user_id")
+    .order("created_at", { ascending: false });
+
+  if (applicationsError) {
+    throw new Error(
+      `Failed to fetch applications: ${applicationsError.message}`
+    );
+  }
+
+  // Create a set of user IDs who have applications
+  const userIdsWithApplications = new Set(
+    applications.map((app) => app.user_id)
+  );
+
+  // Filter out users who have submitted applications and exclude admin users
+  const usersWithoutApplications = allProfiles.filter(
+    (profile) =>
+      !userIdsWithApplications.has(profile.id) && profile.role !== "admin"
+  );
+
+  return usersWithoutApplications;
+}
+
+export async function getUsersWithoutApplicationsPaginated(
+  page: number = 1,
+  pageSize: number = 10
+) {
+  const supabase = await createClient();
+
+  // Get all user profiles with count
+  const {
+    data: allProfiles,
+    error: profilesError,
+    count: totalProfiles,
+  } = await supabase
+    .from("profiles")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false });
+
+  if (profilesError) {
+    throw new Error(`Failed to fetch user profiles: ${profilesError.message}`);
+  }
+
+  // Get all unique user IDs who have submitted applications
+  const { data: applications, error: applicationsError } = await supabase
+    .from("applications")
+    .select("user_id");
+
+  if (applicationsError) {
+    throw new Error(
+      `Failed to fetch applications: ${applicationsError.message}`
+    );
+  }
+
+  // Create a set of user IDs who have applications
+  const userIdsWithApplications = new Set(
+    applications.map((app) => app.user_id)
+  );
+
+  // Filter out users who have submitted applications and exclude admin users
+  const usersWithoutApplications = allProfiles.filter(
+    (profile) =>
+      !userIdsWithApplications.has(profile.id) && profile.role !== "admin"
+  );
+
+  // Apply pagination
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize;
+  const paginatedUsers = usersWithoutApplications.slice(from, to);
+
+  return {
+    data: paginatedUsers,
+    total: usersWithoutApplications.length,
+    totalProfiles: totalProfiles || 0,
+    usersWithApplications: userIdsWithApplications.size,
+    page,
+    pageSize,
+    totalPages: Math.ceil(usersWithoutApplications.length / pageSize),
+  };
 }

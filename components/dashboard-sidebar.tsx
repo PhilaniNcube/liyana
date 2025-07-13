@@ -16,6 +16,7 @@ import {
   LogOut,
   Code,
   Shield,
+  UserX,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -38,6 +39,11 @@ const sidebarItems = [
     title: "Users",
     href: "/dashboard/users",
     icon: Users,
+  },
+  {
+    title: "Users Without Apps",
+    href: "/dashboard/users-without-applications",
+    icon: UserX,
   },
   {
     title: "API Checks",
