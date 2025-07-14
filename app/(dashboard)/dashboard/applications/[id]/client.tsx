@@ -43,6 +43,9 @@ import {
   AdditionalInfoCard,
   FraudCheckResults,
 } from "@/components/application-detail";
+import ApiCheckCard from "./api-check-card";
+import { DocumentsDisplayCard } from "./documents-display-card";
+import type { Database } from "@/lib/types";
 
 interface Application {
   id: number;
@@ -93,11 +96,13 @@ interface Application {
 interface ApplicationDetailClientProps {
   application: Application;
   apiChecks: any[];
+  documents: Database["public"]["Tables"]["documents"]["Row"][];
 }
 
 export function ApplicationDetailClient({
   application,
   apiChecks,
+  documents,
 }: ApplicationDetailClientProps) {
   const [isRunningFraudCheck, setIsRunningFraudCheck] = useState(false);
   const [fraudCheckResults, setFraudCheckResults] = useState<any>(null);
@@ -237,183 +242,21 @@ export function ApplicationDetailClient({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* API Checks */}
               {apiChecks.map((check, index) => (
-                <div key={check.id} className="border rounded-lg p-4 space-y-3">
-                  {/* Check Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      {getApiCheckStatusIcon(check.status)}
-                      <div>
-                        <p className="font-medium capitalize">
-                          {check.check_type.replace("_", " ")} Check
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {check.vendor} • {formatDate(check.checked_at)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {/* Extract ZIP button for fraud checks with ZIP data */}
-                      {check.check_type === "fraud_check" &&
-                        check.response_payload?.pRetData &&
-                        isBase64Zip(check.response_payload.pRetData) && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleZipExtraction(check, setExtractingZip)
-                            }
-                            disabled={extractingZip === check.id}
-                            className="flex items-center space-x-1"
-                          >
-                            {extractingZip === check.id ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>Extracting...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Download className="h-4 w-4" />
-                                <span>Extract PDF</span>
-                              </>
-                            )}
-                          </Button>
-                        )}
-                      <Badge className={getApiCheckStatusColor(check.status)}>
-                        {check.status.toUpperCase()}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Response Details */}
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <details className="text-sm">
-                      <summary className="cursor-pointer text-muted-foreground hover:text-foreground flex items-center space-x-1">
-                        <FileText className="h-4 w-4" />
-                        <span>View Response Details</span>
-                      </summary>
-                      <div className="mt-2 space-y-2">
-                        {/* Show key response fields */}
-                        {check.response_payload && (
-                          <div className="space-y-1">
-                            {/* Credit check specific fields */}
-                            {check.check_type === "credit_bureau" && (
-                              <>
-                                {check.response_payload
-                                  .pTransactionCompleted !== undefined && (
-                                  <div className="flex justify-between">
-                                    <span className="font-medium">
-                                      Transaction Completed:
-                                    </span>
-                                    <span
-                                      className={
-                                        check.response_payload
-                                          .pTransactionCompleted
-                                          ? "text-green-600"
-                                          : "text-red-600"
-                                      }
-                                    >
-                                      {check.response_payload
-                                        .pTransactionCompleted
-                                        ? "Yes"
-                                        : "No"}
-                                    </span>
-                                  </div>
-                                )}
-                                {check.response_payload.pCBVScore && (
-                                  <div className="flex justify-between">
-                                    <span className="font-medium">
-                                      CBV Score:
-                                    </span>
-                                    <span>
-                                      {check.response_payload.pCBVScore}
-                                    </span>
-                                  </div>
-                                )}
-                                {check.response_payload.pCurrentDebtReview && (
-                                  <div className="flex justify-between">
-                                    <span className="font-medium">
-                                      Debt Review:
-                                    </span>
-                                    <span
-                                      className={
-                                        check.response_payload
-                                          .pCurrentDebtReview
-                                          ? "text-red-600"
-                                          : "text-green-600"
-                                      }
-                                    >
-                                      {check.response_payload.pCurrentDebtReview
-                                        ? "Yes"
-                                        : "No"}
-                                    </span>
-                                  </div>
-                                )}
-                              </>
-                            )}
-
-                            {/* Fraud check specific fields */}
-                            {check.check_type === "fraud_check" && (
-                              <>
-                                {check.response_payload
-                                  .pTransactionCompleted !== undefined && (
-                                  <div className="flex justify-between">
-                                    <span className="font-medium">
-                                      Transaction Completed:
-                                    </span>
-                                    <span
-                                      className={
-                                        check.response_payload
-                                          .pTransactionCompleted
-                                          ? "text-green-600"
-                                          : "text-red-600"
-                                      }
-                                    >
-                                      {check.response_payload
-                                        .pTransactionCompleted
-                                        ? "Yes"
-                                        : "No"}
-                                    </span>
-                                  </div>
-                                )}
-                                {check.response_payload.pRetData && (
-                                  <div className="flex justify-between">
-                                    <span className="font-medium">
-                                      Document Available:
-                                    </span>
-                                    <span className="text-green-600">
-                                      {isBase64Zip(
-                                        check.response_payload.pRetData
-                                      )
-                                        ? "ZIP File"
-                                        : "Data"}
-                                    </span>
-                                  </div>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Raw response data */}
-                        <details className="mt-3">
-                          <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
-                            View Raw Response
-                          </summary>
-                          <pre className="text-xs bg-background border rounded p-2 overflow-x-auto mt-1 max-h-40">
-                            {JSON.stringify(check.response_payload, null, 2)}
-                          </pre>
-                        </details>
-                      </div>
-                    </details>
-                  </div>
-                </div>
+                <ApiCheckCard check={check} key={index} />
               ))}
             </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Documents Section */}
+      <DocumentsDisplayCard
+        applicationId={application.id}
+        documents={documents || []}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Personal Information */}

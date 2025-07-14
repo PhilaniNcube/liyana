@@ -87,9 +87,7 @@ export default async function UsersWithoutApplicationsPage(props: {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              With Applications
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Pending</CardTitle>
             <UserCheck className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -105,14 +103,14 @@ export default async function UsersWithoutApplicationsPage(props: {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Without Applications
+              Declined Applications
             </CardTitle>
             <AlertTriangle className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">{total}</div>
             <p className="text-xs text-muted-foreground">
-              No applications submitted
+              Failed credit checks
             </p>
           </CardContent>
         </Card>

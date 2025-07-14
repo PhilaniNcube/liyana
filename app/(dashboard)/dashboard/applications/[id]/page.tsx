@@ -1,5 +1,6 @@
 import { getApplicationByIdWithProfile } from "@/lib/queries/applications";
 import { getApiChecksByIdNumber } from "@/lib/queries/api-checks";
+import { getDocumentsByApplication } from "@/lib/queries/documents";
 import { notFound } from "next/navigation";
 import { decryptValue } from "@/lib/encryption";
 import { ApplicationDetailClient } from "./client";
@@ -31,6 +32,9 @@ export default async function ApplicationDetailPage({
     // Fetch API checks for the decrypted ID number
     const apiChecks = await getApiChecksByIdNumber(decryptedIdNumber);
 
+    // Fetch documents for this application
+    const documents = await getDocumentsByApplication(applicationId);
+
     const decryptedApplication = {
       ...application,
       id_number_decrypted: decryptedIdNumber,
@@ -40,6 +44,7 @@ export default async function ApplicationDetailPage({
       <ApplicationDetailClient
         application={decryptedApplication}
         apiChecks={apiChecks}
+        documents={documents}
       />
     );
   } catch (error) {
