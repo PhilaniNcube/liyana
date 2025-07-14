@@ -171,6 +171,7 @@ export default async function UsersWithoutApplicationsPage(props: {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
+                    <TableHead>ID Number</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Registered</TableHead>
                     <TableHead>Days Since Registration</TableHead>
@@ -192,6 +193,9 @@ export default async function UsersWithoutApplicationsPage(props: {
                         <TableCell>{profile.email || "No email"}</TableCell>
                         <TableCell>
                           {profile.phone_number || "No phone"}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {profile.decrypted_id_number || "Not provided"}
                         </TableCell>
                         <TableCell>
                           <Badge variant={getRoleVariant(profile.role)}>

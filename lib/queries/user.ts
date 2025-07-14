@@ -1,8 +1,23 @@
 import { createClient } from "@/lib/server";
 import { z } from "zod";
 import type { Database } from "@/lib/types";
+import { decryptValue } from "@/lib/encryption";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+
+// Helper function to safely decrypt ID number
+function safeDecryptIdNumber(encryptedIdNumber: string | null): string | null {
+  if (!encryptedIdNumber) {
+    return null;
+  }
+
+  try {
+    return decryptValue(encryptedIdNumber);
+  } catch (error) {
+    console.error("Failed to decrypt ID number:", error);
+    return "Error decrypting";
+  }
+}
 
 // Types
 export interface CurrentUser {
@@ -86,6 +101,7 @@ export async function getAllUserProfiles() {
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
+    .neq("role", "admin") // Exclude admin users
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -107,6 +123,7 @@ export async function getUserProfilesPaginated(
   const { data, error, count } = await supabase
     .from("profiles")
     .select("*", { count: "exact" })
+    .neq("role", "admin") // Exclude admin users
     .order("created_at", { ascending: false })
     .range(from, to);
 
@@ -263,8 +280,14 @@ export async function getUsersWithoutApplicationsPaginated(
   const to = from + pageSize;
   const paginatedUsers = usersWithoutApplications.slice(from, to);
 
+  // Add decrypted ID numbers to the paginated users
+  const usersWithDecryptedIds = paginatedUsers.map((user) => ({
+    ...user,
+    decrypted_id_number: safeDecryptIdNumber(user.id_number),
+  }));
+
   return {
-    data: paginatedUsers,
+    data: usersWithDecryptedIds,
     total: usersWithoutApplications.length,
     totalProfiles: totalProfiles || 0,
     usersWithApplications: userIdsWithApplications.size,

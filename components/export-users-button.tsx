@@ -10,6 +10,7 @@ interface UserProfile {
   full_name: string;
   email: string | null;
   phone_number: string | null;
+  decrypted_id_number: string | null; // Changed to expect decrypted value
   role: string;
   created_at: string;
 }
@@ -35,6 +36,7 @@ export function ExportUsersButton({
         "Full Name",
         "Email",
         "Phone Number",
+        "ID Number",
         "Role",
         "Registration Date",
         "Days Since Registration",
@@ -52,6 +54,7 @@ export function ExportUsersButton({
           user.full_name || "No name",
           user.email || "No email",
           user.phone_number || "No phone",
+          user.decrypted_id_number || "Not provided",
           user.role,
           new Date(user.created_at).toLocaleDateString(),
           daysSinceRegistration.toString(),
