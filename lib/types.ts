@@ -248,6 +248,7 @@ export type Database = {
           email: string | null;
           full_name: string;
           id: string;
+          id_number: string | null;
           phone_number: string | null;
           role: Database["public"]["Enums"]["user_role"];
         };
@@ -256,6 +257,7 @@ export type Database = {
           email?: string | null;
           full_name: string;
           id: string;
+          id_number?: string | null;
           phone_number?: string | null;
           role?: Database["public"]["Enums"]["user_role"];
         };
@@ -264,6 +266,7 @@ export type Database = {
           email?: string | null;
           full_name?: string;
           id?: string;
+          id_number?: string | null;
           phone_number?: string | null;
           role?: Database["public"]["Enums"]["user_role"];
         };
@@ -460,6 +463,8 @@ export const Constants = {
         "in_review",
         "approved",
         "declined",
+        "submitted_to_lender",
+        "submission_failed",
       ],
       bank_account_type: ["savings", "transaction", "current", "business"],
       document_type: ["id", "bank_statement", "payslip", "proof_of_residence"],

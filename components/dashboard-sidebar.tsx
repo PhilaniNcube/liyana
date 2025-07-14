@@ -41,8 +41,8 @@ const sidebarItems = [
     icon: Users,
   },
   {
-    title: "Users Without Apps",
-    href: "/dashboard/users-without-applications",
+    title: "Declined Loans",
+    href: "/dashboard/declined-loans",
     icon: UserX,
   },
   {

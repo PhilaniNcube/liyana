@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/server";
+import { encryptValue } from "@/lib/encryption";
+import { getCurrentUser } from "@/lib/queries/user";
 
 interface ScoreReason {
   reasonCode: string;
@@ -50,6 +52,40 @@ async function saveApiCheckResult(
     }
   } catch (error) {
     console.error("Error saving API check result:", error);
+  }
+}
+
+// Helper function to update user profile with encrypted ID number
+async function updateUserProfileWithIdNumber(idNumber: string) {
+  try {
+    const supabase = await createClient();
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      console.error(
+        "No current user found when trying to update profile with ID number"
+      );
+      return;
+    }
+
+    // Encrypt the ID number before storing
+    const encryptedIdNumber = encryptValue(idNumber);
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        id_number: encryptedIdNumber,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", currentUser.id);
+
+    if (error) {
+      console.error("Error updating user profile with ID number:", error);
+    } else {
+      console.log("User profile updated successfully with encrypted ID number");
+    }
+  } catch (error) {
+    console.error("Error updating user profile with ID number:", error);
   }
 }
 
@@ -183,6 +219,9 @@ export async function GET(request: NextRequest) {
       reason: "Score below minimum requirement",
     });
 
+    // Still update user profile with encrypted ID number for record-keeping
+    await updateUserProfileWithIdNumber(idNumber);
+
     return NextResponse.json(
       {
         success: false,
@@ -202,6 +241,9 @@ export async function GET(request: NextRequest) {
     creditScore: score,
     reason: "Credit check passed",
   });
+
+  // Update user profile with encrypted ID number
+  await updateUserProfileWithIdNumber(idNumber);
 
   return NextResponse.json(
     {
