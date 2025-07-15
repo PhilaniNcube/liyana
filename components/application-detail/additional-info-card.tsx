@@ -77,14 +77,13 @@ export function AdditionalInfoCard({ application }: AdditionalInfoCardProps) {
   }
 
   return (
-    <Card>
+    <Card className="mt-3">
       <CardHeader>
         <CardTitle>Additional Information</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {application.affordability && (
           <div>
-            <h4 className="font-semibold mb-4">Affordability Assessment</h4>
             {(() => {
               const incomeStatement = formatAffordabilityIncomeStatement(
                 application.affordability

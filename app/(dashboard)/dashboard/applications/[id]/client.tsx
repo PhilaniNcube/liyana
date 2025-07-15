@@ -26,14 +26,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { handleFraudCheck } from "@/lib/utils/fraud-check";
-import {
-  extractPdfFromZip,
-  isBase64Zip,
-  handleZipExtraction,
-  getApiCheckStatusIcon,
-  getApiCheckStatusColor,
-  handleBraveLenderSubmit,
-} from "@/lib/utils";
+import { handleBraveLenderSubmit } from "@/lib/utils";
 
 import {
   PersonalInfoCard,
@@ -47,6 +40,8 @@ import ApiCheckCard from "./api-check-card";
 import { DocumentsDisplayCard } from "./documents-display-card";
 import { AdminDocumentUploadForm } from "@/components/admin-document-upload-form";
 import type { Database } from "@/lib/types";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Application {
   id: number;
@@ -236,62 +231,79 @@ export function ApplicationDetailClient({
         </div>
       </div>
 
-      {/* Fraud Check Results */}
-      <FraudCheckResults fraudCheckResults={fraudCheckResults} />
+      <Tabs defaultValue="personal-info" className="mt-4">
+        <TabsList>
+          <TabsTrigger value="personal-info">Personal Info</TabsTrigger>
+          <TabsTrigger value="contact-info">Contact Info</TabsTrigger>
+          <TabsTrigger value="employment-info"> Employment Info</TabsTrigger>
+          <TabsTrigger value="loan-banking-info">
+            Loan & Banking Info
+          </TabsTrigger>
+          <TabsTrigger value="checks">Credit Checks</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+        </TabsList>
+        <TabsContent value="personal-info">
+          {/* Personal Information */}
+          <PersonalInfoCard application={application} />
+        </TabsContent>
+        <TabsContent value="contact-info">
+          {/* Contact Information */}
+          <ContactInfoCard application={application} />
+        </TabsContent>
+        <TabsContent value="employment-info">
+          {/* Employment Information */}
+          <EmploymentInfoCard application={application} />
+        </TabsContent>
+        <TabsContent value="loan-banking-info">
+          {/* Loan & Banking Information */}
+          <LoanBankingInfoCard application={application} />
+          {/* Additional Information */}
+          <AdditionalInfoCard application={application} />
+        </TabsContent>
+        <TabsContent value="checks">
+          {/* Fraud Check Results */}
+          <FraudCheckResults fraudCheckResults={fraudCheckResults} />
+          {/* API Check History */}
+          {apiChecks && apiChecks.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Shield className="h-5 w-5 mr-2" />
+                  API Check History
+                </CardTitle>
+                <CardDescription>
+                  History of all KYC and verification checks performed for this
+                  ID number
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* API Checks */}
+                  {apiChecks.map((check, index) => (
+                    <ApiCheckCard check={check} key={index} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+        <TabsContent value="documents">
+          {/* Documents Section */}
+          <DocumentsDisplayCard
+            applicationId={application.id}
+            documents={currentDocuments || []}
+          />
 
-      {/* API Check History */}
-      {apiChecks && apiChecks.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Shield className="h-5 w-5 mr-2" />
-              API Check History
-            </CardTitle>
-            <CardDescription>
-              History of all KYC and verification checks performed for this ID
-              number
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* API Checks */}
-              {apiChecks.map((check, index) => (
-                <ApiCheckCard check={check} key={index} />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Documents Section */}
-      <DocumentsDisplayCard
-        applicationId={application.id}
-        documents={currentDocuments || []}
-      />
-
-      {/* Admin Document Upload Form */}
-      <AdminDocumentUploadForm
-        applicationId={application.id.toString()}
-        documents={currentDocuments || []}
-        onUploadSuccess={handleDocumentUploadSuccess}
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Personal Information */}
-        <PersonalInfoCard application={application} />
-
-        {/* Contact Information */}
-        <ContactInfoCard application={application} />
-
-        {/* Employment Information */}
-        <EmploymentInfoCard application={application} />
-
-        {/* Loan & Banking Information */}
-        <LoanBankingInfoCard application={application} />
-      </div>
-
-      {/* Additional Information */}
-      <AdditionalInfoCard application={application} />
+          {/* Admin Document Upload Form */}
+          {userRole === "admin" && (
+            <AdminDocumentUploadForm
+              applicationId={application.id.toString()}
+              documents={currentDocuments || []}
+              onUploadSuccess={handleDocumentUploadSuccess}
+            />
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Timeline */}
       <Card>
