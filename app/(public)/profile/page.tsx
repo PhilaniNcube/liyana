@@ -11,6 +11,13 @@ export default async function ProfilePage() {
     redirect("/auth/login");
   }
 
+  // Get user profile information
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", data.user.id)
+    .single();
+
   // Get existing applications
   let applications;
 
@@ -24,7 +31,11 @@ export default async function ProfilePage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <ProfilePageClient applications={applications || null} />
+        <ProfilePageClient
+          applications={applications || null}
+          userEmail={data.user.email}
+          userFullName={profile?.full_name}
+        />
       </div>
     </div>
   );

@@ -9,14 +9,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CheckCircle, Clock, FileText, Plus, ArrowRight } from "lucide-react";
+import {
+  CheckCircle,
+  Clock,
+  FileText,
+  Plus,
+  ArrowRight,
+  Settings,
+} from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ResetPasswordComponent } from "@/components/reset-password-component";
 import type { Database } from "@/lib/types";
 
 interface ProfilePageClientProps {
   applications: Database["public"]["Tables"]["applications"]["Row"][] | null;
+  userEmail?: string;
+  userFullName?: string;
 }
 
 // Helper function to get status color
@@ -52,7 +62,11 @@ const getStatusIcon = (status: string) => {
   }
 };
 
-export function ProfilePageClient({ applications }: ProfilePageClientProps) {
+export function ProfilePageClient({
+  applications,
+  userEmail,
+  userFullName,
+}: ProfilePageClientProps) {
   const router = useRouter();
   const hasApplications = applications && applications.length > 0;
 
@@ -62,6 +76,8 @@ export function ProfilePageClient({ applications }: ProfilePageClientProps) {
 
   return (
     <div className="space-y-8">
+      {/* User Settings Section */}
+
       {hasApplications ? (
         // Show applications with option to create new
         <section className="space-y-6">
@@ -177,20 +193,67 @@ export function ProfilePageClient({ applications }: ProfilePageClientProps) {
         </section>
       ) : (
         // Show welcome message for new users
-        <section className="text-center space-y-6 py-12">
-          <div className="max-w-md mx-auto">
-            <h1 className="text-3xl font-bold mb-4">Welcome to Liyana</h1>
-            <p className="text-muted-foreground">
-              You haven't submitted any loan applications yet. Get started by
-              applying for a payday cash loan. The process is quick and easy.
-            </p>
+        <section className="space-y-8">
+          {/* Welcome Section */}
+          <div className="text-center space-y-6 py-12">
+            <div className="max-w-md mx-auto">
+              <h1 className="text-3xl font-bold mb-4">Welcome to Liyana</h1>
+              <p className="text-muted-foreground">
+                You haven't submitted any loan applications yet. Get started by
+                applying for a payday cash loan. The process is quick and easy.
+              </p>
+            </div>
+            <Button
+              asChild
+              size="lg"
+              className="flex items-center gap-2 mx-auto"
+            >
+              <Link href="/apply">
+                <Plus className="h-4 w-4" />
+                Apply for a Loan
+              </Link>
+            </Button>
           </div>
-          <Button asChild size="lg" className="flex items-center gap-2 mx-auto">
-            <Link href="/apply">
-              <Plus className="h-4 w-4" />
-              Apply for a Loan
-            </Link>
-          </Button>
+          {/* User Settings Section for new users */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Account Settings
+                  </CardTitle>
+                  <CardDescription>
+                    Manage your account preferences and security settings
+                  </CardDescription>
+                </div>
+                <ResetPasswordComponent
+                  userEmail={userEmail}
+                  className="ml-auto"
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Full Name</p>
+                  <p className="text-sm text-muted-foreground">
+                    {userFullName || "Not provided"}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Email Address</p>
+                  <p className="text-sm text-muted-foreground">
+                    {userEmail || "Not provided"}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Password</p>
+                  <p className="text-sm text-muted-foreground">••••••••••••</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </section>
       )}
     </div>
