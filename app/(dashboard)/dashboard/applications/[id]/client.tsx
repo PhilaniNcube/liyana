@@ -45,6 +45,7 @@ import {
 } from "@/components/application-detail";
 import ApiCheckCard from "./api-check-card";
 import { DocumentsDisplayCard } from "./documents-display-card";
+import { AdminDocumentUploadForm } from "@/components/admin-document-upload-form";
 import type { Database } from "@/lib/types";
 
 interface Application {
@@ -97,18 +98,28 @@ interface ApplicationDetailClientProps {
   application: Application;
   apiChecks: any[];
   documents: Database["public"]["Tables"]["documents"]["Row"][];
+  userRole?: string;
 }
 
 export function ApplicationDetailClient({
   application,
   apiChecks,
   documents,
+  userRole,
 }: ApplicationDetailClientProps) {
   const [isRunningFraudCheck, setIsRunningFraudCheck] = useState(false);
   const [fraudCheckResults, setFraudCheckResults] = useState<any>(null);
   const [extractingZip, setExtractingZip] = useState<number | null>(null);
   const [isSubmittingToBraveLender, setIsSubmittingToBraveLender] =
     useState(false);
+  const [currentDocuments, setCurrentDocuments] = useState(documents);
+
+  const handleDocumentUploadSuccess = (
+    newDocument: Database["public"]["Tables"]["documents"]["Row"]
+  ) => {
+    setCurrentDocuments((prev) => [...prev, newDocument]);
+    toast.success("Document uploaded successfully");
+  };
 
   const formatCurrency = (amount: number | null) => {
     if (!amount) return "N/A";
@@ -255,7 +266,14 @@ export function ApplicationDetailClient({
       {/* Documents Section */}
       <DocumentsDisplayCard
         applicationId={application.id}
-        documents={documents || []}
+        documents={currentDocuments || []}
+      />
+
+      {/* Admin Document Upload Form */}
+      <AdminDocumentUploadForm
+        applicationId={application.id.toString()}
+        documents={currentDocuments || []}
+        onUploadSuccess={handleDocumentUploadSuccess}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

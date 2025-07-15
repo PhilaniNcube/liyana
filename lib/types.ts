@@ -301,7 +301,15 @@ export type Database = {
         | "submitted_to_lender"
         | "submission_failed";
       bank_account_type: "savings" | "transaction" | "current" | "business";
-      document_type: "id" | "bank_statement" | "payslip" | "proof_of_residence";
+      document_type:
+        | "id"
+        | "bank_statement"
+        | "payslip"
+        | "proof_of_residence"
+        | "contract"
+        | "photo"
+        | "credit_report"
+        | "other";
       employment_type:
         | "employed"
         | "self_employed"
@@ -467,7 +475,16 @@ export const Constants = {
         "submission_failed",
       ],
       bank_account_type: ["savings", "transaction", "current", "business"],
-      document_type: ["id", "bank_statement", "payslip", "proof_of_residence"],
+      document_type: [
+        "id",
+        "bank_statement",
+        "payslip",
+        "proof_of_residence",
+        "contract",
+        "photo",
+        "credit_report",
+        "other",
+      ],
       employment_type: [
         "employed",
         "self_employed",
