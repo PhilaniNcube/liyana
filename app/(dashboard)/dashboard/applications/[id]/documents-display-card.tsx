@@ -146,7 +146,7 @@ export function DocumentsDisplayCard({
 
   if (documents.length === 0) {
     return (
-      <Card>
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
@@ -164,59 +164,18 @@ export function DocumentsDisplayCard({
   }
 
   return (
-    <Card>
+    <Card className="mt-6">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
             Documents ({documents.length} files)
           </CardTitle>
-          <div className="flex items-center gap-2">
-            {completionPercentage === 100 ? (
-              <Badge variant="default" className="bg-green-100 text-green-800">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Complete
-              </Badge>
-            ) : (
-              <Badge
-                variant="secondary"
-                className="bg-yellow-100 text-yellow-800"
-              >
-                <AlertTriangle className="h-3 w-3 mr-1" />
-                {uploadedTypes.length}/{REQUIRED_DOCUMENT_TYPES.length} Types
-              </Badge>
-            )}
-          </div>
         </div>
-        {missingTypes.length > 0 && (
-          <p className="text-sm text-muted-foreground">
-            Missing document types:{" "}
-            {missingTypes
-              .map(
-                (type) =>
-                  DOCUMENT_CONFIGS[type as keyof typeof DOCUMENT_CONFIGS]?.title
-              )
-              .join(", ")}
-          </p>
-        )}
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
           {/* Progress Overview */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Completion Progress</span>
-              <span className="font-medium">
-                {Math.round(completionPercentage)}%
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${completionPercentage}%` }}
-              />
-            </div>
-          </div>
 
           {/* Documents by Type */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

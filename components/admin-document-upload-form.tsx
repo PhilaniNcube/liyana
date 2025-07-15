@@ -279,242 +279,245 @@ export function AdminDocumentUploadForm({
   };
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn("space-y-6 mt-6", className)}>
       {/* Progress Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Document Upload Progress</CardTitle>
-          <CardDescription>
-            Track the completion status of all document types for this
-            application
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between text-sm">
-              <span>Document Types Completed</span>
-              <span className="font-medium">
-                {completedTypes}/{totalTypes}
-              </span>
-            </div>
-            <Progress value={progressPercentage} className="h-2" />
 
-            {/* Document type status grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-              {Object.entries(DOCUMENT_CONFIGS).map(([type, config]) => {
-                const TypeIcon = config.icon;
-                const hasDocuments =
-                  getDocumentsByType(type as DocumentType).length > 0;
-                const documentCount = getDocumentsByType(
-                  type as DocumentType
-                ).length;
-
-                return (
-                  <div
-                    key={type}
-                    className={cn(
-                      "p-3 rounded-lg border text-center space-y-2",
-                      hasDocuments
-                        ? "bg-green-50 border-green-200"
-                        : "bg-gray-50 border-gray-200"
-                    )}
-                  >
-                    <div className="flex items-center justify-center">
-                      <TypeIcon
-                        size={20}
-                        className={
-                          hasDocuments ? "text-green-600" : "text-gray-400"
-                        }
-                      />
-                      {hasDocuments && (
-                        <CheckCircle
-                          size={16}
-                          className="text-green-600 ml-1"
-                        />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium">{config.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {documentCount} file{documentCount !== 1 ? "s" : ""}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Upload Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Upload New Documents</CardTitle>
-          <CardDescription>
-            Upload documents for this application (Admin Only)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Document Type Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="document-type">Document Type</Label>
-            <Select
-              value={selectedDocumentType}
-              onValueChange={(value) =>
-                setSelectedDocumentType(value as DocumentType)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select document type" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(DOCUMENT_CONFIGS).map(([type, config]) => (
-                  <SelectItem key={type} value={type}>
-                    <div className="flex items-center gap-2">
-                      <config.icon size={16} />
-                      {config.title}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* File Upload Area */}
-          <div
-            {...getRootProps()}
-            className={cn(
-              "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
-              isDragActive
-                ? "border-primary bg-primary/10"
-                : "border-gray-300 hover:border-gray-400"
-            )}
-          >
-            <input {...getInputProps()} />
-            <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-sm font-medium mb-2">
-              {isDragActive
-                ? "Drop files here"
-                : "Drag and drop files here, or click to browse"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              PDF, JPEG, JPG, PNG files only
-              {selectedDocumentType && (
-                <span className="block mt-1">
-                  Max file size:{" "}
-                  {(
-                    DOCUMENT_CONFIGS[selectedDocumentType].maxFileSize /
-                    1024 /
-                    1024
-                  ).toFixed(0)}
-                  MB
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Document Upload Progress</CardTitle>
+            <CardDescription>
+              Track the completion status of all document types for this
+              application
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-between text-sm">
+                <span>Document Types Completed</span>
+                <span className="font-medium">
+                  {completedTypes}/{totalTypes}
                 </span>
-              )}
-            </p>
-          </div>
-
-          {/* Error Messages */}
-          {errors.length > 0 && (
-            <div className="space-y-2">
-              {errors.map((error, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-2 text-sm text-red-700 bg-red-50 rounded px-3 py-2 border border-red-200"
-                >
-                  <AlertCircle size={16} />
-                  {error}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* File Preview */}
-          {files.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">
-                  Selected Files ({files.length})
-                </h4>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={clearAllFiles}
-                  className="text-xs"
-                >
-                  Clear All
-                </Button>
               </div>
+              <Progress value={progressPercentage} className="h-2" />
 
-              <div className="grid gap-2">
-                {files.map((file, index) => (
+              {/* Document type status grid */}
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                {Object.entries(DOCUMENT_CONFIGS).map(([type, config]) => {
+                  const TypeIcon = config.icon;
+                  const hasDocuments =
+                    getDocumentsByType(type as DocumentType).length > 0;
+                  const documentCount = getDocumentsByType(
+                    type as DocumentType
+                  ).length;
+
+                  return (
+                    <div
+                      key={type}
+                      className={cn(
+                        "p-3 rounded-lg border text-center space-y-2",
+                        hasDocuments
+                          ? "bg-green-50 border-green-200"
+                          : "bg-gray-50 border-gray-200"
+                      )}
+                    >
+                      <div className="flex items-center justify-center">
+                        <TypeIcon
+                          size={20}
+                          className={
+                            hasDocuments ? "text-green-600" : "text-gray-400"
+                          }
+                        />
+                        {hasDocuments && (
+                          <CheckCircle
+                            size={16}
+                            className="text-green-600 ml-1"
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium">{config.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {documentCount} file{documentCount !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Upload Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload New Documents</CardTitle>
+            <CardDescription>
+              Upload documents for this application (Admin Only)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Document Type Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="document-type">Document Type</Label>
+              <Select
+                value={selectedDocumentType}
+                onValueChange={(value) =>
+                  setSelectedDocumentType(value as DocumentType)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select document type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(DOCUMENT_CONFIGS).map(([type, config]) => (
+                    <SelectItem key={type} value={type}>
+                      <div className="flex items-center gap-2">
+                        <config.icon size={16} />
+                        {config.title}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* File Upload Area */}
+            <div
+              {...getRootProps()}
+              className={cn(
+                "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+                isDragActive
+                  ? "border-primary bg-primary/10"
+                  : "border-gray-300 hover:border-gray-400"
+              )}
+            >
+              <input {...getInputProps()} />
+              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-sm font-medium mb-2">
+                {isDragActive
+                  ? "Drop files here"
+                  : "Drag and drop files here, or click to browse"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                PDF, JPEG, JPG, PNG files only
+                {selectedDocumentType && (
+                  <span className="block mt-1">
+                    Max file size:{" "}
+                    {(
+                      DOCUMENT_CONFIGS[selectedDocumentType].maxFileSize /
+                      1024 /
+                      1024
+                    ).toFixed(0)}
+                    MB
+                  </span>
+                )}
+              </p>
+            </div>
+
+            {/* Error Messages */}
+            {errors.length > 0 && (
+              <div className="space-y-2">
+                {errors.map((error, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border"
+                    className="flex items-center gap-2 text-sm text-red-700 bg-red-50 rounded px-3 py-2 border border-red-200"
                   >
-                    <div className="flex-shrink-0">
-                      {file.type.startsWith("image/") ? (
-                        <div className="w-10 h-10 rounded border overflow-hidden">
-                          <img
-                            src={file.preview}
-                            alt={file.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-10 h-10 rounded border bg-red-100 flex items-center justify-center">
-                          <File size={20} className="text-red-600" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {file.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFile(index)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <X size={16} />
-                    </Button>
+                    <AlertCircle size={16} />
+                    {error}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Upload Button */}
-          <div className="flex justify-end space-x-2">
-            <Button
-              onClick={uploadDocuments}
-              disabled={
-                uploading || files.length === 0 || !selectedDocumentType
-              }
-              className="min-w-[120px]"
-            >
-              {uploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload {files.length} File{files.length !== 1 ? "s" : ""}
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            {/* File Preview */}
+            {files.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium">
+                    Selected Files ({files.length})
+                  </h4>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearAllFiles}
+                    className="text-xs"
+                  >
+                    Clear All
+                  </Button>
+                </div>
+
+                <div className="grid gap-2">
+                  {files.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border"
+                    >
+                      <div className="flex-shrink-0">
+                        {file.type.startsWith("image/") ? (
+                          <div className="w-10 h-10 rounded border overflow-hidden">
+                            <img
+                              src={file.preview}
+                              alt={file.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded border bg-red-100 flex items-center justify-center">
+                            <File size={20} className="text-red-600" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <X size={16} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Upload Button */}
+            <div className="flex justify-end space-x-2">
+              <Button
+                onClick={uploadDocuments}
+                disabled={
+                  uploading || files.length === 0 || !selectedDocumentType
+                }
+                className="min-w-[120px]"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload {files.length} File{files.length !== 1 ? "s" : ""}
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

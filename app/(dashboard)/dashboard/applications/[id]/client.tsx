@@ -288,20 +288,16 @@ export function ApplicationDetailClient({
           )}
         </TabsContent>
         <TabsContent value="documents">
+          <AdminDocumentUploadForm
+            applicationId={application.id.toString()}
+            documents={currentDocuments || []}
+            onUploadSuccess={handleDocumentUploadSuccess}
+          />
           {/* Documents Section */}
           <DocumentsDisplayCard
             applicationId={application.id}
             documents={currentDocuments || []}
           />
-
-          {/* Admin Document Upload Form */}
-          {userRole === "admin" && (
-            <AdminDocumentUploadForm
-              applicationId={application.id.toString()}
-              documents={currentDocuments || []}
-              onUploadSuccess={handleDocumentUploadSuccess}
-            />
-          )}
         </TabsContent>
       </Tabs>
 
