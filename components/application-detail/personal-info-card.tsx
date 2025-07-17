@@ -5,6 +5,7 @@ import { User } from "lucide-react";
 
 interface Application {
   id_number_decrypted: string;
+  email?: string | null;
   date_of_birth: string | null;
   gender: string | null;
   gender_other: string | null;
@@ -17,6 +18,7 @@ interface Application {
   postal_code: string | null;
   profile?: {
     full_name: string;
+    email?: string | null;
   } | null;
 }
 
@@ -63,6 +65,14 @@ export function PersonalInfoCard({ application }: PersonalInfoCardProps) {
             </p>
             <p className="text-sm">
               {application.id_number_decrypted || "N/A"}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              Email Address
+            </p>
+            <p className="text-sm">
+              {application.profile?.email || application.email || "N/A"}
             </p>
           </div>
           <div>
