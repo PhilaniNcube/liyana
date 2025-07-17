@@ -279,19 +279,18 @@ export function ApplicationDetailClient({
           )}
         </TabsContent>
         <TabsContent value="documents">
-          {/* Admin Document Upload Form */}
-          {(userRole === "admin" || userRole === "editor") && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <AdminDocumentUploadForm
               applicationId={application.id.toString()}
               documents={currentDocuments || []}
               onUploadSuccess={handleDocumentUploadSuccess}
             />
-          )}
-          {/* Documents Section */}
-          <DocumentsDisplayCard
-            applicationId={application.id}
-            documents={currentDocuments || []}
-          />
+            {/* Documents Section */}
+            <DocumentsDisplayCard
+              applicationId={application.id}
+              documents={currentDocuments || []}
+            />
+          </div>
         </TabsContent>
       </Tabs>
 

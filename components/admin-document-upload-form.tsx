@@ -282,73 +282,7 @@ export function AdminDocumentUploadForm({
     <div className={cn("space-y-6 mt-6", className)}>
       {/* Progress Overview */}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Document Upload Progress</CardTitle>
-            <CardDescription>
-              Track the completion status of all document types for this
-              application
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <span>Document Types Completed</span>
-                <span className="font-medium">
-                  {completedTypes}/{totalTypes}
-                </span>
-              </div>
-              <Progress value={progressPercentage} className="h-2" />
-
-              {/* Document type status grid */}
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                {Object.entries(DOCUMENT_CONFIGS).map(([type, config]) => {
-                  const TypeIcon = config.icon;
-                  const hasDocuments =
-                    getDocumentsByType(type as DocumentType).length > 0;
-                  const documentCount = getDocumentsByType(
-                    type as DocumentType
-                  ).length;
-
-                  return (
-                    <div
-                      key={type}
-                      className={cn(
-                        "p-3 rounded-lg border text-center space-y-2",
-                        hasDocuments
-                          ? "bg-green-50 border-green-200"
-                          : "bg-gray-50 border-gray-200"
-                      )}
-                    >
-                      <div className="flex items-center justify-center">
-                        <TypeIcon
-                          size={20}
-                          className={
-                            hasDocuments ? "text-green-600" : "text-gray-400"
-                          }
-                        />
-                        {hasDocuments && (
-                          <CheckCircle
-                            size={16}
-                            className="text-green-600 ml-1"
-                          />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium">{config.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {documentCount} file{documentCount !== 1 ? "s" : ""}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 gap-4">
         {/* Upload Form */}
         <Card>
           <CardHeader>
