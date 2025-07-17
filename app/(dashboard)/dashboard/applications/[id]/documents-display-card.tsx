@@ -97,18 +97,18 @@ export function DocumentsDisplayCard({
     try {
       const supabase = createClient();
 
-      // Get signed URL for download
-      const { data, error } = await supabase.storage
+      // For public bucket, get the direct public URL
+      const { data } = supabase.storage
         .from("documents")
-        .createSignedUrl(doc.storage_path, 60); // 1 minute expiry
+        .getPublicUrl(doc.storage_path);
 
-      if (error) {
-        throw error;
+      if (!data?.publicUrl) {
+        throw new Error("Failed to get public URL");
       }
 
       // Create download link
       const link = document.createElement("a");
-      link.href = data.signedUrl;
+      link.href = data.publicUrl;
       link.download = `${DOCUMENT_CONFIGS[doc.document_type as keyof typeof DOCUMENT_CONFIGS]?.title || doc.document_type}_${doc.id}`;
       document.body.appendChild(link);
       link.click();
@@ -127,20 +127,94 @@ export function DocumentsDisplayCard({
     try {
       const supabase = createClient();
 
-      // Get signed URL for preview
-      const { data, error } = await supabase.storage
-        .from("documents")
-        .createSignedUrl(doc.storage_path, 60);
+      console.log("Attempting to preview document:", {
+        id: doc.id,
+        storage_path: doc.storage_path,
+        document_type: doc.document_type,
+      });
 
-      if (error) {
-        throw error;
+      // For public bucket, construct the direct public URL
+      const { data } = supabase.storage
+        .from("documents")
+        .getPublicUrl(doc.storage_path);
+
+      if (!data?.publicUrl) {
+        throw new Error("Failed to get public URL");
       }
 
-      // Open in new tab
-      window.open(data.signedUrl, "_blank");
+      console.log("Successfully got public URL:", data.publicUrl);
+
+      // Check if it's a PDF - use embed for PDFs, otherwise try to open in new tab
+      const isPDF = doc.storage_path.toLowerCase().endsWith(".pdf");
+
+      if (isPDF) {
+        // For PDFs, create a more robust preview
+        const previewWindow = window.open("", "_blank");
+        if (previewWindow) {
+          previewWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>Document Preview - ${doc.document_type}</title>
+                <style>
+                  body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+                  .container { width: 100%; height: 100vh; display: flex; flex-direction: column; }
+                  .header { background: #f8f9fa; padding: 1rem; border-bottom: 1px solid #e9ecef; }
+                  .content { flex: 1; }
+                  embed, iframe { width: 100%; height: 100%; border: none; }
+                  .fallback { padding: 2rem; text-align: center; }
+                  .fallback a { color: #0066cc; text-decoration: none; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <div class="header">
+                    <h2 style="margin: 0;">Document Preview: ${doc.document_type.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}</h2>
+                    <p style="margin: 0.5rem 0 0 0; color: #666;">Uploaded: ${format(new Date(doc.uploaded_at), "MMM d, yyyy 'at' h:mm a")}</p>
+                  </div>
+                  <div class="content">
+                    <embed src="${data.publicUrl}" type="application/pdf">
+                      <div class="fallback">
+                        <p>Unable to display PDF in browser.</p>
+                        <a href="${data.publicUrl}" target="_blank">Click here to download and view the document</a>
+                      </div>
+                    </embed>
+                  </div>
+                </div>
+              </body>
+            </html>
+          `);
+          previewWindow.document.close();
+        } else {
+          toast.error("Popup blocked. Please allow popups and try again.");
+        }
+      } else {
+        // For images and other files, try direct opening
+        const previewWindow = window.open(data.publicUrl, "_blank");
+        if (!previewWindow) {
+          toast.error("Popup blocked. Please allow popups and try again.");
+        }
+      }
     } catch (error) {
       console.error("Preview error:", error);
-      toast.error("Failed to preview document");
+
+      // Provide more specific error messages
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
+      if (errorMessage.includes("Object not found")) {
+        toast.error(
+          "Document file not found in storage. The file may have been moved or deleted."
+        );
+      } else if (errorMessage.includes("not allowed")) {
+        toast.error(
+          "Access denied. You don't have permission to view this document."
+        );
+      } else {
+        toast.error(
+          `Failed to preview document: ${errorMessage || "Unknown error"}`
+        );
+      }
     }
   };
 
