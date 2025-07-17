@@ -262,18 +262,18 @@ export function DocumentsDisplayCard({
               return (
                 <div
                   key={documentType}
-                  className={`border rounded-lg p-4 ${
+                  className={`border rounded-lg p-3 ${
                     typeDocuments.length > 0
                       ? config.borderColor
                       : "border-gray-200"
                   } ${typeDocuments.length > 0 ? config.bgColor : "bg-gray-50"}`}
                 >
-                  <div className="flex flex-col items-center text-center gap-3 mb-3">
+                  <div className="flex items-center gap-3 mb-3">
                     <div
-                      className={`p-3 rounded-lg ${typeDocuments.length > 0 ? "bg-white" : "bg-gray-100"}`}
+                      className={`p-2 rounded-lg ${typeDocuments.length > 0 ? "bg-white" : "bg-gray-100"}`}
                     >
                       <IconComponent
-                        className={`h-6 w-6 ${typeDocuments.length > 0 ? config.color : "text-gray-400"}`}
+                        className={`h-5 w-5 ${typeDocuments.length > 0 ? config.color : "text-gray-400"}`}
                       />
                     </div>
                     <div className="flex-1">
@@ -283,50 +283,44 @@ export function DocumentsDisplayCard({
                         {typeDocuments.length !== 1 ? "s" : ""}
                       </p>
                     </div>
-                    {typeDocuments.length > 0 && (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    )}
                   </div>
 
                   {/* Document Files */}
                   {typeDocuments.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2 items-center">
                       {typeDocuments.map((doc, index) => (
                         <div
                           key={doc.id}
-                          className="bg-white border rounded-lg p-2"
+                          className="bg-white border rounded p-2 flex items-center justify-between"
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <FileText className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs font-medium truncate">
-                                  File #{index + 1}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {format(new Date(doc.uploaded_at), "MMM d")}
-                                </p>
-                              </div>
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-medium truncate">
+                                File #{index + 1}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(doc.uploaded_at), "MMM d")}
+                              </p>
                             </div>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handlePreview(doc)}
-                                className="h-6 w-6 p-0"
-                              >
-                                <Eye className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDownload(doc)}
-                                disabled={downloadingDoc === doc.id}
-                                className="h-6 w-6 p-0"
-                              >
-                                <Download className="h-3 w-3" />
-                              </Button>
-                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handlePreview(doc)}
+                              className="h-6 w-6 p-0"
+                            >
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDownload(doc)}
+                              disabled={downloadingDoc === doc.id}
+                              className="h-6 w-6 p-0"
+                            >
+                              <Download className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
                       ))}
