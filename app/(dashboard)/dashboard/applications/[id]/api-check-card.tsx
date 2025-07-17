@@ -231,7 +231,7 @@ const ApiCheckCard = ({ check }: { check: ApiCheck }) => {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-purple-600" />
-            <CardTitle className="text-lg">Fraud Check Report</CardTitle>
+            <CardTitle className="text-lg">Consumer Credit Report</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             {getStatusIcon(check.status)}
