@@ -75,7 +75,6 @@ async function updateUserProfileWithIdNumber(idNumber: string) {
       .from("profiles")
       .update({
         id_number: encryptedIdNumber,
-        updated_at: new Date().toISOString(),
       })
       .eq("id", currentUser.id);
 

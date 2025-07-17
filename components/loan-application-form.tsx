@@ -292,9 +292,24 @@ export function LoanApplicationForm({
 
       // Check the success flag from the API response
       if (data.success) {
-        setCreditCheckStatus("success");
-        // Automatically proceed to the next step on success
-        await setCurrentStep(2);
+        // Check if credit score is available and meets minimum requirement
+        const creditScore = data.creditScore || data.score || null;
+
+        if (creditScore !== null && creditScore < 600) {
+          setCreditCheckStatus("failed");
+          // Update results to indicate credit score failure
+          setCreditCheckResults({
+            ...data,
+            success: false,
+            creditScoreFailed: true,
+            creditScore,
+            message: `Your credit score of ${creditScore} does not meet our minimum requirement of 600. We are unable to proceed with your loan application at this time.`,
+          });
+        } else {
+          setCreditCheckStatus("success");
+          // Automatically proceed to the next step on success
+          await setCurrentStep(2);
+        }
       } else {
         setCreditCheckStatus("failed");
       }
@@ -458,6 +473,20 @@ export function LoanApplicationForm({
   }, [form]);
 
   const handleNext = async () => {
+    // If we're on step 1 (Credit Check), check if credit check passed
+    if (currentStep === 1) {
+      if (creditCheckStatus !== "success") {
+        // Don't allow proceeding if credit check hasn't passed
+        return;
+      }
+
+      // Check if credit score failed (below 600)
+      if (creditCheckResults?.creditScoreFailed) {
+        // Don't allow proceeding if credit score is below 600
+        return;
+      }
+    }
+
     // If we're on step 4, submit the application before moving to step 5
     if (currentStep === 4) {
       await handleSubmitApplication();
@@ -683,7 +712,16 @@ export function LoanApplicationForm({
 
         <div className={`flex gap-2 ${currentStep === 1 ? "ml-auto" : ""}`}>
           {currentStep < 5 && ( // Allow all steps except step 5 to show Next button
-            <Button type="button" onClick={handleNext} disabled={isPending}>
+            <Button
+              type="button"
+              onClick={handleNext}
+              disabled={
+                isPending ||
+                (currentStep === 1 &&
+                  (creditCheckStatus !== "success" ||
+                    creditCheckResults?.creditScoreFailed))
+              }
+            >
               {currentStep === 4 && isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
