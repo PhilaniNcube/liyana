@@ -104,7 +104,6 @@ export function ApplicationDetailClient({
 }: ApplicationDetailClientProps) {
   const [isRunningFraudCheck, setIsRunningFraudCheck] = useState(false);
   const [fraudCheckResults, setFraudCheckResults] = useState<any>(null);
-  const [extractingZip, setExtractingZip] = useState<number | null>(null);
   const [isSubmittingToBraveLender, setIsSubmittingToBraveLender] =
     useState(false);
   const [currentDocuments, setCurrentDocuments] = useState(documents);
@@ -114,14 +113,6 @@ export function ApplicationDetailClient({
   ) => {
     setCurrentDocuments((prev) => [...prev, newDocument]);
     toast.success("Document uploaded successfully");
-  };
-
-  const formatCurrency = (amount: number | null) => {
-    if (!amount) return "N/A";
-    return new Intl.NumberFormat("en-ZA", {
-      style: "currency",
-      currency: "ZAR",
-    }).format(amount);
   };
 
   const formatDate = (date: string | null) => {
