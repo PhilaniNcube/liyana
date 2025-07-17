@@ -108,6 +108,27 @@ export function ApplicationDetailClient({
     useState(false);
   const [currentDocuments, setCurrentDocuments] = useState(documents);
 
+  // Filter API checks to show only the latest of each type
+  const getLatestApiChecks = (checks: any[]) => {
+    const latestChecks = new Map();
+
+    checks.forEach((check) => {
+      const key = check.check_type;
+      const existingCheck = latestChecks.get(key);
+
+      if (
+        !existingCheck ||
+        new Date(check.checked_at) > new Date(existingCheck.checked_at)
+      ) {
+        latestChecks.set(key, check);
+      }
+    });
+
+    return Array.from(latestChecks.values());
+  };
+
+  const latestApiChecks = getLatestApiChecks(apiChecks);
+
   const handleDocumentUploadSuccess = (
     newDocument: Database["public"]["Tables"]["documents"]["Row"]
   ) => {
@@ -270,7 +291,7 @@ export function ApplicationDetailClient({
               <CardContent>
                 <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* API Checks */}
-                  {apiChecks.map((check, index) => (
+                  {latestApiChecks.map((check, index) => (
                     <ApiCheckCard check={check} key={index} />
                   ))}
                 </div>
