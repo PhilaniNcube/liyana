@@ -17,8 +17,12 @@ import {
   Code,
   Shield,
   UserX,
+  ChevronDown,
+  ChevronRight,
+  Database,
 } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 
 interface DashboardSidebarProps {
   user: User;
@@ -31,19 +35,25 @@ const sidebarItems = [
     icon: Home,
   },
   {
-    title: "Applications",
-    href: "/dashboard/applications",
-    icon: FileText,
-  },
-  {
-    title: "Users",
-    href: "/dashboard/users",
-    icon: Users,
-  },
-  {
-    title: "Declined Loans",
-    href: "/dashboard/declined-loans",
-    icon: UserX,
+    title: "User Management",
+    icon: Database,
+    subItems: [
+      {
+        title: "Pending Applications",
+        href: "/dashboard/applications",
+        icon: FileText,
+      },
+      {
+        title: "Declined Loans",
+        href: "/dashboard/declined-loans",
+        icon: UserX,
+      },
+      {
+        title: "All Users",
+        href: "/dashboard/users",
+        icon: Users,
+      },
+    ],
   },
   {
     title: "API Checks",
@@ -74,6 +84,19 @@ const sidebarItems = [
 
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
   const pathname = usePathname();
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
+  const toggleExpanded = (title: string) => {
+    setExpandedItems((prev) =>
+      prev.includes(title)
+        ? prev.filter((item) => item !== title)
+        : [...prev, title]
+    );
+  };
+
+  const isSubItemActive = (subItems: any[]) => {
+    return subItems.some((subItem) => pathname === subItem.href);
+  };
 
   return (
     <div className="flex h-full w-64 flex-col bg-background border-r">
@@ -97,10 +120,62 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
       <nav className="flex-1 p-4 space-y-2">
         {sidebarItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
 
+          // Handle items with subItems (nested menu)
+          if (item.subItems) {
+            const isExpanded = expandedItems.includes(item.title);
+            const hasActiveSubItem = isSubItemActive(item.subItems);
+
+            return (
+              <div key={item.title}>
+                <Button
+                  variant={hasActiveSubItem ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start gap-2",
+                    hasActiveSubItem && "bg-secondary"
+                  )}
+                  onClick={() => toggleExpanded(item.title)}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.title}
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4 ml-auto" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 ml-auto" />
+                  )}
+                </Button>
+
+                {isExpanded && (
+                  <div className="ml-4 mt-1 space-y-1">
+                    {item.subItems.map((subItem) => {
+                      const SubIcon = subItem.icon;
+                      const isActive = pathname === subItem.href;
+
+                      return (
+                        <Link key={subItem.href} href={subItem.href}>
+                          <Button
+                            variant={isActive ? "secondary" : "ghost"}
+                            className={cn(
+                              "w-full justify-start gap-2 text-sm",
+                              isActive && "bg-secondary"
+                            )}
+                          >
+                            <SubIcon className="h-3 w-3" />
+                            {subItem.title}
+                          </Button>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          // Handle regular items (no subItems)
+          const isActive = pathname === item.href;
           return (
-            <Link key={item.href} href={item.href}>
+            <Link key={item.href} href={item.href!}>
               <Button
                 variant={isActive ? "secondary" : "ghost"}
                 className={cn(
