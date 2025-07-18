@@ -17,7 +17,13 @@ const APIChecks = async () => {
           <li key={check.id} className="p-4 border rounded-md">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold">{check.check_type}</h2>
+                <h2 className="text-lg font-semibold">
+                  {check.check_type === "fraud_check"
+                    ? "Credit Report"
+                    : check.check_type === "credit_bureau"
+                      ? "Credit Score"
+                      : "API Check"}
+                </h2>
                 <p className="text-sm text-gray-500">
                   {formatDate(check.checked_at, "PPpp")}
                 </p>
