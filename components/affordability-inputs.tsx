@@ -130,6 +130,24 @@ export function AffordabilityInputs({
       ? (totalGrossIncome - 6250) * minNorms.percentageAbove
       : 0);
 
+  // Calculate minimum expected expenses (approximately 70% of gross income as baseline)
+  const minimumExpectedExpenses = totalGrossIncome * 0.7;
+  const expensesTooLow =
+    totalExpenses < minimumExpectedExpenses && totalGrossIncome > 0;
+
+  // Set form error if expenses are too low to prevent progression
+  useEffect(() => {
+    if (expensesTooLow) {
+      form.setError("affordability", {
+        type: "manual",
+        message:
+          "Total expenses appear to be unrealistically low for your income level.",
+      });
+    } else {
+      form.clearErrors("affordability");
+    }
+  }, [expensesTooLow, form]);
+
   // Debug: Log calculation updates (can be removed in production)
   useEffect(() => {
     console.log("Affordability calculations updated:", {
@@ -137,8 +155,16 @@ export function AffordabilityInputs({
       minimumDisposableIncome,
       disposableIncome,
       surplus: disposableIncome - minimumDisposableIncome,
+      minimumExpectedExpenses,
+      expensesTooLow,
     });
-  }, [totalGrossIncome, minimumDisposableIncome, disposableIncome]);
+  }, [
+    totalGrossIncome,
+    minimumDisposableIncome,
+    disposableIncome,
+    minimumExpectedExpenses,
+    expensesTooLow,
+  ]);
 
   return (
     <div className="space-y-4">
@@ -394,6 +420,41 @@ export function AffordabilityInputs({
                   <Image
                     src="/square.jpg"
                     alt="Affordability Warning"
+                    width={200}
+                    height={150}
+                    className="rounded-lg"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Low Expenses Warning */}
+        {expensesTooLow && (
+          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <AlertTriangle className="h-6 w-6 text-yellow-600 mt-1 flex-shrink-0" />
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-yellow-800 mb-2">
+                  Expense Validation Required
+                </h4>
+                <p className="text-sm text-yellow-700 mb-3">
+                  Your total expenses of {formatCurrency(totalExpenses)} appear
+                  to be unrealistically low for someone with a gross income of{" "}
+                  {formatCurrency(totalGrossIncome)}. Please review and ensure
+                  all your monthly expenses are accurately captured. The minimum
+                  expected expenses for your income level should be around{" "}
+                  {formatCurrency(minimumExpectedExpenses)}.
+                </p>
+                <p className="text-sm text-yellow-700 font-medium">
+                  You cannot proceed until your expenses are properly
+                  documented.
+                </p>
+                <div className="flex justify-center mt-3">
+                  <Image
+                    src="/square.jpg"
+                    alt="Expense Validation Warning"
                     width={200}
                     height={150}
                     className="rounded-lg"
