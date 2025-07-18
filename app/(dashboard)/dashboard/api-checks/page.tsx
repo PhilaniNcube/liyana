@@ -8,6 +8,18 @@ import { Badge } from "lucide-react";
 const APIChecks = async () => {
   const apiChecks = await getApiChecks();
 
+  const getCreditScore = (check: (typeof apiChecks)[0]) => {
+    if (check.check_type !== "credit_bureau") return null;
+
+    const payload = check.response_payload as any;
+    return (
+      payload?.creditScore ||
+      payload?.score ||
+      payload?.parsedData?.results?.[0]?.score ||
+      null
+    );
+  };
+
   return (
     <div>
       {/* API Check History */}
@@ -27,6 +39,23 @@ const APIChecks = async () => {
                 <p className="text-sm text-gray-500">
                   {formatDate(check.checked_at, "PPpp")}
                 </p>
+                {check.check_type === "credit_bureau" &&
+                  getCreditScore(check) && (
+                    <div className="mt-2">
+                      <span className="text-sm font-medium text-gray-700">
+                        Score:{" "}
+                      </span>
+                      <span
+                        className={`text-lg font-bold ${
+                          Number(getCreditScore(check)) >= 600
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {getCreditScore(check)}
+                      </span>
+                    </div>
+                  )}
               </div>
               <div className="flex items-center space-x-2">
                 {check.check_type === "fraud_check" ? (
