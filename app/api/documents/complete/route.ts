@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     // Send email notification
     try {
       const { data: emailData, error: emailError } = await resend.emails.send({
-        from: "Liyana Loans <noreply@liyanafinance.co.za>",
+        from: "Liyana Finance <noreply@liyanafinance.co.za>",
         to: [user.email!],
         subject: "Documents Uploaded Successfully - Application Under Review",
         html: `
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
             </div>
             
             <div style="background-color: #000000; color: #d1d5db; padding: 20px; text-align: center; font-size: 14px;">
-              <p style="margin: 0;">Thank you for choosing Liyana Loans</p>
+              <p style="margin: 0;">Thank you for choosing Liyana Finance</p>
               <p style="margin: 5px 0 0 0;">This is an automated message, please do not reply.</p>
             </div>
           </div>

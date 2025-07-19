@@ -85,8 +85,24 @@ export function CreditCheckStep({
           <CheckCircle className="h-4 w-4" />
           <AlertTitle>Credit Check Successful!</AlertTitle>
           <AlertDescription>
-            {results.message} Your score is {results.score}. You can now
-            proceed.
+            <div className="space-y-2">
+              <p>{results.message}</p>
+              <div className="flex items-center space-x-2">
+                <span>Your credit score is:</span>
+                <span
+                  className={`text-2xl font-bold ${
+                    results.score && results.score >= 600
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {results.score}
+                </span>
+              </div>
+              <p className="text-sm text-green-700 font-medium">
+                You can now proceed to the next step.
+              </p>
+            </div>
           </AlertDescription>
         </Alert>
       )}
@@ -96,19 +112,35 @@ export function CreditCheckStep({
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Credit Check Unsuccessful</AlertTitle>
           <AlertDescription>
-            {results.message}
-            {results.reasons && results.reasons.length > 0 && (
-              <div className="mt-4">
-                <h4 className="font-semibold">
-                  Factors that influenced your score:
-                </h4>
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  {results.reasons.map((reason) => (
-                    <li key={reason.reasonCode}>{reason.reasonDescription}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <div className="space-y-2">
+              <p>{results.message}</p>
+              {results.score && (
+                <div className="flex items-center space-x-2">
+                  <span>Your credit score is:</span>
+                  <span
+                    className={`text-2xl font-bold ${
+                      results.score >= 600 ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    {results.score}
+                  </span>
+                </div>
+              )}
+              {results.reasons && results.reasons.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-semibold">
+                    Factors that influenced your score:
+                  </h4>
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    {results.reasons.map((reason) => (
+                      <li key={reason.reasonCode}>
+                        {reason.reasonDescription}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </AlertDescription>
         </Alert>
       )}

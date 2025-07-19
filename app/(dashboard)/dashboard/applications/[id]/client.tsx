@@ -42,6 +42,7 @@ import { AdminDocumentUploadForm } from "@/components/admin-document-upload-form
 import type { Database } from "@/lib/types";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import EmailApplication from "./email-application";
 
 interface Application {
   id: number;
@@ -107,6 +108,22 @@ export function ApplicationDetailClient({
   const [isSubmittingToBraveLender, setIsSubmittingToBraveLender] =
     useState(false);
   const [currentDocuments, setCurrentDocuments] = useState(documents);
+
+  // Filter for credit reports from fraud check API checks
+  const creditReports = apiChecks
+    .filter(
+      (check: any) =>
+        check.check_type === "fraud_check" &&
+        check.status === "passed" &&
+        check.response_payload
+    )
+    .map((check: any) => ({
+      id: check.id.toString(),
+      check_type: check.check_type,
+      status: check.status,
+      created_at: check.checked_at,
+      report_data: check.response_payload,
+    }));
 
   // Filter API checks to show only the latest of each type
   const getLatestApiChecks = (checks: any[]) => {
@@ -253,6 +270,7 @@ export function ApplicationDetailClient({
           </TabsTrigger>
           <TabsTrigger value="checks">Credit Checks</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="emails">Emails</TabsTrigger>
         </TabsList>
         <TabsContent value="personal-info">
           {/* Personal Information */}
@@ -312,6 +330,23 @@ export function ApplicationDetailClient({
               documents={currentDocuments || []}
             />
           </div>
+        </TabsContent>
+        <TabsContent value="emails">
+          {/* Emails Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Emails</CardTitle>
+              <CardDescription>
+                All emails sent to the applicant regarding this application
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <EmailApplication
+                id={application.id}
+                creditReports={creditReports}
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
