@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       subject || `Update on your loan application #${applicationId}`;
 
     // Handle credit report attachment if provided
-    let attachments: Array<{
+    const attachments: Array<{
       filename: string;
       content: Buffer | string;
       content_type?: string;
