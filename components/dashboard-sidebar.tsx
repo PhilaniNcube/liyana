@@ -61,7 +61,7 @@ const sidebarItems = [
     icon: Code,
   },
   {
-    title: "Fraud Check",
+    title: "Credit Check",
     href: "/dashboard/fraud-check",
     icon: Shield,
   },
