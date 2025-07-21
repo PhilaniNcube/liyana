@@ -3,7 +3,8 @@ import { cn, getApiCheckStatusColor, getApiCheckStatusIcon } from "@/lib/utils";
 import { ApiCheck } from "@/lib/schemas";
 import { formatDate } from "date-fns";
 import ExtractZip from "./_components/extract-zip";
-import { Badge } from "lucide-react";
+import { CreditBureauDialog } from "./_components/credit-bureau-dialog";
+import { Badge } from "@/components/ui/badge";
 
 const APIChecks = async () => {
   const apiChecks = await getApiChecks();
@@ -41,18 +42,35 @@ const APIChecks = async () => {
                 </p>
                 {check.check_type === "credit_bureau" &&
                   getCreditScore(check) && (
-                    <div className="mt-2">
+                    <div className="mt-2 flex items-center gap-2">
                       <span className="text-sm font-medium text-gray-700">
                         Score:{" "}
                       </span>
                       <span
                         className={`text-lg font-bold ${
-                          Number(getCreditScore(check)) >= 600
+                          Number(getCreditScore(check)) >= 700
                             ? "text-green-600"
-                            : "text-red-600"
+                            : Number(getCreditScore(check)) >= 650
+                              ? "text-yellow-600"
+                              : Number(getCreditScore(check)) >= 600
+                                ? "text-orange-600"
+                                : "text-red-600"
                         }`}
                       >
                         {getCreditScore(check)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        (
+                        {Number(getCreditScore(check)) >= 750
+                          ? "Excellent"
+                          : Number(getCreditScore(check)) >= 700
+                            ? "Good"
+                            : Number(getCreditScore(check)) >= 650
+                              ? "Fair"
+                              : Number(getCreditScore(check)) >= 600
+                                ? "Poor"
+                                : "Very Poor"}
+                        )
                       </span>
                     </div>
                   )}
@@ -60,6 +78,8 @@ const APIChecks = async () => {
               <div className="flex items-center space-x-2">
                 {check.check_type === "fraud_check" ? (
                   <ExtractZip check={check as ApiCheck} />
+                ) : check.check_type === "credit_bureau" ? (
+                  <CreditBureauDialog check={check} />
                 ) : (
                   <Badge
                     className={cn(

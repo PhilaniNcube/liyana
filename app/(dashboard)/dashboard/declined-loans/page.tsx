@@ -57,7 +57,7 @@ export default async function UsersWithoutApplicationsPage(props: {
       <div>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Users Without Applications</h1>
+            <h1 className="text-3xl font-bold">Declined Loans</h1>
             <p className="text-muted-foreground">
               Users who have registered but haven't submitted loan applications
               yet
@@ -137,7 +137,7 @@ export default async function UsersWithoutApplicationsPage(props: {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-orange-600" />
-              Users Without Applications ({total})
+              Declined Loans ({total})
             </CardTitle>
             <div className="text-sm text-muted-foreground">
               Showing {(page - 1) * pageSize + 1} to{" "}

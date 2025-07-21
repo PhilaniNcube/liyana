@@ -13,9 +13,9 @@ export default function UsersWithoutApplicationsLoading() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Users Without Applications</h1>
+        <h1 className="text-3xl font-bold">Declined Loans</h1>
         <p className="text-muted-foreground">
-          Users who have registered but haven't submitted loan applications yet
+          Users with profiles but who do not meet minimum requirements
         </p>
       </div>
 

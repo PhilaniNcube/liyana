@@ -81,9 +81,7 @@ export function ExportUsersButton({
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      toast.success(
-        `Exported ${users.length} users without applications to CSV file`
-      );
+      toast.success(`Exported ${users.length} Declined Loans to CSV file`);
     } catch (error) {
       console.error("Export failed:", error);
       toast.error("Failed to export users");
