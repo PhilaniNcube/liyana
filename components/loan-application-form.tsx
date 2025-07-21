@@ -7,6 +7,7 @@ import { useActionState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryState, parseAsInteger, parseAsString } from "nuqs";
 import { z } from "zod";
+import { extractDateOfBirthFromSAID } from "@/lib/utils/sa-id";
 import {
   submitLoanApplication,
   type LoanApplicationState,
@@ -740,48 +741,3 @@ export function LoanApplicationForm({
     </div>
   );
 }
-
-// Utility function to extract date of birth from SA ID number
-const extractDateOfBirthFromSAID = (idNumber: string): string | null => {
-  if (!idNumber || idNumber.length !== 13) {
-    return null;
-  }
-
-  // Extract YYMMDD from the first 6 digits
-  const yearDigits = idNumber.substring(0, 2);
-  const month = idNumber.substring(2, 4);
-  const day = idNumber.substring(4, 6);
-
-  // Convert YY to full year (assuming current century for years 00-30, previous century for 31-99)
-  const currentYear = new Date().getFullYear();
-  const currentCentury = Math.floor(currentYear / 100) * 100;
-  const yearNumber = parseInt(yearDigits);
-
-  let fullYear: number;
-  if (yearNumber <= 30) {
-    fullYear = currentCentury + yearNumber;
-  } else {
-    fullYear = currentCentury - 100 + yearNumber;
-  }
-
-  // Validate month and day
-  const monthNumber = parseInt(month);
-  const dayNumber = parseInt(day);
-
-  if (monthNumber < 1 || monthNumber > 12 || dayNumber < 1 || dayNumber > 31) {
-    return null;
-  }
-
-  // Create date and validate it exists (handles leap years, etc.)
-  const date = new Date(fullYear, monthNumber - 1, dayNumber);
-  if (
-    date.getFullYear() !== fullYear ||
-    date.getMonth() !== monthNumber - 1 ||
-    date.getDate() !== dayNumber
-  ) {
-    return null;
-  }
-
-  // Return in YYYY-MM-DD format for HTML date input
-  return `${fullYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-};

@@ -31,12 +31,17 @@ import {
   Download,
 } from "lucide-react";
 import { extractPdfFromZip, isBase64Zip } from "@/lib/utils/zip-extractor";
+import {
+  extractDateOfBirthFromSAID,
+  extractGenderFromSAID,
+  validateSAIDNumber,
+} from "@/lib/utils/sa-id";
 
 const fraudCheckSchema = z.object({
   idNumber: z
     .string()
-    .min(13, "ID number must be 13 digits")
-    .max(13, "ID number must be 13 digits"),
+    .min(6, "ID number must be at least 6 digits to extract date of birth")
+    .max(13, "ID number must not exceed 13 digits"),
   forename: z.string().min(1, "First name is required"),
   surname: z.string().min(1, "Surname is required"),
   gender: z.enum(["M", "F"], { required_error: "Gender is required" }),
@@ -118,6 +123,45 @@ export default function FraudCheckPage() {
     },
   });
 
+  const idNumber = form.watch("idNumber");
+
+  // Handle ID number changes and auto-fill date of birth from first 6 digits
+  const handleIdNumberChange = (value: string) => {
+    console.log("ID Number changed:", value, "Length:", value.length);
+
+    // Extract date of birth from first 6 digits when we have at least 6 digits
+    if (value.length >= 6) {
+      console.log("Extracting date from first 6 digits...");
+
+      // Extract and set date of birth
+      const dateOfBirth = extractDateOfBirthFromSAID(value);
+      console.log("Extracted date of birth:", dateOfBirth);
+      if (dateOfBirth) {
+        form.setValue("dateOfBirth", dateOfBirth);
+        console.log("Date of birth set to:", dateOfBirth);
+        toast.success("Date of birth extracted from ID number");
+      }
+
+      // Extract and set gender if we have at least 7 digits
+      if (value.length >= 7) {
+        const gender = extractGenderFromSAID(value);
+        console.log("Extracted gender:", gender);
+        if (gender) {
+          form.setValue("gender", gender);
+          console.log("Gender set to:", gender);
+          toast.success("Gender extracted from ID number");
+        }
+      }
+    } else {
+      // Clear auto-filled values when ID has less than 6 digits
+      if (form.getValues("dateOfBirth") || form.getValues("gender")) {
+        console.log("Clearing auto-filled values for incomplete ID");
+        form.setValue("dateOfBirth", "");
+        form.resetField("gender");
+      }
+    }
+  };
+
   const handleDownload = async (base64Data: string) => {
     if (!isBase64Zip(base64Data)) {
       toast.error("Invalid ZIP data format");
@@ -146,7 +190,18 @@ export default function FraudCheckPage() {
     setResult(null);
 
     try {
-      const result = await submitFraudCheck(null, data);
+      // Convert date of birth from YYYY-MM-DD to YYYYMMDD format for the API
+      const formattedData = {
+        ...data,
+        dateOfBirth: data.dateOfBirth ? data.dateOfBirth.replace(/-/g, "") : "",
+      };
+
+      console.log(
+        "Submitting fraud check with formatted date:",
+        formattedData.dateOfBirth
+      );
+
+      const result = await submitFraudCheck(null, formattedData);
       setResult(result);
 
       if (result.status === "passed") {
@@ -224,8 +279,41 @@ export default function FraudCheckPage() {
                       <FormItem>
                         <FormLabel>ID Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="1234567890123" {...field} />
+                          <Input
+                            placeholder="1234567890123"
+                            value={field.value}
+                            onChange={(e) => {
+                              field.onChange(e); // Update the form field
+                              handleIdNumberChange(e.target.value); // Handle auto-fill logic
+                            }}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                            maxLength={13}
+                            className={
+                              field.value && field.value.length >= 6
+                                ? "bg-green-50 border-green-200"
+                                : ""
+                            }
+                          />
                         </FormControl>
+                        {field.value && field.value.length >= 6 && (
+                          <div className="space-y-1">
+                            <p className="text-xs text-green-600">
+                              ✓ Extracting data from ID number
+                            </p>
+                            <p className="text-xs text-blue-600">
+                              Extracted DOB:{" "}
+                              {extractDateOfBirthFromSAID(field.value)}
+                              {field.value.length >= 7 && (
+                                <>
+                                  {" "}
+                                  | Gender: {extractGenderFromSAID(field.value)}
+                                </>
+                              )}
+                            </p>
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
@@ -270,10 +358,16 @@ export default function FraudCheckPage() {
                           <FormLabel>Gender</FormLabel>
                           <Select
                             onValueChange={field.onChange}
-                            defaultValue={field.value}
+                            value={field.value || ""}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger
+                                className={
+                                  field.value
+                                    ? "bg-green-50 border-green-200 w-full"
+                                    : "w-full"
+                                }
+                              >
                                 <SelectValue placeholder="Select gender" />
                               </SelectTrigger>
                             </FormControl>
@@ -282,6 +376,11 @@ export default function FraudCheckPage() {
                               <SelectItem value="F">Female</SelectItem>
                             </SelectContent>
                           </Select>
+                          {field.value && (
+                            <p className="text-xs text-green-600">
+                              Auto-filled from ID number
+                            </p>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -294,8 +393,26 @@ export default function FraudCheckPage() {
                         <FormItem>
                           <FormLabel>Date of Birth</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} />
+                            <Input
+                              type="date"
+                              {...field}
+                              readOnly
+                              className={
+                                field.value
+                                  ? "bg-green-50 border-green-200 cursor-not-allowed"
+                                  : "bg-gray-50 cursor-not-allowed"
+                              }
+                            />
                           </FormControl>
+                          {field.value ? (
+                            <p className="text-xs text-green-600">
+                              Auto-filled from ID number
+                            </p>
+                          ) : (
+                            <p className="text-xs text-gray-500">
+                              Will be auto-filled when valid ID is entered
+                            </p>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}

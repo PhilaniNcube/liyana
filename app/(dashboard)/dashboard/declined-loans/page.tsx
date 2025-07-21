@@ -45,7 +45,7 @@ export default async function DeclinedLoansPage(props: {
   const searchParams = await props.searchParams;
   const { page, dateFrom, dateTo } = searchParamsCache.parse(searchParams);
 
-  const pageSize = 10;
+  const pageSize = 50;
   const {
     data: declinedUsersAndApplications,
     total,
