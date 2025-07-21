@@ -10,7 +10,11 @@ import {
 } from "@/components/ui/table";
 import { getDeclinedUsersAndApplicationsPaginated } from "@/lib/queries/user";
 import { formatDistanceToNow } from "date-fns";
-import { parseAsInteger, createSearchParamsCache } from "nuqs/server";
+import {
+  parseAsInteger,
+  parseAsString,
+  createSearchParamsCache,
+} from "nuqs/server";
 import { UsersPagination } from "@/components/users-pagination";
 import {
   Users,
@@ -19,19 +23,27 @@ import {
   TrendingDown,
   XCircle,
   UserX,
+  Calendar,
+  Filter,
+  X,
 } from "lucide-react";
 import { ExportUsersButton } from "@/components/export-users-button";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 const searchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
+  dateFrom: parseAsString,
+  dateTo: parseAsString,
 });
 
 export default async function DeclinedLoansPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const searchParams = await props.searchParams;
-  const { page } = searchParamsCache.parse(searchParams);
+  const { page, dateFrom, dateTo } = searchParamsCache.parse(searchParams);
 
   const pageSize = 10;
   const {
@@ -42,7 +54,12 @@ export default async function DeclinedLoansPage(props: {
     usersWithoutApplications,
     usersWithApplications,
     totalPages,
-  } = await getDeclinedUsersAndApplicationsPaginated(page, pageSize);
+  } = await getDeclinedUsersAndApplicationsPaginated(
+    page,
+    pageSize,
+    dateFrom || undefined,
+    dateTo || undefined
+  );
 
   const getRoleVariant = (role: string) => {
     switch (role) {
@@ -85,6 +102,14 @@ export default async function DeclinedLoansPage(props: {
             </h1>
             <p className="text-muted-foreground">
               Users with declined applications or who haven't applied yet
+              {(dateFrom || dateTo) && (
+                <span className="block text-sm text-blue-600 mt-1">
+                  Filtered by registration date
+                  {dateFrom &&
+                    ` from ${new Date(dateFrom).toLocaleDateString()}`}
+                  {dateTo && ` to ${new Date(dateTo).toLocaleDateString()}`}
+                </span>
+              )}
             </p>
           </div>
           <ExportUsersButton
@@ -93,6 +118,76 @@ export default async function DeclinedLoansPage(props: {
           />
         </div>
       </div>
+
+      {/* Date Filter */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            Date Filter
+            {(dateFrom || dateTo) && (
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                Active
+              </span>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <form method="GET" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+              <div className="space-y-2">
+                <Label htmlFor="dateFrom" className="text-xs">
+                  From Date (Registration)
+                </Label>
+                <Input
+                  id="dateFrom"
+                  name="dateFrom"
+                  type="date"
+                  defaultValue={dateFrom || ""}
+                  className="h-8"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dateTo" className="text-xs">
+                  To Date (Registration)
+                </Label>
+                <Input
+                  id="dateTo"
+                  name="dateTo"
+                  type="date"
+                  defaultValue={dateTo || ""}
+                  className="h-8"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" size="sm" className="h-8 flex-1">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  Apply Filter
+                </Button>
+              </div>
+              <div>
+                {(dateFrom || dateTo) && (
+                  <Link
+                    href="/dashboard/declined-loans"
+                    className="inline-flex items-center justify-center rounded-md text-xs font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3 w-full"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Clear
+                  </Link>
+                )}
+              </div>
+            </div>
+            {(dateFrom || dateTo) && (
+              <div className="text-xs text-muted-foreground bg-blue-50 p-2 rounded">
+                <strong>Active Filter:</strong>{" "}
+                {dateFrom && `From ${new Date(dateFrom).toLocaleDateString()}`}
+                {dateFrom && dateTo && " • "}
+                {dateTo && `To ${new Date(dateTo).toLocaleDateString()}`}
+              </div>
+            )}
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
@@ -181,6 +276,11 @@ export default async function DeclinedLoansPage(props: {
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-orange-600" />
               Declined & Non-Applicant Users ({total})
+              {(dateFrom || dateTo) && (
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                  Filtered
+                </span>
+              )}
             </CardTitle>
             <div className="text-sm text-muted-foreground">
               Showing {(page - 1) * pageSize + 1} to{" "}

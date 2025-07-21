@@ -308,19 +308,35 @@ export interface DeclinedUserProfile extends Profile {
 
 export async function getDeclinedUsersAndApplicationsPaginated(
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
+  dateFrom?: string,
+  dateTo?: string
 ) {
   const supabase = await createClient();
+
+  // Build profile query with optional date filtering
+  let profileQuery = supabase
+    .from("profiles")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false });
+
+  // Apply date filters if provided
+  if (dateFrom) {
+    profileQuery = profileQuery.gte("created_at", dateFrom);
+  }
+  if (dateTo) {
+    // Add 1 day to include the entire end date
+    const endDate = new Date(dateTo);
+    endDate.setDate(endDate.getDate() + 1);
+    profileQuery = profileQuery.lt("created_at", endDate.toISOString());
+  }
 
   // Get all user profiles with count
   const {
     data: allProfiles,
     error: profilesError,
     count: totalProfiles,
-  } = await supabase
-    .from("profiles")
-    .select("*", { count: "exact" })
-    .order("created_at", { ascending: false });
+  } = await profileQuery;
 
   if (profilesError) {
     throw new Error(`Failed to fetch user profiles: ${profilesError.message}`);
