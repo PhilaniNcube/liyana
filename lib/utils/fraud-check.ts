@@ -83,7 +83,7 @@ export const handleFraudCheck = async (
     });
 
     if (!response.ok) {
-      throw new Error("Failed to run fraud check");
+      throw new Error("Failed to Run Credit Check");
     }
 
     const data = await response.json();
@@ -228,7 +228,7 @@ export const handleFraudCheck = async (
     toast.success("Fraud check completed successfully");
   } catch (error) {
     console.error("Fraud check error:", error);
-    toast.error("Failed to run fraud check");
+    toast.error("Failed to Run Credit Check");
   } finally {
     setIsRunningFraudCheck(false);
   }

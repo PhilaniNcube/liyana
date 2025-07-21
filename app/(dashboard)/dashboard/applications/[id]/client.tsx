@@ -250,7 +250,7 @@ export function ApplicationDetailClient({
             ) : (
               <>
                 <Shield className="h-4 w-4 mr-2" />
-                Run Fraud Check
+                Run Credit Check
               </>
             )}
           </Button>
