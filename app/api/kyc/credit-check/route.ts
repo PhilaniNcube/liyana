@@ -131,8 +131,8 @@ export async function GET(request: NextRequest) {
 
   urlWithParams.searchParams.append("pUsername", encodedUserName);
   urlWithParams.searchParams.append("pPassword", encodedPassword);
-  urlWithParams.searchParams.append("pMyOrigin", "Liyana Finance");
-  urlWithParams.searchParams.append("pVersion", "1.0");
+  urlWithParams.searchParams.append("pMyOrigin", "Liyana");
+  urlWithParams.searchParams.append("pVersion", "3.0");
   urlWithParams.searchParams.append("pResultType", "json");
   urlWithParams.searchParams.append("pIdNumber", idNumber);
 
