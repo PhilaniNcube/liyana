@@ -108,6 +108,7 @@ export function ApplicationDetailClient({
   const [isSubmittingToBraveLender, setIsSubmittingToBraveLender] =
     useState(false);
   const [currentDocuments, setCurrentDocuments] = useState(documents);
+  const [isDeclining, setIsDeclining] = useState(false);
 
   // Filter for credit reports from fraud check API checks
   const creditReports = apiChecks
@@ -151,6 +152,57 @@ export function ApplicationDetailClient({
   ) => {
     setCurrentDocuments((prev) => [...prev, newDocument]);
     toast.success("Document uploaded successfully");
+  };
+
+  const handleDeclineApplication = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to decline this application? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    // Prompt for decline reason
+    const reason = prompt(
+      "Please provide a reason for declining this application (optional):"
+    );
+
+    setIsDeclining(true);
+    try {
+      const requestBody: any = {
+        status: "declined",
+      };
+
+      if (reason && reason.trim()) {
+        requestBody.decline_reason = reason.trim();
+      }
+
+      const response = await fetch(
+        `/api/applications/${application.id}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to decline application");
+      }
+
+      toast.success("Application has been declined successfully");
+
+      // Refresh the page to update the application status
+      window.location.reload();
+    } catch (error) {
+      console.error("Error declining application:", error);
+      toast.error("Failed to decline application. Please try again.");
+    } finally {
+      setIsDeclining(false);
+    }
   };
 
   const formatDate = (date: string | null) => {
@@ -213,7 +265,9 @@ export function ApplicationDetailClient({
             }
             disabled={
               isSubmittingToBraveLender ||
-              application.status === "submitted_to_lender"
+              isDeclining ||
+              application.status === "submitted_to_lender" ||
+              application.status === "declined"
             }
             variant="default"
             size="sm"
@@ -238,7 +292,11 @@ export function ApplicationDetailClient({
                 setFraudCheckResults
               )
             }
-            disabled={isRunningFraudCheck}
+            disabled={
+              isRunningFraudCheck ||
+              isDeclining ||
+              application.status === "declined"
+            }
             variant="outline"
             size="sm"
           >
@@ -251,6 +309,30 @@ export function ApplicationDetailClient({
               <>
                 <Shield className="h-4 w-4 mr-2" />
                 Run Credit Check
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={handleDeclineApplication}
+            disabled={
+              isSubmittingToBraveLender ||
+              isRunningFraudCheck ||
+              isDeclining ||
+              application.status === "declined" ||
+              application.status === "approved"
+            }
+            variant="destructive"
+            size="sm"
+          >
+            {isDeclining ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Declining...
+              </>
+            ) : (
+              <>
+                <XCircle className="h-4 w-4 mr-2" />
+                Decline Application
               </>
             )}
           </Button>
