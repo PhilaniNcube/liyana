@@ -296,3 +296,140 @@ export async function getUsersWithoutApplicationsPaginated(
     totalPages: Math.ceil(usersWithoutApplications.length / pageSize),
   };
 }
+
+// Enhanced interface for declined users/applications
+export interface DeclinedUserProfile extends Profile {
+  decrypted_id_number: string | null;
+  application_status?: "declined" | "no_application";
+  latest_application_id?: number;
+  application_amount?: number;
+  declined_at?: string;
+}
+
+export async function getDeclinedUsersAndApplicationsPaginated(
+  page: number = 1,
+  pageSize: number = 10
+) {
+  const supabase = await createClient();
+
+  // Get all user profiles with count
+  const {
+    data: allProfiles,
+    error: profilesError,
+    count: totalProfiles,
+  } = await supabase
+    .from("profiles")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false });
+
+  if (profilesError) {
+    throw new Error(`Failed to fetch user profiles: ${profilesError.message}`);
+  }
+
+  // Get all applications with status
+  const { data: applications, error: applicationsError } = await supabase
+    .from("applications")
+    .select("user_id, status, id, application_amount, updated_at, created_at")
+    .order("created_at", { ascending: false });
+
+  if (applicationsError) {
+    throw new Error(
+      `Failed to fetch applications: ${applicationsError.message}`
+    );
+  }
+
+  // Create maps for application data
+  const userApplicationMap = new Map();
+  const declinedApplications = new Set<string>();
+
+  applications.forEach((app) => {
+    // Keep track of the latest application for each user
+    if (
+      !userApplicationMap.has(app.user_id) ||
+      new Date(app.created_at) >
+        new Date(userApplicationMap.get(app.user_id).created_at)
+    ) {
+      userApplicationMap.set(app.user_id, app);
+    }
+
+    // Track users with declined applications
+    if (app.status === "declined") {
+      declinedApplications.add(app.user_id);
+    }
+  });
+
+  // Filter profiles to include:
+  // 1. Users without any applications (excluding admins)
+  // 2. Users with declined applications
+  const declinedUsers: DeclinedUserProfile[] = allProfiles
+    .filter((profile) => profile.role !== "admin")
+    .filter((profile) => {
+      const hasApplication = userApplicationMap.has(profile.id);
+      const hasDeclinedApplication = declinedApplications.has(profile.id);
+
+      // Include if: no application OR has declined application
+      return !hasApplication || hasDeclinedApplication;
+    })
+    .map((profile) => {
+      const application = userApplicationMap.get(profile.id);
+      const hasDeclinedApplication = declinedApplications.has(profile.id);
+
+      return {
+        ...profile,
+        decrypted_id_number: safeDecryptIdNumber(profile.id_number),
+        application_status: (hasDeclinedApplication
+          ? "declined"
+          : "no_application") as "declined" | "no_application",
+        latest_application_id: application?.id,
+        application_amount: application?.application_amount,
+        declined_at: hasDeclinedApplication
+          ? application?.updated_at
+          : undefined,
+      };
+    })
+    .sort((a, b) => {
+      // Sort by: declined applications first, then by creation date (newest first)
+      if (
+        a.application_status === "declined" &&
+        b.application_status === "no_application"
+      ) {
+        return -1;
+      }
+      if (
+        a.application_status === "no_application" &&
+        b.application_status === "declined"
+      ) {
+        return 1;
+      }
+      return (
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    });
+
+  // Count statistics
+  const totalDeclinedUsers = declinedUsers.length;
+  const usersWithDeclinedApplications = declinedUsers.filter(
+    (u) => u.application_status === "declined"
+  ).length;
+  const usersWithoutApplications = declinedUsers.filter(
+    (u) => u.application_status === "no_application"
+  ).length;
+  const totalUsersWithAnyApplication = userApplicationMap.size;
+
+  // Apply pagination
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize;
+  const paginatedUsers = declinedUsers.slice(from, to);
+
+  return {
+    data: paginatedUsers,
+    total: totalDeclinedUsers,
+    totalProfiles: totalProfiles || 0,
+    usersWithDeclinedApplications,
+    usersWithoutApplications,
+    usersWithApplications: totalUsersWithAnyApplication,
+    page,
+    pageSize,
+    totalPages: Math.ceil(totalDeclinedUsers / pageSize),
+  };
+}

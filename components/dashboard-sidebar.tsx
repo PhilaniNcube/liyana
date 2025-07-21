@@ -20,6 +20,7 @@ import {
   ChevronDown,
   ChevronRight,
   Database,
+  UserCheck,
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -47,6 +48,11 @@ const sidebarItems = [
         title: "Declined Loans",
         href: "/dashboard/declined-loans",
         icon: UserX,
+      },
+      {
+        title: "Approved Loans",
+        href: "/dashboard/loans",
+        icon: UserCheck,
       },
       {
         title: "All Users",
