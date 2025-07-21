@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     const apiURL =
+      process.env.NORMAL_ENQUIRY_URL ||
       "https://apis-uat.experian.co.za:9443/nsv2/NormalSearchService";
 
     const requestBody = {
