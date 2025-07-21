@@ -106,9 +106,9 @@ export async function GET(request: NextRequest) {
   const encodedUserName = encodeURIComponent(userName);
   const encodedPassword = encodeURIComponent(password);
 
-  const apiURL = new URL(
-    `${process.env.GET_SCORE_URL}/${encodedUserName}/${encodedPassword}/LIYANA/3.0/Json/${idNumber}`
-  );
+  // const apiURL = new URL(
+  //   `${process.env.GET_SCORE_URL}/${encodedUserName}/${encodedPassword}/LIYANA/3.0/Json/${idNumber}`
+  // );
 
   if (!userName || !password) {
     console.error("Experian credentials are not set in environment variables.");
@@ -118,9 +118,25 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  console.log("Fetching score data from:", apiURL.toString());
+  // console.log("Fetching score data from:", apiURL.toString());
+  //   https://webservices
+  // uat.compuscan.co.za:9443/PersonScoreService/getScore/?pUsername=yourUs
+  //  ername&pPassword=yourPass&pMyOrigin=TestApp&pVersion=1.0&pResultTyp
+  //  e=xml&pIdNumber=7408285107080
 
-  const response = await fetch(apiURL.toString(), {
+  const apiURL = process.env.GET_SCORE_URL!;
+
+  // append the query parameters
+  const urlWithParams = new URL(apiURL);
+
+  urlWithParams.searchParams.append("pUsername", encodedUserName);
+  urlWithParams.searchParams.append("pPassword", encodedPassword);
+  urlWithParams.searchParams.append("pMyOrigin", "Liyana Finance");
+  urlWithParams.searchParams.append("pVersion", "1.0");
+  urlWithParams.searchParams.append("pResultType", "json");
+  urlWithParams.searchParams.append("pIdNumber", idNumber);
+
+  const response = await fetch(urlWithParams.toString(), {
     method: "GET",
   });
 
