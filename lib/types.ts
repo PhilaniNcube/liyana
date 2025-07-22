@@ -242,6 +242,38 @@ export type Database = {
           },
         ];
       };
+      profile_documents: {
+        Row: {
+          created_at: string;
+          document_type: Database["public"]["Enums"]["document_type"];
+          id: number;
+          path: string;
+          profile_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          document_type: Database["public"]["Enums"]["document_type"];
+          id?: number;
+          path: string;
+          profile_id: string;
+        };
+        Update: {
+          created_at?: string;
+          document_type?: Database["public"]["Enums"]["document_type"];
+          id?: number;
+          path?: string;
+          profile_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profile_documents_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           created_at: string;

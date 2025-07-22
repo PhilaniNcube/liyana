@@ -43,8 +43,9 @@ export async function POST(request: NextRequest) {
   const emailVerificationResponse = await fetch(emailVerificationUrl, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
     },
     body: JSON.stringify({
       EmailAddress: email,
@@ -55,11 +56,10 @@ export async function POST(request: NextRequest) {
     }),
   });
 
-  console.log("Email Verification Response:", await emailVerificationResponse);
-
   // add a try-catch block to handle errors
   if (!emailVerificationResponse.ok) {
     const errorData = await emailVerificationResponse.json();
+    console.error("Error verifying email:", errorData);
     return NextResponse.json(
       { error: "Failed to verify email", details: errorData },
       { status: 400 }

@@ -22,6 +22,7 @@ import { formatDistanceToNow } from "date-fns";
 import { parseAsInteger, createSearchParamsCache } from "nuqs/server";
 import { Suspense } from "react";
 import { UsersPagination } from "@/components/users-pagination";
+import Link from "next/link";
 
 const searchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -79,6 +80,7 @@ export default async function UsersPage(props: {
                 <TableHead>Phone</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -98,6 +100,17 @@ export default async function UsersPage(props: {
                     {formatDistanceToNow(new Date(profile.created_at), {
                       addSuffix: true,
                     })}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/dashboard/users/${profile.id}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        View
+                      </Link>
+                      {/* Add more actions as needed */}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

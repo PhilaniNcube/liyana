@@ -45,6 +45,8 @@ import type { Database } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmailApplication from "./email-application";
 import { EmailVerificationDialog } from "@/components/email-verification-dialog";
+import { ProfileDocumentUpload } from "@/components/profile-document-upload";
+import { ProfileDocumentsDisplay } from "@/components/profile-documents-display";
 
 interface Application {
   id: number;
@@ -112,6 +114,9 @@ export function ApplicationDetailClient({
     useState(false);
   const [currentDocuments, setCurrentDocuments] = useState(documents);
   const [isDeclining, setIsDeclining] = useState(false);
+  const [profileDocuments, setProfileDocuments] = useState<
+    Database["public"]["Tables"]["profile_documents"]["Row"][]
+  >([]);
 
   // Filter for credit reports from Credit Check API checks
   const creditReports = apiChecks
@@ -155,6 +160,13 @@ export function ApplicationDetailClient({
   ) => {
     setCurrentDocuments((prev) => [...prev, newDocument]);
     toast.success("Document uploaded successfully");
+  };
+
+  const handleProfileDocumentUploadSuccess = (
+    newDocument: Database["public"]["Tables"]["profile_documents"]["Row"]
+  ) => {
+    setProfileDocuments((prev) => [...prev, newDocument]);
+    toast.success("Profile document uploaded successfully");
   };
 
   const handleDeclineApplication = async () => {
@@ -437,17 +449,43 @@ export function ApplicationDetailClient({
           )}
         </TabsContent>
         <TabsContent value="documents">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <AdminDocumentUploadForm
-              applicationId={application.id.toString()}
-              documents={currentDocuments || []}
-              onUploadSuccess={handleDocumentUploadSuccess}
-            />
-            {/* Documents Section */}
-            <DocumentsDisplayCard
-              applicationId={application.id}
-              documents={currentDocuments || []}
-            />
+          <div className="space-y-6">
+            {/* Application Documents */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">
+                Application Documents
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <AdminDocumentUploadForm
+                  applicationId={application.id.toString()}
+                  documents={currentDocuments || []}
+                  onUploadSuccess={handleDocumentUploadSuccess}
+                />
+                <DocumentsDisplayCard
+                  applicationId={application.id}
+                  documents={currentDocuments || []}
+                />
+              </div>
+            </div>
+
+            {/* Profile Documents */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Profile Documents</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <ProfileDocumentUpload
+                  profileId={application.user_id}
+                  onUploadSuccess={handleProfileDocumentUploadSuccess}
+                />
+                <ProfileDocumentsDisplay
+                  profileId={application.user_id}
+                  documents={profileDocuments}
+                  onRefresh={() => {
+                    // Refresh profile documents - this will trigger a fetch in the display component
+                    setProfileDocuments([]);
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </TabsContent>
         <TabsContent value="emails">
