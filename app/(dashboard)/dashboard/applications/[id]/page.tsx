@@ -38,6 +38,8 @@ export default async function ApplicationDetailPage({
     const decryptedApplication = {
       ...application,
       id_number_decrypted: decryptedIdNumber,
+      first_name: application.profile?.full_name.split(" ")[0] || null,
+      last_name: application.profile?.full_name.split(" ")[1] || null,
     };
 
     return (
