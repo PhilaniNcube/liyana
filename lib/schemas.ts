@@ -345,3 +345,94 @@ export const whoYouEmailVerificationResponseSchema = z.object({
   code: z.number(),
   detail: whoYouEmailVerificationDetailSchema,
 });
+
+// WhoYou Account Verification Response Types
+export interface WhoYouAccountVerificationInformation {
+  id: string;
+  idNumber: string;
+  reference: string;
+  isIdNumberValid: boolean;
+  isNameValid: boolean;
+  isInitialsValid: boolean;
+  isAccountTypeValid: boolean;
+  isAccountNumberValid: boolean;
+  isBranchCodeValid: boolean;
+  accountStatus: string;
+  canAcceptCredit: boolean;
+  canAcceptDebit: boolean;
+  isOpenAtLeast3Months: boolean;
+  supplierCode: number;
+}
+
+export interface WhoYouAccountVerificationDetail {
+  isWhoYouCache: boolean;
+  accountVerificationInformation: WhoYouAccountVerificationInformation[];
+}
+
+export interface WhoYouAccountVerificationResponse {
+  code: number;
+  detail: WhoYouAccountVerificationDetail;
+}
+
+// Account Verification Request Types
+export interface WhoYouAccountVerificationRequest {
+  IdentificationNumber: string;
+  ClientReference: string;
+  AccountNumber: string;
+  BranchCode: string;
+  AccountType: string;
+  IdentificationType: string;
+  Bank: string;
+  FirstName: string;
+  Surname: string;
+  HasConsent: string;
+  CacheValidity: string;
+  RequestPurpose: string;
+  RequestSource: string;
+}
+
+// Zod schemas for WhoYou Account Verification validation
+export const whoYouAccountVerificationInformationSchema = z.object({
+  id: z.string(),
+  idNumber: z.string(),
+  reference: z.string(),
+  isIdNumberValid: z.boolean(),
+  isNameValid: z.boolean(),
+  isInitialsValid: z.boolean(),
+  isAccountTypeValid: z.boolean(),
+  isAccountNumberValid: z.boolean(),
+  isBranchCodeValid: z.boolean(),
+  accountStatus: z.string(),
+  canAcceptCredit: z.boolean(),
+  canAcceptDebit: z.boolean(),
+  isOpenAtLeast3Months: z.boolean(),
+  supplierCode: z.number(),
+});
+
+export const whoYouAccountVerificationDetailSchema = z.object({
+  isWhoYouCache: z.boolean(),
+  accountVerificationInformation: z.array(
+    whoYouAccountVerificationInformationSchema
+  ),
+});
+
+export const whoYouAccountVerificationResponseSchema = z.object({
+  code: z.number(),
+  detail: whoYouAccountVerificationDetailSchema,
+});
+
+export const whoYouAccountVerificationRequestSchema = z.object({
+  IdentificationNumber: z.string().min(1, "Identification number is required"),
+  ClientReference: z.string().min(1, "Client reference is required"),
+  AccountNumber: z.string().min(1, "Account number is required"),
+  BranchCode: z.string().min(1, "Branch code is required"),
+  AccountType: z.string().min(1, "Account type is required"),
+  IdentificationType: z.string().min(1, "Identification type is required"),
+  Bank: z.string().min(1, "Bank name is required"),
+  FirstName: z.string().min(1, "First name is required"),
+  Surname: z.string().min(1, "Surname is required"),
+  HasConsent: z.string().min(1, "Consent is required"),
+  CacheValidity: z.string().min(1, "Cache validity is required"),
+  RequestPurpose: z.string().optional(),
+  RequestSource: z.string().optional(),
+});

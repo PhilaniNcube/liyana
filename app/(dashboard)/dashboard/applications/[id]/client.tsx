@@ -53,6 +53,8 @@ interface Application {
   user_id: string;
   id_number: string;
   id_number_decrypted: string;
+  first_name: string | null;
+  last_name: string | null;
   created_at: string;
   updated_at: string;
   status: string;
