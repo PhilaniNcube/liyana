@@ -290,7 +290,10 @@ export type Database = {
         | "credit_bureau"
         | "fraud_check"
         | "bank_verification"
-        | "dha_otv_facial";
+        | "dha_otv_facial"
+        | "email_verification"
+        | "employment_verification"
+        | "address_verification";
       api_vendor: "Experian" | "WhoYou" | "ThisIsMe";
       application_status:
         | "pre_qualifier"
@@ -463,6 +466,9 @@ export const Constants = {
         "fraud_check",
         "bank_verification",
         "dha_otv_facial",
+        "email_verification",
+        "employment_verification",
+        "address_verification",
       ],
       api_vendor: ["Experian", "WhoYou", "ThisIsMe"],
       application_status: [

@@ -225,9 +225,9 @@ export const handleFraudCheck = async (
     }
 
     setFraudCheckResults(data);
-    toast.success("Fraud check completed successfully");
+    toast.success("Credit Check completed successfully");
   } catch (error) {
-    console.error("Fraud check error:", error);
+    console.error("Credit Check error:", error);
     toast.error("Failed to Run Credit Check");
   } finally {
     setIsRunningFraudCheck(false);

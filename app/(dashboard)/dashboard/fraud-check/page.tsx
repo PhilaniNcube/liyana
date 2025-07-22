@@ -82,7 +82,7 @@ async function submitFraudCheck(
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "Failed to perform fraud check");
+      throw new Error(data.error || "Failed to perform Credit Check");
     }
 
     return {
@@ -197,7 +197,7 @@ export default function FraudCheckPage() {
       };
 
       console.log(
-        "Submitting fraud check with formatted date:",
+        "Submitting Credit Check with formatted date:",
         formattedData.dateOfBirth
       );
 
@@ -205,12 +205,12 @@ export default function FraudCheckPage() {
       setResult(result);
 
       if (result.status === "passed") {
-        toast.success("Fraud check completed successfully");
+        toast.success("Credit Check completed successfully");
       } else if (result.status === "failed") {
-        toast.error(result.error || "Fraud check failed");
+        toast.error(result.error || "Credit Check failed");
       }
     } catch (error) {
-      toast.error("An error occurred during the fraud check");
+      toast.error("An error occurred during the Credit Check");
       setResult({
         status: "failed",
         error: "An unexpected error occurred",
@@ -245,9 +245,9 @@ export default function FraudCheckPage() {
   return (
     <div className="container mx-auto py-8 space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold">Fraud Check</h1>
+        <h1 className="text-3xl font-bold">Credit Check</h1>
         <p className="text-muted-foreground">
-          Perform on-demand fraud checks using Experian
+          Perform on-demand Credit Checks using Experian
         </p>
       </div>
 
@@ -257,7 +257,7 @@ export default function FraudCheckPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
-              Submit Fraud Check
+              Submit Credit Check
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -590,7 +590,7 @@ export default function FraudCheckPage() {
                   ) : (
                     <>
                       <Shield className="mr-2 h-4 w-4" />
-                      Submit Fraud Check
+                      Submit Credit Check
                     </>
                   )}
                 </Button>
@@ -607,7 +607,7 @@ export default function FraudCheckPage() {
           <CardContent>
             {!result ? (
               <div className="text-center py-8 text-muted-foreground">
-                Submit a fraud check to see results here
+                Submit a Credit Check to see results here
               </div>
             ) : (
               <div className={`p-4 rounded-lg border-2 ${getResultColor()}`}>

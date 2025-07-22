@@ -16,7 +16,7 @@ const ExtractZip = ({ check }: { check: ApiCheck }) => {
 
   return (
     <div className="flex items-center space-x-2">
-      {/* Extract ZIP button for fraud checks with ZIP data */}
+      {/* Extract ZIP button for Credit Checks with ZIP data */}
       {check.check_type === "fraud_check" &&
         check.response_payload?.pRetData &&
         isBase64Zip(check.response_payload.pRetData) && (

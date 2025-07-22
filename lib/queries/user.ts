@@ -345,7 +345,9 @@ export async function getDeclinedUsersAndApplicationsPaginated(
   // Get all applications with status
   const { data: applications, error: applicationsError } = await supabase
     .from("applications")
-    .select("user_id, status, id, application_amount, updated_at, created_at")
+    .select(
+      "user_id, status, id, application_amount, updated_at, created_at, id_number"
+    )
     .order("created_at", { ascending: false });
 
   if (applicationsError) {
@@ -390,9 +392,12 @@ export async function getDeclinedUsersAndApplicationsPaginated(
       const application = userApplicationMap.get(profile.id);
       const hasDeclinedApplication = declinedApplications.has(profile.id);
 
+      // Use ID number from application if available, otherwise from profile
+      const idNumberToDecrypt = application?.id_number || profile.id_number;
+
       return {
         ...profile,
-        decrypted_id_number: safeDecryptIdNumber(profile.id_number),
+        decrypted_id_number: safeDecryptIdNumber(idNumberToDecrypt),
         application_status: (hasDeclinedApplication
           ? "declined"
           : "no_application") as "declined" | "no_application",
@@ -422,7 +427,7 @@ export async function getDeclinedUsersAndApplicationsPaginated(
       );
     });
 
-  // Count statistics
+  // Count statistics (excluding admins)
   const totalDeclinedUsers = declinedUsers.length;
   const usersWithDeclinedApplications = declinedUsers.filter(
     (u) => u.application_status === "declined"
@@ -430,7 +435,27 @@ export async function getDeclinedUsersAndApplicationsPaginated(
   const usersWithoutApplications = declinedUsers.filter(
     (u) => u.application_status === "no_application"
   ).length;
-  const totalUsersWithAnyApplication = userApplicationMap.size;
+
+  // Calculate proper statistics excluding admins
+  const totalNonAdminProfiles = (allProfiles || []).filter(
+    (profile) => profile.role !== "admin"
+  ).length;
+
+  // Count users with successful applications (not declined)
+  const usersWithSuccessfulApplications = new Set<string>();
+  applications.forEach((app) => {
+    if (app.status !== "declined") {
+      usersWithSuccessfulApplications.add(app.user_id);
+    }
+  });
+
+  // Filter to only count non-admin users with successful applications
+  const nonAdminUsersWithSuccessfulApplications = Array.from(
+    usersWithSuccessfulApplications
+  ).filter((userId) => {
+    const profile = allProfiles?.find((p) => p.id === userId);
+    return profile && profile.role !== "admin";
+  }).length;
 
   // Apply pagination
   const from = (page - 1) * pageSize;
@@ -440,10 +465,10 @@ export async function getDeclinedUsersAndApplicationsPaginated(
   return {
     data: paginatedUsers,
     total: totalDeclinedUsers,
-    totalProfiles: totalProfiles || 0,
+    totalProfiles: totalNonAdminProfiles,
     usersWithDeclinedApplications,
     usersWithoutApplications,
-    usersWithApplications: totalUsersWithAnyApplication,
+    usersWithApplications: nonAdminUsersWithSuccessfulApplications,
     page,
     pageSize,
     totalPages: Math.ceil(totalDeclinedUsers / pageSize),

@@ -189,3 +189,159 @@ export const loanApplicationSchema = z
       path: ["loan_purpose_reason"],
     }
   );
+
+// WhoYou Email Verification Response Types
+export interface WhoYouDomainDetails {
+  id: string;
+  domain: string;
+  topLevelDomain: string;
+  registered: boolean | null;
+  created: string;
+  updated: string;
+  expires: string | null;
+  registrarName: string;
+  registeredTo: string;
+  isDisposable: boolean | null;
+  isFree: boolean | null;
+  isCustom: boolean | null;
+  isDmarcEnforced: boolean | null;
+  isSpfStrict: boolean | null;
+  isValidMx: boolean | null;
+  canAcceptAll: boolean | null;
+  isSuspiciousTld: boolean | null;
+  doesWebsiteExist: boolean | null;
+  emailVerificationInformationId: string;
+}
+
+export interface WhoYouAccountDetail {
+  id: string;
+  platformId: number;
+  platform: string;
+  emailVerificationInformationId: string;
+}
+
+export interface WhoYouBreach {
+  id: string;
+  name: string;
+  domain: string;
+  breachDate: string;
+  emailVerificationBreachDetailsId: string;
+}
+
+export interface WhoYouBreachDetails {
+  id: string;
+  haveIBeenPwnedListed: boolean;
+  numberOfBreaches: number;
+  firstBreach: string;
+  breaches: WhoYouBreach[];
+  emailVerificationInformationId: string;
+}
+
+export interface WhoYouAppliedRule {
+  id: string;
+  name: string;
+  operation: string;
+  score: number;
+  emailVerificationInformationId: string;
+}
+
+export interface WhoYouEmailVerificationInformation {
+  id: string;
+  email: string;
+  isHighRisk: boolean;
+  isDeliverable: boolean;
+  emailVerificationResponseId: string;
+  domainDetails: WhoYouDomainDetails;
+  accountDetails: WhoYouAccountDetail[];
+  breachDetails: WhoYouBreachDetails;
+  appliedRules: WhoYouAppliedRule[];
+}
+
+export interface WhoYouEmailVerificationDetail {
+  isWhoYouCache: boolean;
+  emailVerificationInformation: WhoYouEmailVerificationInformation;
+  report: string;
+}
+
+export interface WhoYouEmailVerificationResponse {
+  code: number;
+  detail: WhoYouEmailVerificationDetail;
+}
+
+// Zod schemas for WhoYou Email Verification Response validation
+export const whoYouDomainDetailsSchema = z.object({
+  id: z.string(),
+  domain: z.string(),
+  topLevelDomain: z.string(),
+  registered: z.boolean().nullable(),
+  created: z.string(),
+  updated: z.string(),
+  expires: z.string().nullable(),
+  registrarName: z.string(),
+  registeredTo: z.string(),
+  isDisposable: z.boolean().nullable(),
+  isFree: z.boolean().nullable(),
+  isCustom: z.boolean().nullable(),
+  isDmarcEnforced: z.boolean().nullable(),
+  isSpfStrict: z.boolean().nullable(),
+  isValidMx: z.boolean().nullable(),
+  canAcceptAll: z.boolean().nullable(),
+  isSuspiciousTld: z.boolean().nullable(),
+  doesWebsiteExist: z.boolean().nullable(),
+  emailVerificationInformationId: z.string(),
+});
+
+export const whoYouAccountDetailSchema = z.object({
+  id: z.string(),
+  platformId: z.number(),
+  platform: z.string(),
+  emailVerificationInformationId: z.string(),
+});
+
+export const whoYouBreachSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  domain: z.string(),
+  breachDate: z.string(),
+  emailVerificationBreachDetailsId: z.string(),
+});
+
+export const whoYouBreachDetailsSchema = z.object({
+  id: z.string(),
+  haveIBeenPwnedListed: z.boolean(),
+  numberOfBreaches: z.number(),
+  firstBreach: z.string(),
+  breaches: z.array(whoYouBreachSchema),
+  emailVerificationInformationId: z.string(),
+});
+
+export const whoYouAppliedRuleSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  operation: z.string(),
+  score: z.number(),
+  emailVerificationInformationId: z.string(),
+});
+
+export const whoYouEmailVerificationInformationSchema = z.object({
+  id: z.string(),
+  email: z.string().email(),
+  isHighRisk: z.boolean(),
+  isDeliverable: z.boolean(),
+  emailVerificationResponseId: z.string(),
+  domainDetails: whoYouDomainDetailsSchema,
+  accountDetails: z.array(whoYouAccountDetailSchema),
+  breachDetails: whoYouBreachDetailsSchema,
+  appliedRules: z.array(whoYouAppliedRuleSchema),
+});
+
+export const whoYouEmailVerificationDetailSchema = z.object({
+  isWhoYouCache: z.boolean(),
+  emailVerificationInformation: whoYouEmailVerificationInformationSchema,
+  report: z.string(),
+});
+
+export const whoYouEmailVerificationResponseSchema = z.object({
+  code: z.number(),
+  detail: whoYouEmailVerificationDetailSchema,
+});

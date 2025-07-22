@@ -20,7 +20,7 @@ export function FraudCheckResults({
       <CardHeader>
         <CardTitle className="flex items-center">
           <Shield className="h-5 w-5 mr-2" />
-          Fraud Check Results
+          Credit Check Results
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -41,7 +41,7 @@ export function FraudCheckResults({
 
         {fraudCheckResults.pRetData && (
           <div>
-            <h4 className="font-semibold mb-2">Fraud Check Report:</h4>
+            <h4 className="font-semibold mb-2">Credit Check Report:</h4>
             <div className="space-y-3">
               {typeof fraudCheckResults.pRetData === "object" &&
               fraudCheckResults.pRetData.type ? (
@@ -121,7 +121,7 @@ export function FraudCheckResults({
                                     📄 PDF Document
                                   </p>
                                   <p className="text-xs text-blue-700 mb-3">
-                                    This PDF contains the detailed fraud check
+                                    This PDF contains the detailed Credit Check
                                     report.
                                   </p>
                                   <div className="flex items-center space-x-2">
@@ -220,7 +220,7 @@ export function FraudCheckResults({
                       <p className="text-xs text-blue-700">
                         This file contains XML data in ZIP format. You may need
                         to download and extract it manually to view the full
-                        fraud check report.
+                        Credit Check report.
                       </p>
                     </div>
                   )}

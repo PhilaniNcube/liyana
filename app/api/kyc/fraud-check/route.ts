@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    console.log("Sending fraud check request to:", apiURL);
+    console.log("Sending Credit Check request to:", apiURL);
 
     const response = await fetch(apiURL, {
       method: "POST",
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      console.error("Error fetching fraud check data:", response.statusText);
+      console.error("Error fetching Credit Check data:", response.statusText);
 
       // Save failed API check result
       await saveApiCheckResult(idNumber, "failed", {
@@ -139,16 +139,16 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json(
-        { error: "Failed to fetch fraud check data" },
+        { error: "Failed to fetch Credit Check data" },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-    console.log("Fraud check data received:", data);
+    console.log("Credit Check data received:", data);
 
     if (data.error) {
-      console.error("Fraud check error:", data.error);
+      console.error("Credit Check error:", data.error);
 
       // Save failed API check result
       await saveApiCheckResult(idNumber, "failed", {
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
       ...data,
       requestBody: requestBody,
       reason: data.pTransactionCompleted
-        ? "Fraud check completed successfully"
+        ? "Credit Check completed successfully"
         : "Transaction not completed",
     });
 
@@ -182,19 +182,19 @@ export async function POST(request: NextRequest) {
     // Client will handle the Base64 decoding
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
-    console.error("Fraud check error:", error);
+    console.error("Credit Check error:", error);
 
     // Save failed API check result for internal errors
     if (idNumber) {
       await saveApiCheckResult(idNumber, "failed", {
         error: "Internal server error",
         errorMessage: error instanceof Error ? error.message : "Unknown error",
-        reason: "Internal server error during fraud check",
+        reason: "Internal server error during Credit Check",
       });
     }
 
     return NextResponse.json(
-      { error: "Internal server error during fraud check" },
+      { error: "Internal server error during Credit Check" },
       { status: 500 }
     );
   }

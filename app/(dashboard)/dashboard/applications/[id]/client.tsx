@@ -21,6 +21,7 @@ import {
   XCircle,
   AlertCircle,
   Send,
+  Mail,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -43,6 +44,7 @@ import type { Database } from "@/lib/types";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmailApplication from "./email-application";
+import { EmailVerificationDialog } from "@/components/email-verification-dialog";
 
 interface Application {
   id: number;
@@ -87,6 +89,7 @@ interface Application {
   decline_reason: any;
   profile?: {
     full_name: string;
+    email: string | null;
   } | null;
 }
 
@@ -110,7 +113,7 @@ export function ApplicationDetailClient({
   const [currentDocuments, setCurrentDocuments] = useState(documents);
   const [isDeclining, setIsDeclining] = useState(false);
 
-  // Filter for credit reports from fraud check API checks
+  // Filter for credit reports from Credit Check API checks
   const creditReports = apiChecks
     .filter(
       (check: any) =>
@@ -303,7 +306,7 @@ export function ApplicationDetailClient({
             {isRunningFraudCheck ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Running Fraud Check...
+                Running Credit Check...
               </>
             ) : (
               <>
@@ -361,6 +364,40 @@ export function ApplicationDetailClient({
         <TabsContent value="contact-info">
           {/* Contact Information */}
           <ContactInfoCard application={application} />
+
+          {/* Email Verification */}
+          {application.profile?.email && (
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Mail className="h-5 w-5 mr-2" />
+                  Email Verification
+                </CardTitle>
+                <CardDescription>
+                  Comprehensive email verification and risk assessment
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Email Address</p>
+                    <p className="text-sm text-muted-foreground">
+                      {application.profile.email}
+                    </p>
+                  </div>
+                  <EmailVerificationDialog
+                    email={application.profile.email}
+                    idNumber={application.id_number_decrypted}
+                  >
+                    <Button variant="outline" size="sm">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Verify Email
+                    </Button>
+                  </EmailVerificationDialog>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
         <TabsContent value="employment-info">
           {/* Employment Information */}
@@ -373,7 +410,7 @@ export function ApplicationDetailClient({
           <AdditionalInfoCard application={application} />
         </TabsContent>
         <TabsContent value="checks">
-          {/* Fraud Check Results */}
+          {/* Credit Check Results */}
           <FraudCheckResults fraudCheckResults={fraudCheckResults} />
           {/* API Check History */}
           {apiChecks && apiChecks.length > 0 && (

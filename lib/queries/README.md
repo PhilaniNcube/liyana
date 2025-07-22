@@ -22,7 +22,7 @@ The application manages a loan/credit application system with the following main
 - **profiles**: User profiles with roles (customer, admin, editor)
 - **applications**: Loan applications with status tracking
 - **documents**: Required documents (ID, bank statements, payslips, proof of residence)
-- **api_checks**: Third-party verification checks (credit bureau, fraud checks, etc.)
+- **api_checks**: Third-party verification checks (credit bureau, Credit Checks, etc.)
 
 ## Usage
 
@@ -65,7 +65,7 @@ import {
 - Third-party verification tracking
 - Status monitoring (passed, failed, pending)
 - Vendor-specific queries (Experian, WhoYou, ThisIsMe)
-- Check type filtering (credit bureau, fraud check, etc.)
+- Check type filtering (credit bureau, Credit Check, etc.)
 
 ### Analytics Queries (`analytics.ts`)
 - Dashboard statistics

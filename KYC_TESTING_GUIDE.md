@@ -49,7 +49,7 @@ We have successfully implemented a comprehensive KYC (Know Your Customer) system
 #### ❌ FAIL Debt Review:
 - `3333333333333` - Under debt review
 
-#### ❌ FAIL Fraud Check:
+#### ❌ FAIL Credit Check:
 - `4444444444444` - Fraud alerts detected
 
 ## 🚀 How to Test

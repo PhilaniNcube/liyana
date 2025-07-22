@@ -107,7 +107,7 @@ export async function performFraudCheck(
     });
 
     if (!response.ok) {
-      throw new Error("Fraud check API request failed");
+      throw new Error("Credit Check API request failed");
     }
 
     return await response.json();
@@ -115,7 +115,7 @@ export async function performFraudCheck(
     return {
       success: false,
       error: "Network error",
-      message: "Failed to connect to fraud check service",
+      message: "Failed to connect to Credit Check service",
     };
   }
 }

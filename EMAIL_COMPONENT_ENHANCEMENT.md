@@ -23,7 +23,7 @@ The enhanced `EmailApplication` component now provides:
 ### 2. Credit Report Integration
 
 - Automatically fetches available credit report files from `api_checks` table
-- Filters for completed fraud checks with `status = 'passed'` (fraud_check contains the actual report files)
+- Filters for completed Credit Checks with `status = 'passed'` (fraud_check contains the actual report files)
 - Shows credit report file availability status with count and dates
 - Attaches ZIP files containing credit reports as email attachments when requested
 
