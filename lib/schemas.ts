@@ -487,3 +487,90 @@ export const whoYouCellphoneVerificationRequestSchema = z.object({
   CellphoneNumber: z.string().min(1, "Cellphone number is required"),
   IncludeRawResponse: z.boolean(),
 });
+
+// WhoYou ID Verification Response Types
+export interface WhoYouIdVerificationDetail {
+  id: string;
+  idNumber: string;
+  firstNames: string;
+  surname: string;
+  gender: string;
+  dateOfBirth: string;
+  status: string;
+  datePerformed: string;
+  birthPlaceCountryCode: string;
+  deadIndicator: boolean | null;
+  dateOfDeath: string;
+  maritalStatus: string;
+  dateOfMarriage: string;
+  idIssueDate: string;
+  idSequenceNumber: string;
+  onHANIS: boolean;
+  onNPR: boolean;
+  smartCardIssued: boolean;
+  idNumberBlocked: boolean;
+  photo: string;
+  dataSource: string;
+  hasPhoto: boolean;
+  report: string;
+  canAccessDhaLive: boolean;
+}
+
+export interface WhoYouIdVerificationResponse {
+  code: number;
+  detail: WhoYouIdVerificationDetail;
+  message?: string;
+}
+
+// ID Verification Request Types
+export interface WhoYouIdVerificationRequest {
+  IdNumber: string;
+  ClientReference: string;
+  IncludePhoto: boolean;
+  IncludeReport: boolean;
+  RequestPurpose: string;
+  RequestSource: string;
+}
+
+// Zod schemas for WhoYou ID Verification validation
+export const whoYouIdVerificationDetailSchema = z.object({
+  id: z.string(),
+  idNumber: z.string(),
+  firstNames: z.string(),
+  surname: z.string(),
+  gender: z.string(),
+  dateOfBirth: z.string(),
+  status: z.string(),
+  datePerformed: z.string(),
+  birthPlaceCountryCode: z.string(),
+  deadIndicator: z.boolean().nullable(),
+  dateOfDeath: z.string(),
+  maritalStatus: z.string(),
+  dateOfMarriage: z.string(),
+  idIssueDate: z.string(),
+  idSequenceNumber: z.string(),
+  onHANIS: z.boolean(),
+  onNPR: z.boolean(),
+  smartCardIssued: z.boolean(),
+  idNumberBlocked: z.boolean(),
+  photo: z.string(),
+  dataSource: z.string(),
+  hasPhoto: z.boolean(),
+  report: z.string(),
+  canAccessDhaLive: z.boolean(),
+});
+
+export const whoYouIdVerificationResponseSchema = z.object({
+  code: z.number(),
+  detail: whoYouIdVerificationDetailSchema,
+  message: z.string().optional(),
+});
+
+export const whoYouIdVerificationRequestSchema = z.object({
+  IdNumber: z.string().min(1, "ID number is required"),
+  ClientReference: z.string().min(1, "Client reference is required"),
+  IncludePhoto: z.boolean(),
+  IncludeReport: z.boolean(),
+  RequestPurpose: z.string().optional(),
+  RequestSource: z.string().optional(),
+});
