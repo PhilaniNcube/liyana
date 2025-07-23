@@ -87,28 +87,20 @@ export async function POST(request: NextRequest) {
   // get the access token from the response
   const accessToken = loginData.detail.token;
 
-  const cellPhoneVerificationURL = `${process.env.WHO_YOU_URL}/otv/enquire/v1/cellphone-verification`;
+  const cellPhoneVerificationURL = `${process.env.WHO_YOU_URL}/otv/token/v1/cellphone-match`;
 
   const cellPhoneVerificationResponse = await fetch(cellPhoneVerificationURL, {
     method: "POST",
     headers: {
-      //   "Content-Type": "application/json",
+      "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
       IdNumber: decryptedIdNumber,
-      CountryCode: "ZAF",
-      IncludeRawResponse: true,
-      ClientReference: application_id.toString(),
-      RequestPurpose: "",
-      RequestSource: "",
+      CellphoneNumber: cell_number,
+      IncludeRawResponse: false,
     }),
   });
-
-  console.log(
-    "Cellphone verification response:",
-    await cellPhoneVerificationResponse.statusText
-  );
 
   if (!cellPhoneVerificationResponse.ok) {
     const errorData = await cellPhoneVerificationResponse.text();
@@ -124,6 +116,8 @@ export async function POST(request: NextRequest) {
 
   const cellPhoneVerificationData: WhoYouCellphoneVerificationResponse =
     await cellPhoneVerificationResponse.json();
+
+  console.log("Cellphone verification data:", cellPhoneVerificationData);
 
   return NextResponse.json({
     success: true,

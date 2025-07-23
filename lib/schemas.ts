@@ -439,59 +439,51 @@ export const whoYouAccountVerificationRequestSchema = z.object({
 
 // WhoYou Cellphone Verification Response Types
 export interface WhoYouCellphoneVerificationDetail {
-  id: string;
-  companyId: string;
-  datestamp: string;
-  phoneNumber: string;
-  status: string;
-  isValid: boolean;
-  numberType: string;
-  carrier: string;
-  score: number;
-  rawResponse: string;
-  report: string;
+  idNumberProvided: string;
+  phoneNumberProvided: string;
+  isMatch: boolean;
+  score: number | null;
+  phoneNumberType: string;
+}
+
+export interface WhoYouCellphoneVerificationResponseDetail {
+  code: number;
+  detail: WhoYouCellphoneVerificationDetail;
 }
 
 export interface WhoYouCellphoneVerificationResponse {
   code: number;
-  detail: WhoYouCellphoneVerificationDetail;
+  detail: WhoYouCellphoneVerificationResponseDetail;
 }
 
 // Cellphone Verification Request Types
 export interface WhoYouCellphoneVerificationRequest {
   IdNumber: string;
-  CountryCode: string;
+  CellphoneNumber: string;
   IncludeRawResponse: boolean;
-  ClientReference: string;
-  RequestPurpose: string;
-  RequestSource: string;
 }
 
 // Zod schemas for WhoYou Cellphone Verification validation
 export const whoYouCellphoneVerificationDetailSchema = z.object({
-  id: z.string(),
-  companyId: z.string(),
-  datestamp: z.string(),
-  phoneNumber: z.string(),
-  status: z.string(),
-  isValid: z.boolean(),
-  numberType: z.string(),
-  carrier: z.string(),
-  score: z.number(),
-  rawResponse: z.string(),
-  report: z.string(),
+  idNumberProvided: z.string(),
+  phoneNumberProvided: z.string(),
+  isMatch: z.boolean(),
+  score: z.number().nullable(),
+  phoneNumberType: z.string(),
 });
 
-export const whoYouCellphoneVerificationResponseSchema = z.object({
+export const whoYouCellphoneVerificationResponseDetailSchema = z.object({
   code: z.number(),
   detail: whoYouCellphoneVerificationDetailSchema,
 });
 
+export const whoYouCellphoneVerificationResponseSchema = z.object({
+  code: z.number(),
+  detail: whoYouCellphoneVerificationResponseDetailSchema,
+});
+
 export const whoYouCellphoneVerificationRequestSchema = z.object({
   IdNumber: z.string().min(1, "ID number is required"),
-  CountryCode: z.string().min(1, "Country code is required"),
+  CellphoneNumber: z.string().min(1, "Cellphone number is required"),
   IncludeRawResponse: z.boolean(),
-  ClientReference: z.string().min(1, "Client reference is required"),
-  RequestPurpose: z.string().optional(),
-  RequestSource: z.string().optional(),
 });

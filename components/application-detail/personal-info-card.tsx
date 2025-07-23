@@ -100,15 +100,16 @@ export function PersonalInfoCard({ application }: PersonalInfoCardProps) {
     }
   };
 
-  const getStatusIcon = (isValid: boolean) => {
-    return isValid ? (
+  const getStatusIcon = (isMatch: boolean) => {
+    return isMatch ? (
       <CheckCircle className="h-4 w-4 text-green-500" />
     ) : (
       <XCircle className="h-4 w-4 text-red-500" />
     );
   };
 
-  const getScoreColor = (score: number) => {
+  const getScoreColor = (score: number | null) => {
+    if (!score) return "text-gray-600";
     if (score >= 80) return "text-green-600";
     if (score >= 60) return "text-yellow-600";
     return "text-red-600";
@@ -311,10 +312,18 @@ export function PersonalInfoCard({ application }: PersonalInfoCardProps) {
                               <CardContent className="space-y-2">
                                 <div className="flex justify-between">
                                   <span className="text-xs text-muted-foreground">
-                                    Number
+                                    ID Number
                                   </span>
                                   <span className="text-xs font-mono">
-                                    {verificationResult.phoneNumber}
+                                    {verificationResult.idNumberProvided}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs text-muted-foreground">
+                                    Phone Number
+                                  </span>
+                                  <span className="text-xs font-mono">
+                                    {verificationResult.phoneNumberProvided}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -322,16 +331,8 @@ export function PersonalInfoCard({ application }: PersonalInfoCardProps) {
                                     Type
                                   </span>
                                   <Badge variant="outline" className="text-xs">
-                                    {verificationResult.numberType}
+                                    {verificationResult.phoneNumberType}
                                   </Badge>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-muted-foreground">
-                                    Carrier
-                                  </span>
-                                  <span className="text-xs">
-                                    {verificationResult.carrier}
-                                  </span>
                                 </div>
                               </CardContent>
                             </Card>
@@ -345,81 +346,43 @@ export function PersonalInfoCard({ application }: PersonalInfoCardProps) {
                               <CardContent className="space-y-2">
                                 <div className="flex items-center justify-between">
                                   <span className="text-xs text-muted-foreground">
-                                    Valid
+                                    Match Status
                                   </span>
-                                  {getStatusIcon(verificationResult.isValid)}
+                                  {getStatusIcon(verificationResult.isMatch)}
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-xs text-muted-foreground">
-                                    Status
+                                    Match Result
                                   </span>
                                   <Badge
                                     variant={
-                                      verificationResult.status === "Completed"
+                                      verificationResult.isMatch
                                         ? "default"
-                                        : "secondary"
+                                        : "destructive"
                                     }
                                   >
-                                    {verificationResult.status}
+                                    {verificationResult.isMatch
+                                      ? "Match"
+                                      : "No Match"}
                                   </Badge>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-muted-foreground">
-                                    Score
-                                  </span>
-                                  <span
-                                    className={`text-xs font-bold ${getScoreColor(
-                                      verificationResult.score
-                                    )}`}
-                                  >
-                                    {verificationResult.score}%
-                                  </span>
-                                </div>
+                                {verificationResult.score !== null && (
+                                  <div className="flex justify-between">
+                                    <span className="text-xs text-muted-foreground">
+                                      Score
+                                    </span>
+                                    <span
+                                      className={`text-xs font-bold ${getScoreColor(
+                                        verificationResult.score
+                                      )}`}
+                                    >
+                                      {verificationResult.score}%
+                                    </span>
+                                  </div>
+                                )}
                               </CardContent>
                             </Card>
                           </div>
-
-                          <Card>
-                            <CardHeader className="pb-3">
-                              <CardTitle className="text-sm">
-                                Verification Details
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-2">
-                              <div className="flex justify-between">
-                                <span className="text-xs text-muted-foreground">
-                                  Verification ID
-                                </span>
-                                <span className="text-xs font-mono">
-                                  {verificationResult.id}
-                                </span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-xs text-muted-foreground">
-                                  Company ID
-                                </span>
-                                <span className="text-xs font-mono">
-                                  {verificationResult.companyId}
-                                </span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-xs text-muted-foreground">
-                                  Date
-                                </span>
-                                <span className="text-xs">
-                                  {new Date(
-                                    verificationResult.datestamp
-                                  ).toLocaleDateString("en-ZA", {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
-                                </span>
-                              </div>
-                            </CardContent>
-                          </Card>
 
                           <div className="flex justify-center pt-4">
                             <Button
