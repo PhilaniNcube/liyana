@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/server";
+import { encryptValue } from "@/lib/encryption";
 
 // Helper function to save API check result to database
 async function saveApiCheckResult(
@@ -11,7 +12,7 @@ async function saveApiCheckResult(
     const supabase = await createClient();
 
     const { error } = await supabase.from("api_checks").insert({
-      id_number: idNumber,
+      id_number: encryptValue(idNumber),
       check_type: "fraud_check",
       vendor: "Experian",
       status: status,

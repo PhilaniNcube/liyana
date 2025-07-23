@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
   // Save the API check result to the database
   try {
     const { error } = await supabase.from("api_checks").insert({
-      id_number: decryptedIdNumber,
+      id_number: id_number,
       check_type: "id_verification",
       vendor: "WhoYou",
       status: "passed",

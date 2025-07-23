@@ -37,7 +37,7 @@ async function saveApiCheckResult(
     const supabase = await createClient();
 
     const { error } = await supabase.from("api_checks").insert({
-      id_number: idNumber,
+      id_number: encryptValue(idNumber),
       check_type: "credit_bureau",
       vendor: "Experian",
       status: status,

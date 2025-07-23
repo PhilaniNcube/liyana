@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
   try {
     const decryptedIdNumber = decryptValue(id_number);
     const { error } = await supabase.from("api_checks").insert({
-      id_number: decryptedIdNumber,
+      id_number: id_number,
       check_type: "bank_verification",
       vendor: "WhoYou",
       status: "passed",
