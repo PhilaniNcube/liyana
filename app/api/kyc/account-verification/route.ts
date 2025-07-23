@@ -2,6 +2,7 @@ import { WhoYouAccountVerificationResponse } from "@/lib/schemas";
 import { NextRequest } from "next/dist/server/web/spec-extension/request";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/server";
+import { decryptValue } from "@/lib/encryption";
 
 export async function POST(request: NextRequest) {
   const { application_id } = await request.json();
@@ -132,8 +133,8 @@ export async function POST(request: NextRequest) {
       Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
-      IdentificationNumber: id_number,
-      ClientReference: application_id.toString(),
+      IdentificationNumber: decryptValue(id_number),
+      ClientReference: "test",
       AccountNumber: account_number,
       BranchCode: branch_code,
       AccountType: account_type,
@@ -141,10 +142,8 @@ export async function POST(request: NextRequest) {
       Bank: bank.split(" ")[0], // Use the first part of the bank name
       FirstName: first_name,
       Surname: last_name,
-      HasConsent: "true",
+      HasConsent: true,
       CacheValidity: "1",
-      RequestPurpose: "",
-      RequestSource: "",
     }),
   });
 
@@ -159,6 +158,11 @@ export async function POST(request: NextRequest) {
 
   const accountVerificationData: WhoYouAccountVerificationResponse =
     await accountVerificationResponse.json();
+
+  console.log(
+    "Account Verification Data:",
+    accountVerificationData.detail.accountVerificationInformation
+  );
 
   return NextResponse.json({
     success: true,
