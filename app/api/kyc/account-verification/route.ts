@@ -163,6 +163,27 @@ export async function POST(request: NextRequest) {
     accountVerificationData.detail.accountVerificationInformation
   );
 
+  // Save the API check result to the database
+  try {
+    const decryptedIdNumber = decryptValue(id_number);
+    const { error } = await supabase.from("api_checks").insert({
+      id_number: decryptedIdNumber,
+      check_type: "bank_verification",
+      vendor: "WhoYou",
+      status: "passed",
+      response_payload: JSON.parse(JSON.stringify(accountVerificationData)),
+      checked_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.error("Error saving API check result:", error);
+    } else {
+      console.log("Account verification API check result saved successfully");
+    }
+  } catch (error) {
+    console.error("Error saving API check result:", error);
+  }
+
   return NextResponse.json({
     success: true,
     accountVerificationInformation:
