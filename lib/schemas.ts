@@ -436,3 +436,62 @@ export const whoYouAccountVerificationRequestSchema = z.object({
   RequestPurpose: z.string().optional(),
   RequestSource: z.string().optional(),
 });
+
+// WhoYou Cellphone Verification Response Types
+export interface WhoYouCellphoneVerificationDetail {
+  id: string;
+  companyId: string;
+  datestamp: string;
+  phoneNumber: string;
+  status: string;
+  isValid: boolean;
+  numberType: string;
+  carrier: string;
+  score: number;
+  rawResponse: string;
+  report: string;
+}
+
+export interface WhoYouCellphoneVerificationResponse {
+  code: number;
+  detail: WhoYouCellphoneVerificationDetail;
+}
+
+// Cellphone Verification Request Types
+export interface WhoYouCellphoneVerificationRequest {
+  IdNumber: string;
+  CountryCode: string;
+  IncludeRawResponse: boolean;
+  ClientReference: string;
+  RequestPurpose: string;
+  RequestSource: string;
+}
+
+// Zod schemas for WhoYou Cellphone Verification validation
+export const whoYouCellphoneVerificationDetailSchema = z.object({
+  id: z.string(),
+  companyId: z.string(),
+  datestamp: z.string(),
+  phoneNumber: z.string(),
+  status: z.string(),
+  isValid: z.boolean(),
+  numberType: z.string(),
+  carrier: z.string(),
+  score: z.number(),
+  rawResponse: z.string(),
+  report: z.string(),
+});
+
+export const whoYouCellphoneVerificationResponseSchema = z.object({
+  code: z.number(),
+  detail: whoYouCellphoneVerificationDetailSchema,
+});
+
+export const whoYouCellphoneVerificationRequestSchema = z.object({
+  IdNumber: z.string().min(1, "ID number is required"),
+  CountryCode: z.string().min(1, "Country code is required"),
+  IncludeRawResponse: z.boolean(),
+  ClientReference: z.string().min(1, "Client reference is required"),
+  RequestPurpose: z.string().optional(),
+  RequestSource: z.string().optional(),
+});
