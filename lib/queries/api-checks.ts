@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/server";
 import { z } from "zod";
 import type { Database } from "@/lib/types";
+import { decryptValue } from "../encryption";
 
 // API Check query schemas
 export const getApiCheckByIdSchema = z.object({
@@ -241,6 +242,13 @@ export async function getApiChecksByIdNumber(idNumber: string) {
       `Failed to fetch API checks for ID number: ${error.message}`
     );
   }
+
+  // decrypt the id_number if it is encrypted
+  data.forEach((check) => {
+    if (check.id_number && check.id_number.length > 13) {
+      check.id_number = decryptValue(check.id_number);
+    }
+  });
 
   return data;
 }

@@ -49,12 +49,6 @@ export function CreditBureauDialog({ check }: CreditBureauDialogProps) {
     );
   };
 
-  // check if the id_number is encrypted, the encrypted value will be longer than 13 characters, if it is encrypted then decrypted, if not then just display it
-  const finalIdNumber =
-    check.id_number.length > 13
-      ? decryptValue(check.id_number)
-      : check.id_number;
-
   const getCreditReason = () => {
     const payload = check.response_payload as any;
 
