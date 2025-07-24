@@ -347,5 +347,14 @@ export async function getApiChecks() {
     throw new Error(`Failed to fetch API checks: ${error.message}`);
   }
 
+  // Decrypt ID numbers if they are encrypted
+  data.forEach((check) => {
+    if (check.id_number && check.id_number.length > 13) {
+      check.id_number = decryptValue(check.id_number);
+    }
+  });
+
+  console.log("Fetched API checks:", data[0]);
+
   return data;
 }

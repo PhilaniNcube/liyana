@@ -52,6 +52,8 @@ export default async function ApplicationDetailPage({
       };
     });
 
+    console.log("Decrypted Application:", decryptedApiChecks);
+
     return (
       <ApplicationDetailClient
         application={decryptedApplication}
