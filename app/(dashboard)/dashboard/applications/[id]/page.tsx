@@ -42,10 +42,20 @@ export default async function ApplicationDetailPage({
       last_name: application.profile?.full_name.split(" ")[1] || null,
     };
 
+    const decryptedApiChecks = apiChecks.map((check) => {
+      return {
+        ...check,
+        id_number:
+          check.id_number.length > 13
+            ? decryptValue(check.id_number)
+            : check.id_number,
+      };
+    });
+
     return (
       <ApplicationDetailClient
         application={decryptedApplication}
-        apiChecks={apiChecks}
+        apiChecks={decryptedApiChecks}
         documents={documents}
       />
     );
