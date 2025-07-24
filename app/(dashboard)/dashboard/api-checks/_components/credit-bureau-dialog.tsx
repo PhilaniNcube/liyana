@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDate } from "date-fns";
+import { decryptValue } from "@/lib/encryption";
 
 interface CreditBureauDialogProps {
   check: {
@@ -47,6 +48,12 @@ export function CreditBureauDialog({ check }: CreditBureauDialogProps) {
       null
     );
   };
+
+  // check if the id_number is encrypted, the encrypted value will be longer than 13 characters, if it is encrypted then decrypted, if not then just display it
+  const finalIdNumber =
+    check.id_number.length > 13
+      ? decryptValue(check.id_number)
+      : check.id_number;
 
   const getCreditReason = () => {
     const payload = check.response_payload as any;
