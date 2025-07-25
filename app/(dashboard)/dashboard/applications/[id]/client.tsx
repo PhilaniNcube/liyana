@@ -283,8 +283,7 @@ export function ApplicationDetailClient({
             disabled={
               isSubmittingToBraveLender ||
               isDeclining ||
-              application.status === "submitted_to_lender" ||
-              application.status === "declined"
+              application.status === "submitted_to_lender"
             }
             variant="default"
             size="sm"

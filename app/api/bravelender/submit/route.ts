@@ -298,9 +298,9 @@ export async function POST(request: NextRequest) {
     // Log the payload for debugging (remove sensitive data)
     console.log("BraveLender payload (sanitized):", {
       ...braveLenderPayload,
-      idNumber: "[REDACTED]",
-      bankAccountNumber: "[REDACTED]",
-      email: braveLenderPayload.email ? "[REDACTED]" : "MISSING",
+      idNumber: decryptValue(application.id_number),
+      bankAccountNumber: application.bank_account_number,
+      email: braveLenderPayload.email,
     });
 
     // Send request to BraveLender
