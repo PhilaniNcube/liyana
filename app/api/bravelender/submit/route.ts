@@ -296,12 +296,15 @@ export async function POST(request: NextRequest) {
     };
 
     // Log the payload for debugging (remove sensitive data)
-    console.log("BraveLender payload (sanitized):", {
-      ...braveLenderPayload,
-      idNumber: decryptValue(application.id_number),
-      bankAccountNumber: application.bank_account_number,
-      email: braveLenderPayload.email,
-    });
+    console.log(
+      "BraveLender payload (sanitized):",
+      JSON.stringify({
+        ...braveLenderPayload,
+        idNumber: decryptValue(application.id_number),
+        bankAccountNumber: application.bank_account_number,
+        email: braveLenderPayload.email,
+      })
+    );
 
     // Send request to BraveLender
     const braveLenderResponse = await fetch(BRAVELENDER_API_URL, {
