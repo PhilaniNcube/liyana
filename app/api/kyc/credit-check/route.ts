@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
   const encodedPassword = encodeURIComponent(password);
 
   const apiURL = new URL(
-    `${process.env.GET_SCORE_URL}/${encodedUserName}/${encodedPassword}/LiyanaFinance/1.0/Json/${idNumber}`
+    `${process.env.GET_SCORE_URL}/${encodedUserName}/${encodedPassword}/LiyanaFinance/3.0/Json/${idNumber}`
   );
 
   if (!userName || !password) {
