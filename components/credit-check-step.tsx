@@ -48,14 +48,14 @@ export function CreditCheckStep({
   return (
     <div className="space-y-6">
       {/* Temporary Notice */}
-      <Alert variant="default">
+      {/* <Alert variant="default">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Credit Check Temporarily Disabled</AlertTitle>
         <AlertDescription>
           We're currently collecting your ID number for verification purposes.
           The credit check will be performed later in the application process.
         </AlertDescription>
-      </Alert>
+      </Alert> */}
 
       <FormField
         control={form.control}
