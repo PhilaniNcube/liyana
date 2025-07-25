@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import {
   Eye,
   TrendingUp,
@@ -157,33 +158,21 @@ export function CreditBureauDialog({ check }: CreditBureauDialogProps) {
                   <div className="text-sm text-muted-foreground mb-2">
                     Score Range
                   </div>
-                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={cn(
-                        "h-full transition-all duration-500",
-                        creditScore >= 750
-                          ? "bg-green-600"
-                          : creditScore >= 700
-                            ? "bg-green-500"
-                            : creditScore >= 650
-                              ? "bg-yellow-500"
-                              : creditScore >= 600
-                                ? "bg-orange-500"
-                                : "bg-red-500"
-                      )}
-                      style={{
-                        width: `${Math.min((creditScore / 999) * 100, 100)}%`,
-                      }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                    <span>0</span>
-                    <span className="text-red-500">600</span>
-                    <span className="text-yellow-500">650</span>
-                    <span className="text-green-500">700</span>
-                    <span className="text-green-600">750+</span>
-                    <span>999</span>
-                  </div>
+                  <Progress
+                    value={Math.min((creditScore / 999) * 100, 100)}
+                    className={cn(
+                      "h-2",
+                      creditScore >= 750
+                        ? "[&>[data-slot=progress-indicator]]:bg-green-600"
+                        : creditScore >= 700
+                          ? "[&>[data-slot=progress-indicator]]:bg-green-500"
+                          : creditScore >= 650
+                            ? "[&>[data-slot=progress-indicator]]:bg-yellow-500"
+                            : creditScore >= 600
+                              ? "[&>[data-slot=progress-indicator]]:bg-orange-500"
+                              : "[&>[data-slot=progress-indicator]]:bg-red-500"
+                    )}
+                  />
                 </div>
               )}
             </CardContent>
