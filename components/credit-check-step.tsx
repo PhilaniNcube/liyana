@@ -47,16 +47,6 @@ export function CreditCheckStep({
 
   return (
     <div className="space-y-6">
-      {/* Temporary Notice */}
-      {/* <Alert variant="default">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Credit Check Temporarily Disabled</AlertTitle>
-        <AlertDescription>
-          We're currently collecting your ID number for verification purposes.
-          The credit check will be performed later in the application process.
-        </AlertDescription>
-      </Alert> */}
-
       <FormField
         control={form.control}
         name="id_number" // Match the schema field name
@@ -82,10 +72,10 @@ export function CreditCheckStep({
         {status === "loading" ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Validating...
+            Checking...
           </>
         ) : (
-          "Validate ID Number"
+          "Perform Credit Check"
         )}
       </Button>
 
@@ -93,10 +83,22 @@ export function CreditCheckStep({
       {status === "success" && results && (
         <Alert variant="default">
           <CheckCircle className="h-4 w-4" />
-          <AlertTitle>ID Number Validated!</AlertTitle>
+          <AlertTitle>Credit Check Successful!</AlertTitle>
           <AlertDescription>
             <div className="space-y-2">
               <p>{results.message}</p>
+              <div className="flex items-center space-x-2">
+                <span>Your credit score is:</span>
+                <span
+                  className={`text-2xl font-bold ${
+                    results.score && results.score >= 600
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {results.score}
+                </span>
+              </div>
               <p className="text-sm text-green-700 font-medium">
                 You can now proceed to the next step.
               </p>

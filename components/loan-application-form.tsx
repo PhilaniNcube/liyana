@@ -128,8 +128,8 @@ type LoanApplicationData = z.infer<typeof loanApplicationSchema>;
 const STEPS = [
   {
     id: 1,
-    title: "ID Validation",
-    description: "Verify your identity",
+    title: "Credit Check",
+    description: "Quick pre-qualification check",
     icon: CheckCircle,
   },
   {
@@ -278,38 +278,50 @@ export function LoanApplicationForm({
   );
   const [isPending, startTransition] = useTransition();
 
-  // Credit check function - TEMPORARILY DISABLED
+  // Credit check function
   const performCreditCheck = async (idNumber: string) => {
-    // TEMPORARILY DISABLED - Just validate ID and proceed
     setCreditCheckStatus("loading");
-    setCreditCheckResults(null);
+    setCreditCheckResults(null); // Reset previous results
 
-    // Simulate a brief loading state
-    setTimeout(() => {
-      setCreditCheckStatus("success");
+    try {
+      const response = await fetch(
+        `/api/kyc/credit-check?idNumber=${encodeURIComponent(idNumber)}`
+      );
+
+      const data = await response.json();
+      setCreditCheckResults(data);
+
+      // Check the success flag from the API response
+      if (data.success) {
+        // Check if credit score is available and meets minimum requirement
+        const creditScore = data.creditScore || data.score || null;
+
+        if (creditScore !== null && creditScore < 600) {
+          setCreditCheckStatus("failed");
+          // Update results to indicate credit score failure
+          setCreditCheckResults({
+            ...data,
+            success: false,
+            creditScoreFailed: true,
+            creditScore,
+            message: `Your credit score of ${creditScore} does not meet our minimum requirement of 600. We are unable to proceed with your loan application at this time.`,
+          });
+        } else {
+          setCreditCheckStatus("success");
+          // Automatically proceed to the next step on success
+          await setCurrentStep(2);
+        }
+      } else {
+        setCreditCheckStatus("failed");
+      }
+    } catch (error) {
+      console.error("Credit check error:", error);
+      setCreditCheckStatus("failed");
       setCreditCheckResults({
-        success: true,
-        message:
-          "ID number validated. Credit check will be performed later in the process.",
+        success: false,
+        message: "An unexpected error occurred during the credit check.",
       });
-    }, 1000);
-
-    // TODO: Re-enable actual credit check later
-    // try {
-    //   const response = await fetch(
-    //     `/api/kyc/credit-check?idNumber=${encodeURIComponent(idNumber)}`
-    //   );
-    //   const data = await response.json();
-    //   setCreditCheckResults(data);
-    //   // ... rest of credit check logic
-    // } catch (error) {
-    //   console.error("Credit check error:", error);
-    //   setCreditCheckStatus("failed");
-    //   setCreditCheckResults({
-    //     success: false,
-    //     message: "An unexpected error occurred during the credit check.",
-    //   });
-    // }
+    }
   };
 
   // Use React Query to fetch documents
@@ -462,25 +474,17 @@ export function LoanApplicationForm({
   }, [form]);
 
   const handleNext = async () => {
-    // TEMPORARILY DISABLED - Allow progression from step 1 without credit check
-    // if (currentStep === 1) {
-    //   if (creditCheckStatus !== "success") {
-    //     // Don't allow proceeding if credit check hasn't passed
-    //     return;
-    //   }
-
-    //   // Check if credit score failed (below 600)
-    //   if (creditCheckResults?.creditScoreFailed) {
-    //     // Don't allow proceeding if credit score is below 600
-    //     return;
-    //   }
-    // }
-
-    // For step 1, just validate that ID number is provided
+    // If we're on step 1 (Credit Check), check if credit check passed
     if (currentStep === 1) {
-      const isValid = await form.trigger("id_number");
-      if (!isValid) {
-        return; // Don't proceed if ID number is invalid
+      if (creditCheckStatus !== "success") {
+        // Don't allow proceeding if credit check hasn't passed
+        return;
+      }
+
+      // Check if credit score failed (below 600)
+      if (creditCheckResults?.creditScoreFailed) {
+        // Don't allow proceeding if credit score is below 600
+        return;
       }
     }
 
@@ -713,11 +717,10 @@ export function LoanApplicationForm({
               type="button"
               onClick={handleNext}
               disabled={
-                isPending
-                // TEMPORARILY DISABLED - Allow progression from step 1
-                // || (currentStep === 1 &&
-                //   (creditCheckStatus !== "success" ||
-                //     creditCheckResults?.creditScoreFailed))
+                isPending ||
+                (currentStep === 1 &&
+                  (creditCheckStatus !== "success" ||
+                    creditCheckResults?.creditScoreFailed))
               }
             >
               {currentStep === 4 && isPending ? (
