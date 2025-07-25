@@ -207,6 +207,66 @@ export type Database = {
         };
         Relationships: [];
       };
+      approved_loans: {
+        Row: {
+          application_id: number;
+          approved_date: string | null;
+          created_at: string | null;
+          id: number;
+          interest_rate: number;
+          loan_term_days: number;
+          monthly_payment: number;
+          next_payment_date: string | null;
+          profile_id: string | null;
+          status: string;
+          total_repayment_amount: number;
+          updated_at: string | null;
+        };
+        Insert: {
+          application_id: number;
+          approved_date?: string | null;
+          created_at?: string | null;
+          id?: never;
+          interest_rate: number;
+          loan_term_days: number;
+          monthly_payment: number;
+          next_payment_date?: string | null;
+          profile_id?: string | null;
+          status?: string;
+          total_repayment_amount: number;
+          updated_at?: string | null;
+        };
+        Update: {
+          application_id?: number;
+          approved_date?: string | null;
+          created_at?: string | null;
+          id?: never;
+          interest_rate?: number;
+          loan_term_days?: number;
+          monthly_payment?: number;
+          next_payment_date?: string | null;
+          profile_id?: string | null;
+          status?: string;
+          total_repayment_amount?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "approved_loans_application_id_fkey";
+            columns: ["application_id"];
+            isOneToOne: false;
+            referencedRelation: "applications";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fk_approved_loans_profiles";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       documents: {
         Row: {
           application_id: number;
@@ -238,6 +298,44 @@ export type Database = {
             columns: ["application_id"];
             isOneToOne: false;
             referencedRelation: "applications";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      loan_payments: {
+        Row: {
+          approved_loan_id: number;
+          created_at: string | null;
+          id: number;
+          payment_amount: number;
+          payment_date: string | null;
+          payment_method: string | null;
+          status: string;
+        };
+        Insert: {
+          approved_loan_id: number;
+          created_at?: string | null;
+          id?: never;
+          payment_amount: number;
+          payment_date?: string | null;
+          payment_method?: string | null;
+          status?: string;
+        };
+        Update: {
+          approved_loan_id?: number;
+          created_at?: string | null;
+          id?: never;
+          payment_amount?: number;
+          payment_date?: string | null;
+          payment_method?: string | null;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "loan_payments_approved_loan_id_fkey";
+            columns: ["approved_loan_id"];
+            isOneToOne: false;
+            referencedRelation: "approved_loans";
             referencedColumns: ["id"];
           },
         ];
