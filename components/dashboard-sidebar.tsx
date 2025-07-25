@@ -71,11 +71,11 @@ const sidebarItems = [
     href: "/dashboard/fraud-check",
     icon: Shield,
   },
-  {
-    title: "Loans",
-    href: "/dashboard/loans",
-    icon: CreditCard,
-  },
+  // {
+  //   title: "Loans",
+  //   href: "/dashboard/loans",
+  //   icon: CreditCard,
+  // },
   {
     title: "Analytics",
     href: "/dashboard/analytics",
