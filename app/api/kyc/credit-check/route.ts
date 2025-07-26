@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/server";
 import { encryptValue } from "@/lib/encryption";
 import { getCurrentUser } from "@/lib/queries/user";
+import { createServiceClient } from "@/lib/service";
 
 interface ScoreReason {
   reasonCode: string;
@@ -34,7 +35,7 @@ async function saveApiCheckResult(
   responsePayload: any
 ) {
   try {
-    const supabase = await createClient();
+    const supabase = await createServiceClient();
 
     const { error } = await supabase.from("api_checks").insert({
       id_number: encryptValue(idNumber),
