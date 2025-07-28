@@ -80,6 +80,7 @@ export type Database = {
             | null;
           bank_name: string | null;
           branch_code: string | null;
+          bravelender_application_id: string | null;
           city: string | null;
           created_at: string;
           date_of_birth: string | null;
@@ -125,6 +126,7 @@ export type Database = {
             | null;
           bank_name?: string | null;
           branch_code?: string | null;
+          bravelender_application_id?: string | null;
           city?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
@@ -170,6 +172,7 @@ export type Database = {
             | null;
           bank_name?: string | null;
           branch_code?: string | null;
+          bravelender_application_id?: string | null;
           city?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
@@ -210,42 +213,48 @@ export type Database = {
       approved_loans: {
         Row: {
           application_id: number;
-          approved_date: string | null;
+          approved_date: string;
           created_at: string | null;
           id: number;
+          initiation_fee: number;
           interest_rate: number;
           loan_term_days: number;
           monthly_payment: number;
           next_payment_date: string | null;
-          profile_id: string | null;
+          profile_id: string;
+          service_fee: number;
           status: string;
           total_repayment_amount: number;
           updated_at: string | null;
         };
         Insert: {
           application_id: number;
-          approved_date?: string | null;
+          approved_date?: string;
           created_at?: string | null;
-          id?: never;
+          id?: number;
+          initiation_fee: number;
           interest_rate: number;
           loan_term_days: number;
           monthly_payment: number;
           next_payment_date?: string | null;
-          profile_id?: string | null;
+          profile_id: string;
+          service_fee: number;
           status?: string;
           total_repayment_amount: number;
           updated_at?: string | null;
         };
         Update: {
           application_id?: number;
-          approved_date?: string | null;
+          approved_date?: string;
           created_at?: string | null;
-          id?: never;
+          id?: number;
+          initiation_fee?: number;
           interest_rate?: number;
           loan_term_days?: number;
           monthly_payment?: number;
           next_payment_date?: string | null;
-          profile_id?: string | null;
+          profile_id?: string;
+          service_fee?: number;
           status?: string;
           total_repayment_amount?: number;
           updated_at?: string | null;

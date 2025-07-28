@@ -84,6 +84,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ensure application is not already submitted
+    if (application.status === "submitted_to_lender") {
+      return NextResponse.json(
+        { error: "Application already submitted to lender" },
+        { status: 400 }
+      );
+    }
+
+    // if the application already has a BraveLender application ID, return an error
+    if (application.bravelender_application_id) {
+      return NextResponse.json(
+        { error: "Application already has a BraveLender application ID" },
+        { status: 400 }
+      );
+    }
+
     // Fetch user profile separately
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
@@ -312,9 +328,8 @@ export async function POST(request: NextRequest) {
       "BraveLender payload (sanitized):",
       JSON.stringify({
         ...braveLenderPayload,
-        idNumber: decryptValue(application.id_number),
-        bankAccountNumber: application.bank_account_number,
-        email: braveLenderPayload.email,
+        idNumber: "REDACTED",
+        bankAccountNumber: "REDACTED",
       })
     );
 
@@ -332,7 +347,8 @@ export async function POST(request: NextRequest) {
 
     const braveLenderData = await braveLenderResponse.json();
 
-    if (!braveLenderResponse.ok) {
+    // Check for BraveLender's specific error format
+    if (braveLenderData.isError || !braveLenderResponse.ok) {
       console.error("BraveLender API error:", {
         status: braveLenderResponse.status,
         statusText: braveLenderResponse.statusText,
@@ -352,7 +368,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: "Failed to submit to BraveLender",
-          details: braveLenderData?.message || braveLenderData,
+          details: braveLenderData?.message || "An unknown error occurred",
           status: braveLenderResponse.status,
         },
         { status: braveLenderResponse.status }
@@ -365,6 +381,7 @@ export async function POST(request: NextRequest) {
       .update({
         status: "submitted_to_lender",
         updated_at: new Date().toISOString(),
+        bravelender_application_id: braveLenderData.data.application_id,
       })
       .eq("id", applicationId);
 
