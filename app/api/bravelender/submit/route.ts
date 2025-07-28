@@ -271,7 +271,12 @@ export async function POST(request: NextRequest) {
       employmentStatus: mapEmploymentStatus(application.employment_type),
       employer: application.employer_name || "",
       employerAddress: application.employer_address || undefined,
-      employerContactNumber: application.employer_contact_number || undefined,
+
+      //      employerContactNumber: application.employer_phone_number || undefined, trim any white spaces
+      employerContactNumber: application.employer_contact_number
+        ? application.employer_contact_number.trim()
+        : undefined,
+
       jobTitle: application.job_title || "",
       monthlyIncome: application.monthly_income?.toString() || "0",
       workExperience: "", // Default since not captured in our form
