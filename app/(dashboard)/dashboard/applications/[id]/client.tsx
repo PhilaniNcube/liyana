@@ -355,10 +355,19 @@ export function ApplicationDetailClient({
             )}
           </Button>
           <Badge className={getStatusColor(application.status)}>
-            {
-              // Display status with proper casing
-              application.status.replace("_", " ").toUpperCase()
-            }
+            {(() => {
+              // Use a switch case to format status text
+              switch (application.status) {
+                case "submitted_to_lender":
+                  return "Submitted to Bravelender";
+                case "approved":
+                  return "Approved";
+                case "declined":
+                  return "Declined";
+                default:
+                  return application.status.replace("_", " ").toUpperCase();
+              }
+            })()}
           </Badge>
         </div>
       </div>
