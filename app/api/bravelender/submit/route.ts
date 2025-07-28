@@ -242,6 +242,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const employerContactNumber = application.employer_contact_number
+      ? application.employer_contact_number.trim()
+      : undefined;
+
+    // remover any intermediate spaces from the employer contact number
+    const trimmedEmployerContactNumber = employerContactNumber
+      ? employerContactNumber.replace(/\s+/g, "")
+      : undefined;
+
     // Prepare BraveLender request payload
     const braveLenderPayload: BraveLenderLoanRequest = {
       firstName: firstName || "Unknown",
@@ -273,9 +282,7 @@ export async function POST(request: NextRequest) {
       employerAddress: application.employer_address || undefined,
 
       //      employerContactNumber: application.employer_phone_number || undefined, trim any white spaces
-      employerContactNumber: application.employer_contact_number
-        ? application.employer_contact_number.trim()
-        : undefined,
+      employerContactNumber: trimmedEmployerContactNumber || undefined,
 
       jobTitle: application.job_title || "",
       monthlyIncome: application.monthly_income?.toString() || "0",
