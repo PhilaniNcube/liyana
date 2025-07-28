@@ -311,7 +311,8 @@ export function ApplicationDetailClient({
             disabled={
               isRunningFraudCheck ||
               isDeclining ||
-              application.status === "declined"
+              application.status === "declined" ||
+              application.status === "submitted_to_lender"
             }
             variant="outline"
             size="sm"
@@ -335,7 +336,8 @@ export function ApplicationDetailClient({
               isRunningFraudCheck ||
               isDeclining ||
               application.status === "declined" ||
-              application.status === "approved"
+              application.status === "approved" ||
+              application.status === "submitted_to_lender"
             }
             variant="destructive"
             size="sm"
@@ -353,7 +355,10 @@ export function ApplicationDetailClient({
             )}
           </Button>
           <Badge className={getStatusColor(application.status)}>
-            {application.status.replace("_", " ").toUpperCase()}
+            {
+              // Display status with proper casing
+              application.status.replace("_", " ").toUpperCase()
+            }
           </Badge>
         </div>
       </div>
