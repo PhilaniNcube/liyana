@@ -119,6 +119,7 @@ export function ApplicationDetailClient({
   const [profileDocuments, setProfileDocuments] = useState<
     Database["public"]["Tables"]["profile_documents"]["Row"][]
   >([]);
+  const [isSendingOtv, setIsSendingOtv] = useState(false);
 
   // Filter for credit reports from Credit Check API checks
   const creditReports = apiChecks
@@ -219,6 +220,33 @@ export function ApplicationDetailClient({
       toast.error("Failed to decline application. Please try again.");
     } finally {
       setIsDeclining(false);
+    }
+  };
+
+  const handleOtvRequest = async () => {
+    setIsSendingOtv(true);
+    try {
+      const response = await fetch("/api/kyc/otv", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ application_id: application.id }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Handles HTTP errors (4xx, 5xx)
+        throw new Error(result.error || "Failed to send OTV link");
+      }
+
+      // Full success
+      toast.success(`OTV link sent successfully. PIN: ${result.message}`);
+    } catch (error: any) {
+      toast.error(error.message || "An unexpected error occurred.");
+    } finally {
+      setIsSendingOtv(false);
     }
   };
 
@@ -351,6 +379,24 @@ export function ApplicationDetailClient({
               <>
                 <XCircle className="h-4 w-4 mr-2" />
                 Decline Application
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={handleOtvRequest}
+            disabled={isSendingOtv}
+            variant="outline"
+            size="sm"
+          >
+            {isSendingOtv ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Sending OTV Link...
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-2" />
+                Send OTV Link
               </>
             )}
           </Button>

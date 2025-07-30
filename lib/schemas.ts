@@ -574,3 +574,54 @@ export const whoYouIdVerificationRequestSchema = z.object({
   RequestPurpose: z.string().optional(),
   RequestSource: z.string().optional(),
 });
+
+// WhoYou OTV (One-Time-Verification) Success Response
+export interface WhoYouOtvSuccessResponse {
+  code: 0;
+  detail: {
+    pinCode: string;
+    url: {
+      PWA: string;
+    };
+  };
+  message: string;
+}
+
+export const whoYouOtvSuccessResponseSchema = z.object({
+  code: z.literal(0),
+  detail: z.object({
+    pinCode: z.string(),
+    url: z.object({
+      PWA: z.string().url(),
+    }),
+  }),
+  message: z.string(),
+});
+
+// WhoYou OTV (One-Time-Verification) Error Response
+export interface WhoYouOtvErrorResponse {
+  code: number;
+  message: string;
+  detail?: {
+    pinCode: string;
+    url: {
+      PWA: string;
+    };
+  };
+}
+
+export const whoYouOtvErrorResponseSchema = z.object({
+  code: z.number().int().gt(0),
+  message: z.string(),
+  detail: z.any().optional(),
+});
+
+// Combined OTV Response
+export type WhoYouOtvResponse =
+  | WhoYouOtvSuccessResponse
+  | WhoYouOtvErrorResponse;
+
+export const whoYouOtvResponseSchema = z.union([
+  whoYouOtvSuccessResponseSchema,
+  whoYouOtvErrorResponseSchema,
+]);

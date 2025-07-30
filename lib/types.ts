@@ -349,6 +349,38 @@ export type Database = {
           },
         ];
       };
+      otv_checks: {
+        Row: {
+          application_id: number;
+          created_at: string;
+          id: number;
+          id_number: string;
+          pin_code: string;
+        };
+        Insert: {
+          application_id: number;
+          created_at?: string;
+          id?: number;
+          id_number: string;
+          pin_code: string;
+        };
+        Update: {
+          application_id?: number;
+          created_at?: string;
+          id?: number;
+          id_number?: string;
+          pin_code?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "otv_checks_application_id_fkey";
+            columns: ["application_id"];
+            isOneToOne: false;
+            referencedRelation: "applications";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profile_documents: {
         Row: {
           created_at: string;

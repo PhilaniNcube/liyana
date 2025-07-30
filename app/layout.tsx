@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navigation } from "@/components/navigation";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Providers } from "@/components/providers";
+import { Toaster } from "sonner";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -41,6 +42,7 @@ export default function RootLayout({
         <Providers>
           <NuqsAdapter>{children}</NuqsAdapter>
         </Providers>
+        <Toaster />
       </body>
     </html>
   );
