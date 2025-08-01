@@ -625,3 +625,165 @@ export const whoYouOtvResponseSchema = z.union([
   whoYouOtvSuccessResponseSchema,
   whoYouOtvErrorResponseSchema,
 ]);
+
+// WhoYou OTV Results Response Types
+export interface WhoYouOtvDocumentPhotos {
+  front: string;
+  back: string;
+}
+
+export interface WhoYouOtvAllDocumentCaptureInformation {
+  documentType: string;
+  documentNumber: string;
+  iDNumber: string;
+  cardNo: string;
+  countryOfBirth: string;
+  dateOfBirth: string;
+  dateOfExpire: string;
+  dateOfIssue: string;
+  firstNames: string;
+  nationality: string;
+  passportNo: string;
+  gender: string;
+  surname: string;
+  issuingCountryCode: string;
+  mrzStatus: "NO_MRZ" | "MRZ_EXTRACT_FAILED" | "MRZ_EXTRACT_SUCCESS";
+  isExtracted: boolean;
+}
+
+export interface WhoYouOtvDocumentResult {
+  faceVerificationScore: string;
+  faceVerificationResult: string;
+  informationScore: string;
+  informationResult: string;
+  countryCode: string;
+  allDocumentCaptureInformation: WhoYouOtvAllDocumentCaptureInformation;
+}
+
+export interface WhoYouOtvStatus {
+  name: string;
+  description: string;
+  code:
+    | "VERIFIED_SYS_APRVD"
+    | "VERIFIED_USR_APRVD"
+    | "EXP_SYS_RJCTD"
+    | "EXP_TO_REVIEW"
+    | "EXP_APRVD_UNVRFD";
+}
+
+export interface WhoYouOtvResultsDetail {
+  hanisID: string;
+  hanisResult: string;
+  hanisError: number;
+  hanisReference: string;
+  idNumber: string;
+  firstNames: string;
+  surname: string;
+  dateOfBirth: string;
+  gender: string;
+  status: string;
+  hanisType: string;
+  onFileMatch: boolean;
+  dhaVerified: boolean;
+  photo: string;
+  report: string;
+  idvCountryCode: string;
+  documentPhotos: WhoYouOtvDocumentPhotos;
+  documentResult: WhoYouOtvDocumentResult;
+  dataSource:
+    | "DHA Direct"
+    | "DHA SAFPS"
+    | "WhoYou"
+    | "Document Upload"
+    | "Approved Selfie";
+  dateStamp: string;
+  otvStatus: WhoYouOtvStatus;
+}
+
+export interface WhoYouOtvResultsResponse {
+  code: number;
+  detail: WhoYouOtvResultsDetail;
+  message: string;
+}
+
+// Zod schemas for WhoYou OTV Results validation
+export const whoYouOtvDocumentPhotosSchema = z.object({
+  front: z.string(),
+  back: z.string(),
+});
+
+export const whoYouOtvAllDocumentCaptureInformationSchema = z.object({
+  documentType: z.string(),
+  documentNumber: z.string(),
+  iDNumber: z.string(),
+  cardNo: z.string(),
+  countryOfBirth: z.string(),
+  dateOfBirth: z.string(),
+  dateOfExpire: z.string(),
+  dateOfIssue: z.string(),
+  firstNames: z.string(),
+  nationality: z.string(),
+  passportNo: z.string(),
+  gender: z.string(),
+  surname: z.string(),
+  issuingCountryCode: z.string(),
+  mrzStatus: z.enum(["NO_MRZ", "MRZ_EXTRACT_FAILED", "MRZ_EXTRACT_SUCCESS"]),
+  isExtracted: z.boolean(),
+});
+
+export const whoYouOtvDocumentResultSchema = z.object({
+  faceVerificationScore: z.string(),
+  faceVerificationResult: z.string(),
+  informationScore: z.string(),
+  informationResult: z.string(),
+  countryCode: z.string(),
+  allDocumentCaptureInformation: whoYouOtvAllDocumentCaptureInformationSchema,
+});
+
+export const whoYouOtvStatusSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  code: z.enum([
+    "VERIFIED_SYS_APRVD",
+    "VERIFIED_USR_APRVD",
+    "EXP_SYS_RJCTD",
+    "EXP_TO_REVIEW",
+    "EXP_APRVD_UNVRFD",
+  ]),
+});
+
+export const whoYouOtvResultsDetailSchema = z.object({
+  hanisID: z.string(),
+  hanisResult: z.string(),
+  hanisError: z.number(),
+  hanisReference: z.string(),
+  idNumber: z.string(),
+  firstNames: z.string(),
+  surname: z.string(),
+  dateOfBirth: z.string(),
+  gender: z.string(),
+  status: z.string(),
+  hanisType: z.string(),
+  onFileMatch: z.boolean(),
+  dhaVerified: z.boolean(),
+  photo: z.string(),
+  report: z.string(),
+  idvCountryCode: z.string(),
+  documentPhotos: whoYouOtvDocumentPhotosSchema,
+  documentResult: whoYouOtvDocumentResultSchema,
+  dataSource: z.enum([
+    "DHA Direct",
+    "DHA SAFPS",
+    "WhoYou",
+    "Document Upload",
+    "Approved Selfie",
+  ]),
+  dateStamp: z.string(),
+  otvStatus: whoYouOtvStatusSchema,
+});
+
+export const whoYouOtvResultsResponseSchema = z.object({
+  code: z.literal(0),
+  detail: whoYouOtvResultsDetailSchema,
+  message: z.string(),
+});

@@ -47,6 +47,7 @@ import EmailApplication from "./email-application";
 import { EmailVerificationDialog } from "@/components/email-verification-dialog";
 import { ProfileDocumentUpload } from "@/components/profile-document-upload";
 import { ProfileDocumentsDisplay } from "@/components/profile-documents-display";
+import { OtvResultsDialog } from "@/components/otv-results-dialog";
 
 interface Application {
   id: number;
@@ -283,13 +284,13 @@ export function ApplicationDetailClient({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/dashboard/applications">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Applications
-            </Link>
-          </Button>
           <div>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/applications">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Applications
+              </Link>
+            </Button>
             <h1 className="text-3xl font-bold">
               Application #{application.id}
             </h1>
@@ -400,6 +401,12 @@ export function ApplicationDetailClient({
               </>
             )}
           </Button>
+          <OtvResultsDialog applicationId={application.id}>
+            <Button variant="outline" size="sm">
+              <Shield className="h-4 w-4 mr-2" />
+              Check OTV Results
+            </Button>
+          </OtvResultsDialog>
           <Badge className={getStatusColor(application.status)}>
             {(() => {
               // Use a switch case to format status text

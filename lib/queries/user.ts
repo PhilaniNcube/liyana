@@ -310,7 +310,13 @@ export async function getDeclinedUsersAndApplicationsPaginated(
   page: number = 1,
   pageSize: number = 10,
   dateFrom?: string,
-  dateTo?: string
+  dateTo?: string,
+  sortBy:
+    | "registration_date"
+    | "application_date"
+    | "name"
+    | "status" = "application_date",
+  sortOrder: "asc" | "desc" = "desc"
 ) {
   const supabase = await createClient();
 
@@ -348,7 +354,7 @@ export async function getDeclinedUsersAndApplicationsPaginated(
     .select(
       "user_id, status, id, application_amount, updated_at, created_at, id_number"
     )
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: true });
 
   if (applicationsError) {
     throw new Error(
@@ -409,22 +415,55 @@ export async function getDeclinedUsersAndApplicationsPaginated(
       };
     })
     .sort((a, b) => {
-      // Sort by: declined applications first, then by creation date (newest first)
-      if (
-        a.application_status === "declined" &&
-        b.application_status === "no_application"
-      ) {
-        return -1;
+      const order = sortOrder === "asc" ? 1 : -1;
+
+      switch (sortBy) {
+        case "name":
+          const nameA = (a.full_name || "").toLowerCase();
+          const nameB = (b.full_name || "").toLowerCase();
+          return nameA.localeCompare(nameB) * order;
+
+        case "status":
+          // Primary sort by status (declined first, then no_application)
+          if (a.application_status !== b.application_status) {
+            if (
+              a.application_status === "declined" &&
+              b.application_status === "no_application"
+            ) {
+              return -1 * order;
+            }
+            if (
+              a.application_status === "no_application" &&
+              b.application_status === "declined"
+            ) {
+              return 1 * order;
+            }
+          }
+          // Secondary sort by registration date
+          return (
+            (new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime()) *
+            order
+          );
+
+        case "application_date":
+          // Sort by application date if available, otherwise registration date
+          const dateA = a.declined_at
+            ? new Date(a.declined_at).getTime()
+            : new Date(a.created_at).getTime();
+          const dateB = b.declined_at
+            ? new Date(b.declined_at).getTime()
+            : new Date(b.created_at).getTime();
+          return (dateA - dateB) * order;
+
+        case "registration_date":
+        default:
+          return (
+            (new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime()) *
+            order
+          );
       }
-      if (
-        a.application_status === "no_application" &&
-        b.application_status === "declined"
-      ) {
-        return 1;
-      }
-      return (
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
     });
 
   // Count statistics (excluding admins)

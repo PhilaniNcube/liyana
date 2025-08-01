@@ -32,18 +32,28 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const searchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   dateFrom: parseAsString,
   dateTo: parseAsString,
+  sortBy: parseAsString.withDefault("application_date"),
+  sortOrder: parseAsString.withDefault("desc"),
 });
 
 export default async function DeclinedLoansPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const searchParams = await props.searchParams;
-  const { page, dateFrom, dateTo } = searchParamsCache.parse(searchParams);
+  const { page, dateFrom, dateTo, sortBy, sortOrder } =
+    searchParamsCache.parse(searchParams);
 
   const pageSize = 50;
   const {
@@ -58,7 +68,9 @@ export default async function DeclinedLoansPage(props: {
     page,
     pageSize,
     dateFrom || undefined,
-    dateTo || undefined
+    dateTo || undefined,
+    sortBy as "registration_date" | "application_date" | "name" | "status",
+    sortOrder as "asc" | "desc"
   );
 
   const getRoleVariant = (role: string) => {
@@ -110,6 +122,12 @@ export default async function DeclinedLoansPage(props: {
                   {dateTo && ` to ${new Date(dateTo).toLocaleDateString()}`}
                 </span>
               )}
+              {(sortBy !== "application_date" || sortOrder !== "desc") && (
+                <span className="block text-sm text-green-600 mt-1">
+                  Sorted by {sortBy.replace("_", " ")} (
+                  {sortOrder === "asc" ? "oldest first" : "newest first"})
+                </span>
+              )}
             </p>
           </div>
           <ExportUsersButton
@@ -125,7 +143,10 @@ export default async function DeclinedLoansPage(props: {
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <Filter className="h-4 w-4" />
             Date Filter
-            {(dateFrom || dateTo) && (
+            {(dateFrom ||
+              dateTo ||
+              sortBy !== "application_date" ||
+              sortOrder !== "desc") && (
               <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
                 Active
               </span>
@@ -134,7 +155,7 @@ export default async function DeclinedLoansPage(props: {
         </CardHeader>
         <CardContent className="pt-0">
           <form method="GET" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
               <div className="space-y-2">
                 <Label htmlFor="dateFrom" className="text-xs">
                   From Date (Registration)
@@ -159,14 +180,51 @@ export default async function DeclinedLoansPage(props: {
                   className="h-8"
                 />
               </div>
+              <div className="">
+                <Label htmlFor="sortBy" className="text-xs">
+                  Sort By
+                </Label>
+                <Select name="sortBy" defaultValue={sortBy}>
+                  <SelectTrigger className="h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="registration_date">
+                      Registration Date
+                    </SelectItem>
+                    <SelectItem value="application_date">
+                      Application Date
+                    </SelectItem>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="status">Status</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="">
+                <Label htmlFor="sortOrder" className="text-xs">
+                  Order
+                </Label>
+                <Select name="sortOrder" defaultValue={sortOrder}>
+                  <SelectTrigger className="h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="desc">Newest First</SelectItem>
+                    <SelectItem value="asc">Oldest First</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex gap-2">
                 <Button type="submit" size="sm" className="h-8 flex-1">
                   <Calendar className="h-3 w-3 mr-1" />
-                  Apply Filter
+                  Apply
                 </Button>
               </div>
               <div>
-                {(dateFrom || dateTo) && (
+                {(dateFrom ||
+                  dateTo ||
+                  sortBy !== "application_date" ||
+                  sortOrder !== "desc") && (
                   <Link
                     href="/dashboard/declined-loans"
                     className="inline-flex items-center justify-center rounded-md text-xs font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3 w-full"
@@ -177,12 +235,23 @@ export default async function DeclinedLoansPage(props: {
                 )}
               </div>
             </div>
-            {(dateFrom || dateTo) && (
+            {(dateFrom ||
+              dateTo ||
+              sortBy !== "application_date" ||
+              sortOrder !== "desc") && (
               <div className="text-xs text-muted-foreground bg-blue-50 p-2 rounded">
-                <strong>Active Filter:</strong>{" "}
+                <strong>Active Filters:</strong>{" "}
                 {dateFrom && `From ${new Date(dateFrom).toLocaleDateString()}`}
                 {dateFrom && dateTo && " • "}
                 {dateTo && `To ${new Date(dateTo).toLocaleDateString()}`}
+                {(dateFrom || dateTo) &&
+                  (sortBy !== "application_date" || sortOrder !== "desc") &&
+                  " • "}
+                {sortBy !== "application_date" &&
+                  `Sort: ${sortBy.replace("_", " ")}`}
+                {sortBy !== "application_date" && sortOrder !== "desc" && " • "}
+                {sortOrder !== "desc" &&
+                  `Order: ${sortOrder === "asc" ? "Oldest First" : "Newest First"}`}
               </div>
             )}
           </form>
@@ -279,6 +348,12 @@ export default async function DeclinedLoansPage(props: {
               {(dateFrom || dateTo) && (
                 <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
                   Filtered
+                </span>
+              )}
+              {(sortBy !== "registration_date" || sortOrder !== "desc") && (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                  Sorted: {sortBy.replace("_", " ")} (
+                  {sortOrder === "asc" ? "↑" : "↓"})
                 </span>
               )}
             </CardTitle>
