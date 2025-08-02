@@ -11,7 +11,7 @@ import {
 import { getCurrentUser } from "@/lib/queries/user";
 import Link from "next/link";
 
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Heart, Shield } from "lucide-react";
 
 export default async function Home() {
   const currentUser = await getCurrentUser();
@@ -31,15 +31,15 @@ export default async function Home() {
                   <span className="font-normal">NCRCP18217</span>
                 </Badge>
                 <h1 className="text-3xl font-bold tracking-tighter font-sans sm:text-5xl xl:text-6xl/none">
-                  Quick solutions for{" "}
+                  Complete financial solutions for{" "}
                   <span className="text-[#f8e306]">
-                    life's unexpected moments
+                    life's important moments
                   </span>
                 </h1>
                 <p className="max-w-[600px] mx-auto text-gray-500 md:text-xl">
-                  Liyana Finance specialises in providing quick and convenient
-                  payday loans to help you navigate life’s unexpected financial
-                  challenges.
+                  Liyana Finance offers comprehensive financial services
+                  including payday loans, life insurance, and funeral policies
+                  to protect what matters most.
                 </p>
               </div>
             </div>
@@ -54,13 +54,29 @@ export default async function Home() {
                         Welcome back, {currentUser.full_name}!
                       </CardTitle>
                       <CardDescription>
-                        Ready to apply for a loan? Start your application
-                        process now.
+                        Choose from our range of financial services to get
+                        started.
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-3">
                       <Button asChild size="lg" className="w-full">
-                        <Link href="/apply">Apply Now</Link>
+                        <Link href="/apply">Apply for Loan</Link>
+                      </Button>
+                      <Button
+                        asChild
+                        size="lg"
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <Link href="/insurance/life">Life Insurance</Link>
+                      </Button>
+                      <Button
+                        asChild
+                        size="lg"
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <Link href="/insurance/funeral">Funeral Policy</Link>
                       </Button>
                     </CardContent>
                   </Card>
@@ -69,6 +85,98 @@ export default async function Home() {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section className="w-full py-16 bg-gray-50">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+              Our Services
+            </h2>
+            <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mt-4">
+              We provide comprehensive financial solutions tailored to your
+              needs
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-3">
+            {/* Loans Card */}
+            <Card className="relative overflow-hidden">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-6 w-6 text-[#f8e306]" />
+                  <CardTitle>Quick Loans</CardTitle>
+                </div>
+                <CardDescription>
+                  Fast and convenient payday loans for life's unexpected
+                  financial challenges
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-gray-600 mb-4">
+                  <li>• Quick approval process</li>
+                  <li>• Competitive interest rates</li>
+                  <li>• Flexible repayment terms</li>
+                  <li>• Online application</li>
+                </ul>
+                <Button asChild className="w-full">
+                  <Link href="/apply">Apply Now</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Life Insurance Card */}
+            <Card className="relative overflow-hidden">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <Heart className="h-6 w-6 text-red-500" />
+                  <CardTitle>Life Insurance</CardTitle>
+                </div>
+                <CardDescription>
+                  Protect your family's financial future with comprehensive life
+                  insurance coverage
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-gray-600 mb-4">
+                  <li>• Comprehensive coverage</li>
+                  <li>• Affordable premiums</li>
+                  <li>• Multiple payout options</li>
+                  <li>• Easy claims process</li>
+                </ul>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/insurance/life">Learn More</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Funeral Policy Card */}
+            <Card className="relative overflow-hidden">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <Shield className="h-6 w-6 text-blue-500" />
+                  <CardTitle>Funeral Policies</CardTitle>
+                </div>
+                <CardDescription>
+                  Ensure dignity in difficult times with our comprehensive
+                  funeral policy coverage
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-gray-600 mb-4">
+                  <li>• Family coverage options</li>
+                  <li>• Immediate cover</li>
+                  <li>• No waiting periods</li>
+                  <li>• 24/7 support</li>
+                </ul>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/insurance/funeral">Learn More</Link>
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
