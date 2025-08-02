@@ -276,6 +276,96 @@ export type Database = {
           },
         ];
       };
+      claim_payouts: {
+        Row: {
+          amount: number;
+          beneficiary_party_id: string;
+          claim_id: number;
+          created_at: string;
+          id: number;
+          payout_date: string;
+        };
+        Insert: {
+          amount: number;
+          beneficiary_party_id: string;
+          claim_id: number;
+          created_at?: string;
+          id?: number;
+          payout_date: string;
+        };
+        Update: {
+          amount?: number;
+          beneficiary_party_id?: string;
+          claim_id?: number;
+          created_at?: string;
+          id?: number;
+          payout_date?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "claim_payouts_beneficiary_party_id_fkey";
+            columns: ["beneficiary_party_id"];
+            isOneToOne: false;
+            referencedRelation: "parties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "claim_payouts_claim_id_fkey";
+            columns: ["claim_id"];
+            isOneToOne: false;
+            referencedRelation: "claims";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      claims: {
+        Row: {
+          claim_number: string;
+          claimant_party_id: string;
+          created_at: string;
+          date_filed: string;
+          date_of_incident: string;
+          id: number;
+          policy_id: number;
+          status: Database["public"]["Enums"]["claim_status"];
+        };
+        Insert: {
+          claim_number: string;
+          claimant_party_id: string;
+          created_at?: string;
+          date_filed: string;
+          date_of_incident: string;
+          id?: number;
+          policy_id: number;
+          status: Database["public"]["Enums"]["claim_status"];
+        };
+        Update: {
+          claim_number?: string;
+          claimant_party_id?: string;
+          created_at?: string;
+          date_filed?: string;
+          date_of_incident?: string;
+          id?: number;
+          policy_id?: number;
+          status?: Database["public"]["Enums"]["claim_status"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "claims_claimant_party_id_fkey";
+            columns: ["claimant_party_id"];
+            isOneToOne: false;
+            referencedRelation: "parties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "claims_policy_id_fkey";
+            columns: ["policy_id"];
+            isOneToOne: false;
+            referencedRelation: "policies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       documents: {
         Row: {
           application_id: number;
@@ -310,6 +400,96 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      funeral_policies: {
+        Row: {
+          covered_members: Json;
+          created_at: string;
+          end_date: string | null;
+          frequency: Database["public"]["Enums"]["frequency"];
+          id: number;
+          policy_holder_id: string;
+          policy_status: Database["public"]["Enums"]["policy_status"];
+          premium_amount: number;
+          product_id: number | null;
+          start_date: string;
+          updated_at: string;
+        };
+        Insert: {
+          covered_members: Json;
+          created_at?: string;
+          end_date?: string | null;
+          frequency: Database["public"]["Enums"]["frequency"];
+          id: number;
+          policy_holder_id: string;
+          policy_status: Database["public"]["Enums"]["policy_status"];
+          premium_amount: number;
+          product_id?: number | null;
+          start_date?: string;
+          updated_at?: string;
+        };
+        Update: {
+          covered_members?: Json;
+          created_at?: string;
+          end_date?: string | null;
+          frequency?: Database["public"]["Enums"]["frequency"];
+          id?: number;
+          policy_holder_id?: string;
+          policy_status?: Database["public"]["Enums"]["policy_status"];
+          premium_amount?: number;
+          product_id?: number | null;
+          start_date?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      life_insurance_policies: {
+        Row: {
+          coverage_amount: number;
+          created_at: string;
+          end_date: string | null;
+          frequency: Database["public"]["Enums"]["frequency"];
+          id: number;
+          payout_structure: string;
+          policy_holder_id: string;
+          policy_status: Database["public"]["Enums"]["policy_status"];
+          premium_amount: number;
+          product_id: number | null;
+          start_date: string;
+          underwriting_details: Json;
+          updated_at: string;
+        };
+        Insert: {
+          coverage_amount: number;
+          created_at?: string;
+          end_date?: string | null;
+          frequency: Database["public"]["Enums"]["frequency"];
+          id: number;
+          payout_structure: string;
+          policy_holder_id: string;
+          policy_status: Database["public"]["Enums"]["policy_status"];
+          premium_amount: number;
+          product_id?: number | null;
+          start_date?: string;
+          underwriting_details?: Json;
+          updated_at?: string;
+        };
+        Update: {
+          coverage_amount?: number;
+          created_at?: string;
+          end_date?: string | null;
+          frequency?: Database["public"]["Enums"]["frequency"];
+          id?: number;
+          payout_structure?: string;
+          policy_holder_id?: string;
+          policy_status?: Database["public"]["Enums"]["policy_status"];
+          premium_amount?: number;
+          product_id?: number | null;
+          start_date?: string;
+          underwriting_details?: Json;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       loan_payments: {
         Row: {
@@ -381,6 +561,211 @@ export type Database = {
           },
         ];
       };
+      parties: {
+        Row: {
+          address_details: Json | null;
+          contact_details: Json | null;
+          created_at: string;
+          date_of_birth: string | null;
+          first_name: string | null;
+          id: string;
+          id_number: string | null;
+          last_name: string | null;
+          organization_name: string | null;
+          party_type: Database["public"]["Enums"]["party_type"];
+          profile_id: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          address_details?: Json | null;
+          contact_details?: Json | null;
+          created_at?: string;
+          date_of_birth?: string | null;
+          first_name?: string | null;
+          id?: string;
+          id_number?: string | null;
+          last_name?: string | null;
+          organization_name?: string | null;
+          party_type: Database["public"]["Enums"]["party_type"];
+          profile_id?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          address_details?: Json | null;
+          contact_details?: Json | null;
+          created_at?: string;
+          date_of_birth?: string | null;
+          first_name?: string | null;
+          id?: string;
+          id_number?: string | null;
+          last_name?: string | null;
+          organization_name?: string | null;
+          party_type?: Database["public"]["Enums"]["party_type"];
+          profile_id?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "parties_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      policies: {
+        Row: {
+          created_at: string;
+          end_date: string | null;
+          frequency: Database["public"]["Enums"]["frequency"];
+          id: number;
+          policy_holder_id: string;
+          policy_status: Database["public"]["Enums"]["policy_status"];
+          premium_amount: number;
+          product_id: number | null;
+          start_date: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          end_date?: string | null;
+          frequency: Database["public"]["Enums"]["frequency"];
+          id?: number;
+          policy_holder_id: string;
+          policy_status: Database["public"]["Enums"]["policy_status"];
+          premium_amount: number;
+          product_id?: number | null;
+          start_date?: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          end_date?: string | null;
+          frequency?: Database["public"]["Enums"]["frequency"];
+          id?: number;
+          policy_holder_id?: string;
+          policy_status?: Database["public"]["Enums"]["policy_status"];
+          premium_amount?: number;
+          product_id?: number | null;
+          start_date?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "policies_policy_holder_id_fkey";
+            columns: ["policy_holder_id"];
+            isOneToOne: false;
+            referencedRelation: "parties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "policies_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "product_types";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      policy_beneficiaries: {
+        Row: {
+          allocation_percentage: number;
+          beneficiary_party_id: string;
+          created_at: string;
+          id: number;
+          policy_id: number;
+          relation_type: Database["public"]["Enums"]["relation_type"];
+        };
+        Insert: {
+          allocation_percentage: number;
+          beneficiary_party_id: string;
+          created_at?: string;
+          id?: number;
+          policy_id: number;
+          relation_type: Database["public"]["Enums"]["relation_type"];
+        };
+        Update: {
+          allocation_percentage?: number;
+          beneficiary_party_id?: string;
+          created_at?: string;
+          id?: number;
+          policy_id?: number;
+          relation_type?: Database["public"]["Enums"]["relation_type"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "policy_beneficiaries_beneficiary_party_id_fkey";
+            columns: ["beneficiary_party_id"];
+            isOneToOne: false;
+            referencedRelation: "parties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "policy_beneficiaries_policy_id_fkey";
+            columns: ["policy_id"];
+            isOneToOne: false;
+            referencedRelation: "policies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      policy_versions: {
+        Row: {
+          created_at: string;
+          effective_from: string;
+          id: number;
+          policy_data: Json;
+          policy_id: number;
+          reason_for_change: string | null;
+          version_number: number;
+        };
+        Insert: {
+          created_at?: string;
+          effective_from: string;
+          id?: number;
+          policy_data: Json;
+          policy_id: number;
+          reason_for_change?: string | null;
+          version_number: number;
+        };
+        Update: {
+          created_at?: string;
+          effective_from?: string;
+          id?: number;
+          policy_data?: Json;
+          policy_id?: number;
+          reason_for_change?: string | null;
+          version_number?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "policy_versions_policy_id_fkey";
+            columns: ["policy_id"];
+            isOneToOne: false;
+            referencedRelation: "policies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      product_types: {
+        Row: {
+          created_at: string;
+          id: number;
+          name: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: number;
+          name: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: number;
+          name?: string;
+        };
+        Relationships: [];
+      };
       profile_documents: {
         Row: {
           created_at: string;
@@ -443,6 +828,67 @@ export type Database = {
         };
         Relationships: [];
       };
+      transactions: {
+        Row: {
+          amount: number;
+          created_at: string;
+          id: string;
+          metadata: Json | null;
+          payment_ref: string | null;
+          source_claim_payout_id: number | null;
+          source_loan_id: number | null;
+          source_policy_version_id: number | null;
+          transaction_status: Database["public"]["Enums"]["transaction_status"];
+          transaction_type: Database["public"]["Enums"]["transaction_type"];
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          id?: string;
+          metadata?: Json | null;
+          payment_ref?: string | null;
+          source_claim_payout_id?: number | null;
+          source_loan_id?: number | null;
+          source_policy_version_id?: number | null;
+          transaction_status: Database["public"]["Enums"]["transaction_status"];
+          transaction_type: Database["public"]["Enums"]["transaction_type"];
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          id?: string;
+          metadata?: Json | null;
+          payment_ref?: string | null;
+          source_claim_payout_id?: number | null;
+          source_loan_id?: number | null;
+          source_policy_version_id?: number | null;
+          transaction_status?: Database["public"]["Enums"]["transaction_status"];
+          transaction_type?: Database["public"]["Enums"]["transaction_type"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "transactions_source_claim_payout_id_fkey";
+            columns: ["source_claim_payout_id"];
+            isOneToOne: false;
+            referencedRelation: "claim_payouts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transactions_source_loan_id_fkey";
+            columns: ["source_loan_id"];
+            isOneToOne: false;
+            referencedRelation: "approved_loans";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transactions_source_policy_version_id_fkey";
+            columns: ["source_policy_version_id"];
+            isOneToOne: false;
+            referencedRelation: "policy_versions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -477,6 +923,12 @@ export type Database = {
         | "submitted_to_lender"
         | "submission_failed";
       bank_account_type: "savings" | "transaction" | "current" | "business";
+      claim_status:
+        | "submitted"
+        | "under_review"
+        | "approved"
+        | "denied"
+        | "paid";
       document_type:
         | "id"
         | "bank_statement"
@@ -492,6 +944,7 @@ export type Database = {
         | "contract"
         | "unemployed"
         | "retired";
+      frequency: "monthly" | "quarterly" | "annually";
       gender: "male" | "female" | "rather not say" | "other";
       marital_status:
         | "single"
@@ -499,6 +952,16 @@ export type Database = {
         | "divorced"
         | "widowed"
         | "life_partner";
+      party_type: "individual" | "organization";
+      policy_status: "pending" | "active" | "lapsed" | "cancelled";
+      relation_type: "spouse" | "child" | "parent" | "sibling";
+      transaction_status: "pending" | "completed" | "failed";
+      transaction_type:
+        | "premium_payment"
+        | "claim_payout"
+        | "loan_disbursement"
+        | "loan_repayment"
+        | "refund";
       user_role: "customer" | "admin" | "editor";
     };
     CompositeTypes: {
@@ -656,6 +1119,7 @@ export const Constants = {
         "submission_failed",
       ],
       bank_account_type: ["savings", "transaction", "current", "business"],
+      claim_status: ["submitted", "under_review", "approved", "denied", "paid"],
       document_type: [
         "id",
         "bank_statement",
@@ -673,6 +1137,7 @@ export const Constants = {
         "unemployed",
         "retired",
       ],
+      frequency: ["monthly", "quarterly", "annually"],
       gender: ["male", "female", "rather not say", "other"],
       marital_status: [
         "single",
@@ -680,6 +1145,17 @@ export const Constants = {
         "divorced",
         "widowed",
         "life_partner",
+      ],
+      party_type: ["individual", "organization"],
+      policy_status: ["pending", "active", "lapsed", "cancelled"],
+      relation_type: ["spouse", "child", "parent", "sibling"],
+      transaction_status: ["pending", "completed", "failed"],
+      transaction_type: [
+        "premium_payment",
+        "claim_payout",
+        "loan_disbursement",
+        "loan_repayment",
+        "refund",
       ],
       user_role: ["customer", "admin", "editor"],
     },
