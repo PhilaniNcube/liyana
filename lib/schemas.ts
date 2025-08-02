@@ -787,3 +787,153 @@ export const whoYouOtvResultsResponseSchema = z.object({
   detail: whoYouOtvResultsDetailSchema,
   message: z.string(),
 });
+
+// WhoYou Employment Status Verification Response Types
+export interface WhoYouEmployerInformation {
+  id: string;
+  idNumber: string;
+  sector: string;
+  occupation: string;
+  contactPerson: string;
+  employerName: string;
+  originalEmployerName: string;
+  employerCompanyCipcStatus: string;
+  employerBranchDetails: string;
+  employerContactTelephone: string;
+  employerEmailAddress: string;
+  employerAddressLine1: string;
+  employerAddressLine2: string;
+  employerAddressLine3: string;
+  employerAddressLine4: string;
+  employerAddressPostCode: string;
+  firstDate: string | null;
+  firstStatus: string;
+  latestDate: string | null;
+  latestStatus: string;
+  recordDate: string | null;
+  score: number;
+  bureauSource: string;
+  source: string;
+  kycSource: string;
+  reference: string;
+  employerTelephone: string[];
+}
+
+export interface WhoYouEmploymentVerificationDetail {
+  isWhoYouCache: boolean;
+  employerInformation: WhoYouEmployerInformation[];
+}
+
+export interface WhoYouEmploymentVerificationResponse {
+  code: number;
+  detail: WhoYouEmploymentVerificationDetail;
+}
+
+// Zod schemas for WhoYou Employment Status Verification validation
+export const whoYouEmployerInformationSchema = z.object({
+  id: z.string(),
+  idNumber: z.string(),
+  sector: z.string(),
+  occupation: z.string(),
+  contactPerson: z.string(),
+  employerName: z.string(),
+  originalEmployerName: z.string(),
+  employerCompanyCipcStatus: z.string(),
+  employerBranchDetails: z.string(),
+  employerContactTelephone: z.string(),
+  employerEmailAddress: z.string(),
+  employerAddressLine1: z.string(),
+  employerAddressLine2: z.string(),
+  employerAddressLine3: z.string(),
+  employerAddressLine4: z.string(),
+  employerAddressPostCode: z.string(),
+  firstDate: z.string().nullable(),
+  firstStatus: z.string(),
+  latestDate: z.string().nullable(),
+  latestStatus: z.string(),
+  recordDate: z.string().nullable(),
+  score: z.number(),
+  bureauSource: z.string(),
+  source: z.string(),
+  kycSource: z.string(),
+  reference: z.string(),
+  employerTelephone: z.array(z.string()),
+});
+
+export const whoYouEmploymentVerificationDetailSchema = z.object({
+  isWhoYouCache: z.boolean(),
+  employerInformation: z.array(whoYouEmployerInformationSchema),
+});
+
+export const whoYouEmploymentVerificationResponseSchema = z.object({
+  code: z.number(),
+  detail: whoYouEmploymentVerificationDetailSchema,
+});
+
+// API Response Types for Frontend
+export interface EmploymentVerificationApiResponse {
+  data: WhoYouEmploymentVerificationResponse;
+  message: string;
+}
+
+export const employmentVerificationApiResponseSchema = z.object({
+  data: whoYouEmploymentVerificationResponseSchema,
+  message: z.string(),
+});
+
+export interface DecryptedApplication {
+  affordability: any | null;
+  application_amount: number | null;
+  bank_account_holder: string | null;
+  bank_account_number: string | null;
+  bank_account_type: string | null;
+  bank_name: string | null;
+  branch_code: string | null;
+  bravelender_application_id: string | null;
+  city: string | null;
+  created_at: string;
+  date_of_birth: string | null;
+  decline_reason: any | null;
+  dependants: number | null;
+  employer_address: string | null;
+  employer_contact_number: string | null;
+  employer_name: string | null;
+  employment_end_date: string | null;
+  employment_type: string | null;
+  gender: string | null;
+  gender_other: string | null;
+  home_address: string | null;
+  id: number;
+  id_number: string; // This remains encrypted
+  job_title: string | null;
+  language: string | null;
+  loan_purpose: string | null;
+  loan_purpose_reason: string | null;
+  marital_status: string | null;
+  monthly_income: number | null;
+  nationality: string | null;
+  next_of_kin_email: string | null;
+  next_of_kin_name: string | null;
+  next_of_kin_phone_number: string | null;
+  phone_number: string | null;
+  postal_code: string | null;
+  status: string;
+  term: number;
+  updated_at: string;
+  user_id: string;
+  work_experience: string | null;
+  // Profile information
+  profile: {
+    created_at: string;
+    email: string | null;
+    full_name: string;
+    id: string;
+    id_number: string | null;
+    phone_number: string | null;
+    role: string;
+  } | null;
+  // Additional decrypted/computed fields
+  id_number_decrypted: string;
+  first_name: string | null;
+  last_name: string | null;
+}

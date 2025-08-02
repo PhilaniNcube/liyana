@@ -132,7 +132,6 @@ export async function getApprovedApplications(
       profiles?.map((profile) => [profile.id, profile]) || []
     );
 
-    // Enhance loans with application and profile data (with decrypted applications)
     const enhancedLoans = loans.map((loan) => ({
       ...loan,
       application: decryptApplication(

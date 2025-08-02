@@ -48,58 +48,10 @@ import { EmailVerificationDialog } from "@/components/email-verification-dialog"
 import { ProfileDocumentUpload } from "@/components/profile-document-upload";
 import { ProfileDocumentsDisplay } from "@/components/profile-documents-display";
 import { OtvResultsDialog } from "@/components/otv-results-dialog";
-
-interface Application {
-  id: number;
-  user_id: string;
-  id_number: string;
-  id_number_decrypted: string;
-  first_name: string | null;
-  last_name: string | null;
-  created_at: string;
-  updated_at: string;
-  status: string;
-  date_of_birth: string | null;
-  gender: string | null;
-  gender_other: string | null;
-  marital_status: string | null;
-  nationality: string | null;
-  language: string | null;
-  dependants: number | null;
-  home_address: string | null;
-  city: string | null;
-  postal_code: string | null;
-  phone_number: string | null;
-  next_of_kin_name: string | null;
-  next_of_kin_phone_number: string | null;
-  next_of_kin_email: string | null;
-  employment_type: string | null;
-  monthly_income: number | null;
-  job_title: string | null;
-  work_experience: string | null;
-  employer_name: string | null;
-  employer_address: string | null;
-  employer_contact_number: string | null;
-  employment_end_date: string | null;
-  application_amount: number | null;
-  term: number;
-  loan_purpose: string | null;
-  loan_purpose_reason: string | null;
-  bank_name: string | null;
-  bank_account_type: string | null;
-  bank_account_holder: string | null;
-  branch_code: string | null;
-  bank_account_number: string | null;
-  affordability: any;
-  decline_reason: any;
-  profile?: {
-    full_name: string;
-    email: string | null;
-  } | null;
-}
+import { DecryptedApplication } from "@/lib/schemas";
 
 interface ApplicationDetailClientProps {
-  application: Application;
+  application: DecryptedApplication;
   apiChecks: any[];
   documents: Database["public"]["Tables"]["documents"]["Row"][];
   userRole?: string;
