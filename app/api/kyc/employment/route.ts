@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     body: JSON.stringify({
       idNumber: idNumber,
       CacheValidity: "1",
-      ClientReference: application.id,
+      ClientReference: "",
       RequestPurpose: "",
       RequestSource: "",
     }),
