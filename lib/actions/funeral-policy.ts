@@ -4,36 +4,49 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "../server";
 import { getCurrentUser, getUserProfile } from "../queries";
-
-const funeralPolicySchema = z.object({
-  // Policy holder details
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  idNumber: z.string().min(1, "ID number is required"),
-  dateOfBirth: z.string().min(1, "Date of birth is required"),
-  phoneNumber: z.string().min(1, "Phone number is required"),
-  email: z.string().email("Invalid email address"),
-  address: z.string().min(1, "Address is required"),
-
-  // Policy details
-  premiumAmount: z.coerce.number().min(1, "Premium amount is required"),
-  frequency: z.enum(["monthly", "quarterly", "annually"]),
-  coveredMembers: z
-    .array(
-      z.object({
-        firstName: z.string().min(1, "First name is required"),
-        lastName: z.string().min(1, "Last name is required"),
-        relationship: z.string().min(1, "Relationship is required"),
-        dateOfBirth: z.string().min(1, "Date of birth is required"),
-      })
-    )
-    .optional(),
-});
+import { funeralPolicySchema } from "../schemas";
 
 export async function createFuneralPolicy(prevState: any, formData: FormData) {
-  const validatedFields = funeralPolicySchema.safeParse(
-    Object.fromEntries(formData.entries())
-  );
+  // Parse FormData entries and handle arrays
+  const formEntries = Object.fromEntries(formData.entries());
+
+  // Handle JSON fields that come as strings
+  const parsedEntries = {
+    ...formEntries,
+    // Parse boolean fields
+    has_medical_conditions: formEntries.has_medical_conditions === "true",
+    takes_medication: formEntries.takes_medication === "true",
+    smoker: formEntries.smoker === "true",
+    health_declaration: formEntries.health_declaration === "true",
+    terms_and_conditions: formEntries.terms_and_conditions === "true",
+    privacy_policy: formEntries.privacy_policy === "true",
+    marketing_consent: formEntries.marketing_consent === "true",
+    // Parse number fields
+    monthly_income: formEntries.monthly_income
+      ? parseFloat(formEntries.monthly_income as string)
+      : 0,
+    coverage_amount: formEntries.coverage_amount
+      ? parseFloat(formEntries.coverage_amount as string)
+      : 0,
+    monthly_premium: formEntries.monthly_premium
+      ? parseFloat(formEntries.monthly_premium as string)
+      : 0,
+    dependants: formEntries.dependants
+      ? parseInt(formEntries.dependants as string)
+      : 0,
+    debit_order_date: formEntries.debit_order_date
+      ? parseInt(formEntries.debit_order_date as string)
+      : undefined,
+    // Parse JSON fields
+    beneficiaries: formEntries.beneficiaries
+      ? JSON.parse(formEntries.beneficiaries as string)
+      : [],
+    additional_members: formEntries.additional_members
+      ? JSON.parse(formEntries.additional_members as string)
+      : [],
+  };
+
+  const validatedFields = funeralPolicySchema.safeParse(parsedEntries);
 
   if (!validatedFields.success) {
     return {
@@ -55,91 +68,98 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
 
   const { data: validatedData } = validatedFields;
 
-  // 1. Create a party for the policy holder
-  const { data: party, error: partyError } = await supabase
-    .from("parties")
-    .insert({
-      first_name: validatedData.firstName,
-      last_name: validatedData.lastName,
-      id_number: validatedData.idNumber,
-      date_of_birth: validatedData.dateOfBirth,
-      contact_details: {
-        phone: validatedData.phoneNumber,
-        email: validatedData.email,
-      },
-      address_details: {
-        physical: validatedData.address,
-      },
-      party_type: "individual",
-      profile_id: userProfile.id,
-    })
-    .select("id")
-    .single();
+  try {
+    // 1. Create a party for the policy holder
+    const { data: party, error: partyError } = await supabase
+      .from("parties")
+      .insert({
+        first_name: validatedData.first_name,
+        last_name: validatedData.last_name,
+        id_number: validatedData.id_number,
+        date_of_birth: validatedData.date_of_birth,
+        contact_details: {
+          phone: validatedData.phone_number,
+          email: validatedData.email,
+        },
+        address_details: {
+          physical: validatedData.residential_address,
+          city: validatedData.city,
+          postal_code: validatedData.postal_code,
+        },
+        party_type: "individual",
+        profile_id: userProfile.id,
+      })
+      .select("id")
+      .single();
 
-  if (partyError || !party) {
+    if (partyError || !party) {
+      return {
+        error: true,
+        message: "Failed to create policy holder.",
+        details: partyError?.message,
+      };
+    }
+
+    // 2. Create a policy in the policy table
+    const { data: policy, error: policyError } = await supabase
+      .from("policies")
+      .insert({
+        policy_holder_id: party.id,
+        product_id: 3, // Assuming 3 is the ID for funeral policies
+        policy_status: "pending",
+        premium_amount: validatedData.monthly_premium,
+        frequency: "monthly", // Based on the schema, this seems to be a monthly premium
+      })
+      .select("*")
+      .single();
+
+    if (policyError || !policy) {
+      return {
+        error: true,
+        message: "Failed to create policy.",
+        details: policyError?.message,
+      };
+    }
+
+    // 3. Create the funeral policy with all details
+    const { data: funeralPolicy, error: funeralPolicyError } = await supabase
+      .from("funeral_policies")
+      .insert({
+        policy_holder_id: party.id,
+        product_id: 3,
+        policy_status: "pending",
+        premium_amount: validatedData.monthly_premium,
+        frequency: "monthly",
+        covered_members:
+          validatedData.additional_members &&
+          validatedData.additional_members.length > 0
+            ? JSON.stringify(validatedData.additional_members)
+            : null,
+      } as any)
+      .select("*")
+      .single();
+
+    if (funeralPolicyError || !funeralPolicy) {
+      return {
+        error: true,
+        message: "Failed to create funeral policy.",
+        details: funeralPolicyError?.message,
+      };
+    }
+
+    revalidatePath("/insurance/funeral");
+
+    return {
+      error: false,
+      message: "Funeral policy created successfully.",
+      policyId: funeralPolicy.id,
+    };
+  } catch (error) {
+    console.error("Error creating funeral policy:", error);
     return {
       error: true,
-      message: "Failed to create policy holder.",
-      details: partyError.message,
+      message: "An unexpected error occurred while creating the policy.",
+      details: error instanceof Error ? error.message : "Unknown error",
     };
   }
-
-  // 2. Create a policy in the policy table as well
-  const { data: policy, error: policyError } = await supabase
-    .from("policies")
-    .insert({
-      policy_holder_id: party.id,
-      product_id: 3, // Assuming 3 is the ID for funeral policies
-      policy_status: "pending",
-      premium_amount: validatedData.premiumAmount,
-      frequency: validatedData.frequency,
-    })
-    .select("*")
-    .single();
-
-  if (policyError || !policy) {
-    return {
-      error: true,
-      message: "Failed to create policy.",
-      details: policyError.message,
-    };
-  }
-
-  // 3. Create the funeral policy
-  const { data: funeralPolicy, error: funeralPolicyError } = await supabase
-    .from("funeral_policies")
-    .insert({
-      policy_holder_id: party.id,
-      product_id: 3,
-      policy_status: "pending",
-      premium_amount: validatedData.premiumAmount,
-      frequency: validatedData.frequency,
-      covered_members: validatedData.coveredMembers
-        ? JSON.stringify(
-            validatedData.coveredMembers.map((member) => ({
-              first_name: member.firstName,
-              last_name: member.lastName,
-              relationship: member.relationship,
-              date_of_birth: member.dateOfBirth,
-            }))
-          )
-        : JSON.stringify([]),
-    } as any)
-    .select("*")
-    .single();
-
-  if (funeralPolicyError || !funeralPolicy) {
-    return {
-      error: true,
-      message: "Failed to create funeral policy.",
-      details: funeralPolicyError.message,
-    };
-  }
-
-  revalidatePath("/insurance/funeral");
-
-  return {
-    error: false,
-    message: "Funeral policy created successfully.",
-  };
 }
