@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "../server";
 import { getCurrentUser, getUserProfile } from "../queries";
 
@@ -19,6 +18,16 @@ const funeralPolicySchema = z.object({
   // Policy details
   premiumAmount: z.coerce.number().min(1, "Premium amount is required"),
   frequency: z.enum(["monthly", "quarterly", "annually"]),
+  coveredMembers: z
+    .array(
+      z.object({
+        firstName: z.string().min(1, "First name is required"),
+        lastName: z.string().min(1, "Last name is required"),
+        relationship: z.string().min(1, "Relationship is required"),
+        dateOfBirth: z.string().min(1, "Date of birth is required"),
+      })
+    )
+    .optional(),
 });
 
 export async function createFuneralPolicy(prevState: any, formData: FormData) {
@@ -72,6 +81,58 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
       error: true,
       message: "Failed to create policy holder.",
       details: partyError.message,
+    };
+  }
+
+  // 2. Create a policy in the policy table as well
+  const { data: policy, error: policyError } = await supabase
+    .from("policies")
+    .insert({
+      policy_holder_id: party.id,
+      product_id: 3, // Assuming 3 is the ID for funeral policies
+      policy_status: "pending",
+      premium_amount: validatedData.premiumAmount,
+      frequency: validatedData.frequency,
+    })
+    .select("*")
+    .single();
+
+  if (policyError || !policy) {
+    return {
+      error: true,
+      message: "Failed to create policy.",
+      details: policyError.message,
+    };
+  }
+
+  // 3. Create the funeral policy
+  const { data: funeralPolicy, error: funeralPolicyError } = await supabase
+    .from("funeral_policies")
+    .insert({
+      policy_holder_id: party.id,
+      product_id: 3,
+      policy_status: "pending",
+      premium_amount: validatedData.premiumAmount,
+      frequency: validatedData.frequency,
+      covered_members: validatedData.coveredMembers
+        ? JSON.stringify(
+            validatedData.coveredMembers.map((member) => ({
+              first_name: member.firstName,
+              last_name: member.lastName,
+              relationship: member.relationship,
+              date_of_birth: member.dateOfBirth,
+            }))
+          )
+        : JSON.stringify([]),
+    } as any)
+    .select("*")
+    .single();
+
+  if (funeralPolicyError || !funeralPolicy) {
+    return {
+      error: true,
+      message: "Failed to create funeral policy.",
+      details: funeralPolicyError.message,
     };
   }
 

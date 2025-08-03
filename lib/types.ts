@@ -441,7 +441,22 @@ export type Database = {
           start_date?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "funeral_policies_policy_holder_id_fkey";
+            columns: ["policy_holder_id"];
+            isOneToOne: false;
+            referencedRelation: "parties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "funeral_policies_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "product_types";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       life_insurance_policies: {
         Row: {
@@ -489,7 +504,22 @@ export type Database = {
           underwriting_details?: Json;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "life_insurance_policies_policy_holder_id_fkey";
+            columns: ["policy_holder_id"];
+            isOneToOne: false;
+            referencedRelation: "parties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "life_insurance_policies_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "product_types";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       loan_payments: {
         Row: {
