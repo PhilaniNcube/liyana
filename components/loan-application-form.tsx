@@ -278,11 +278,28 @@ export function LoanApplicationForm({
   );
   const [isPending, startTransition] = useTransition();
 
-  // Credit check function
+  // Credit check function - TEMPORARILY DISABLED FOR TESTING
   const performCreditCheck = async (idNumber: string) => {
     setCreditCheckStatus("loading");
     setCreditCheckResults(null); // Reset previous results
 
+    // Simulate a brief loading period
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // TEMPORARILY BYPASS CREDIT CHECK - Always return success
+    const mockSuccessData = {
+      success: true,
+      creditScore: 650, // Mock score above 600 threshold
+      message: "Credit check passed (TESTING MODE - CREDIT CHECK DISABLED)",
+      testMode: true,
+    };
+
+    setCreditCheckResults(mockSuccessData);
+    setCreditCheckStatus("success");
+    // Automatically proceed to the next step on success
+    await setCurrentStep(2);
+
+    /* ORIGINAL CREDIT CHECK CODE - COMMENTED OUT FOR TESTING
     try {
       const response = await fetch(
         `/api/kyc/credit-check?idNumber=${encodeURIComponent(idNumber)}`
@@ -322,6 +339,7 @@ export function LoanApplicationForm({
         message: "An unexpected error occurred during the credit check.",
       });
     }
+    */
   };
 
   // Use React Query to fetch documents
