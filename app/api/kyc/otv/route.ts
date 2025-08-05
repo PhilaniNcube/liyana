@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
       Authorization: `Bearer ${loginToken}`,
     },
     body: JSON.stringify({
-      number: "+27817551279",
+      number: profile.phone_number,
       message: `Please verify your ID by clicking on the following link: ${verificstionLink}. Please enter the following PIN: ${requestPinData.detail.pinCode} when requested.`,
     }),
   });
