@@ -137,7 +137,12 @@ export async function POST(request: NextRequest) {
   }
 
   // Check if the PIN was successfully requested
-  if (!requestPinData.detail || !requestPinData.detail.pinCode) {
+  if (
+    !requestPinData.detail ||
+    !requestPinData.detail.pinCode ||
+    !requestPinData.detail.url ||
+    !requestPinData.detail.url.PWA
+  ) {
     return NextResponse.json(
       { error: "Failed to request PIN" },
       { status: 400 }
