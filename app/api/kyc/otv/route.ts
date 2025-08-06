@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
   }
 
   // send an SMS with a link to the user that concatenates the pin and the url so that the user can click on it
-  const verificstionLink = `${process.env.WHO_YOU_URL}/otv/?pin=${requestPinData.detail?.pinCode}`;
+  const verificstionLink = `${process.env.WHO_YOU_URL}/otv/?p=${requestPinData.detail?.pinCode}`;
 
   const smsUrl = `${process.env.WHO_YOU_URL}/otv/token/v1/sendMessage`;
 
