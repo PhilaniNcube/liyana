@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
     },
     body: JSON.stringify({
       number: profile.phone_number,
-      message: `Please verify your ID by clicking on the following link: ${verificstionLink}. Please enter the following PIN: ${requestPinData.detail.pinCode} when requested.`,
+      message: `Liyana Finance: Please verify yourself using the following link: ${verificstionLink}. Please enter the following PIN: ${requestPinData.detail.pinCode} when requested.`,
     }),
   });
 
