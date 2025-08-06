@@ -159,8 +159,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // send an SMS with a link to the user that concatenates the pin and the url so that the user can click on it
-  const verificstionLink = `${process.env.WHO_YOU_URL}/otv/?p=${requestPinData.detail?.pinCode}`;
+  // Construct the verification link from the Who You URL and the PIN code
+  console.log("Verification link will be sent via SMS");
+  const verLink = `${requestPinData.detail.url.PWA}${requestPinData.detail.pinCode}`;
 
   const smsUrl = `${process.env.WHO_YOU_URL}/otv/token/v1/sendMessage`;
 
@@ -172,7 +173,7 @@ export async function POST(request: NextRequest) {
     },
     body: JSON.stringify({
       number: "+27817551279",
-      message: `Liyana Finance: Please verify yourself using the following link: ${verificstionLink}. Please enter the following PIN: ${requestPinData.detail.pinCode} when requested.`,
+      message: `Liyana Finance: Please verify yourself using the following link: ${verLink}. Please enter the following PIN: ${requestPinData.detail.pinCode} when requested.`,
     }),
   });
 
