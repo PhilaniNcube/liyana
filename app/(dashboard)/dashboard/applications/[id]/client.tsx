@@ -49,6 +49,7 @@ import { ProfileDocumentUpload } from "@/components/profile-document-upload";
 import { ProfileDocumentsDisplay } from "@/components/profile-documents-display";
 import { OtvResultsDialog } from "@/components/otv-results-dialog";
 import { DecryptedApplication } from "@/lib/schemas";
+import { ApproveLoanModal } from "@/components/approve-loan-modal";
 
 interface ApplicationDetailClientProps {
   application: DecryptedApplication;
@@ -257,6 +258,29 @@ export function ApplicationDetailClient({
           </div>
         </div>
         <div className="flex items-center space-x-2">
+          <ApproveLoanModal
+            applicationId={application.id}
+            currentAmount={application.application_amount || 1000}
+            currentTerm={application.term || 30}
+            applicantName={application.profile?.full_name}
+            onApprovalSuccess={() => window.location.reload()}
+          >
+            <Button
+              disabled={
+                isSubmittingToBraveLender ||
+                isDeclining ||
+                isSendingOtv ||
+                application.status === "approved" ||
+                application.status === "declined" ||
+                application.status === "submitted_to_lender"
+              }
+              variant="default"
+              size="sm"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Approve Loan
+            </Button>
+          </ApproveLoanModal>
           <Button
             onClick={() =>
               handleBraveLenderSubmit(application, setIsSubmittingToBraveLender)
