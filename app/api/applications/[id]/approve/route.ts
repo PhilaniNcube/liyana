@@ -12,11 +12,12 @@ const approvalSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const applicationId = params.id;
+    const resolvedParams = await params;
+    const applicationId = resolvedParams.id;
 
     // Get the current user and check if they're an admin
     const {
