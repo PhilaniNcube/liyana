@@ -80,10 +80,10 @@ export default async function DeclinedLoansPage(props: {
       <div>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">
+            <h1 className="md:text-3xl font-bold">
               Declined Loans & Non-Applicants
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-xs md:text-basetext-muted-foreground">
               Users with declined applications or who haven't applied yet
             </p>
           </div>
