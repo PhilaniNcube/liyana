@@ -74,6 +74,63 @@ export class PaydayLoanCalculator {
   // --- Public Methods for Repayment Calculation ---
 
   /**
+   * Returns the initiation fee per the configured rules.
+   */
+  public getInitiationFee(): number {
+    return this.calculateInitiationFee();
+  }
+
+  /**
+   * Returns the service fee for the full loan term (pro-rated at 30-day periods).
+   */
+  public getServiceFeeForTerm(): number {
+    return this.calculateServiceFee(this.termInDays);
+  }
+
+  /**
+   * Computes the next payment date from a given date (defaults to loan start),
+   * advancing in 30-day periods and capped at the loan end date.
+   */
+  public getNextPaymentDate(fromDate: Date = this.loanStartDate): Date {
+    const addDays = (date: Date, days: number) => {
+      const d = new Date(date.getTime());
+      d.setDate(d.getDate() + days);
+      return d;
+    };
+
+    const loanEndDate = addDays(this.loanStartDate, this.termInDays);
+
+    // If fromDate is before or equal to start, first due is min(30 days, term)
+    if (fromDate <= this.loanStartDate) {
+      const initialIncrement = Math.min(
+        PaydayLoanCalculator.DAYS_IN_MONTH_FOR_FEE,
+        this.termInDays
+      );
+      return addDays(this.loanStartDate, initialIncrement);
+    }
+
+    // If after maturity, the due date is at maturity (no further dates)
+    if (fromDate >= loanEndDate) {
+      return loanEndDate;
+    }
+
+    const msPerDay = 1000 * 3600 * 24;
+    const daysElapsed = Math.ceil(
+      (fromDate.getTime() - this.loanStartDate.getTime()) / msPerDay
+    );
+    // Next period boundary (1-based periods of 30 days)
+    const periodsElapsed = Math.ceil(
+      daysElapsed / PaydayLoanCalculator.DAYS_IN_MONTH_FOR_FEE
+    );
+    const daysToNextBoundary =
+      periodsElapsed * PaydayLoanCalculator.DAYS_IN_MONTH_FOR_FEE;
+
+    const candidate = addDays(this.loanStartDate, daysToNextBoundary);
+    // Cap at loan end date
+    return candidate > loanEndDate ? loanEndDate : candidate;
+  }
+
+  /**
    * Calculates the total amount to be repaid at the end of the full loan term.
    * @returns {number} The total repayment amount (Principal + All Fees + Full Interest).
    */

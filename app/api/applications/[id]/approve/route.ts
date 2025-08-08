@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/server";
 import { z } from "zod";
+import { PaydayLoanCalculator } from "@/lib/utils/loancalculator";
 
 const approvalSchema = z.object({
   loan_amount: z.number().min(500).max(5000),
@@ -89,6 +90,18 @@ export async function POST(
       );
     }
 
+    // Compute fees and next payment date using the loan calculator
+    const calculator = new PaydayLoanCalculator({
+      principal: validatedData.loan_amount,
+      termInDays: validatedData.loan_term,
+      loanStartDate: new Date(),
+      annualInterestRate: validatedData.interest_rate / 100, // convert % to decimal
+    });
+
+    const initiationFee = calculator.getInitiationFee();
+    const serviceFee = calculator.getServiceFeeForTerm();
+    const nextPaymentDate = calculator.getNextPaymentDate(new Date());
+
     // Create an approved loan record
     const { data: approvedLoan, error: approvedLoanError } = await supabase
       .from("approved_loans")
@@ -99,9 +112,10 @@ export async function POST(
         monthly_payment: validatedData.monthly_repayment,
         loan_term_days: validatedData.loan_term,
         interest_rate: validatedData.interest_rate,
-        initiation_fee: 0, // You can calculate this based on your business logic
-        service_fee: 0, // You can calculate this based on your business logic
+        initiation_fee: initiationFee,
+        service_fee: serviceFee,
         approved_date: new Date().toISOString(),
+        next_payment_date: nextPaymentDate.toISOString().slice(0, 10),
         status: "active",
       })
       .select()
