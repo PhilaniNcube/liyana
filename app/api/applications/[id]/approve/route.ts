@@ -117,6 +117,7 @@ export async function POST(
         approved_date: new Date().toISOString(),
         next_payment_date: nextPaymentDate.toISOString().slice(0, 10),
         status: "active",
+        approved_loan_amount: validatedData.loan_amount,
       })
       .select()
       .single();
