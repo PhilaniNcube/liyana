@@ -34,7 +34,6 @@ export function LoanOverview({ loan }: Props) {
   let progress;
   let daysElapsed;
   const daysTotal = loan_term_days;
-  let numberOfPayments;
 
   if (approved) {
     const now = new Date();
@@ -46,7 +45,7 @@ export function LoanOverview({ loan }: Props) {
     progress = 0;
   }
 
-  numberOfPayments = Math.ceil(daysTotal / 30); // Assuming monthly payments
+  const numberOfPayments = Math.ceil(daysTotal / 30); // Assuming monthly payments
 
   function clamp(value: number, min: number, max: number): number {
     return Math.min(Math.max(value, min), max);
