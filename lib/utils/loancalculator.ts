@@ -1,3 +1,4 @@
+// ...existing code...
 /**
  * @interface LoanParams
  * @description Defines the shape of the input parameters for a new loan calculation.
@@ -92,42 +93,54 @@ export class PaydayLoanCalculator {
    * advancing in 30-day periods and capped at the loan end date.
    */
   public getNextPaymentDate(fromDate: Date = this.loanStartDate): Date {
+    // Helper to add days
     const addDays = (date: Date, days: number) => {
       const d = new Date(date.getTime());
       d.setDate(d.getDate() + days);
       return d;
     };
 
-    const loanEndDate = addDays(this.loanStartDate, this.termInDays);
+    // Calculate loan maturity date
+    const maturityDate = addDays(this.loanStartDate, this.termInDays);
 
-    // If fromDate is before or equal to start, first due is min(30 days, term)
+    // If fromDate is before or equal to start, first due is min(next 25th/26th, maturity)
     if (fromDate <= this.loanStartDate) {
-      const initialIncrement = Math.min(
-        PaydayLoanCalculator.DAYS_IN_MONTH_FOR_FEE,
-        this.termInDays
-      );
-      return addDays(this.loanStartDate, initialIncrement);
+      fromDate = this.loanStartDate;
     }
 
     // If after maturity, the due date is at maturity (no further dates)
-    if (fromDate >= loanEndDate) {
-      return loanEndDate;
+    if (fromDate >= maturityDate) {
+      return maturityDate;
     }
 
-    const msPerDay = 1000 * 3600 * 24;
-    const daysElapsed = Math.ceil(
-      (fromDate.getTime() - this.loanStartDate.getTime()) / msPerDay
-    );
-    // Next period boundary (1-based periods of 30 days)
-    const periodsElapsed = Math.ceil(
-      daysElapsed / PaydayLoanCalculator.DAYS_IN_MONTH_FOR_FEE
-    );
-    const daysToNextBoundary =
-      periodsElapsed * PaydayLoanCalculator.DAYS_IN_MONTH_FOR_FEE;
+    // Find the next 25th or 26th of the month after fromDate
+    const year = fromDate.getFullYear();
+    const month = fromDate.getMonth();
+    const day = fromDate.getDate();
 
-    const candidate = addDays(this.loanStartDate, daysToNextBoundary);
-    // Cap at loan end date
-    return candidate > loanEndDate ? loanEndDate : candidate;
+    // Find next 25th and 26th
+    let next25th = new Date(year, month, 25);
+    let next26th = new Date(year, month, 26);
+    if (day >= 26) {
+      // Move to next month
+      next25th = new Date(year, month + 1, 25);
+      next26th = new Date(year, month + 1, 26);
+    } else if (day >= 25) {
+      next26th = new Date(year, month, 26);
+      next25th = new Date(year, month + 1, 25);
+    }
+
+    // Pick the soonest date after fromDate
+    let nextPaymentDate = next25th > fromDate ? next25th : next26th;
+    if (next26th > fromDate && next26th < nextPaymentDate) {
+      nextPaymentDate = next26th;
+    }
+
+    // Cap at maturity
+    if (nextPaymentDate > maturityDate) {
+      return maturityDate;
+    }
+    return nextPaymentDate;
   }
 
   /**
