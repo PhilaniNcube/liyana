@@ -26,8 +26,16 @@ export default async function ApplicationDetailPage({
       notFound();
     }
 
-    // Decrypt sensitive data on the server side
-    const decryptedIdNumber = decryptValue(application.id_number);
+    // Decrypt sensitive data on the server side (defensive)
+    let decryptedIdNumber: string;
+    try {
+      decryptedIdNumber = application.id_number
+        ? decryptValue(application.id_number)
+        : "";
+    } catch {
+      // Fallback: value might already be plaintext or key mismatch in dev
+      decryptedIdNumber = application.id_number || "";
+    }
 
     // Fetch API checks for the decrypted ID number
     const apiChecks = await getApiChecksByIdNumber(decryptedIdNumber);
