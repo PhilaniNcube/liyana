@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import type { Database } from "@/lib/types";
 import { createClient } from "@/lib/client";
+import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 
 type ProfileDocument = Database["public"]["Tables"]["profile_documents"]["Row"];
 type AppDocument = Database["public"]["Tables"]["documents"]["Row"];
@@ -237,78 +238,74 @@ export function ProfileDocumentsDisplay({
           </div>
         ) : (
           <div className="space-y-6">
-            {Object.entries(grouped).map(([documentType, docs]) => (
-              <div key={documentType}>
-                <div className="flex items-center gap-2 mb-3">
-                  {getDocumentIcon(documentType as DocumentType)}
-                  <h4 className="font-medium">
-                    {DOCUMENT_TYPE_LABELS[documentType as DocumentType]}
-                  </h4>
-                  <Badge variant="secondary">{docs.length}</Badge>
-                </div>
-                <div className="space-y-2">
-                  {docs.map((document) => (
-                    <div
-                      key={`${document.source}-${document.id}`}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        {getDocumentIcon(document.document_type)}
-                        <div>
-                          <p className="text-sm font-medium">
-                            {DOCUMENT_TYPE_LABELS[document.document_type]}
-                          </p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Calendar className="h-3 w-3" />
-                            Uploaded {formatDate(document.created_at)}
-                            <Badge variant="outline">
-                              {document.source === "profile"
-                                ? "Profile"
-                                : "Application"}
-                            </Badge>
+            <ScrollArea className="h-60">
+              {Object.entries(grouped).map(([documentType, docs]) => (
+                <div key={documentType}>
+                  <div className="space-y-2">
+                    {docs.map((document) => (
+                      <div
+                        key={`${document.source}-${document.id}`}
+                        className="flex items-center justify-between p-3 border rounded-lg my-2"
+                      >
+                        <div className="flex items-center gap-3">
+                          {/* {getDocumentIcon(document.document_type)} */}
+                          <div>
+                            <p className="text-sm font-medium">
+                              {DOCUMENT_TYPE_LABELS[document.document_type]}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
+                              Uploaded {formatDate(document.created_at)}
+                              <Badge variant="outline">
+                                {document.source === "profile"
+                                  ? "Profile"
+                                  : "Application"}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={
+                              DOCUMENT_TYPE_COLORS[document.document_type]
+                            }
+                          >
+                            {DOCUMENT_TYPE_LABELS[document.document_type]}
+                          </Badge>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handlePreview(document)}
+                            title="Preview"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownload(document)}
+                            disabled={
+                              isDownloading ===
+                              `${document.source}-${document.id}`
+                            }
+                            title="Download"
+                          >
+                            {isDownloading ===
+                            `${document.source}-${document.id}` ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Download className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className={
-                            DOCUMENT_TYPE_COLORS[document.document_type]
-                          }
-                        >
-                          {DOCUMENT_TYPE_LABELS[document.document_type]}
-                        </Badge>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handlePreview(document)}
-                          title="Preview"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownload(document)}
-                          disabled={
-                            isDownloading ===
-                            `${document.source}-${document.id}`
-                          }
-                          title="Download"
-                        >
-                          {isDownloading ===
-                          `${document.source}-${document.id}` ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Download className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+              <ScrollBar />
+            </ScrollArea>
           </div>
         )}
       </CardContent>
