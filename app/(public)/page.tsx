@@ -62,22 +62,6 @@ export default async function Home() {
                       <Button asChild size="lg" className="w-full">
                         <Link href="/apply">Apply for Loan</Link>
                       </Button>
-                      <Button
-                        asChild
-                        size="lg"
-                        variant="outline"
-                        className="w-full"
-                      >
-                        <Link href="/insurance/life">Life Insurance</Link>
-                      </Button>
-                      <Button
-                        asChild
-                        size="lg"
-                        variant="outline"
-                        className="w-full"
-                      >
-                        <Link href="/insurance/funeral">Funeral Policy</Link>
-                      </Button>
                     </CardContent>
                   </Card>
                 ) : (
