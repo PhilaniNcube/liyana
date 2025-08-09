@@ -9,6 +9,7 @@ import {
 interface Application {
   affordability: any;
   decline_reason: any;
+  monthly_income?: number | null;
 }
 
 interface AdditionalInfoCardProps {
@@ -24,7 +25,10 @@ export function AdditionalInfoCard({ application }: AdditionalInfoCardProps) {
     }).format(amount);
   };
 
-  const formatAffordabilityIncomeStatement = (affordability: any) => {
+  const formatAffordabilityIncomeStatement = (
+    affordability: any,
+    monthlyIncome?: number | null
+  ) => {
     if (!affordability) return null;
 
     // Handle the structured format (income/deductions/expenses arrays)
@@ -33,11 +37,13 @@ export function AdditionalInfoCard({ application }: AdditionalInfoCardProps) {
       affordability.deductions ||
       affordability.expenses
     ) {
-      const totalIncome =
+      const baseIncomeTotal =
         affordability.income?.reduce(
           (sum: number, item: any) => sum + (item.amount || 0),
           0
         ) || 0;
+      const monthlyIncomeAddition = Number(monthlyIncome) || 0;
+      const totalIncome = baseIncomeTotal + monthlyIncomeAddition;
       const totalDeductions =
         affordability.deductions?.reduce(
           (sum: number, item: any) => sum + (item.amount || 0),
@@ -86,7 +92,8 @@ export function AdditionalInfoCard({ application }: AdditionalInfoCardProps) {
           <div>
             {(() => {
               const incomeStatement = formatAffordabilityIncomeStatement(
-                application.affordability
+                application.affordability,
+                application.monthly_income ?? null
               );
               if (!incomeStatement) {
                 return (
