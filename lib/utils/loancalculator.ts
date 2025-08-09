@@ -1,4 +1,9 @@
-// ...existing code...
+import {
+  differenceInCalendarDays,
+  eachMonthOfInterval,
+  lastDayOfMonth,
+} from "date-fns";
+
 /**
  * @interface LoanParams
  * @description Defines the shape of the input parameters for a new loan calculation.
@@ -10,8 +15,8 @@ interface LoanParams {
   termInDays: number;
   /** The date the loan was initiated. */
   loanStartDate: Date;
-  /** The annual interest rate as a decimal (e.g., 0.05 for 5%). Defaults to 5%. */
-  annualInterestRate?: number;
+  /** The monthly interest rate as a decimal (e.g., 0.01 for 1%). Defaults to 0.05 (5%). */
+  monthlyInterestRate?: number;
   /** An optional late payment fee. Defaults to 0. */
   latePaymentFee?: number;
 }
@@ -24,16 +29,14 @@ export class PaydayLoanCalculator {
   private readonly principal: number;
   private readonly termInDays: number;
   private readonly loanStartDate: Date;
-  private readonly annualInterestRate: number;
+  private readonly monthlyInterestRate: number;
   private readonly latePaymentFee: number;
 
   // Constants based on your requirements
   private static readonly INITIATION_FEE_BASE = 165;
   private static readonly INITIATION_FEE_THRESHOLD = 1000;
   private static readonly INITIATION_FEE_PERCENTAGE = 0.1; // 10%
-  private static readonly MONTHLY_SERVICE_FEE = 65;
-  private static readonly DAYS_IN_YEAR = 365;
-  private static readonly DAYS_IN_MONTH_FOR_FEE = 30;
+  private static readonly MONTHLY_SERVICE_FEE = 69;
 
   /**
    * Creates an instance of the PaydayLoanCalculator.
@@ -45,11 +48,17 @@ export class PaydayLoanCalculator {
     this.loanStartDate = params.loanStartDate;
 
     // Set default values for optional parameters
-    this.annualInterestRate = params.annualInterestRate ?? 0.05; // Default to 5%
+    this.monthlyInterestRate = params.monthlyInterestRate ?? 0.05; // Default to 5%
     this.latePaymentFee = params.latePaymentFee ?? 0;
   }
 
-  // --- Private Helper Methods for Fee Calculation ---
+  // --- Private Helper Methods ---
+
+  private getMaturityDate(): Date {
+    const end = new Date(this.loanStartDate.getTime());
+    end.setDate(end.getDate() + this.termInDays - 1);
+    return end;
+  }
 
   private calculateInitiationFee(): number {
     let additionalFee = 0;
@@ -61,253 +70,233 @@ export class PaydayLoanCalculator {
     return PaydayLoanCalculator.INITIATION_FEE_BASE + additionalFee;
   }
 
+  private getActiveMonths(): { start: Date; end: Date }[] {
+    const startDate = this.loanStartDate;
+    const endDate = this.getMaturityDate();
+
+    const monthAnchors = eachMonthOfInterval({
+      start: new Date(startDate.getFullYear(), startDate.getMonth(), 1),
+      end: new Date(endDate.getFullYear(), endDate.getMonth(), 1),
+    });
+
+    return monthAnchors.map((anchor, idx) => {
+      const y = anchor.getFullYear();
+      const m = anchor.getMonth();
+      const monthStart = idx === 0 ? startDate : new Date(y, m, 1);
+      const monthEnd = lastDayOfMonth(new Date(y, m, 1));
+      const end = monthEnd < endDate ? monthEnd : endDate;
+      return { start: monthStart, end };
+    });
+  }
+
   private calculateServiceFee(days: number): number {
-    const numberOfMonths = days / PaydayLoanCalculator.DAYS_IN_MONTH_FOR_FEE;
-    return numberOfMonths * PaydayLoanCalculator.MONTHLY_SERVICE_FEE;
+    const months = this.getActiveMonths();
+    let totalFee = 0;
+    let daysRemaining = days;
+    for (const { start, end } of months) {
+      const daysInMonth = differenceInCalendarDays(end, start) + 1;
+      const chargeableDays = Math.min(daysRemaining, daysInMonth);
+      totalFee += (chargeableDays / daysInMonth) *
+        PaydayLoanCalculator.MONTHLY_SERVICE_FEE;
+      daysRemaining -= chargeableDays;
+      if (daysRemaining <= 0) break;
+    }
+    return totalFee;
   }
 
   private calculateInterest(days: number): number {
-    const dailyRate =
-      this.annualInterestRate / PaydayLoanCalculator.DAYS_IN_YEAR;
-    return this.principal * dailyRate * days;
+    // Interest is calculated using the monthly rate, pro-rated by actual days in each active month
+    const months = this.getActiveMonths();
+    let totalInterest = 0;
+    let daysRemaining = days;
+    for (const { start, end } of months) {
+      const daysInMonth = differenceInCalendarDays(end, start) + 1;
+      const chargeableDays = Math.min(daysRemaining, daysInMonth);
+      totalInterest += (chargeableDays / daysInMonth) *
+        this.monthlyInterestRate * this.principal;
+      daysRemaining -= chargeableDays;
+      if (daysRemaining <= 0) break;
+    }
+    return totalInterest;
   }
 
-  // --- Public Methods for Repayment Calculation ---
+  // --- Public Methods ---
 
   /**
-   * Returns the initiation fee per the configured rules.
+   * Returns all scheduled repayment dates.
+   * Payments occur only on the 25th/26th of a month, or the loan end date if it falls before those days in the final month.
    */
+  public getPaymentScheduleDates(): Date[] {
+    const schedule: Date[] = [];
+    const startDate = this.loanStartDate;
+    const endDate = this.getMaturityDate();
+
+    const monthAnchors = eachMonthOfInterval({
+      start: new Date(startDate.getFullYear(), startDate.getMonth(), 1),
+      end: new Date(endDate.getFullYear(), endDate.getMonth(), 1),
+    });
+
+    monthAnchors.forEach((anchor, idx) => {
+      const y = anchor.getFullYear();
+      const m = anchor.getMonth();
+      const monthStartCutoff = idx === 0 ? startDate : new Date(y, m, 1);
+      const day25 = new Date(y, m, 25);
+      const day26 = new Date(y, m, 26);
+      const inLastMonth = y === endDate.getFullYear() &&
+        m === endDate.getMonth();
+
+      let picked: Date | null = null;
+      if (day25 >= monthStartCutoff && day25 <= endDate) {
+        picked = day25;
+      } else if (day26 >= monthStartCutoff && day26 <= endDate) {
+        picked = day26;
+      } else if (inLastMonth && endDate < day25) {
+        picked = new Date(
+          endDate.getFullYear(),
+          endDate.getMonth(),
+          endDate.getDate(),
+        );
+      }
+
+      if (picked) schedule.push(picked);
+    });
+
+    return schedule;
+  }
+
+  /** Returns the initiation fee per the configured rules. */
   public getInitiationFee(): number {
     return this.calculateInitiationFee();
   }
 
-  /**
-   * Returns the service fee for the full loan term (pro-rated at 30-day periods).
-   */
+  /** Returns the service fee for the full loan term (pro-rated using actual month lengths). */
   public getServiceFeeForTerm(): number {
     return this.calculateServiceFee(this.termInDays);
   }
 
-  /**
-   * Computes the next payment date from a given date (defaults to loan start),
-   * advancing in 30-day periods and capped at the loan end date.
-   */
+  /** Returns the next scheduled payment date from a given date (defaults to loan start). */
   public getNextPaymentDate(fromDate: Date = this.loanStartDate): Date {
-    // Helper to add days
-    const addDays = (date: Date, days: number) => {
-      const d = new Date(date.getTime());
-      d.setDate(d.getDate() + days);
-      return d;
-    };
-
-    // Calculate loan maturity date
-    const maturityDate = addDays(this.loanStartDate, this.termInDays);
-
-    // If fromDate is before or equal to start, first due is min(next 25th/26th, maturity)
-    if (fromDate <= this.loanStartDate) {
-      fromDate = this.loanStartDate;
-    }
-
-    // If after maturity, the due date is at maturity (no further dates)
-    if (fromDate >= maturityDate) {
-      return maturityDate;
-    }
-
-    // Find the next 25th or 26th of the month after fromDate
-    const year = fromDate.getFullYear();
-    const month = fromDate.getMonth();
-    const day = fromDate.getDate();
-
-    // Find next 25th and 26th
-    let next25th = new Date(year, month, 25);
-    let next26th = new Date(year, month, 26);
-    if (day >= 26) {
-      // Move to next month
-      next25th = new Date(year, month + 1, 25);
-      next26th = new Date(year, month + 1, 26);
-    } else if (day >= 25) {
-      next26th = new Date(year, month, 26);
-      next25th = new Date(year, month + 1, 25);
-    }
-
-    // Pick the soonest date after fromDate
-    let nextPaymentDate = next25th > fromDate ? next25th : next26th;
-    if (next26th > fromDate && next26th < nextPaymentDate) {
-      nextPaymentDate = next26th;
-    }
-
-    // Cap at maturity
-    if (nextPaymentDate > maturityDate) {
-      return maturityDate;
-    }
-    return nextPaymentDate;
+    const maturityDate = this.getMaturityDate();
+    const schedule = this.getPaymentScheduleDates();
+    const next = schedule.find((d) => d >= fromDate);
+    return next ?? maturityDate;
   }
 
-  /**
-   * Calculates the total amount to be repaid at the end of the full loan term.
-   * @returns {number} The total repayment amount (Principal + All Fees + Full Interest).
-   */
+  /** Calculates the total amount to be repaid at the end of the full loan term. */
   public getTotalRepayment(): number {
     const initiationFee = this.calculateInitiationFee();
     const totalServiceFee = this.calculateServiceFee(this.termInDays);
     const totalInterest = this.calculateInterest(this.termInDays);
-
     return this.principal + initiationFee + totalServiceFee + totalInterest;
   }
 
-  /**
-   * Calculates the monthly repayment amount. Assumes 1 payment for terms <= 30 days,
-   * and 2 payments for terms > 30 days.
-   * @returns {number} The amount for each monthly installment.
-   */
+  /** Returns the total interest for the full loan term. */
+  public getTotalInterest(): number {
+    return this.calculateInterest(this.termInDays);
+  }
+
+  /** Calculates the per-payment amount by dividing total by number of scheduled payments. */
   public getMonthlyRepayment(): number {
     const totalRepayment = this.getTotalRepayment();
-    const numberOfPayments = Math.ceil(
-      this.termInDays / PaydayLoanCalculator.DAYS_IN_MONTH_FOR_FEE
-    );
-
-    if (numberOfPayments === 0) {
-      return totalRepayment; // Avoid division by zero
-    }
-
+    const numberOfPayments = this.getPaymentScheduleDates().length;
+    if (numberOfPayments === 0) return totalRepayment;
     return totalRepayment / numberOfPayments;
+  }
+
+  /** Returns the number of repayments (one per scheduled payment date). */
+  public getNumberOfRepayments(): number {
+    return this.getPaymentScheduleDates().length;
   }
 
   /**
    * Calculates the settlement amount if the loan is paid off early.
    * Interest and Service Fees are pro-rated to the actual number of days the loan was active.
-   * @param {Date} settlementDate - The date the customer wishes to settle the loan.
-   * @param {number} previousPayments - The total amount of payments already made towards the loan. Defaults to 0.
-   * @returns {number | string} The remaining amount to pay for early settlement, or an error message.
    */
   public getEarlySettlementAmount(
     settlementDate: Date,
-    previousPayments: number = 0
+    previousPayments: number = 0,
   ): number | string {
     if (settlementDate < this.loanStartDate) {
       return "Settlement date cannot be before the loan start date.";
     }
-
     if (previousPayments < 0) {
       return "Previous payments cannot be negative.";
     }
 
-    // Calculate the number of days the loan was held
-    const timeDifference =
-      settlementDate.getTime() - this.loanStartDate.getTime();
-    const daysHeld = Math.ceil(timeDifference / (1000 * 3600 * 24));
-
+    const daysHeld = Math.ceil(
+      (settlementDate.getTime() - this.loanStartDate.getTime()) /
+        (1000 * 3600 * 24),
+    );
     if (daysHeld > this.termInDays) {
       return "Settlement date is after the loan maturity. Use getTotalRepayment() instead.";
     }
 
-    const initiationFee = this.calculateInitiationFee(); // This is always charged in full
+    const initiationFee = this.calculateInitiationFee();
     const proRatedServiceFee = this.calculateServiceFee(daysHeld);
     const proRatedInterest = this.calculateInterest(daysHeld);
 
-    const totalAmountDue =
-      this.principal + initiationFee + proRatedServiceFee + proRatedInterest;
+    const totalAmountDue = this.principal + initiationFee + proRatedServiceFee +
+      proRatedInterest;
     const remainingAmount = totalAmountDue - previousPayments;
-
-    // Ensure the remaining amount is not negative
     return Math.max(0, remainingAmount);
   }
 
-  /**
-   * Returns the total repayment amount including the specified late fee.
-   * @returns {number} The total repayment amount plus the late fee.
-   */
+  /** Returns the total repayment amount including the specified late fee. */
   public getTotalWithLateFee(): number {
     return this.getTotalRepayment() + this.latePaymentFee;
   }
 
-  /**
-   * Calculates the outstanding amount remaining on the loan.
-   * @param {Date} currentDate - The current date to calculate the outstanding amount as of.
-   * @param {number} previousPayments - The total amount of payments already made towards the loan. Defaults to 0.
-   * @returns {number | string} The outstanding amount, or an error message.
-   */
+  /** Calculates the outstanding amount remaining on the loan as of currentDate. */
   public getOutstandingAmount(
     currentDate: Date,
-    previousPayments: number = 0
+    previousPayments: number = 0,
   ): number | string {
     if (currentDate < this.loanStartDate) {
       return "Current date cannot be before the loan start date.";
     }
-
     if (previousPayments < 0) {
       return "Previous payments cannot be negative.";
     }
 
-    // Calculate the number of days the loan has been active
-    const timeDifference = currentDate.getTime() - this.loanStartDate.getTime();
-    const daysActive = Math.ceil(timeDifference / (1000 * 3600 * 24));
-
-    // If the loan has matured, use full term calculations
+    const daysActive = Math.ceil(
+      (currentDate.getTime() - this.loanStartDate.getTime()) /
+        (1000 * 3600 * 24),
+    );
     const effectiveDays = Math.min(daysActive, this.termInDays);
 
     const initiationFee = this.calculateInitiationFee();
     const serviceFeeDue = this.calculateServiceFee(effectiveDays);
     const interestDue = this.calculateInterest(effectiveDays);
 
-    const totalAmountDue =
-      this.principal + initiationFee + serviceFeeDue + interestDue;
+    const totalAmountDue = this.principal + initiationFee + serviceFeeDue +
+      interestDue;
     const outstandingAmount = totalAmountDue - previousPayments;
-
     return Math.max(0, outstandingAmount);
   }
 
-  /**
-   * Calculates the next payment amount based on the payment schedule.
-   * @param {Date} currentDate - The current date to determine the next payment from.
-   * @param {number} previousPayments - The total amount of payments already made towards the loan. Defaults to 0.
-   * @returns {number | string} The next payment amount, or an error message.
-   */
+  /** Calculates the next payment amount based on payment schedule and outstanding amount. */
   public getNextPaymentAmount(
     currentDate: Date,
-    previousPayments: number = 0
+    previousPayments: number = 0,
   ): number | string {
     if (currentDate < this.loanStartDate) {
       return "Current date cannot be before the loan start date.";
     }
-
     if (previousPayments < 0) {
       return "Previous payments cannot be negative.";
     }
 
     const outstandingAmount = this.getOutstandingAmount(
       currentDate,
-      previousPayments
+      previousPayments,
     );
+    if (typeof outstandingAmount === "string") return outstandingAmount;
+    if (outstandingAmount === 0) return 0;
 
-    if (typeof outstandingAmount === "string") {
-      return outstandingAmount; // Return error message
-    }
+    const remainingPaymentPeriods =
+      this.getPaymentScheduleDates().filter((d) => d >= currentDate).length;
+    if (remainingPaymentPeriods === 0) return outstandingAmount;
 
-    if (outstandingAmount === 0) {
-      return 0; // Loan is fully paid
-    }
-
-    // Calculate the number of payments remaining
-    const timeDifference = currentDate.getTime() - this.loanStartDate.getTime();
-    const daysElapsed = Math.ceil(timeDifference / (1000 * 3600 * 24));
-    const daysRemaining = Math.max(0, this.termInDays - daysElapsed);
-
-    if (daysRemaining === 0) {
-      // Loan has matured, full outstanding amount is due
-      return outstandingAmount;
-    }
-
-    // Calculate remaining payment periods
-    const remainingPaymentPeriods = Math.ceil(
-      daysRemaining / PaydayLoanCalculator.DAYS_IN_MONTH_FOR_FEE
-    );
-
-    if (remainingPaymentPeriods === 0) {
-      return outstandingAmount; // Avoid division by zero
-    }
-
-    // Divide the outstanding amount by the number of remaining payment periods
     return outstandingAmount / remainingPaymentPeriods;
   }
 }

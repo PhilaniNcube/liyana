@@ -7,8 +7,12 @@ async function getUser() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
   // At this point, middleware has already verified the user is authenticated and is an admin
-  return user!;
+  return user;
 }
 
 export default async function DashboardLayout({

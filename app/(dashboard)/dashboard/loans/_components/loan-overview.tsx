@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { LoanStatusBadge } from "./loan-status-badg";
 import { Stat } from "./stat";
 import { formatCurrency } from "@/lib/utils/format-currency";
+import { PaydayLoanCalculator } from "@/lib/utils/loancalculator";
 import { formatDate } from "date-fns";
 import { InfoRow } from "./info-row";
 
@@ -27,14 +28,39 @@ export function LoanOverview({ loan }: Props) {
     profile_id,
     created_at,
     updated_at,
+    approved_loan_amount,
   } = loan;
 
   const approved = new Date(approved_date);
   const nextPayment = next_payment_date ? new Date(next_payment_date) : null;
+
+  // Use PaydayLoanCalculator for headline figures
+  const calculator = new PaydayLoanCalculator({
+    principal: approved_loan_amount ?? 0,
+    termInDays: loan_term_days,
+    loanStartDate: approved,
+    monthlyInterestRate: interest_rate / 100, // assuming interest_rate is in percent
+  });
+
+  const totalRepayment = calculator.getTotalRepayment();
+  const totalInterestAmount = calculator.getTotalInterest();
+  const initiationFee = calculator.getInitiationFee();
+  const serviceFee = calculator.getServiceFeeForTerm();
+  const monthlyPayment = calculator.getMonthlyRepayment();
+  const numberOfPayments = calculator.getNumberOfRepayments();
+  const scheduleDates = calculator.getPaymentScheduleDates();
+  const payments = scheduleDates.map((date, idx) => {
+    const isLast = idx === scheduleDates.length - 1;
+    const amount = isLast
+      ? totalRepayment - monthlyPayment * (scheduleDates.length - 1)
+      : monthlyPayment;
+    return { date, amount: Math.max(0, amount) };
+  });
+
+  // Progress calculation
   let progress;
   let daysElapsed;
   const daysTotal = loan_term_days;
-
   if (approved) {
     const now = new Date();
     const timeDiff = now.getTime() - approved.getTime();
@@ -44,8 +70,6 @@ export function LoanOverview({ loan }: Props) {
     daysElapsed = 0;
     progress = 0;
   }
-
-  const numberOfPayments = Math.ceil(daysTotal / 30); // Assuming monthly payments
 
   function clamp(value: number, min: number, max: number): number {
     return Math.min(Math.max(value, min), max);
@@ -63,11 +87,17 @@ export function LoanOverview({ loan }: Props) {
       </div>
 
       {/* Key stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <Stat
+          icon={DollarSign}
+          label="Loan Amount"
+          value={formatCurrency(approved_loan_amount ?? 0)}
+          hint={`${numberOfPayments} installments`}
+        />
         <Stat
           icon={DollarSign}
           label="Monthly payment"
-          value={formatCurrency(monthly_payment)}
+          value={formatCurrency(monthlyPayment)}
           hint={`${numberOfPayments} installments`}
         />
         <Stat
@@ -92,12 +122,20 @@ export function LoanOverview({ loan }: Props) {
       </div>
 
       {/* Totals */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-4">
         <Card className="border-dashed">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Total repayment</div>
             <div className="text-xl font-semibold">
-              {formatCurrency(total_repayment_amount)}
+              {formatCurrency(totalRepayment)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-dashed">
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">Total interest</div>
+            <div className="text-xl font-semibold">
+              {formatCurrency(totalInterestAmount)}
             </div>
           </CardContent>
         </Card>
@@ -105,7 +143,7 @@ export function LoanOverview({ loan }: Props) {
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Initiation fee</div>
             <div className="text-xl font-semibold">
-              {formatCurrency(initiation_fee)}
+              {formatCurrency(initiationFee)}
             </div>
           </CardContent>
         </Card>
@@ -113,7 +151,7 @@ export function LoanOverview({ loan }: Props) {
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Service fee</div>
             <div className="text-xl font-semibold">
-              {formatCurrency(service_fee)}
+              {formatCurrency(serviceFee)}
             </div>
           </CardContent>
         </Card>
@@ -126,9 +164,30 @@ export function LoanOverview({ loan }: Props) {
         <header className="flex items-center justify-between">
           <h2 className="text-base font-medium">Payment Schedule</h2>
           <div className="text-xs text-muted-foreground">
-            {`${numberOfPayments} payments, starting ${formatDate(new Date(approved.getFullYear(), approved.getMonth() + 1, approved.getDate()), "PP")}`}
+            {`${numberOfPayments} payments${payments.length ? `, starting ${formatDate(payments[0].date, "PP")}` : ""}`}
           </div>
         </header>
+        {payments.length ? (
+          <div className="rounded-md border">
+            <div className="divide-y">
+              {payments.map((p, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between p-3 text-sm"
+                >
+                  <div className="text-muted-foreground">
+                    {formatDate(p.date, "PP")}
+                  </div>
+                  <div className="font-medium">{formatCurrency(p.amount)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground">
+            No scheduled payments
+          </div>
+        )}
       </section>
 
       <Separator />
