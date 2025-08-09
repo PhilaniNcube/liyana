@@ -13,7 +13,7 @@ const approvalSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const supabase = await createClient();
@@ -54,7 +54,7 @@ export async function POST(
     if (fetchError || !application) {
       return NextResponse.json(
         { error: "Application not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -65,7 +65,7 @@ export async function POST(
     ) {
       return NextResponse.json(
         { error: "Application has already been processed" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -86,7 +86,7 @@ export async function POST(
       console.error("Error updating application:", updateError);
       return NextResponse.json(
         { error: "Failed to approve application" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -95,7 +95,7 @@ export async function POST(
       principal: validatedData.loan_amount,
       termInDays: validatedData.loan_term,
       loanStartDate: new Date(),
-      annualInterestRate: validatedData.interest_rate / 100, // convert % to decimal
+      monthlyInterestRate: validatedData.interest_rate / 100, // convert % to decimal
     });
 
     const initiationFee = calculator.getInitiationFee();
@@ -132,7 +132,7 @@ export async function POST(
 
       return NextResponse.json(
         { error: "Failed to create approved loan record" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -148,13 +148,13 @@ export async function POST(
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid request data", details: error.errors },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
