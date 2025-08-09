@@ -22,6 +22,7 @@ import {
   AlertCircle,
   Send,
   Mail,
+  MoreHorizontal,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -50,6 +51,14 @@ import { ProfileDocumentsDisplay } from "@/components/profile-documents-display"
 import { OtvResultsDialog } from "@/components/otv-results-dialog";
 import { DecryptedApplication } from "@/lib/schemas";
 import { ApproveLoanModal } from "@/components/approve-loan-modal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ApplicationDetailClientProps {
   application: DecryptedApplication;
@@ -235,7 +244,7 @@ export function ApplicationDetailClient({
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
           <div>
             <Button variant="ghost" size="sm" asChild>
@@ -257,7 +266,7 @@ export function ApplicationDetailClient({
             </p>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <ApproveLoanModal
             applicationId={application.id}
             currentAmount={application.application_amount || 1000}
@@ -281,6 +290,7 @@ export function ApplicationDetailClient({
               Approve Loan
             </Button>
           </ApproveLoanModal>
+          {/* Primary action: Submit to BraveLender */}
           <Button
             onClick={() =>
               handleBraveLenderSubmit(application, setIsSubmittingToBraveLender)
@@ -305,84 +315,73 @@ export function ApplicationDetailClient({
               </>
             )}
           </Button>
-          <Button
-            onClick={() =>
-              handleFraudCheck(
-                application,
-                setIsRunningFraudCheck,
-                setFraudCheckResults
-              )
-            }
-            disabled={
-              isRunningFraudCheck ||
-              isDeclining ||
-              application.status === "declined" ||
-              application.status === "submitted_to_lender"
-            }
-            variant="outline"
-            size="sm"
-          >
-            {isRunningFraudCheck ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Running Credit Check...
-              </>
-            ) : (
-              <>
-                <Shield className="h-4 w-4 mr-2" />
-                Run Credit Check
-              </>
-            )}
-          </Button>
-          <Button
-            onClick={handleDeclineApplication}
-            disabled={
-              isSubmittingToBraveLender ||
-              isRunningFraudCheck ||
-              isDeclining ||
-              application.status === "declined" ||
-              application.status === "approved" ||
-              application.status === "submitted_to_lender"
-            }
-            variant="destructive"
-            size="sm"
-          >
-            {isDeclining ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Declining...
-              </>
-            ) : (
-              <>
-                <XCircle className="h-4 w-4 mr-2" />
-                Decline Application
-              </>
-            )}
-          </Button>
-          <Button
-            onClick={handleOtvRequest}
-            disabled={isSendingOtv}
-            variant="outline"
-            size="sm"
-          >
-            {isSendingOtv ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Sending OTV Link...
-              </>
-            ) : (
-              <>
-                <Send className="h-4 w-4 mr-2" />
-                Send OTV Link
-              </>
-            )}
-          </Button>
-          <OtvResultsDialog applicationId={application.id}>
-            <Button variant="outline" size="sm">
-              <Shield className="h-4 w-4 mr-2" />
-              Check OTV Results
-            </Button>
-          </OtvResultsDialog>
+
+          {/* Secondary actions under More menu to reduce width */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <MoreHorizontal className="h-4 w-4 mr-2" /> More
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  handleFraudCheck(
+                    application,
+                    setIsRunningFraudCheck,
+                    setFraudCheckResults
+                  );
+                }}
+                disabled={
+                  isRunningFraudCheck ||
+                  isDeclining ||
+                  application.status === "declined" ||
+                  application.status === "submitted_to_lender"
+                }
+              >
+                <Shield className="h-4 w-4" />
+                {isRunningFraudCheck
+                  ? "Running Credit Check..."
+                  : "Run Credit Check"}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  handleOtvRequest();
+                }}
+                disabled={isSendingOtv}
+              >
+                <Send className="h-4 w-4" />
+                {isSendingOtv ? "Sending OTV Link..." : "Send OTV Link"}
+              </DropdownMenuItem>
+              <OtvResultsDialog applicationId={application.id}>
+                <DropdownMenuItem>
+                  <Shield className="h-4 w-4" /> Check OTV Results
+                </DropdownMenuItem>
+              </OtvResultsDialog>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  handleDeclineApplication();
+                }}
+                variant="destructive"
+                disabled={
+                  isSubmittingToBraveLender ||
+                  isRunningFraudCheck ||
+                  isDeclining ||
+                  application.status === "declined" ||
+                  application.status === "approved" ||
+                  application.status === "submitted_to_lender"
+                }
+              >
+                <XCircle className="h-4 w-4" />
+                {isDeclining ? "Declining..." : "Decline Application"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Badge className={getStatusColor(application.status)}>
             {(() => {
               // Use a switch case to format status text
