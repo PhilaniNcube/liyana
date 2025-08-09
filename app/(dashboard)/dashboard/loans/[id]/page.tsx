@@ -11,6 +11,8 @@ import { LoanOverview } from "../_components/loan-overview";
 import { Separator } from "@/components/ui/separator";
 import { BorrowerDetails } from "../_components/borrower-details";
 import { ProfileDocumentsDisplay } from "@/components/profile-documents-display";
+import { ProfileDocumentUpload } from "../_components/profile-document-upload";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PageProps {
   params: Promise<{ id: number }>;
@@ -22,8 +24,8 @@ const LoanPage = async ({ params }: PageProps) => {
 
   // Render loan details in a card UI
   return (
-    <main className="container mx-auto space-y-6">
-      <header className="space-y-1">
+    <div className=" space-y-6">
+      <section className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">
           Loan Application
         </h1>
@@ -31,26 +33,32 @@ const LoanPage = async ({ params }: PageProps) => {
           Review status, payment schedule, and key details for this approved
           loan.
         </p>
-      </header>
+      </section>
+      <ScrollArea>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl">Approved Loan</CardTitle>
+            <CardDescription>
+              {"Application and repayment details for the selected record."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <LoanOverview loan={loan} />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xl">Approved Loan</CardTitle>
-          <CardDescription>
-            {"Application and repayment details for the selected record."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <LoanOverview loan={loan} />
-        </CardContent>
-      </Card>
+        <Separator />
 
-      <Separator />
-
-      <BorrowerDetails applicationId={loan.application_id} />
-
-  <ProfileDocumentsDisplay profileId={loan.profile_id} className="mt-6" />
-    </main>
+        <BorrowerDetails applicationId={loan.application_id} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+          <ProfileDocumentsDisplay profileId={loan.profile_id} className="" />
+          <ProfileDocumentUpload
+            className="h-full"
+            profileId={loan.profile_id}
+          />
+        </div>
+      </ScrollArea>
+    </div>
   );
 };
 

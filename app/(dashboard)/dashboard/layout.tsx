@@ -23,9 +23,9 @@ export default async function DashboardLayout({
   const user = await getUser();
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       <DashboardSidebar user={user} />
-      <main className="flex-1 overflow-y-auto">
+      <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="container mx-auto p-6">{children}</div>
       </main>
     </div>
