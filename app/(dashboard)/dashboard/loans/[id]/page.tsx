@@ -9,6 +9,7 @@ import { getLoan } from "@/lib/queries/loans";
 import React from "react";
 import { LoanOverview } from "../_components/loan-overview";
 import { Separator } from "@/components/ui/separator";
+import { BorrowerDetails } from "../_components/borrower-details";
 
 interface PageProps {
   params: Promise<{ id: number }>;
@@ -44,6 +45,8 @@ const LoanPage = async ({ params }: PageProps) => {
       </Card>
 
       <Separator />
+
+      <BorrowerDetails applicationId={loan.application_id} />
     </main>
   );
 };
