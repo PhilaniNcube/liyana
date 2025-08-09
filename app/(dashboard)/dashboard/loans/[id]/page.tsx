@@ -10,6 +10,7 @@ import React from "react";
 import { LoanOverview } from "../_components/loan-overview";
 import { Separator } from "@/components/ui/separator";
 import { BorrowerDetails } from "../_components/borrower-details";
+import { ProfileDocumentsDisplay } from "@/components/profile-documents-display";
 
 interface PageProps {
   params: Promise<{ id: number }>;
@@ -47,6 +48,8 @@ const LoanPage = async ({ params }: PageProps) => {
       <Separator />
 
       <BorrowerDetails applicationId={loan.application_id} />
+
+  <ProfileDocumentsDisplay profileId={loan.profile_id} className="mt-6" />
     </main>
   );
 };
