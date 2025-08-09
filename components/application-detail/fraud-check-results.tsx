@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
+import WhoYouIdVerificationResults from "./whoyou-id-results";
+import WhoYouBankVerificationResults from "./whoyou-bank-results";
 
 interface FraudCheckResultsProps {
   fraudCheckResults: any;
@@ -24,6 +26,18 @@ export function FraudCheckResults({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Visualize WHOYou ID Verification if shape matches */}
+        {typeof fraudCheckResults === "object" &&
+          fraudCheckResults?.detail?.idNumber && (
+            <WhoYouIdVerificationResults data={fraudCheckResults} />
+          )}
+
+        {/* Visualize WHOYou Bank Verification if shape matches */}
+        {typeof fraudCheckResults === "object" &&
+          fraudCheckResults?.detail?.accountVerificationInformation && (
+            <WhoYouBankVerificationResults data={fraudCheckResults} />
+          )}
+
         {fraudCheckResults.pTransactionCompleted !== undefined && (
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium">Transaction Status:</span>
@@ -39,6 +53,7 @@ export function FraudCheckResults({
           </div>
         )}
 
+        {/* Fallback: render structured ZIP/error or raw string if present */}
         {fraudCheckResults.pRetData && (
           <div>
             <h4 className="font-semibold mb-2">Credit Check Report:</h4>
