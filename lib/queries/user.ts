@@ -113,7 +113,7 @@ export async function getAllUserProfiles() {
 
 export async function getUserProfilesPaginated(
   page: number = 1,
-  pageSize: number = 5
+  pageSize: number = 10,
 ) {
   const supabase = await createClient();
 
@@ -123,11 +123,12 @@ export async function getUserProfilesPaginated(
   const { data, error, count } = await supabase
     .from("profiles")
     .select("*", { count: "exact" })
-    .neq("role", "admin") // Exclude admin users
+    .neq("role", "admin")
     .order("created_at", { ascending: false })
     .range(from, to);
 
   if (error) {
+    console.log("Error fetching user profiles:", error.message);
     throw new Error(`Failed to fetch user profiles: ${error.message}`);
   }
 
@@ -141,7 +142,7 @@ export async function getUserProfilesPaginated(
 }
 
 export async function getUsersByRole(
-  role: Database["public"]["Enums"]["user_role"]
+  role: Database["public"]["Enums"]["user_role"],
 ) {
   const supabase = await createClient();
 
@@ -163,7 +164,7 @@ export async function updateUserProfile(
   updates: {
     full_name?: string;
     role?: Database["public"]["Enums"]["user_role"];
-  }
+  },
 ) {
   const supabase = await createClient();
 
@@ -215,19 +216,19 @@ export async function getUsersWithoutApplications() {
 
   if (applicationsError) {
     throw new Error(
-      `Failed to fetch applications: ${applicationsError.message}`
+      `Failed to fetch applications: ${applicationsError.message}`,
     );
   }
 
   // Create a set of user IDs who have applications
   const userIdsWithApplications = new Set(
-    applications.map((app) => app.user_id)
+    applications.map((app) => app.user_id),
   );
 
   // Filter out users who have submitted applications and exclude admin users
   const usersWithoutApplications = allProfiles.filter(
     (profile) =>
-      !userIdsWithApplications.has(profile.id) && profile.role !== "admin"
+      !userIdsWithApplications.has(profile.id) && profile.role !== "admin",
   );
 
   return usersWithoutApplications;
@@ -235,7 +236,7 @@ export async function getUsersWithoutApplications() {
 
 export async function getUsersWithoutApplicationsPaginated(
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
 ) {
   const supabase = await createClient();
 
@@ -260,19 +261,19 @@ export async function getUsersWithoutApplicationsPaginated(
 
   if (applicationsError) {
     throw new Error(
-      `Failed to fetch applications: ${applicationsError.message}`
+      `Failed to fetch applications: ${applicationsError.message}`,
     );
   }
 
   // Create a set of user IDs who have applications
   const userIdsWithApplications = new Set(
-    applications.map((app) => app.user_id)
+    applications.map((app) => app.user_id),
   );
 
   // Filter out users who have submitted applications and exclude admin users
   const usersWithoutApplications = allProfiles.filter(
     (profile) =>
-      !userIdsWithApplications.has(profile.id) && profile.role !== "admin"
+      !userIdsWithApplications.has(profile.id) && profile.role !== "admin",
   );
 
   // Apply pagination
@@ -316,7 +317,7 @@ export async function getDeclinedUsersAndApplicationsPaginated(
     | "application_date"
     | "name"
     | "status" = "application_date",
-  sortOrder: "asc" | "desc" = "desc"
+  sortOrder: "asc" | "desc" = "desc",
 ) {
   const supabase = await createClient();
 
@@ -352,13 +353,13 @@ export async function getDeclinedUsersAndApplicationsPaginated(
   const { data: applications, error: applicationsError } = await supabase
     .from("applications")
     .select(
-      "user_id, status, id, application_amount, updated_at, created_at, id_number"
+      "user_id, status, id, application_amount, updated_at, created_at, id_number",
     )
     .order("created_at", { ascending: true });
 
   if (applicationsError) {
     throw new Error(
-      `Failed to fetch applications: ${applicationsError.message}`
+      `Failed to fetch applications: ${applicationsError.message}`,
     );
   }
 
@@ -404,9 +405,10 @@ export async function getDeclinedUsersAndApplicationsPaginated(
       return {
         ...profile,
         decrypted_id_number: safeDecryptIdNumber(idNumberToDecrypt),
-        application_status: (hasDeclinedApplication
-          ? "declined"
-          : "no_application") as "declined" | "no_application",
+        application_status:
+          (hasDeclinedApplication ? "declined" : "no_application") as
+            | "declined"
+            | "no_application",
         latest_application_id: application?.id,
         application_amount: application?.application_amount,
         declined_at: hasDeclinedApplication
@@ -469,15 +471,15 @@ export async function getDeclinedUsersAndApplicationsPaginated(
   // Count statistics (excluding admins)
   const totalDeclinedUsers = declinedUsers.length;
   const usersWithDeclinedApplications = declinedUsers.filter(
-    (u) => u.application_status === "declined"
+    (u) => u.application_status === "declined",
   ).length;
   const usersWithoutApplications = declinedUsers.filter(
-    (u) => u.application_status === "no_application"
+    (u) => u.application_status === "no_application",
   ).length;
 
   // Calculate proper statistics excluding admins
   const totalNonAdminProfiles = (allProfiles || []).filter(
-    (profile) => profile.role !== "admin"
+    (profile) => profile.role !== "admin",
   ).length;
 
   // Count users with successful applications (not declined)
@@ -490,7 +492,7 @@ export async function getDeclinedUsersAndApplicationsPaginated(
 
   // Filter to only count non-admin users with successful applications
   const nonAdminUsersWithSuccessfulApplications = Array.from(
-    usersWithSuccessfulApplications
+    usersWithSuccessfulApplications,
   ).filter((userId) => {
     const profile = allProfiles?.find((p) => p.id === userId);
     return profile && profile.role !== "admin";

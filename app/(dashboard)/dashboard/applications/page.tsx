@@ -67,6 +67,7 @@ export default async function ApplicationsPage() {
               {applications.map((app) => {
                 const profile = app.profile;
                 const displayName = profile?.full_name || "Unknown User";
+                const idDisplay = app.id_number_decrypted || "-";
 
                 return (
                   <TableRow
@@ -94,7 +95,7 @@ export default async function ApplicationsPage() {
                         href={`/dashboard/applications/${app.id}`}
                         className="block"
                       >
-                        {decryptValue(app.id_number)}
+                        {idDisplay}
                       </Link>
                     </TableCell>
                     <TableCell>

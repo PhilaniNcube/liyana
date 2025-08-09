@@ -10,6 +10,10 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // Ignore generated files
+  {
+    ignores: ["lib/database.types.ts"],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {

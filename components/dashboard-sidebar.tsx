@@ -21,9 +21,12 @@ import {
   ChevronRight,
   Database,
   UserCheck,
+  Menu,
+  ChevronLeft,
 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DashboardSidebarProps {
   user: User;
@@ -91,6 +94,19 @@ const sidebarItems = [
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
   const pathname = usePathname();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const isMobile = useIsMobile();
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(true);
+
+  useEffect(() => {
+    setIsSidebarExpanded(!isMobile);
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (isMobile) {
+      setIsSidebarExpanded(false);
+      setExpandedItems([]);
+    }
+  }, [pathname, isMobile]);
 
   const toggleExpanded = (title: string) => {
     setExpandedItems((prev) =>
@@ -104,12 +120,40 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
     return subItems.some((subItem) => pathname === subItem.href);
   };
 
+  const showLabels = !isMobile || isSidebarExpanded;
+
   return (
-    <div className="flex h-full w-64 flex-col bg-background border-r">
-      {/* Header */}
-      <div className="flex items-center gap-2 p-6 border-b">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-md flex items-center justify-center">
+    <div
+      className={cn(
+        "flex h-full flex-col bg-background border-r transition-all duration-200 ease-in-out",
+        showLabels ? "w-64" : "w-16"
+      )}
+    >
+      {/* Header with toggle above logo on mobile */}
+      <div className="border-b p-4">
+        {isMobile && (
+          <div className="flex">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setIsSidebarExpanded((v) => !v)}
+              aria-label={showLabels ? "Collapse sidebar" : "Expand sidebar"}
+            >
+              {showLabels ? (
+                <ChevronLeft className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+        )}
+        <div
+          className={cn(
+            "mt-2 flex items-center gap-2",
+            !showLabels && "justify-center"
+          )}
+        >
+          <div className="w-8 h-8 rounded-md flex items-center justify-center overflow-hidden">
             <Image
               src="/square.jpg"
               alt=""
@@ -118,16 +162,17 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
               className="object-cover"
             />
           </div>
-          <span className="font-semibold text-lg">Liyana Finance</span>
+          {showLabels && (
+            <span className="font-semibold text-base">Liyana Finance</span>
+          )}
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className={cn("flex-1 p-2 space-y-2")}>
         {sidebarItems.map((item) => {
           const Icon = item.icon;
 
-          // Handle items with subItems (nested menu)
           if (item.subItems) {
             const isExpanded = expandedItems.includes(item.title);
             const hasActiveSubItem = isSubItemActive(item.subItems);
@@ -137,23 +182,31 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                 <Button
                   variant={hasActiveSubItem ? "secondary" : "ghost"}
                   className={cn(
-                    "w-full justify-start gap-2",
+                    "w-full gap-2",
+                    showLabels ? "justify-start" : "justify-center",
                     hasActiveSubItem && "bg-secondary"
                   )}
-                  onClick={() => toggleExpanded(item.title)}
+                  onClick={() => {
+                    if (isMobile && !showLabels) {
+                      setIsSidebarExpanded(true);
+                      return;
+                    }
+                    toggleExpanded(item.title);
+                  }}
                 >
                   <Icon className="h-4 w-4" />
-                  {item.title}
-                  {isExpanded ? (
-                    <ChevronDown className="h-4 w-4 ml-auto" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 ml-auto" />
-                  )}
+                  {showLabels && <span>{item.title}</span>}
+                  {showLabels &&
+                    (isExpanded ? (
+                      <ChevronDown className="h-4 w-4 ml-auto" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 ml-auto" />
+                    ))}
                 </Button>
 
-                {isExpanded && (
+                {showLabels && isExpanded && (
                   <div className="ml-4 mt-1 space-y-1">
-                    {item.subItems.map((subItem) => {
+                    {item.subItems.map((subItem: any) => {
                       const SubIcon = subItem.icon;
                       const isActive = pathname === subItem.href;
 
@@ -167,7 +220,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                             )}
                           >
                             <SubIcon className="h-3 w-3" />
-                            {subItem.title}
+                            <span>{subItem.title}</span>
                           </Button>
                         </Link>
                       );
@@ -178,19 +231,22 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
             );
           }
 
-          // Handle regular items (no subItems)
           const isActive = pathname === item.href;
           return (
             <Link key={item.href} href={item.href!}>
               <Button
                 variant={isActive ? "secondary" : "ghost"}
                 className={cn(
-                  "w-full justify-start gap-2",
+                  "w-full gap-2",
+                  showLabels ? "justify-start" : "justify-center",
                   isActive && "bg-secondary"
                 )}
+                onClick={() => {
+                  if (isMobile) setIsSidebarExpanded(false);
+                }}
               >
                 <Icon className="h-4 w-4" />
-                {item.title}
+                {showLabels && <span>{item.title}</span>}
               </Button>
             </Link>
           );
@@ -198,32 +254,42 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
       </nav>
 
       {/* User Profile */}
-      <div className="p-4 border-t">
-        <div className="flex items-center gap-3 mb-3">
+      <div className="p-3 border-t">
+        <div
+          className={cn(
+            "flex items-center mb-3",
+            showLabels ? "gap-3" : "justify-center"
+          )}
+        >
           <Avatar className="h-8 w-8">
             <AvatarImage src={user.user_metadata?.avatar_url} />
             <AvatarFallback>
               {user.email?.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">
-              {user.user_metadata?.full_name || user.email}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
-              {user.email}
-            </p>
-          </div>
+          {showLabels && (
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">
+                {user.user_metadata?.full_name || user.email}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user.email}
+              </p>
+            </div>
+          )}
         </div>
 
         <form action="/auth/logout" method="post">
           <Button
             type="submit"
             variant="ghost"
-            className="w-full justify-start gap-2 text-muted-foreground"
+            className={cn(
+              "w-full gap-2 text-muted-foreground",
+              showLabels ? "justify-start" : "justify-center"
+            )}
           >
             <LogOut className="h-4 w-4" />
-            Sign out
+            {showLabels && <span>Sign out</span>}
           </Button>
         </form>
       </div>

@@ -167,7 +167,7 @@ export function LoansPageClient({ initialLoans }: LoansPageClientProps) {
                     >
                       <TableCell className="font-medium">
                         <Link
-                          href={`/dashboard/applications/${loan.application_id}`}
+                          href={`/dashboard/loans/${loan.id}`}
                           className="block"
                         >
                           #{loan.id}
@@ -175,7 +175,7 @@ export function LoansPageClient({ initialLoans }: LoansPageClientProps) {
                       </TableCell>
                       <TableCell>
                         <Link
-                          href={`/dashboard/applications/${loan.application_id}`}
+                          href={`/dashboard/loans/${loan.id}`}
                           className="block"
                         >
                           {displayName}
@@ -183,7 +183,7 @@ export function LoansPageClient({ initialLoans }: LoansPageClientProps) {
                       </TableCell>
                       <TableCell className="font-mono text-sm text-muted-foreground">
                         <Link
-                          href={`/dashboard/applications/${loan.application_id}`}
+                          href={`/dashboard/loans/${loan.id}`}
                           className="block"
                         >
                           {application?.id_number}
@@ -191,7 +191,7 @@ export function LoansPageClient({ initialLoans }: LoansPageClientProps) {
                       </TableCell>
                       <TableCell>
                         <Link
-                          href={`/dashboard/applications/${loan.application_id}`}
+                          href={`/dashboard/loans/${loan.id}`}
                           className="block"
                         >
                           R
@@ -200,7 +200,7 @@ export function LoansPageClient({ initialLoans }: LoansPageClientProps) {
                       </TableCell>
                       <TableCell>
                         <Link
-                          href={`/dashboard/applications/${loan.application_id}`}
+                          href={`/dashboard/loans/${loan.id}`}
                           className="block"
                         >
                           R{loan.monthly_payment?.toLocaleString() || "0"}
@@ -208,7 +208,7 @@ export function LoansPageClient({ initialLoans }: LoansPageClientProps) {
                       </TableCell>
                       <TableCell>
                         <Link
-                          href={`/dashboard/applications/${loan.application_id}`}
+                          href={`/dashboard/loans/${loan.id}`}
                           className="block"
                         >
                           {loan.loan_term_days || 0} days
@@ -216,7 +216,7 @@ export function LoansPageClient({ initialLoans }: LoansPageClientProps) {
                       </TableCell>
                       <TableCell>
                         <Link
-                          href={`/dashboard/applications/${loan.application_id}`}
+                          href={`/dashboard/loans/${loan.id}`}
                           className="block"
                         >
                           <Badge
@@ -229,7 +229,7 @@ export function LoansPageClient({ initialLoans }: LoansPageClientProps) {
                       </TableCell>
                       <TableCell>
                         <Link
-                          href={`/dashboard/applications/${loan.application_id}`}
+                          href={`/dashboard/loans/${loan.id}`}
                           className="block"
                         >
                           {loan.approved_date

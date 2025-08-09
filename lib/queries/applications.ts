@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/server";
 import { z } from "zod";
 import type { Database } from "@/lib/types";
+import { decryptValue } from "@/lib/encryption";
 
 type ApplicationUpdate = Database["public"]["Tables"]["applications"]["Update"];
 type Application = Database["public"]["Tables"]["applications"]["Row"];
@@ -9,6 +10,8 @@ type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 // Enhanced application type with profile data
 export type ApplicationWithProfile = Application & {
   profile: Profile | null;
+  // Convenience field for UI: decrypted id number when available
+  id_number_decrypted?: string | null;
 };
 
 // Application query schemas
@@ -202,10 +205,21 @@ export async function getAllApplications(
     );
 
     // Enhance applications with profile data
-    const enhancedApplications = applications.map((app) => ({
-      ...app,
-      profile: profileMap.get(app.user_id) || null,
-    }));
+    const enhancedApplications = applications.map((app) => {
+      let decrypted: string | null = null;
+      try {
+        decrypted = app.id_number ? decryptValue(app.id_number) : null;
+      } catch {
+        // Fallback to stored value if not decryptable (legacy/plaintext)
+        decrypted = app.id_number ?? null;
+      }
+
+      return {
+        ...app,
+        profile: profileMap.get(app.user_id) || null,
+        id_number_decrypted: decrypted,
+      } as ApplicationWithProfile;
+    });
 
     return enhancedApplications;
   }

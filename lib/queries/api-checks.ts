@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/server";
+import { createServiceClient } from "@/lib/service";
 import { z } from "zod";
 import type { Database } from "@/lib/types";
 import { decryptValue } from "../encryption";
@@ -43,7 +44,7 @@ export async function getApiCheckById(id: number) {
       `
       *,
       application:applications(id, status, user_id, id_number)
-    `
+    `,
     )
     .eq("id", id)
     .single();
@@ -56,7 +57,7 @@ export async function getApiCheckById(id: number) {
 }
 
 export async function getApiChecksByApplication(applicationId: number) {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   const { data, error } = await supabase
     .from("api_checks")
@@ -66,7 +67,7 @@ export async function getApiChecksByApplication(applicationId: number) {
 
   if (error) {
     throw new Error(
-      `Failed to fetch API checks for application: ${error.message}`
+      `Failed to fetch API checks for application: ${error.message}`,
     );
   }
 
@@ -74,9 +75,9 @@ export async function getApiChecksByApplication(applicationId: number) {
 }
 
 export async function getApiChecksByType(
-  checkType: Database["public"]["Enums"]["api_check_type"]
+  checkType: Database["public"]["Enums"]["api_check_type"],
 ) {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   const { data, error } = await supabase
     .from("api_checks")
@@ -84,7 +85,7 @@ export async function getApiChecksByType(
       `
       *,
       application:applications(id, status, user_id, id_number)
-    `
+    `,
     )
     .eq("check_type", checkType)
     .order("checked_at", { ascending: false });
@@ -97,9 +98,9 @@ export async function getApiChecksByType(
 }
 
 export async function getApiChecksByStatus(
-  status: Database["public"]["Enums"]["api_check_status"]
+  status: Database["public"]["Enums"]["api_check_status"],
 ) {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   const { data, error } = await supabase
     .from("api_checks")
@@ -107,7 +108,7 @@ export async function getApiChecksByStatus(
       `
       *,
       application:applications(id, status, user_id, id_number)
-    `
+    `,
     )
     .eq("status", status)
     .order("checked_at", { ascending: false });
@@ -120,9 +121,9 @@ export async function getApiChecksByStatus(
 }
 
 export async function getApiChecksByVendor(
-  vendor: Database["public"]["Enums"]["api_vendor"]
+  vendor: Database["public"]["Enums"]["api_vendor"],
 ) {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   const { data, error } = await supabase
     .from("api_checks")
@@ -130,7 +131,7 @@ export async function getApiChecksByVendor(
       `
       *,
       application:applications(id, status, user_id, id_number)
-    `
+    `,
     )
     .eq("vendor", vendor)
     .order("checked_at", { ascending: false });
@@ -143,7 +144,7 @@ export async function getApiChecksByVendor(
 }
 
 export async function getFailedApiChecks() {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   const { data, error } = await supabase
     .from("api_checks")
@@ -151,7 +152,7 @@ export async function getFailedApiChecks() {
       `
       *,
       application:applications(id, status, user_id, id_number)
-    `
+    `,
     )
     .eq("status", "failed")
     .order("checked_at", { ascending: false });
@@ -164,7 +165,7 @@ export async function getFailedApiChecks() {
 }
 
 export async function getPendingApiChecks() {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   const { data, error } = await supabase
     .from("api_checks")
@@ -172,7 +173,7 @@ export async function getPendingApiChecks() {
       `
       *,
       application:applications(id, status, user_id, id_number)
-    `
+    `,
     )
     .eq("status", "pending")
     .order("checked_at", { ascending: false });
@@ -186,9 +187,9 @@ export async function getPendingApiChecks() {
 
 export async function getApiChecksByApplicationAndType(
   applicationId: number,
-  checkType: Database["public"]["Enums"]["api_check_type"]
+  checkType: Database["public"]["Enums"]["api_check_type"],
 ) {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   const { data, error } = await supabase
     .from("api_checks")
@@ -199,7 +200,7 @@ export async function getApiChecksByApplicationAndType(
 
   if (error) {
     throw new Error(
-      `Failed to fetch API checks by application and type: ${error.message}`
+      `Failed to fetch API checks by application and type: ${error.message}`,
     );
   }
 
@@ -208,9 +209,9 @@ export async function getApiChecksByApplicationAndType(
 
 export async function getLatestApiCheckForApplication(
   applicationId: number,
-  checkType: Database["public"]["Enums"]["api_check_type"]
+  checkType: Database["public"]["Enums"]["api_check_type"],
 ) {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   const { data, error } = await supabase
     .from("api_checks")
@@ -229,7 +230,7 @@ export async function getLatestApiCheckForApplication(
 }
 
 export async function getApiChecksByIdNumber(idNumber: string) {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   const { data, error } = await supabase
     .from("api_checks")
@@ -239,7 +240,7 @@ export async function getApiChecksByIdNumber(idNumber: string) {
 
   if (error) {
     throw new Error(
-      `Failed to fetch API checks for ID number: ${error.message}`
+      `Failed to fetch API checks for ID number: ${error.message}`,
     );
   }
 
@@ -254,7 +255,7 @@ export async function getApiChecksByIdNumber(idNumber: string) {
 }
 
 export async function getApiCheckStats() {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   const { data, error } = await supabase
     .from("api_checks")
@@ -325,7 +326,7 @@ export async function getApiCheckStats() {
       experian: 0,
       whoYou: 0,
       thisIsMe: 0,
-    }
+    },
   );
 
   return {
@@ -336,12 +337,18 @@ export async function getApiCheckStats() {
 }
 
 export async function getApiChecks() {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
+
+  const user = await supabase.auth.getUser();
+
+  console.log("Fetched user:", user);
 
   const { data, error } = await supabase
     .from("api_checks")
     .select("*")
     .order("checked_at", { ascending: false });
+
+  console.log(JSON.stringify(error, null, 2));
 
   if (error) {
     throw new Error(`Failed to fetch API checks: ${error.message}`);

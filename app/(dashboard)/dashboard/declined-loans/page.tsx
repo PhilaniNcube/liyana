@@ -107,12 +107,12 @@ export default async function DeclinedLoansPage(props: {
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center gap-3 justify-between">
           <div>
-            <h1 className="text-3xl font-bold">
+            <h1 className="text-xl md:text-3xl font-bold">
               Declined Loans & Non-Applicants
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm md:text-base text-muted-foreground">
               Users with declined applications or who haven't applied yet
               {(dateFrom || dateTo) && (
                 <span className="block text-sm text-blue-600 mt-1">
@@ -342,7 +342,7 @@ export default async function DeclinedLoansPage(props: {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex flex-col md:flex-row md:items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-orange-600" />
               Declined & Non-Applicant Users ({total})
               {(dateFrom || dateTo) && (
@@ -351,16 +351,16 @@ export default async function DeclinedLoansPage(props: {
                 </span>
               )}
               {(sortBy !== "registration_date" || sortOrder !== "desc") && (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                <span className="text-xs text-center bg-green-100 text-green-700 px-2 py-1 rounded-full">
                   Sorted: {sortBy.replace("_", " ")} (
                   {sortOrder === "asc" ? "↑" : "↓"})
                 </span>
               )}
+              <div className="text-sm text-muted-foreground">
+                Showing {(page - 1) * pageSize + 1} to{" "}
+                {Math.min(page * pageSize, total)} of {total} users
+              </div>
             </CardTitle>
-            <div className="text-sm text-muted-foreground">
-              Showing {(page - 1) * pageSize + 1} to{" "}
-              {Math.min(page * pageSize, total)} of {total} users
-            </div>
           </div>
           <p className="text-sm text-muted-foreground">
             Users with declined loan applications or who haven't submitted any

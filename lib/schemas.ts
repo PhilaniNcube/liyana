@@ -190,6 +190,326 @@ export const loanApplicationSchema = z
     }
   );
 
+// Funeral Policy Schema
+export const funeralPolicySchema = z
+  .object({
+    // Policy Holder Information
+    first_name: z.string().min(1, "First name is required"),
+    last_name: z.string().min(1, "Last name is required"),
+    id_number: z
+      .string()
+      .min(13, "SA ID Number must be 13 digits")
+      .max(13, "SA ID Number must be 13 digits"),
+    date_of_birth: z.string().min(1, "Date of birth is required"),
+    phone_number: z.string().min(10, "Phone number must be at least 10 digits"),
+    email: z.string().email("Please enter a valid email address"),
+    gender: z.enum(["male", "female", "rather not say", "other"], {
+      required_error: "Gender is required",
+    }),
+    gender_other: z.string().optional(),
+    marital_status: z.enum(
+      ["single", "married", "divorced", "widowed", "life_partner"],
+      {
+        required_error: "Marital status is required",
+      }
+    ),
+    occupation: z.string().min(1, "Occupation is required"),
+    monthly_income: z.number().min(1, "Monthly income is required"),
+
+    // Contact Information
+    residential_address: z.string().min(1, "Residential address is required"),
+    city: z.string().min(1, "City is required"),
+    postal_code: z
+      .string()
+      .min(4, "Postal code must be at least 4 digits")
+      .max(4, "Postal code must be exactly 4 digits")
+      .regex(/^\d{4}$/, "Postal code must be 4 digits"),
+
+    // Policy Details
+    policy_type: z.enum(["individual", "family", "extended_family"], {
+      required_error: "Policy type is required",
+    }),
+    coverage_amount: z
+      .number()
+      .min(5000, "Minimum coverage amount is R5,000")
+      .max(100000, "Maximum coverage amount is R100,000"),
+    monthly_premium: z.number().min(1, "Monthly premium is required"),
+    policy_term: z.enum(["lifetime", "20_years", "30_years"], {
+      required_error: "Policy term is required",
+    }),
+    waiting_period: z.enum(["6_months", "12_months", "24_months"], {
+      required_error: "Waiting period is required",
+    }),
+
+    // Payment Information
+    payment_method: z.enum(["debit_order", "cash", "eft"], {
+      required_error: "Payment method is required",
+    }),
+    debit_order_date: z.number().min(1).max(31).optional(),
+    bank_name: z.string().optional(),
+    bank_account_holder: z.string().optional(),
+    bank_account_number: z.string().optional(),
+    bank_account_type: z
+      .enum(["savings", "current", "transmission", "cheque"], {
+        required_error: "Account type is required",
+      })
+      .optional(),
+    branch_code: z.string().optional(),
+
+    // Beneficiaries Information (array of beneficiaries)
+    beneficiaries: z
+      .array(
+        z.object({
+          full_name: z.string().min(1, "Beneficiary name is required"),
+          id_number: z
+            .string()
+            .min(13, "SA ID Number must be 13 digits")
+            .max(13, "SA ID Number must be 13 digits"),
+          relationship: z.enum([
+            "spouse",
+            "child",
+            "parent",
+            "sibling",
+            "grandparent",
+            "grandchild",
+            "other",
+          ]),
+          relationship_other: z.string().optional(),
+          percentage: z
+            .number()
+            .min(1, "Percentage must be at least 1%")
+            .max(100, "Percentage cannot exceed 100%"),
+          phone_number: z
+            .string()
+            .min(10, "Phone number must be at least 10 digits"),
+          email: z
+            .string()
+            .email("Please enter a valid email address")
+            .optional(),
+          address: z.string().min(1, "Address is required"),
+        })
+      )
+      .min(1, "At least one beneficiary is required")
+      .max(5, "Maximum 5 beneficiaries allowed"),
+
+    // Medical Information
+    has_medical_conditions: z.boolean(),
+    medical_conditions: z.string().optional(),
+    takes_medication: z.boolean(),
+    medication_details: z.string().optional(),
+    smoker: z.boolean(),
+    alcohol_consumption: z.enum(["none", "occasional", "moderate", "regular"], {
+      required_error: "Alcohol consumption status is required",
+    }),
+
+    // Additional Members (for family policies)
+    additional_members: z
+      .array(
+        z.object({
+          full_name: z.string().min(1, "Member name is required"),
+          id_number: z
+            .string()
+            .min(13, "SA ID Number must be 13 digits")
+            .max(13, "SA ID Number must be 13 digits"),
+          relationship: z.enum([
+            "spouse",
+            "child",
+            "parent",
+            "sibling",
+            "grandparent",
+            "grandchild",
+            "other",
+          ]),
+          relationship_other: z.string().optional(),
+          date_of_birth: z.string().min(1, "Date of birth is required"),
+          coverage_amount: z
+            .number()
+            .min(1000, "Minimum coverage per member is R1,000"),
+        })
+      )
+      .optional(),
+
+    // Emergency Contact
+    emergency_contact_name: z
+      .string()
+      .min(1, "Emergency contact name is required"),
+    emergency_contact_phone: z
+      .string()
+      .min(10, "Emergency contact phone must be at least 10 digits"),
+    emergency_contact_relationship: z
+      .string()
+      .min(1, "Relationship to emergency contact is required"),
+
+    // Declarations
+    health_declaration: z.boolean().refine((val) => val === true, {
+      message: "Health declaration must be accepted",
+    }),
+    terms_and_conditions: z.boolean().refine((val) => val === true, {
+      message: "Terms and conditions must be accepted",
+    }),
+    privacy_policy: z.boolean().refine((val) => val === true, {
+      message: "Privacy policy must be accepted",
+    }),
+    marketing_consent: z.boolean().optional(),
+  })
+  .refine(
+    (data) => {
+      // Validate conditional gender_other field
+      if (
+        data.gender === "other" &&
+        (!data.gender_other || data.gender_other.trim() === "")
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Please specify your gender when selecting 'Other'",
+      path: ["gender_other"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.id_number) {
+        const dob = extractDateOfBirthFromSAID(data.id_number);
+        if (dob) {
+          data.date_of_birth = dob;
+        }
+        return !!dob;
+      }
+      return true;
+    },
+    {
+      message: "Invalid ID number or could not extract date of birth.",
+      path: ["id_number"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Validate that beneficiary percentages add up to 100%
+      const totalPercentage = data.beneficiaries.reduce(
+        (sum, beneficiary) => sum + beneficiary.percentage,
+        0
+      );
+      return totalPercentage === 100;
+    },
+    {
+      message: "Beneficiary percentages must add up to 100%",
+      path: ["beneficiaries"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Validate conditional payment fields for debit order
+      if (data.payment_method === "debit_order") {
+        return !!(
+          data.bank_name &&
+          data.bank_account_holder &&
+          data.bank_account_number &&
+          data.bank_account_type &&
+          data.branch_code &&
+          data.debit_order_date
+        );
+      }
+      return true;
+    },
+    {
+      message: "Banking details are required for debit order payments",
+      path: ["payment_method"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Validate conditional medical conditions field
+      if (
+        data.has_medical_conditions &&
+        (!data.medical_conditions || data.medical_conditions.trim() === "")
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Please specify medical conditions when indicated",
+      path: ["medical_conditions"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Validate conditional medication details field
+      if (
+        data.takes_medication &&
+        (!data.medication_details || data.medication_details.trim() === "")
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Please specify medication details when indicated",
+      path: ["medication_details"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Validate conditional relationship_other for beneficiaries
+      return data.beneficiaries.every((beneficiary) => {
+        if (
+          beneficiary.relationship === "other" &&
+          (!beneficiary.relationship_other ||
+            beneficiary.relationship_other.trim() === "")
+        ) {
+          return false;
+        }
+        return true;
+      });
+    },
+    {
+      message:
+        "Please specify relationship when selecting 'Other' for beneficiaries",
+      path: ["beneficiaries"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Validate conditional relationship_other for additional members
+      if (data.additional_members) {
+        return data.additional_members.every((member) => {
+          if (
+            member.relationship === "other" &&
+            (!member.relationship_other ||
+              member.relationship_other.trim() === "")
+          ) {
+            return false;
+          }
+          return true;
+        });
+      }
+      return true;
+    },
+    {
+      message:
+        "Please specify relationship when selecting 'Other' for additional members",
+      path: ["additional_members"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Validate additional members for family policies
+      if (
+        data.policy_type === "family" ||
+        data.policy_type === "extended_family"
+      ) {
+        return data.additional_members && data.additional_members.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Additional members are required for family policies",
+      path: ["additional_members"],
+    }
+  );
+
 // WhoYou Email Verification Response Types
 export interface WhoYouDomainDetails {
   id: string;
