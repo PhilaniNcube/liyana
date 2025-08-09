@@ -253,16 +253,15 @@ export function ApplicationDetailClient({
                 Back to Applications
               </Link>
             </Button>
+
             <h1 className="text-3xl font-bold">
-              Application #{application.id}
-            </h1>
-            <p className="text-muted-foreground">
               {application.profile?.full_name && (
-                <span className="font-medium">
-                  {application.profile.full_name} •{" "}
-                </span>
+                <span className="">{application.profile.full_name}</span>
               )}
-              Created on {formatDate(application.created_at)}
+            </h1>
+            <p className="text-muted-foreground ">
+              Application #{application.id} • Created on{" "}
+              {formatDate(application.created_at)}
             </p>
           </div>
         </div>
