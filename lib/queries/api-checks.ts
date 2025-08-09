@@ -232,10 +232,12 @@ export async function getLatestApiCheckForApplication(
 export async function getApiChecksByIdNumber(idNumber: string) {
   const supabase = await createServiceClient();
 
+  // Note: id_number is stored encrypted using a random IV, so encrypting the
+  // incoming value won't match deterministically. We must fetch and compare
+  // after decrypting on the server side.
   const { data, error } = await supabase
     .from("api_checks")
     .select("*")
-    .eq("id_number", idNumber)
     .order("checked_at", { ascending: false });
 
   if (error) {
@@ -244,14 +246,34 @@ export async function getApiChecksByIdNumber(idNumber: string) {
     );
   }
 
-  // decrypt the id_number if it is encrypted
-  data.forEach((check) => {
-    if (check.id_number && check.id_number.length > 13) {
-      check.id_number = decryptValue(check.id_number);
+  const normalize = (v: string) => v.replace(/\D/g, "");
+  const target = normalize(idNumber);
+
+  // Filter rows by comparing decrypted (or plain) id_number
+  const filtered = data.filter((check) => {
+    if (!check.id_number) return false;
+    const raw = check.id_number as string;
+    try {
+      const decrypted = raw.length > 13 ? decryptValue(raw) : raw;
+      return normalize(decrypted) === target;
+    } catch {
+      // If decryption fails, fall back to comparing as plain text
+      return normalize(raw) === target;
     }
   });
 
-  return data;
+  // For caller convenience, present the decrypted plaintext in results
+  filtered.forEach((check) => {
+    if (check.id_number && (check.id_number as string).length > 13) {
+      try {
+        check.id_number = decryptValue(check.id_number as string);
+      } catch {
+        // leave as-is on failure
+      }
+    }
+  });
+
+  return filtered;
 }
 
 export async function getApiCheckStats() {
