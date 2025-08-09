@@ -121,9 +121,20 @@ export function AdditionalInfoCard({ application }: AdditionalInfoCardProps) {
                     <CardContent className="space-y-6">
                       {/* Income Section */}
                       <div>
-                        <div className="flex items-center justify-between mb-4">
+                        {/* Monthly Income line item */}
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center py-2 border-b border-muted">
+                            <span className="text-sm">Monthly Income</span>
+                            <span className="font-medium text-green-600">
+                              {formatCurrency(application.monthly_income || 0)
+                                ?.replace("ZAR", "")
+                                .trim()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between mb-4 mt-4">
                           <h5 className="font-semibold text-green-600">
-                            Income Sources
+                            Other Income
                           </h5>
                         </div>
                         <div className="space-y-3">
