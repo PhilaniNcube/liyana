@@ -22,6 +22,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { format } from "date-fns";
+import WhoYouIdVerificationResults from "@/components/application-detail/whoyou-id-results";
+import WhoYouBankVerificationResults from "@/components/application-detail/whoyou-bank-results";
 
 interface CreditCheckData {
   creditScore?: number;
@@ -53,6 +55,35 @@ interface FraudCheckData {
 const ApiCheckCard = ({ check }: { check: ApiCheck }) => {
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+
+  // Narrow helpers for WHOYou payloads
+  const isWhoYouIdPayload = (
+    payload: unknown
+  ): payload is { code: number; detail?: Record<string, any> } => {
+    if (!payload || typeof payload !== "object") return false;
+    const p = payload as any;
+    const d = p?.detail;
+    return (
+      typeof p.code === "number" &&
+      d &&
+      typeof d === "object" &&
+      typeof d.idNumber === "string" &&
+      // Heuristics: presence of at least one ID-verification field
+      ("onNPR" in d || "hasPhoto" in d || "dataSource" in d)
+    );
+  };
+
+  const isWhoYouBankPayload = (
+    payload: unknown
+  ): payload is {
+    code: number;
+    detail?: { accountVerificationInformation?: Array<Record<string, any>> };
+  } => {
+    if (!payload || typeof payload !== "object") return false;
+    const p = payload as any;
+    const info = p?.detail?.accountVerificationInformation;
+    return typeof p.code === "number" && Array.isArray(info);
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
@@ -399,6 +430,17 @@ const ApiCheckCard = ({ check }: { check: ApiCheck }) => {
   };
 
   // Determine which card to render based on check type
+  // Prefer payload-shape detection for WHOYou checks
+  if (isWhoYouBankPayload(check.response_payload)) {
+    return (
+      <WhoYouBankVerificationResults data={check.response_payload as any} />
+    );
+  }
+
+  if (isWhoYouIdPayload(check.response_payload)) {
+    return <WhoYouIdVerificationResults data={check.response_payload as any} />;
+  }
+
   switch (check.check_type) {
     case "credit_bureau":
       return renderCreditCheckCard();
