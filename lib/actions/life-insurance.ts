@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "../server";
 import { getCurrentUser } from "../queries";
 import { z } from "zod";
-import { lifeInsurancePolicySchema } from "../schemas";
+import { lifeInsuranceLeadSchema } from "../schemas";
 
 export async function createLifeInsurancePolicy(
   prevState: any,
@@ -32,7 +32,7 @@ export async function createLifeInsurancePolicy(
       (entries as any).privacy_policy === true,
   };
 
-  const validated = lifeInsurancePolicySchema.safeParse(parsed);
+  const validated = lifeInsuranceLeadSchema.safeParse(parsed);
   if (!validated.success) {
     console.error("Validation failed:", validated.error);
     return {
@@ -50,31 +50,8 @@ export async function createLifeInsurancePolicy(
 
   const data = validated.data;
 
-  // Resolve product type id for life insurance
-  const { data: productTypeRows, error: productTypeError } = await supabase
-    .from("product_types")
-    .select("id,name")
-    .eq("name", "Life Insurance")
-    .limit(1);
-  if (productTypeError) {
-    return {
-      error: true,
-      message: "Unable to look up product type.",
-      details: productTypeError.message,
-    };
-  }
-  const productTypeId = productTypeRows?.[0]?.id as number | undefined;
-  if (!productTypeId) {
-    return {
-      error: true,
-      message:
-        "Product type 'life_insurance' not found. Please insert it into product_types and retry.",
-      details: "Expected a row in public.product_types with name = 'life_insurance'",
-    };
-  }
-
   try {
-    // 1. Create party for policy holder
+    // Create party only
     const { data: party, error: partyError } = await supabase
       .from("parties")
       .insert({
@@ -92,79 +69,17 @@ export async function createLifeInsurancePolicy(
     if (partyError || !party) {
       return {
         error: true,
-        message: "Failed to create policy holder.",
+        message: "Failed to create party.",
         details: partyError?.message,
       };
     }
 
-    // 2. Create base policy record
-    const { data: policy, error: policyError } = await supabase
-      .from("policies")
-      .insert({
-        policy_holder_id: party.id,
-  product_id: productTypeId,
-        policy_status: "pending",
-        premium_amount: data.premium_amount,
-        frequency: data.frequency,
-        start_date: data.start_date,
-        end_date: data.end_date ?? null,
-      } as any)
-      .select("id")
-      .single();
-
-    if (policyError || !policy) {
-      return {
-        error: true,
-        message: "Failed to create policy.",
-        details: policyError?.message,
-      };
-    }
-
-    // 3. Create life insurance specific row
-    const { error: lifeError } = await supabase.from("life_insurance_policies").insert({
-      policy_holder_id: party.id,
-      product_id: productTypeId,
-      policy_status: "pending",
-      premium_amount: data.premium_amount,
-      frequency: data.frequency,
-      start_date: data.start_date,
-      end_date: data.end_date ?? null,
-      coverage_amount: data.coverage_amount,
-      payout_structure: data.payout_structure,
-      underwriting_details: {},
-    } as any);
-
-    if (lifeError) {
-      return {
-        error: true,
-        message: "Failed to create life insurance policy.",
-        details: lifeError.message,
-      };
-    }
-
-    // 4. Insert beneficiaries into policy_beneficiaries table
-    const beneficiaryRows = (data.beneficiaries as any[]).map((b) => ({
-      policy_id: policy.id,
-      beneficiary_party_id: party.id, // TODO: create separate party per beneficiary in future
-      relation_type: b.relationship,
-      allocation_percentage: b.percentage,
-    }));
-
-    if (beneficiaryRows.length) {
-      const { error: benError } = await supabase
-        .from("policy_beneficiaries")
-        .insert(beneficiaryRows as any);
-      if (benError) {
-        return {
-          error: true,
-          message: "Failed to add beneficiaries.",
-          details: benError.message,
-        };
-      }
-    }
-
     revalidatePath("/insurance/life");
-    return { error: false, message: "Life insurance application submitted." };
+    return {
+      error: false,
+      message: "Application submitted. We'll follow up to complete policy details.",
+      partyId: party.id,
+    };
   } catch (e) {
     return {
       error: true,

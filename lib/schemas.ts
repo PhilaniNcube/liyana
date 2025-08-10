@@ -566,6 +566,47 @@ export const lifeInsurancePolicySchema = z
     }
   );
 
+// Lightweight lead schemas for party-only submissions
+export const lifeInsuranceLeadSchema = z.object({
+  first_name: z.string().min(1, "First name is required"),
+  last_name: z.string().min(1, "Last name is required"),
+  id_number: z
+    .string()
+    .min(13, "SA ID Number must be 13 digits")
+    .max(13, "SA ID Number must be 13 digits"),
+  date_of_birth: z.string().min(1, "Date of birth is required"),
+  phone_number: z.string().min(10, "Phone number must be at least 10 digits"),
+  email: z.string().email("Please enter a valid email address"),
+  terms_and_conditions: z.boolean().refine((v) => v === true, {
+    message: "Terms and conditions must be accepted",
+  }),
+  privacy_policy: z.boolean().refine((v) => v === true, {
+    message: "Privacy policy must be accepted",
+  }),
+});
+
+export const funeralPolicyLeadSchema = z.object({
+  first_name: z.string().min(1, "First name is required"),
+  last_name: z.string().min(1, "Last name is required"),
+  id_number: z
+    .string()
+    .min(13, "SA ID Number must be 13 digits")
+    .max(13, "SA ID Number must be 13 digits"),
+  date_of_birth: z.string().min(1, "Date of birth is required"),
+  phone_number: z.string().min(10, "Phone number must be at least 10 digits"),
+  email: z.string().email("Please enter a valid email address"),
+  residential_address: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  postal_code: z.string().optional().nullable(),
+  terms_and_conditions: z.boolean().refine((v) => v === true, {
+    message: "Terms and conditions must be accepted",
+  }),
+  privacy_policy: z.boolean().refine((v) => v === true, {
+    message: "Privacy policy must be accepted",
+  }),
+  marketing_consent: z.boolean().optional().default(false),
+});
+
 // WhoYou Email Verification Response Types
 export interface WhoYouDomainDetails {
   id: string;

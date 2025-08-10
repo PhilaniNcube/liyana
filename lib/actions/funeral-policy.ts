@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "../server";
 import { getCurrentUser, getUserProfile } from "../queries";
-import { funeralPolicySchema } from "../schemas";
+import { funeralPolicyLeadSchema } from "../schemas";
 
 export async function createFuneralPolicy(prevState: any, formData: FormData) {
   // Parse FormData entries and handle arrays
@@ -46,7 +46,7 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
       : [],
   };
 
-  const validatedFields = funeralPolicySchema.safeParse(parsedEntries);
+  const validatedFields = funeralPolicyLeadSchema.safeParse(parsedEntries);
 
   if (!validatedFields.success) {
     return {
@@ -67,29 +67,6 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
   }
 
   const { data: validatedData } = validatedFields;
-
-  // Lookup product type for funeral policies
-  const { data: ptRows, error: ptError } = await supabase
-    .from("product_types")
-    .select("id,name")
-    .eq("name", "Funeral Policy")
-    .limit(1);
-  if (ptError) {
-    return {
-      error: true,
-      message: "Unable to look up product type.",
-      details: ptError.message,
-    };
-  }
-  const funeralProductTypeId = ptRows?.[0]?.id as number | undefined;
-  if (!funeralProductTypeId) {
-    return {
-      error: true,
-      message:
-        "Product type 'funeral' not found. Please insert it into product_types and retry.",
-      details: "Expected a row in public.product_types with name = 'funeral'",
-    };
-  }
 
   try {
     // 1. Create a party for the policy holder
@@ -123,60 +100,13 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
       };
     }
 
-    // 2. Create a policy in the policy table
-    const { data: policy, error: policyError } = await supabase
-      .from("policies")
-      .insert({
-        policy_holder_id: party.id,
-  product_id: funeralProductTypeId,
-        policy_status: "pending",
-        premium_amount: validatedData.monthly_premium,
-        frequency: "monthly", // Based on the schema, this seems to be a monthly premium
-      })
-      .select("*")
-      .single();
-
-    if (policyError || !policy) {
-      return {
-        error: true,
-        message: "Failed to create policy.",
-        details: policyError?.message,
-      };
-    }
-
-    // 3. Create the funeral policy with all details
-  const { data: funeralPolicy, error: funeralPolicyError } = await supabase
-      .from("funeral_policies")
-      .insert({
-
-        policy_holder_id: party.id,
-        product_id: funeralProductTypeId,
-        policy_status: "pending",
-        premium_amount: validatedData.monthly_premium,
-        frequency: "monthly",
-        covered_members:
-          validatedData.additional_members &&
-          validatedData.additional_members.length > 0
-            ? JSON.stringify(validatedData.additional_members)
-            : null,
-      } as any)
-      .select("*")
-      .single();
-
-    if (funeralPolicyError || !funeralPolicy) {
-      return {
-        error: true,
-        message: "Failed to create funeral policy.",
-        details: funeralPolicyError?.message,
-      };
-    }
-
+    // Party-only application for now
     revalidatePath("/insurance/funeral");
 
     return {
       error: false,
-      message: "Funeral policy created successfully.",
-      policyId: funeralPolicy.id,
+      message: "Application submitted. We'll follow up to complete policy details.",
+      partyId: party.id,
     };
   } catch (error) {
     console.error("Error creating funeral policy:", error);
