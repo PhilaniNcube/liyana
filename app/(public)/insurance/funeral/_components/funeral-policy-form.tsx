@@ -2,7 +2,6 @@
 
 import React from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { funeralPolicyLeadSchema } from "@/lib/schemas";
 import { createFuneralPolicy } from "@/lib/actions/funeral-policy";
@@ -27,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useProductTypes } from "@/hooks/use-product-types";
 
 type ActionState = {
   error?: boolean;

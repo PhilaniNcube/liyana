@@ -27,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useProductTypes } from "@/hooks/use-product-types";
 
 type LifeForm = z.infer<typeof lifeInsuranceLeadSchema>;
 
