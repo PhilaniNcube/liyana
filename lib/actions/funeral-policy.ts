@@ -150,7 +150,7 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
       .insert({
 
         policy_holder_id: party.id,
-  product_id: funeralProductTypeId,
+        product_id: funeralProductTypeId,
         policy_status: "pending",
         premium_amount: validatedData.monthly_premium,
         frequency: "monthly",
