@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 type PoliciesDataTableProps = {
   data: PolicyWithHolder[];
@@ -139,6 +140,8 @@ export function PoliciesDataTable({ data, className }: PoliciesDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = React.useState("");
 
+  const router = useRouter();
+
   const table = useReactTable({
     data,
     columns,
@@ -223,6 +226,10 @@ export function PoliciesDataTable({ data, className }: PoliciesDataTableProps) {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  onClick={() =>
+                    router.push(`/dashboard/insurance/${row.original.id}`)
+                  }
+                  className="cursor-pointer hover:bg-gray-100"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

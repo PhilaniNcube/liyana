@@ -7,6 +7,8 @@ type PartyRow = Database["public"]["Tables"]["parties"]["Row"];
 
 export type PolicyBase = PolicyRow;
 export type PolicyWithHolder = PolicyRow & { policy_holder: PartyRow | null };
+export type ProductType = Database["public"]["Tables"]["product_types"]["Row"];
+export type PolicyWithProduct = PolicyWithHolder & { product: ProductType | null };
 
 export async function getPolicies(): Promise<PolicyWithHolder[]> {
   const supabase = await createClient();
@@ -15,9 +17,9 @@ export async function getPolicies(): Promise<PolicyWithHolder[]> {
   return data;
 }
 
-export async function getPolicyById(id: number): Promise<PolicyWithHolder> {
+export async function getPolicyById(id: number): Promise<PolicyWithProduct> {
     const supabase = await createClient();
-    const { data, error } = await supabase.from("policies").select("*, policy_holder:policy_holder_id(*)").eq("id", id).single();
+    const { data, error } = await supabase.from("policies").select("*, policy_holder:policy_holder_id(*), product:product_id(*)").eq("id", id).single();
     if (error) throw new Error(error.message);
     return data;
 }
