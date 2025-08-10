@@ -36,12 +36,20 @@ type ActionState = {
   details?: string;
 };
 
-export default function FuneralPolicyForm() {
+type ProductType = { id: number; name: string };
+
+export default function FuneralPolicyForm({
+  products = [] as ProductType[],
+}: {
+  products?: ProductType[];
+}) {
   const [state, formAction] = useActionState<ActionState, FormData>(
     createFuneralPolicy,
     {}
   );
   const [isPending, startTransition] = useTransition();
+  // Products are provided from the server component
+  const loading = false;
 
   const form = useForm({
     resolver: zodResolver(funeralPolicyLeadSchema),
@@ -108,7 +116,6 @@ export default function FuneralPolicyForm() {
               control={form.control}
               name="product_id"
               render={({ field }) => {
-                const { data: products, loading } = useProductTypes();
                 return (
                   <FormItem>
                     <FormLabel>Product</FormLabel>

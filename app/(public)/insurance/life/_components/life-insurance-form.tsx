@@ -38,12 +38,20 @@ type ActionState = {
   details?: string;
 };
 
-export default function LifeInsuranceForm() {
+type ProductType = { id: number; name: string };
+
+export default function LifeInsuranceForm({
+  products = [] as ProductType[],
+}: {
+  products?: ProductType[];
+}) {
   const [state, formAction] = useActionState<ActionState, FormData>(
     createLifeInsurancePolicy as any,
     {}
   );
   const [isPending, startTransition] = useTransition();
+  // Products are provided from the server component
+  const loading = false;
 
   const form = useForm<LifeForm>({
     resolver: zodResolver(lifeInsuranceLeadSchema),
@@ -116,7 +124,6 @@ export default function LifeInsuranceForm() {
               control={form.control}
               name="product_id"
               render={({ field }) => {
-                const { data: products, loading } = useProductTypes();
                 return (
                   <FormItem>
                     <FormLabel>Product</FormLabel>
