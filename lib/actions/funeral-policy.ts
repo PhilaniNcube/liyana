@@ -68,6 +68,29 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
 
   const { data: validatedData } = validatedFields;
 
+  // Lookup product type for funeral policies
+  const { data: ptRows, error: ptError } = await supabase
+    .from("product_types")
+    .select("id,name")
+    .eq("name", "Funeral Policy")
+    .limit(1);
+  if (ptError) {
+    return {
+      error: true,
+      message: "Unable to look up product type.",
+      details: ptError.message,
+    };
+  }
+  const funeralProductTypeId = ptRows?.[0]?.id as number | undefined;
+  if (!funeralProductTypeId) {
+    return {
+      error: true,
+      message:
+        "Product type 'funeral' not found. Please insert it into product_types and retry.",
+      details: "Expected a row in public.product_types with name = 'funeral'",
+    };
+  }
+
   try {
     // 1. Create a party for the policy holder
     const { data: party, error: partyError } = await supabase
@@ -105,7 +128,7 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
       .from("policies")
       .insert({
         policy_holder_id: party.id,
-        product_id: 3, // Assuming 3 is the ID for funeral policies
+  product_id: funeralProductTypeId,
         policy_status: "pending",
         premium_amount: validatedData.monthly_premium,
         frequency: "monthly", // Based on the schema, this seems to be a monthly premium
@@ -122,11 +145,12 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
     }
 
     // 3. Create the funeral policy with all details
-    const { data: funeralPolicy, error: funeralPolicyError } = await supabase
+  const { data: funeralPolicy, error: funeralPolicyError } = await supabase
       .from("funeral_policies")
       .insert({
+
         policy_holder_id: party.id,
-        product_id: 3,
+  product_id: funeralProductTypeId,
         policy_status: "pending",
         premium_amount: validatedData.monthly_premium,
         frequency: "monthly",

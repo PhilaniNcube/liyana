@@ -301,7 +301,6 @@ const FuneralPolicyForm = () => {
                           <SelectItem value="rather not say">
                             Rather not say
                           </SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -691,11 +690,11 @@ const FuneralPolicyForm = () => {
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="savings">Savings</SelectItem>
-                              <SelectItem value="current">Current</SelectItem>
-                              <SelectItem value="transmission">
-                                Transmission
+                              <SelectItem value="transaction">
+                                Transaction
                               </SelectItem>
-                              <SelectItem value="cheque">Cheque</SelectItem>
+                              <SelectItem value="current">Current</SelectItem>
+                              <SelectItem value="business">Business</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -851,13 +850,6 @@ const FuneralPolicyForm = () => {
                               <SelectItem value="child">Child</SelectItem>
                               <SelectItem value="parent">Parent</SelectItem>
                               <SelectItem value="sibling">Sibling</SelectItem>
-                              <SelectItem value="grandparent">
-                                Grandparent
-                              </SelectItem>
-                              <SelectItem value="grandchild">
-                                Grandchild
-                              </SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
