@@ -23,10 +23,13 @@ import {
   UserCheck,
   Menu,
   ChevronLeft,
+  BoxIcon,
+  VaultIcon,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { title } from "process";
 
 interface DashboardSidebarProps {
   user: User;
@@ -39,7 +42,7 @@ const sidebarItems = [
     icon: Home,
   },
   {
-    title: "User Management",
+    title: "Loans",
     icon: Database,
     subItems: [
       {
@@ -63,6 +66,16 @@ const sidebarItems = [
         icon: Users,
       },
     ],
+  },
+  {
+    title: "Life Insurance",
+    href: "/dashboard/insurance/life",
+    icon: Shield,
+  },
+  {
+    title: "Funeral Insurance",
+    href: "/dashboard/insurance/funeral",
+    icon: VaultIcon,
   },
   {
     title: "API Checks",
