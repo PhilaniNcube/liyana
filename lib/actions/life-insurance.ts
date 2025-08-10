@@ -5,6 +5,7 @@ import { createClient } from "../server";
 import { getCurrentUser } from "../queries";
 import { z } from "zod";
 import { lifeInsuranceLeadSchema } from "../schemas";
+import { encryptValue } from "../encryption";
 
 export async function createLifeInsurancePolicy(
   prevState: any,
@@ -12,7 +13,7 @@ export async function createLifeInsurancePolicy(
 ) {
   const entries = Object.fromEntries(formData.entries());
 
-  const parsed = {
+  const parsed: any = {
     ...entries,
     coverage_amount: entries.coverage_amount
       ? parseFloat(entries.coverage_amount as string)
@@ -31,6 +32,15 @@ export async function createLifeInsurancePolicy(
       (entries as any).privacy_policy === "true" ||
       (entries as any).privacy_policy === true,
   };
+
+  // Safely coerce product_id to a number to avoid NaN in Zod (treat empty as 0 to trigger positive() message)
+  const rawProductId = (entries as any).product_id as string | undefined;
+  if (typeof rawProductId === "string" && rawProductId.trim() !== "") {
+    const n = Number(rawProductId);
+    if (Number.isFinite(n)) parsed.product_id = n;
+  } else {
+    parsed.product_id = 0;
+  }
 
   const validated = lifeInsuranceLeadSchema.safeParse(parsed);
   if (!validated.success) {
@@ -51,15 +61,23 @@ export async function createLifeInsurancePolicy(
   const data = validated.data;
 
   try {
-    // Create party only
+  // Create party (encrypt id_number and include address_details placeholder)
     const { data: party, error: partyError } = await supabase
       .from("parties")
       .insert({
         first_name: data.first_name,
         last_name: data.last_name,
-        id_number: data.id_number,
+    id_number: encryptValue(data.id_number),
         date_of_birth: data.date_of_birth,
         contact_details: { phone: data.phone_number, email: data.email },
+        address_details:
+          data.residential_address || data.city || data.postal_code
+            ? {
+                physical: data.residential_address ?? null,
+                city: data.city ?? null,
+                postal_code: data.postal_code ?? null,
+              }
+            : null,
         party_type: "individual",
         profile_id: user.id,
       })
@@ -74,10 +92,33 @@ export async function createLifeInsurancePolicy(
       };
     }
 
+    // Create a minimal generic policy record linked to the party
+    // Required fields: policy_holder_id, frequency, policy_status
+    const { error: policyError } = await supabase.from("policies").insert({
+      policy_holder_id: party.id,
+      frequency: "monthly",
+      policy_status: "pending",
+      premium_amount: null,
+      // Use validated product_id (a number) to ensure no NaN is inserted
+      product_id: data.product_id ?? null,
+      start_date: null,
+      end_date: null,
+    });
+
+    if (policyError) {
+      return {
+        error: true,
+        message: "Party created but failed to create policy record.",
+        details: policyError.message,
+        partyId: party.id,
+      };
+    }
+
     revalidatePath("/insurance/life");
     return {
       error: false,
-      message: "Application submitted. We'll follow up to complete policy details.",
+      message:
+        "Application submitted. We'll follow up to complete policy details.",
       partyId: party.id,
     };
   } catch (e) {

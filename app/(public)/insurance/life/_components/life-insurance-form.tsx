@@ -19,6 +19,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { extractDateOfBirthFromSAID } from "@/lib/utils/sa-id";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useProductTypes } from "@/hooks/use-product-types";
 
 type LifeForm = z.infer<typeof lifeInsuranceLeadSchema>;
 
@@ -45,6 +54,10 @@ export default function LifeInsuranceForm() {
       date_of_birth: "",
       phone_number: "",
       email: "",
+      product_id: undefined as any,
+      residential_address: "",
+      city: "",
+      postal_code: "",
       terms_and_conditions: false,
       privacy_policy: false,
     },
@@ -53,14 +66,25 @@ export default function LifeInsuranceForm() {
   const onSubmit = (values: LifeForm) => {
     const fd = new FormData();
     Object.entries(values).forEach(([k, v]) => {
-      if (typeof v === "boolean") fd.append(k, v ? "true" : "false");
-      else if (typeof v === "string" && v !== "") fd.append(k, v);
+      if (typeof v === "boolean") {
+        fd.append(k, v ? "true" : "false");
+      } else if (typeof v === "number" && Number.isFinite(v)) {
+        fd.append(k, String(v));
+      } else if (typeof v === "string" && v !== "") {
+        fd.append(k, v);
+      }
     });
     startTransition(() => formAction(fd));
   };
 
+  // date_of_birth is derived from id_number on input change (no useEffect needed)
+
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-8">
+      {(() => {
+        /* preload product types */ return null;
+      })()}
+
       <div className="text-center">
         <h1 className="text-3xl font-bold">Life Insurance Application</h1>
         <p className="text-muted-foreground mt-2">
@@ -87,6 +111,45 @@ export default function LifeInsuranceForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Card className="p-6 grid grid-cols-1 gap-4">
+            <FormField
+              control={form.control}
+              name="product_id"
+              render={({ field }) => {
+                const { data: products, loading } = useProductTypes();
+                return (
+                  <FormItem>
+                    <FormLabel>Product</FormLabel>
+                    <FormControl>
+                      <Select
+                        onValueChange={(val) => field.onChange(parseInt(val))}
+                        value={field.value ? String(field.value) : undefined}
+                        disabled={loading}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            placeholder={
+                              loading
+                                ? "Loading products..."
+                                : "Select a product"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products?.map((p) => (
+                            <SelectItem key={p.id} value={String(p.id)}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+          </Card>
           <Card className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
@@ -125,6 +188,15 @@ export default function LifeInsuranceForm() {
                       {...field}
                       maxLength={13}
                       placeholder="13-digit SA ID"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(value);
+                        const dob = extractDateOfBirthFromSAID(value);
+                        form.setValue("date_of_birth", dob ?? "", {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -168,6 +240,70 @@ export default function LifeInsuranceForm() {
                       type="email"
                       {...field}
                       placeholder="name@example.com"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </Card>
+
+          <Card className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="residential_address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Residential Address</FormLabel>
+                  <FormControl>
+                    <Input
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      onChange={field.onChange}
+                      value={field.value ?? ""}
+                      placeholder="Street and suburb"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City</FormLabel>
+                  <FormControl>
+                    <Input
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      onChange={field.onChange}
+                      value={field.value ?? ""}
+                      placeholder="City"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="postal_code"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Postal Code</FormLabel>
+                  <FormControl>
+                    <Input
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      onChange={field.onChange}
+                      value={field.value ?? ""}
+                      maxLength={4}
+                      placeholder="0000"
                     />
                   </FormControl>
                   <FormMessage />
