@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instanciate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -17,10 +22,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
-          extensions?: Json
           operationName?: string
           query?: string
           variables?: Json
+          extensions?: Json
         }
         Returns: Json
       }
@@ -207,6 +212,7 @@ export type Database = {
         Row: {
           application_id: number
           approved_date: string
+          approved_loan_amount: number | null
           created_at: string | null
           id: number
           initiation_fee: number
@@ -219,11 +225,11 @@ export type Database = {
           status: string
           total_repayment_amount: number
           updated_at: string | null
-          approved_loan_amount: number | null
         }
         Insert: {
           application_id: number
           approved_date?: string
+          approved_loan_amount?: number | null
           created_at?: string | null
           id?: number
           initiation_fee: number
@@ -236,11 +242,11 @@ export type Database = {
           status?: string
           total_repayment_amount: number
           updated_at?: string | null
-          approved_loan_amount?: number | null
         }
         Update: {
           application_id?: number
           approved_date?: string
+          approved_loan_amount?: number | null
           created_at?: string | null
           id?: number
           initiation_fee?: number
@@ -253,7 +259,6 @@ export type Database = {
           status?: string
           total_repayment_amount?: number
           updated_at?: string | null
-          approved_loan_amount?: number | null
         }
         Relationships: [
           {
@@ -406,9 +411,9 @@ export type Database = {
           id: number
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number
+          premium_amount: number | null
           product_id: number | null
-          start_date: string
+          start_date: string | null
           updated_at: string
         }
         Insert: {
@@ -419,9 +424,9 @@ export type Database = {
           id: number
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number
+          premium_amount?: number | null
           product_id?: number | null
-          start_date?: string
+          start_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -432,9 +437,9 @@ export type Database = {
           id?: number
           policy_holder_id?: string
           policy_status?: Database["public"]["Enums"]["policy_status"]
-          premium_amount?: number
+          premium_amount?: number | null
           product_id?: number | null
-          start_date?: string
+          start_date?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -464,9 +469,9 @@ export type Database = {
           payout_structure: string
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number
+          premium_amount: number | null
           product_id: number | null
-          start_date: string
+          start_date: string | null
           underwriting_details: Json
           updated_at: string
         }
@@ -479,9 +484,9 @@ export type Database = {
           payout_structure: string
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number
+          premium_amount?: number | null
           product_id?: number | null
-          start_date?: string
+          start_date?: string | null
           underwriting_details?: Json
           updated_at?: string
         }
@@ -494,9 +499,9 @@ export type Database = {
           payout_structure?: string
           policy_holder_id?: string
           policy_status?: Database["public"]["Enums"]["policy_status"]
-          premium_amount?: number
+          premium_amount?: number | null
           product_id?: number | null
-          start_date?: string
+          start_date?: string | null
           underwriting_details?: Json
           updated_at?: string
         }
@@ -648,9 +653,9 @@ export type Database = {
           id: number
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number
+          premium_amount: number | null
           product_id: number | null
-          start_date: string
+          start_date: string | null
           updated_at: string
         }
         Insert: {
@@ -660,9 +665,9 @@ export type Database = {
           id?: number
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number
+          premium_amount?: number | null
           product_id?: number | null
-          start_date?: string
+          start_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -672,9 +677,9 @@ export type Database = {
           id?: number
           policy_holder_id?: string
           policy_status?: Database["public"]["Enums"]["policy_status"]
-          premium_amount?: number
+          premium_amount?: number | null
           product_id?: number | null
-          start_date?: string
+          start_date?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -922,8 +927,8 @@ export type Database = {
     Functions: {
       handle_new_user_signup: {
         Args:
-          | { phone_number: string; user_full_name: string; user_id: string }
-          | { user_full_name: string; user_id: string }
+          | { user_id: string; user_full_name: string }
+          | { user_id: string; user_full_name: string; phone_number: string }
         Returns: undefined
       }
     }
@@ -1184,4 +1189,3 @@ export const Constants = {
     },
   },
 } as const
-
