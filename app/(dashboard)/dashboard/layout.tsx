@@ -7,6 +7,10 @@ async function getUser() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const isAdmin = await supabase.rpc("is_admin");
+
+  console.log(isAdmin);
+
   if (!user) {
     throw new Error("User not authenticated");
   }

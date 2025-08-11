@@ -823,25 +823,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ,
-      product_types: {
-        Row: {
-          created_at: string
-          id: number
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          name: string
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
       transactions: {
         Row: {
           amount: number
@@ -913,6 +894,10 @@ export type Database = {
           | { user_id: string; user_full_name: string }
           | { user_id: string; user_full_name: string; phone_number: string }
         Returns: undefined
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
     }
     Enums: {

@@ -4,9 +4,14 @@ import { cookies } from "next/headers";
 export async function createServiceClient() {
   const cookieStore = await cookies();
 
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    // eslint-disable-next-line no-console
+    console.warn('[createServiceClient] SUPABASE_SERVICE_ROLE_KEY is not set. Falling back to anon key – RLS bypass will NOT work.');
+  }
+
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() {

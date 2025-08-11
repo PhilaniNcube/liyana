@@ -895,6 +895,10 @@ export type Database = {
           | { user_id: string; user_full_name: string; phone_number: string }
         Returns: undefined
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       api_check_status: "passed" | "failed" | "pending"
