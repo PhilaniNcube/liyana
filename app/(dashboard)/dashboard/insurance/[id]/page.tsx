@@ -1,7 +1,6 @@
 import { getPolicyById } from "@/lib/queries/policies";
 import PolicyDetail from "@/components/policy-detail";
 import React from "react";
-import { getProductTypes } from "@/lib/queries/product_types";
 
 type PolicyPageProps = {
   params: Promise<{
@@ -13,7 +12,6 @@ const PolicyPage = async ({ params }: PolicyPageProps) => {
   const { id } = await params;
 
   const policy = await getPolicyById(id);
-  const product_types = await getProductTypes();
 
   if (!policy) {
     return <div className="text-red-500">Policy not found</div>;

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "../server";
 import { getCurrentUser } from "../queries";
 import { z } from "zod";
-import { lifeInsuranceLeadSchema } from "../schemas";
+import { lifeInsuranceLeadSchemaWithRefines as lifeInsuranceLeadSchema } from "../schemas";
 import { encryptValue } from "../encryption";
 
 export async function createLifeInsurancePolicy(
@@ -33,14 +33,8 @@ export async function createLifeInsurancePolicy(
       (entries as any).privacy_policy === true,
   };
 
-  // Safely coerce product_id to a number to avoid NaN in Zod (treat empty as 0 to trigger positive() message)
-  const rawProductId = (entries as any).product_id as string | undefined;
-  if (typeof rawProductId === "string" && rawProductId.trim() !== "") {
-    const n = Number(rawProductId);
-    if (Number.isFinite(n)) parsed.product_id = n;
-  } else {
-    parsed.product_id = 0;
-  }
+  // Forward product_type string for enum validation
+  if ((entries as any).product_type) parsed.product_type = (entries as any).product_type;
 
   const validated = lifeInsuranceLeadSchema.safeParse(parsed);
   if (!validated.success) {
@@ -61,7 +55,7 @@ export async function createLifeInsurancePolicy(
   const data = validated.data;
 
   try {
-  // Create party (encrypt id_number and include address_details placeholder)
+  // Create policy holder party with banking_details (encrypt id_number)
     const { data: party, error: partyError } = await supabase
       .from("parties")
       .insert({
@@ -78,6 +72,13 @@ export async function createLifeInsurancePolicy(
                 postal_code: data.postal_code ?? null,
               }
             : null,
+        banking_details: {
+          account_name: data.account_name,
+          bank_name: data.bank_name,
+          account_number: data.account_number,
+          branch_code: data.branch_code,
+          account_type: data.account_type,
+        },
         party_type: "individual",
         profile_id: user.id,
       })
@@ -94,16 +95,15 @@ export async function createLifeInsurancePolicy(
 
     // Create a minimal generic policy record linked to the party
     // Required fields: policy_holder_id, frequency, policy_status
-    const { error: policyError } = await supabase.from("policies").insert({
+  const { data: newPolicy, error: policyError } = await supabase.from("policies").insert({
       policy_holder_id: party.id,
       frequency: "monthly",
       policy_status: "pending",
       premium_amount: null,
-      // Use validated product_id (a number) to ensure no NaN is inserted
-      product_id: data.product_id ?? null,
+      product_type: data.product_type ?? null,
       start_date: null,
       end_date: null,
-    });
+  }).select("id").single();
 
     if (policyError) {
       return {
@@ -111,6 +111,55 @@ export async function createLifeInsurancePolicy(
         message: "Party created but failed to create policy record.",
         details: policyError.message,
         partyId: party.id,
+      };
+    }
+
+    // Create beneficiary parties and link to policy
+    const beneficiaryInserts = data.beneficiaries.map((b: any) => ({
+      first_name: b.first_name,
+      last_name: b.last_name,
+      id_number: encryptValue(b.id_number),
+      date_of_birth: null,
+      contact_details: b.phone_number || b.email ? { phone: b.phone_number ?? null, email: b.email ?? null } : null,
+      address_details: null,
+      party_type: "individual" as const,
+      profile_id: user.id,
+    }));
+
+    const { data: beneficiaryParties, error: benPartyError } = await supabase
+      .from("parties")
+      .insert(beneficiaryInserts)
+      .select("id")
+      .returns<{ id: string }[]>();
+
+    if (benPartyError || !beneficiaryParties || beneficiaryParties.length !== data.beneficiaries.length) {
+      return {
+        error: true,
+        message: "Failed to create beneficiary records.",
+        details: benPartyError?.message,
+        partyId: party.id,
+        policyId: newPolicy?.id,
+      };
+    }
+
+    const policyBeneficiariesRows = data.beneficiaries.map((b: any, idx: number) => ({
+      policy_id: newPolicy!.id,
+      beneficiary_party_id: beneficiaryParties[idx].id,
+      allocation_percentage: b.percentage,
+      relation_type: b.relationship,
+    }));
+
+    const { error: pbError } = await supabase
+      .from("policy_beneficiaries")
+      .insert(policyBeneficiariesRows);
+
+    if (pbError) {
+      return {
+        error: true,
+        message: "Failed to link beneficiaries to the policy.",
+        details: pbError.message,
+        partyId: party.id,
+        policyId: newPolicy?.id,
       };
     }
 

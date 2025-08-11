@@ -577,13 +577,50 @@ export const lifeInsuranceLeadSchema = z.object({
   date_of_birth: z.string().min(1, "Date of birth is required"),
   phone_number: z.string().min(10, "Phone number must be at least 10 digits"),
   email: z.string().email("Please enter a valid email address"),
-  product_id: z.coerce
-    .number()
-    .int()
-    .positive("Please select a product"),
+  product_type: z
+    .enum(["funeral_policy", "life_insurance", "payday_loan"], {
+      required_error: "Please select a product",
+      invalid_type_error: "Please select a product",
+    }),
   residential_address: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   postal_code: z.string().optional().nullable(),
+
+  // Required banking details for party.banking_details
+  account_name: z.string().min(1, "Account name is required"),
+  bank_name: z.string().min(1, "Bank name is required"),
+  account_number: z
+    .string()
+    .min(8, "Account number must be at least 8 digits"),
+  branch_code: z
+    .string()
+    .min(6, "Branch code must be at least 6 digits")
+    .max(6, "Branch code must be exactly 6 digits"),
+  account_type: z.enum(["savings", "transaction", "current", "business"], {
+    required_error: "Account type is required",
+  }),
+
+  // Beneficiaries 5 to 10
+  beneficiaries: z
+    .array(
+      z.object({
+        first_name: z.string().min(1, "First name is required"),
+        last_name: z.string().min(1, "Last name is required"),
+        id_number: z
+          .string()
+          .min(13, "SA ID Number must be 13 digits")
+          .max(13, "SA ID Number must be 13 digits"),
+        relationship: z.enum(["spouse", "child", "parent", "sibling"]),
+        percentage: z
+          .number()
+          .min(1, "Percentage must be at least 1%")
+          .max(100, "Percentage cannot exceed 100%"),
+        phone_number: z.string().min(10).optional(),
+        email: z.string().email().optional(),
+      })
+    )
+    .min(5, "Provide at least 5 beneficiaries")
+    .max(10, "No more than 10 beneficiaries allowed"),
   terms_and_conditions: z.boolean().refine((v) => v === true, {
     message: "Terms and conditions must be accepted",
   }),
@@ -591,6 +628,15 @@ export const lifeInsuranceLeadSchema = z.object({
     message: "Privacy policy must be accepted",
   }),
 });
+
+// Ensure beneficiary percentages add up to 100
+export const lifeInsuranceLeadSchemaWithRefines = lifeInsuranceLeadSchema.refine(
+  (data) => data.beneficiaries.reduce((sum, b) => sum + b.percentage, 0) === 100,
+  {
+    message: "Beneficiary percentages must add up to 100%",
+    path: ["beneficiaries"],
+  }
+);
 
 export const funeralPolicyLeadSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -602,13 +648,49 @@ export const funeralPolicyLeadSchema = z.object({
   date_of_birth: z.string().min(1, "Date of birth is required"),
   phone_number: z.string().min(10, "Phone number must be at least 10 digits"),
   email: z.string().email("Please enter a valid email address"),
-  product_id: z.coerce
-    .number()
-    .int()
-    .positive("Please select a product"),
+  product_type: z
+    .enum(["funeral_policy", "life_insurance", "payday_loan"], {
+      required_error: "Please select a product",
+      invalid_type_error: "Please select a product",
+    }),
   residential_address: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   postal_code: z.string().optional().nullable(),
+  // Required banking details for policy holder party.banking_details
+  account_name: z.string().min(1, "Account name is required"),
+  bank_name: z.string().min(1, "Bank name is required"),
+  account_number: z.string().min(8, "Account number must be at least 8 digits"),
+  branch_code: z
+    .string()
+    .min(6, "Branch code must be at least 6 digits")
+    .max(6, "Branch code must be exactly 6 digits"),
+  account_type: z.enum(["savings", "transaction", "current", "business"], {
+    required_error: "Account type is required",
+  }),
+
+  // Require between 5 and 10 beneficiaries
+  beneficiaries: z
+    .array(
+      z.object({
+        first_name: z.string().min(1, "First name is required"),
+        last_name: z.string().min(1, "Last name is required"),
+        id_number: z
+          .string()
+          .min(13, "SA ID Number must be 13 digits")
+          .max(13, "SA ID Number must be 13 digits"),
+        relationship: z.enum(["spouse", "child", "parent", "sibling"], {
+          required_error: "Relationship is required",
+        }),
+        percentage: z
+          .number()
+          .min(1, "Percentage must be at least 1%")
+          .max(100, "Percentage cannot exceed 100%"),
+        phone_number: z.string().min(10).optional(),
+        email: z.string().email().optional(),
+      })
+    )
+    .min(5, "Provide at least 5 beneficiaries")
+    .max(10, "No more than 10 beneficiaries allowed"),
   terms_and_conditions: z.boolean().refine((v) => v === true, {
     message: "Terms and conditions must be accepted",
   }),
@@ -617,6 +699,15 @@ export const funeralPolicyLeadSchema = z.object({
   }),
 
 });
+
+// Sum of beneficiary percentages must equal 100%
+export const funeralPolicyLeadSchemaWithRefines = funeralPolicyLeadSchema.refine(
+  (data) => data.beneficiaries.reduce((sum, b) => sum + b.percentage, 0) === 100,
+  {
+    message: "Beneficiary percentages must add up to 100%",
+    path: ["beneficiaries"],
+  }
+);
 
 // WhoYou Email Verification Response Types
 export interface WhoYouDomainDetails {

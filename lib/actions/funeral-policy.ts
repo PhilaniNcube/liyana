@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "../server";
 import { getCurrentUser } from "../queries";
-import { funeralPolicyLeadSchema } from "../schemas";
+import { funeralPolicyLeadSchemaWithRefines as funeralPolicyLeadSchema } from "../schemas";
 import { encryptValue } from "../encryption";
 
 export async function createFuneralPolicy(prevState: any, formData: FormData) {
@@ -22,14 +22,16 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
       (entries as any).privacy_policy === true,
   };
   
-  // Safely coerce product_id to a number to avoid NaN in Zod (treat empty as undefined)
-  const rawProductId = (entries as any).product_id as string | undefined;
-  if (typeof rawProductId === "string" && rawProductId.trim() !== "") {
-    const n = Number(rawProductId);
-    if (Number.isFinite(n)) parsed.product_id = n;
-  } else {
-    // Set to 0 so zod positive() triggers our friendly error instead of NaN error
-    parsed.product_id = 0;
+  // Pass through product_type string for zod enum validation
+  if ((entries as any).product_type) parsed.product_type = (entries as any).product_type;
+
+  // For array fields like beneficiaries coming from form-data, attempt JSON parse if string
+  if (typeof parsed.beneficiaries === "string") {
+    try {
+      parsed.beneficiaries = JSON.parse(parsed.beneficiaries as string);
+    } catch {
+      // leave as is; zod will catch invalid shape
+    }
   }
 
   const validatedFields = funeralPolicyLeadSchema.safeParse(parsed);
@@ -56,7 +58,7 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
   const { data: validatedData } = validatedFields;
 
   try {
-    // Create party (encrypt id_number and include address_details when provided)
+    // Create policy holder party with banking_details (encrypt id_number)
     const { data: party, error: partyError } = await supabase
       .from("parties")
       .insert({
@@ -73,6 +75,13 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
                 postal_code: validatedData.postal_code ?? null,
               }
             : null,
+        banking_details: {
+          account_name: validatedData.account_name,
+          bank_name: validatedData.bank_name,
+          account_number: validatedData.account_number,
+          branch_code: validatedData.branch_code,
+          account_type: validatedData.account_type,
+        },
         party_type: "individual",
         profile_id: user.id,
       })
@@ -88,16 +97,15 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
     }
 
     // Create a minimal generic policy record linked to the party
-    const { error: policyError } = await supabase.from("policies").insert({
+    const { data: newPolicy, error: policyError } = await supabase.from("policies").insert({
       policy_holder_id: party.id,
       frequency: "monthly",
       policy_status: "pending",
       premium_amount: null,
-      // Use validated product_id (a number) to ensure no NaN is inserted
-      product_id: validatedData.product_id ?? null,
+      product_type: validatedData.product_type ?? null,
       start_date: null,
       end_date: null,
-    });
+    }).select("id").single();
 
     if (policyError) {
       return {
@@ -105,6 +113,58 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
         message: "Party created but failed to create policy record.",
         details: policyError.message,
         partyId: party.id,
+      };
+    }
+
+    // Create beneficiary parties and link in policy_beneficiaries
+    // We will create minimal party rows for beneficiaries and then insert policy_beneficiaries with allocation_percentage and relation_type
+    const beneficiaryInserts = validatedData.beneficiaries.map((b: any) => ({
+      first_name: b.first_name,
+      last_name: b.last_name,
+      id_number: encryptValue(b.id_number),
+      date_of_birth: null,
+      contact_details: b.phone_number || b.email ? { phone: b.phone_number ?? null, email: b.email ?? null } : null,
+      address_details: null,
+      party_type: "individual" as const,
+      profile_id: user.id,
+    }));
+
+    // Bulk insert beneficiary parties, returning ids in order
+    const { data: beneficiaryParties, error: benPartyError } = await supabase
+      .from("parties")
+      .insert(beneficiaryInserts)
+      .select("id")
+      .returns<{ id: string }[]>();
+
+    if (benPartyError || !beneficiaryParties || beneficiaryParties.length !== validatedData.beneficiaries.length) {
+      return {
+        error: true,
+        message: "Failed to create beneficiary records.",
+        details: benPartyError?.message,
+        partyId: party.id,
+        policyId: newPolicy?.id,
+      };
+    }
+
+    // Prepare policy_beneficiaries rows
+    const policyBeneficiariesRows = validatedData.beneficiaries.map((b: any, idx: number) => ({
+      policy_id: newPolicy!.id,
+      beneficiary_party_id: beneficiaryParties[idx].id,
+      allocation_percentage: b.percentage,
+      relation_type: b.relationship,
+    }));
+
+    const { error: pbError } = await supabase
+      .from("policy_beneficiaries")
+      .insert(policyBeneficiariesRows);
+
+    if (pbError) {
+      return {
+        error: true,
+        message: "Failed to link beneficiaries to the policy.",
+        details: pbError.message,
+        partyId: party.id,
+        policyId: newPolicy?.id,
       };
     }
 

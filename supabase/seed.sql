@@ -9,6 +9,10 @@ DECLARE
   v_now timestamptz := now();
   v_user_id uuid;
   u record;
+  v_holder_party_id uuid;
+  v_policy_id bigint;
+  ben record;
+  v_ben_party_id uuid;
 BEGIN
   -- Loop through a set of seed users
   FOR u IN
@@ -52,6 +56,15 @@ BEGIN
       );
       -- Profile will be created automatically by the auth trigger
     END IF;
+
+    -- Upsert profile to ensure fields are in sync
+    INSERT INTO public.profiles (id, email, full_name, phone_number, role)
+    VALUES (v_user_id, u.email, u.full_name, u.phone, 'customer')
+    ON CONFLICT (id) DO UPDATE
+      SET email = EXCLUDED.email,
+          full_name = EXCLUDED.full_name,
+          phone_number = EXCLUDED.phone_number,
+          role = COALESCE(public.profiles.role, 'customer');
 
     -- Insert two sample applications per user (guarded to avoid duplicates across runs)
     -- Application A
@@ -103,6 +116,96 @@ BEGIN
         WHERE a.user_id = v_user_id AND a.status = 'declined' AND a.application_amount = 3000 AND a.term = 3
       );
     END IF;
+
+    -- Create/find a policy holder party for this user
+    v_holder_party_id := NULL;
+    SELECT id INTO v_holder_party_id FROM public.parties
+    WHERE profile_id = v_user_id AND party_type = 'individual' AND first_name = split_part(u.full_name, ' ', 1)
+    LIMIT 1;
+
+    IF NOT FOUND THEN
+      INSERT INTO public.parties (
+        first_name, last_name, id_number, date_of_birth,
+        contact_details, address_details, banking_details,
+        party_type, profile_id
+      ) VALUES (
+        split_part(u.full_name, ' ', 1), split_part(u.full_name, ' ', 2),
+        'ENC:' || encode(gen_random_bytes(24), 'hex'),
+        '1980-01-01',
+        jsonb_build_object('phone', u.phone, 'email', u.email),
+        jsonb_build_object('physical', 'Seed Street', 'city', 'Johannesburg', 'postal_code', '2001'),
+        jsonb_build_object(
+          'account_name', u.full_name,
+          'bank_name', 'Seed Bank',
+          'account_number', to_char(trunc(random()*9e9 + 1e9)::bigint, 'FM9999999999'),
+          'branch_code', '250655',
+          'account_type', 'transaction'
+        ),
+        'individual', v_user_id
+      ) RETURNING id INTO v_holder_party_id;
+    END IF;
+
+    -- Create a policy for the holder if not exists
+    v_policy_id := NULL;
+    SELECT id INTO v_policy_id FROM public.policies
+    WHERE policy_holder_id = v_holder_party_id AND product_type IN ('funeral_policy','life_insurance')
+    LIMIT 1;
+
+    IF NOT FOUND THEN
+      INSERT INTO public.policies (
+        policy_holder_id, frequency, policy_status, premium_amount, product_type, start_date, end_date
+      ) VALUES (
+        v_holder_party_id,
+        'monthly'::public.frequency,
+        (CASE WHEN u.email LIKE 'seed-bob@%' THEN 'active' ELSE 'pending' END)::public.policy_status,
+        CASE WHEN u.email LIKE 'seed-bob@%' THEN 299 ELSE 199 END,
+        (CASE WHEN u.email LIKE 'seed-%@liyanafinance.co.za' AND random() < 0.5 THEN 'funeral_policy' ELSE 'life_insurance' END)::public.product_type,
+        now()::date,
+        NULL
+      ) RETURNING id INTO v_policy_id;
+    END IF;
+
+    -- Create five beneficiary parties and link them to the policy (idempotent)
+    FOR ben IN
+      SELECT * FROM (
+        VALUES
+          ('Spouse ' || split_part(u.full_name, ' ', 1), 'Seed', 'spouse', 50),
+          ('Child A ' || split_part(u.full_name, ' ', 1), 'Seed', 'child', 20),
+          ('Child B ' || split_part(u.full_name, ' ', 1), 'Seed', 'child', 10),
+          ('Parent ' || split_part(u.full_name, ' ', 1), 'Seed', 'parent', 10),
+          ('Sibling ' || split_part(u.full_name, ' ', 1), 'Seed', 'sibling', 10)
+      ) AS t(first_name, last_name, relation, pct)
+    LOOP
+      -- Find or create beneficiary party
+      v_ben_party_id := NULL;
+      SELECT id INTO v_ben_party_id FROM public.parties
+      WHERE profile_id = v_user_id AND party_type = 'individual' AND first_name = ben.first_name AND last_name = ben.last_name
+      LIMIT 1;
+
+      IF NOT FOUND THEN
+        INSERT INTO public.parties (
+          first_name, last_name, id_number, date_of_birth,
+          contact_details, address_details, party_type, profile_id
+        ) VALUES (
+          ben.first_name, ben.last_name,
+          'ENC:' || encode(gen_random_bytes(24), 'hex'),
+          NULL,
+          NULL,
+          NULL,
+          'individual', v_user_id
+        ) RETURNING id INTO v_ben_party_id;
+      END IF;
+
+      -- Link as policy beneficiary if not already linked with same allocation
+      INSERT INTO public.policy_beneficiaries (
+        policy_id, beneficiary_party_id, allocation_percentage, relation_type
+      )
+      SELECT v_policy_id, v_ben_party_id, ben.pct, ben.relation::public.relation_type
+      WHERE NOT EXISTS (
+        SELECT 1 FROM public.policy_beneficiaries pb
+        WHERE pb.policy_id = v_policy_id AND pb.beneficiary_party_id = v_ben_party_id
+      );
+    END LOOP;
 
   END LOOP;
 END $$;

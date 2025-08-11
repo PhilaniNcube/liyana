@@ -412,7 +412,7 @@ export type Database = {
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
           premium_amount: number | null
-          product_id: number | null
+          product_type: Database["public"]["Enums"]["product_type"] | null
           start_date: string | null
           updated_at: string
         }
@@ -425,7 +425,7 @@ export type Database = {
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
           premium_amount?: number | null
-          product_id?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
           start_date?: string | null
           updated_at?: string
         }
@@ -438,7 +438,7 @@ export type Database = {
           policy_holder_id?: string
           policy_status?: Database["public"]["Enums"]["policy_status"]
           premium_amount?: number | null
-          product_id?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
           start_date?: string | null
           updated_at?: string
         }
@@ -448,13 +448,6 @@ export type Database = {
             columns: ["policy_holder_id"]
             isOneToOne: false
             referencedRelation: "parties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "funeral_policies_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "product_types"
             referencedColumns: ["id"]
           },
         ]
@@ -470,7 +463,7 @@ export type Database = {
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
           premium_amount: number | null
-          product_id: number | null
+          product_type: Database["public"]["Enums"]["product_type"] | null
           start_date: string | null
           underwriting_details: Json
           updated_at: string
@@ -485,7 +478,7 @@ export type Database = {
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
           premium_amount?: number | null
-          product_id?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
           start_date?: string | null
           underwriting_details?: Json
           updated_at?: string
@@ -500,7 +493,7 @@ export type Database = {
           policy_holder_id?: string
           policy_status?: Database["public"]["Enums"]["policy_status"]
           premium_amount?: number | null
-          product_id?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
           start_date?: string | null
           underwriting_details?: Json
           updated_at?: string
@@ -511,13 +504,6 @@ export type Database = {
             columns: ["policy_holder_id"]
             isOneToOne: false
             referencedRelation: "parties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "life_insurance_policies_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "product_types"
             referencedColumns: ["id"]
           },
         ]
@@ -595,6 +581,7 @@ export type Database = {
       parties: {
         Row: {
           address_details: Json | null
+          banking_details: Json | null
           contact_details: Json | null
           created_at: string
           date_of_birth: string | null
@@ -609,6 +596,7 @@ export type Database = {
         }
         Insert: {
           address_details?: Json | null
+          banking_details?: Json | null
           contact_details?: Json | null
           created_at?: string
           date_of_birth?: string | null
@@ -623,6 +611,7 @@ export type Database = {
         }
         Update: {
           address_details?: Json | null
+          banking_details?: Json | null
           contact_details?: Json | null
           created_at?: string
           date_of_birth?: string | null
@@ -654,7 +643,7 @@ export type Database = {
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
           premium_amount: number | null
-          product_id: number | null
+          product_type: Database["public"]["Enums"]["product_type"] | null
           start_date: string | null
           updated_at: string
         }
@@ -666,7 +655,7 @@ export type Database = {
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
           premium_amount?: number | null
-          product_id?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
           start_date?: string | null
           updated_at?: string
         }
@@ -678,7 +667,7 @@ export type Database = {
           policy_holder_id?: string
           policy_status?: Database["public"]["Enums"]["policy_status"]
           premium_amount?: number | null
-          product_id?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
           start_date?: string | null
           updated_at?: string
         }
@@ -688,13 +677,6 @@ export type Database = {
             columns: ["policy_holder_id"]
             isOneToOne: false
             referencedRelation: "parties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "policies_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "product_types"
             referencedColumns: ["id"]
           },
         ]
@@ -778,24 +760,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      product_types: {
-        Row: {
-          created_at: string
-          id: number
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          name: string
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          name?: string
-        }
-        Relationships: []
       }
       profile_documents: {
         Row: {
@@ -985,6 +949,7 @@ export type Database = {
         | "life_partner"
       party_type: "individual" | "organization"
       policy_status: "pending" | "active" | "lapsed" | "cancelled"
+      product_type: "funeral_policy" | "life_insurance" | "payday_loan"
       relation_type: "spouse" | "child" | "parent" | "sibling"
       transaction_status: "pending" | "completed" | "failed"
       transaction_type:
@@ -1176,6 +1141,7 @@ export const Constants = {
       ],
       party_type: ["individual", "organization"],
       policy_status: ["pending", "active", "lapsed", "cancelled"],
+      product_type: ["funeral_policy", "life_insurance", "payday_loan"],
       relation_type: ["spouse", "child", "parent", "sibling"],
       transaction_status: ["pending", "completed", "failed"],
       transaction_type: [

@@ -34,13 +34,7 @@ type ActionState = {
   details?: string;
 };
 
-type ProductType = { id: number; name: string };
-
-export default function FuneralPolicyForm({
-  products = [] as ProductType[],
-}: {
-  products?: ProductType[];
-}) {
+export default function FuneralPolicyForm() {
   const [state, formAction] = useActionState<ActionState, FormData>(
     createFuneralPolicy,
     {}
@@ -58,7 +52,7 @@ export default function FuneralPolicyForm({
       date_of_birth: "",
       phone_number: "",
       email: "",
-      product_id: undefined as any,
+      product_type: undefined as any,
       residential_address: "",
       city: "",
       postal_code: "",
@@ -112,39 +106,33 @@ export default function FuneralPolicyForm({
           <Card className="p-6 grid grid-cols-1 gap-4">
             <FormField
               control={form.control}
-              name="product_id"
-              render={({ field }) => {
-                return (
-                  <FormItem>
-                    <FormLabel>Product</FormLabel>
-                    <FormControl>
-                      <Select
-                        onValueChange={(val) => field.onChange(parseInt(val))}
-                        value={field.value ? String(field.value) : undefined}
-                        disabled={loading}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue
-                            placeholder={
-                              loading
-                                ? "Loading products..."
-                                : "Select a product"
-                            }
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {products?.map((p) => (
-                            <SelectItem key={p.id} value={String(p.id)}>
-                              {p.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
+              name="product_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Product</FormLabel>
+                  <FormControl>
+                    <Select
+                      onValueChange={(val) => field.onChange(val)}
+                      value={field.value}
+                      disabled={loading}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a product" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="funeral_policy">
+                          Funeral Policy
+                        </SelectItem>
+                        <SelectItem value="life_insurance">
+                          Life Insurance
+                        </SelectItem>
+                        <SelectItem value="payday_loan">Payday Loan</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
           </Card>
           <Card className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">

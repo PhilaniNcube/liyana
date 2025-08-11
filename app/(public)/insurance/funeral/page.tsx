@@ -12,14 +12,9 @@ export default async function Page() {
   if (!user) {
     redirect("/auth/login?next=/insurance/funeral");
   }
-  const { data: products } = await supabase
-    .from("product_types")
-    .select("id, name")
-    .order("name", { ascending: true });
-
   return (
     <section className="py-8">
-      <FuneralPolicyForm products={products ?? []} />
+      <FuneralPolicyForm />
     </section>
   );
 }

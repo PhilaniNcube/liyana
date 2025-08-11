@@ -34,7 +34,9 @@ export default function PolicyDetail({
               {policy.policy_status}
             </Badge>
           </CardTitle>
-          <CardDescription>{policy.product?.name ?? "—"}</CardDescription>
+          <CardDescription className="capitalize">
+            {policy.product_type?.replaceAll("_", " ") ?? "—"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
