@@ -30,6 +30,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { title } from "process";
+import { logoutAction } from "@/lib/actions/auth";
 
 interface DashboardSidebarProps {
   user: User;
@@ -292,7 +293,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           )}
         </div>
 
-        <form action="/auth/logout" method="post">
+        <form action={logoutAction}>
           <Button
             type="submit"
             variant="ghost"

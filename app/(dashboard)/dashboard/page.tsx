@@ -1,16 +1,5 @@
 import { createClient } from "@/lib/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Users,
-  FileText,
-  CreditCard,
-  TrendingUp,
-  DollarSign,
-  Clock,
-} from "lucide-react";
-
-export const dynamic = "force-dynamic"; // ensure cookies/session evaluated per-request
-export const revalidate = 0;
 
 export default async function DashboardPage() {
   const supabase = await createClient();
