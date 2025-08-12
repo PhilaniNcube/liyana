@@ -13,6 +13,7 @@ import { BorrowerDetails } from "../_components/borrower-details";
 import { ProfileDocumentsDisplay } from "@/components/profile-documents-display";
 import { ProfileDocumentUpload } from "../_components/profile-document-upload";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { DownloadAgreementButton } from "./_components/download-agreement-button";
 
 interface PageProps {
   params: Promise<{ id: number }>;
@@ -44,6 +45,9 @@ const LoanPage = async ({ params }: PageProps) => {
           </CardHeader>
           <CardContent className="pt-4">
             <LoanOverview loan={loan} />
+            <div className="mt-4 pt-4 border-t">
+              <DownloadAgreementButton loanId={loan.id} />
+            </div>
           </CardContent>
         </Card>
 

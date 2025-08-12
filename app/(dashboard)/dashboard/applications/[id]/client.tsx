@@ -8,18 +8,13 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   Shield,
   Loader2,
-  Download,
-  FileText,
-  Clock,
   CheckCircle,
   XCircle,
-  AlertCircle,
   Send,
   Mail,
   MoreHorizontal,
@@ -64,14 +59,12 @@ interface ApplicationDetailClientProps {
   application: DecryptedApplication;
   apiChecks: any[];
   documents: Database["public"]["Tables"]["documents"]["Row"][];
-  userRole?: string;
 }
 
 export function ApplicationDetailClient({
   application,
   apiChecks,
   documents,
-  userRole,
 }: ApplicationDetailClientProps) {
   const [isRunningFraudCheck, setIsRunningFraudCheck] = useState(false);
   const [fraudCheckResults, setFraudCheckResults] = useState<any>(null);
