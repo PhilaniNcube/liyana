@@ -94,14 +94,13 @@ export async function createLifeInsurancePolicy(
     }
 
     // Create a minimal generic policy record linked to the party
-    // Required fields: policy_holder_id, frequency, policy_status
+    // Required fields: frequency, policy_status, premium_amount
   const { data: newPolicy, error: policyError } = await supabase.from("policies").insert({
       policy_holder_id: party.id,
       frequency: "monthly",
       policy_status: "pending",
-      premium_amount: null,
-      product_type: data.product_type ?? null,
-      start_date: null,
+      premium_amount: parsed.premium_amount || 0,
+      start_date: undefined,
       end_date: null,
   }).select("id").single();
 

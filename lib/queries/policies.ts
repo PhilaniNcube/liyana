@@ -14,7 +14,7 @@ export async function getPolicies(): Promise<PolicyWithHolder[]> {
     const supabase = await createClient();
         const { data, error } = await supabase.from("policies").select("*, policy_holder:policy_holder_id(*)");
   if (error) throw new Error(error.message);
-    return (data ?? []) as PolicyWithHolder[];
+    return (data ?? []) as unknown as PolicyWithHolder[];
 }
 
 export async function getPolicyById(id: number): Promise<PolicyWithProduct> {
@@ -25,7 +25,7 @@ export async function getPolicyById(id: number): Promise<PolicyWithProduct> {
             .eq("id", id)
             .single();
         if (error) throw new Error(error.message);
-        return data as PolicyWithProduct;
+        return data as unknown as PolicyWithProduct;
 }
 
 
@@ -37,7 +37,7 @@ export async function getFuneralPolicies(): Promise<PolicyWithHolder[]> {
             .eq("product_type", "funeral_policy");
         if (error) throw new Error(error.message);
         if (!policies) return [];
-        return policies;    
+        return policies as unknown as PolicyWithHolder[];    
 }
 
 export async function getLifeInsurancePolicies(): Promise<PolicyWithHolder[]> {
@@ -48,7 +48,7 @@ export async function getLifeInsurancePolicies(): Promise<PolicyWithHolder[]> {
         .eq("product_type", "life_insurance");
     if (error) throw new Error(error.message);
     if (!policies) return [];
-    return policies;    
+    return policies as unknown as PolicyWithHolder[];    
 }
 
 // Fetch policy beneficiaries and enrich with party details and decrypted id_number

@@ -98,13 +98,10 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
 
     // Create a minimal generic policy record linked to the party
     const { data: newPolicy, error: policyError } = await supabase.from("policies").insert({
-      policy_holder_id: party.id,
       frequency: "monthly",
       policy_status: "pending",
-      premium_amount: null,
-      product_type: validatedData.product_type ?? null,
-      start_date: null,
-      end_date: null,
+      premium_amount: 0,
+      policy_holder_id: party.id,
     }).select("id").single();
 
     if (policyError) {
