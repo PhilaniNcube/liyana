@@ -1,6 +1,7 @@
 import { getPolicyById } from "@/lib/queries/policies";
 import PolicyDetail from "@/components/policy-detail";
 import React from "react";
+import PolicyBeneficiaries from "./_components/policy-beneficiaries";
 
 type PolicyPageProps = {
   params: Promise<{
@@ -21,6 +22,9 @@ const PolicyPage = async ({ params }: PolicyPageProps) => {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Policy Details</h1>
       <PolicyDetail policy={policy} />
+      <div className="mt-6">
+        <PolicyBeneficiaries policyId={id} />
+      </div>
     </div>
   );
 };

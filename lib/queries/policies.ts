@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/server";
 import type { Database } from "@/lib/database.types";
+import { decryptValue } from "@/lib/encryption";
 
 // Reusable types derived from Supabase table definitions
 type PolicyRow = Database["public"]["Tables"]["policies"]["Row"];
@@ -49,3 +50,42 @@ export async function getLifeInsurancePolicies(): Promise<PolicyWithHolder[]> {
     if (!policies) return [];
     return policies;    
 }
+
+// Fetch policy beneficiaries and enrich with party details and decrypted id_number
+export async function getPolicyBeneficiaries(policyId: number) {
+    const supabase = await createClient();
+
+    const { data: beneficiaries, error } = await supabase
+        .from("policy_beneficiaries")
+        .select("*")
+        .eq("policy_id", policyId);
+
+    if (error) throw new Error(error.message);
+    if (!beneficiaries || beneficiaries.length === 0) return [];
+
+    const enriched = await Promise.all(
+        beneficiaries.map(async (b) => {
+            const { data: party, error: partyError } = await supabase
+                .from("parties")
+                .select("*")
+                .eq("id", b.beneficiary_party_id)
+                .single();
+
+            if (partyError || !party) {
+                return { ...b, party: null, id_number: null } as any;
+            }
+
+            let id_number: string | null = null;
+            try {
+                id_number = party.id_number ? decryptValue(party.id_number) : null;
+            } catch {
+                id_number = null;
+            }
+
+            return { ...b, party, id_number } as any;
+        })
+    );
+
+    return enriched;
+}
+
