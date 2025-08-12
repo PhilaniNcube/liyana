@@ -2,9 +2,10 @@
 
 import React from "react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { funeralPolicyLeadSchema } from "@/lib/schemas";
-import { createFuneralPolicy } from "@/lib/actions/funeral-policy";
+import { lifeInsuranceLeadSchema } from "@/lib/schemas";
+import { createLifeInsurancePolicy } from "@/lib/actions/life-insurance";
 import { useActionState, useTransition } from "react";
 import {
   Form,
@@ -27,6 +28,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type LifeForm = z.infer<typeof lifeInsuranceLeadSchema>;
+
 type ActionState = {
   error?: boolean;
   message?: string;
@@ -34,17 +37,17 @@ type ActionState = {
   details?: string;
 };
 
-export default function FuneralPolicyForm() {
+export default function LifeInsuranceForm() {
   const [state, formAction] = useActionState<ActionState, FormData>(
-    createFuneralPolicy,
+    createLifeInsurancePolicy as any,
     {}
   );
   const [isPending, startTransition] = useTransition();
   // Products are provided from the server component
   const loading = false;
 
-  const form = useForm({
-    resolver: zodResolver(funeralPolicyLeadSchema),
+  const form = useForm<LifeForm>({
+    resolver: zodResolver(lifeInsuranceLeadSchema),
     defaultValues: {
       first_name: "",
       last_name: "",
@@ -61,7 +64,7 @@ export default function FuneralPolicyForm() {
     },
   });
 
-  const onSubmit = (values: any) => {
+  const onSubmit = (values: LifeForm) => {
     const fd = new FormData();
     Object.entries(values).forEach(([k, v]) => {
       if (typeof v === "boolean") {
@@ -75,10 +78,16 @@ export default function FuneralPolicyForm() {
     startTransition(() => formAction(fd));
   };
 
+  // date_of_birth is derived from id_number on input change (no useEffect needed)
+
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-8">
+      {(() => {
+        /* preload product types */ return null;
+      })()}
+
       <div className="text-center">
-        <h1 className="text-3xl font-bold">Funeral Policy Application</h1>
+        <h1 className="text-3xl font-bold">Life Insurance Application</h1>
         <p className="text-muted-foreground mt-2">
           Provide your details and we'll contact you to complete your policy.
         </p>

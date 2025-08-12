@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instanciate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -17,10 +22,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
-          extensions?: Json
           operationName?: string
           query?: string
           variables?: Json
+          extensions?: Json
         }
         Returns: Json
       }
@@ -207,6 +212,7 @@ export type Database = {
         Row: {
           application_id: number
           approved_date: string
+          approved_loan_amount: number | null
           created_at: string | null
           id: number
           initiation_fee: number
@@ -219,11 +225,11 @@ export type Database = {
           status: string
           total_repayment_amount: number
           updated_at: string | null
-          approved_loan_amount: number | null
         }
         Insert: {
           application_id: number
           approved_date?: string
+          approved_loan_amount?: number | null
           created_at?: string | null
           id?: number
           initiation_fee: number
@@ -236,11 +242,11 @@ export type Database = {
           status?: string
           total_repayment_amount: number
           updated_at?: string | null
-          approved_loan_amount?: number | null
         }
         Update: {
           application_id?: number
           approved_date?: string
+          approved_loan_amount?: number | null
           created_at?: string | null
           id?: number
           initiation_fee?: number
@@ -253,7 +259,6 @@ export type Database = {
           status?: string
           total_repayment_amount?: number
           updated_at?: string | null
-          approved_loan_amount?: number | null
         }
         Relationships: [
           {
@@ -406,9 +411,9 @@ export type Database = {
           id: number
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number
-          product_id: number | null
-          start_date: string
+          premium_amount: number | null
+          product_type: Database["public"]["Enums"]["product_type"] | null
+          start_date: string | null
           updated_at: string
         }
         Insert: {
@@ -419,9 +424,9 @@ export type Database = {
           id: number
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number
-          product_id?: number | null
-          start_date?: string
+          premium_amount?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
+          start_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -432,9 +437,9 @@ export type Database = {
           id?: number
           policy_holder_id?: string
           policy_status?: Database["public"]["Enums"]["policy_status"]
-          premium_amount?: number
-          product_id?: number | null
-          start_date?: string
+          premium_amount?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
+          start_date?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -443,13 +448,6 @@ export type Database = {
             columns: ["policy_holder_id"]
             isOneToOne: false
             referencedRelation: "parties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "funeral_policies_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "product_types"
             referencedColumns: ["id"]
           },
         ]
@@ -464,9 +462,9 @@ export type Database = {
           payout_structure: string
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number
-          product_id: number | null
-          start_date: string
+          premium_amount: number | null
+          product_type: Database["public"]["Enums"]["product_type"] | null
+          start_date: string | null
           underwriting_details: Json
           updated_at: string
         }
@@ -479,9 +477,9 @@ export type Database = {
           payout_structure: string
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number
-          product_id?: number | null
-          start_date?: string
+          premium_amount?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
+          start_date?: string | null
           underwriting_details?: Json
           updated_at?: string
         }
@@ -494,9 +492,9 @@ export type Database = {
           payout_structure?: string
           policy_holder_id?: string
           policy_status?: Database["public"]["Enums"]["policy_status"]
-          premium_amount?: number
-          product_id?: number | null
-          start_date?: string
+          premium_amount?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
+          start_date?: string | null
           underwriting_details?: Json
           updated_at?: string
         }
@@ -506,13 +504,6 @@ export type Database = {
             columns: ["policy_holder_id"]
             isOneToOne: false
             referencedRelation: "parties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "life_insurance_policies_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "product_types"
             referencedColumns: ["id"]
           },
         ]
@@ -590,6 +581,7 @@ export type Database = {
       parties: {
         Row: {
           address_details: Json | null
+          banking_details: Json | null
           contact_details: Json | null
           created_at: string
           date_of_birth: string | null
@@ -604,6 +596,7 @@ export type Database = {
         }
         Insert: {
           address_details?: Json | null
+          banking_details?: Json | null
           contact_details?: Json | null
           created_at?: string
           date_of_birth?: string | null
@@ -618,6 +611,7 @@ export type Database = {
         }
         Update: {
           address_details?: Json | null
+          banking_details?: Json | null
           contact_details?: Json | null
           created_at?: string
           date_of_birth?: string | null
@@ -648,9 +642,9 @@ export type Database = {
           id: number
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number
-          product_id: number | null
-          start_date: string
+          premium_amount: number | null
+          product_type: Database["public"]["Enums"]["product_type"] | null
+          start_date: string | null
           updated_at: string
         }
         Insert: {
@@ -660,9 +654,9 @@ export type Database = {
           id?: number
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number
-          product_id?: number | null
-          start_date?: string
+          premium_amount?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
+          start_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -672,9 +666,9 @@ export type Database = {
           id?: number
           policy_holder_id?: string
           policy_status?: Database["public"]["Enums"]["policy_status"]
-          premium_amount?: number
-          product_id?: number | null
-          start_date?: string
+          premium_amount?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
+          start_date?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -683,13 +677,6 @@ export type Database = {
             columns: ["policy_holder_id"]
             isOneToOne: false
             referencedRelation: "parties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "policies_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "product_types"
             referencedColumns: ["id"]
           },
         ]
@@ -773,24 +760,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      product_types: {
-        Row: {
-          created_at: string
-          id: number
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          name: string
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          name?: string
-        }
-        Relationships: []
       }
       profile_documents: {
         Row: {
@@ -922,9 +891,13 @@ export type Database = {
     Functions: {
       handle_new_user_signup: {
         Args:
-          | { phone_number: string; user_full_name: string; user_id: string }
-          | { user_full_name: string; user_id: string }
+          | { user_id: string; user_full_name: string }
+          | { user_id: string; user_full_name: string; phone_number: string }
         Returns: undefined
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
     }
     Enums: {
@@ -980,6 +953,7 @@ export type Database = {
         | "life_partner"
       party_type: "individual" | "organization"
       policy_status: "pending" | "active" | "lapsed" | "cancelled"
+      product_type: "funeral_policy" | "life_insurance" | "payday_loan"
       relation_type: "spouse" | "child" | "parent" | "sibling"
       transaction_status: "pending" | "completed" | "failed"
       transaction_type:
@@ -1171,6 +1145,7 @@ export const Constants = {
       ],
       party_type: ["individual", "organization"],
       policy_status: ["pending", "active", "lapsed", "cancelled"],
+      product_type: ["funeral_policy", "life_insurance", "payday_loan"],
       relation_type: ["spouse", "child", "parent", "sibling"],
       transaction_status: ["pending", "completed", "failed"],
       transaction_type: [
@@ -1184,4 +1159,3 @@ export const Constants = {
     },
   },
 } as const
-
