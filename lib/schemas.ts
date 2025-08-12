@@ -682,9 +682,7 @@ export const funeralPolicyLeadSchema = z.object({
           required_error: "Relationship is required",
         }),
         percentage: z
-          .number()
-          .min(1, "Percentage must be at least 1%")
-          .max(100, "Percentage cannot exceed 100%"),
+          .number(),
         phone_number: z.string().min(10).optional(),
         email: z.string().email().optional(),
       })
@@ -700,14 +698,8 @@ export const funeralPolicyLeadSchema = z.object({
 
 });
 
-// Sum of beneficiary percentages must equal 100%
-export const funeralPolicyLeadSchemaWithRefines = funeralPolicyLeadSchema.refine(
-  (data) => data.beneficiaries.reduce((sum, b) => sum + b.percentage, 0) === 100,
-  {
-    message: "Beneficiary percentages must add up to 100%",
-    path: ["beneficiaries"],
-  }
-);
+
+export const funeralPolicyLeadSchemaWithRefines = funeralPolicyLeadSchema;
 
 // WhoYou Email Verification Response Types
 export interface WhoYouDomainDetails {

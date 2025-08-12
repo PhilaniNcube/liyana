@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { funeralPolicyLeadSchema } from "@/lib/schemas";
+import { funeralPolicyLeadSchemaWithRefines } from "@/lib/schemas";
 import { createFuneralPolicy } from "@/lib/actions/funeral-policy";
 import { useActionState, useTransition } from "react";
 import {
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { extractDateOfBirthFromSAID } from "@/lib/utils/sa-id";
 import {
@@ -26,6 +26,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Trash2, Plus } from "lucide-react";
+import { z } from "zod";
+
+type FuneralForm = z.infer<typeof funeralPolicyLeadSchemaWithRefines>;
 
 type ActionState = {
   error?: boolean;
@@ -43,8 +47,8 @@ export default function FuneralPolicyForm() {
   // Products are provided from the server component
   const loading = false;
 
-  const form = useForm({
-    resolver: zodResolver(funeralPolicyLeadSchema),
+  const form = useForm<FuneralForm>({
+    resolver: zodResolver(funeralPolicyLeadSchemaWithRefines),
     defaultValues: {
       first_name: "",
       last_name: "",
@@ -52,26 +56,53 @@ export default function FuneralPolicyForm() {
       date_of_birth: "",
       phone_number: "",
       email: "",
-      product_type: undefined as any,
+      product_type: "funeral_policy" as const,
       residential_address: "",
       city: "",
       postal_code: "",
+      account_name: "",
+      bank_name: "",
+      account_number: "",
+      branch_code: "",
+      account_type: undefined as any,
+      beneficiaries: Array.from({ length: 5 }, () => ({
+        first_name: "",
+        last_name: "",
+        id_number: "",
+        relationship: undefined as any,
+        percentage: 0,
+        phone_number: "",
+        email: "",
+      })),
       terms_and_conditions: false,
       privacy_policy: false,
     },
   });
 
-  const onSubmit = (values: any) => {
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "beneficiaries",
+  });
+
+  const onSubmit = (values: FuneralForm) => {
     const fd = new FormData();
+
+    // Handle basic fields
     Object.entries(values).forEach(([k, v]) => {
-      if (typeof v === "boolean") {
+      if (k === "beneficiaries") {
+        // Handle beneficiaries separately
+        fd.append(k, JSON.stringify(v));
+      } else if (typeof v === "boolean") {
         fd.append(k, v ? "true" : "false");
       } else if (typeof v === "number" && Number.isFinite(v)) {
         fd.append(k, String(v));
       } else if (typeof v === "string" && v !== "") {
         fd.append(k, v);
+      } else if (v !== undefined && v !== null) {
+        fd.append(k, String(v));
       }
     });
+
     startTransition(() => formAction(fd));
   };
 
@@ -112,8 +143,8 @@ export default function FuneralPolicyForm() {
                   <FormLabel>Product</FormLabel>
                   <FormControl>
                     <Select
-                      onValueChange={(val) => field.onChange(val)}
-                      value={field.value}
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
                       disabled={loading}
                     >
                       <SelectTrigger className="w-full">
@@ -135,168 +166,439 @@ export default function FuneralPolicyForm() {
               )}
             />
           </Card>
-          <Card className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="first_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>First Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter first name" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="last_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Last Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter last name" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="id_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ID Number</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      maxLength={13}
-                      placeholder="13-digit SA ID"
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(value);
-                        const dob = extractDateOfBirthFromSAID(value);
-                        form.setValue("date_of_birth", dob ?? "", {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="date_of_birth"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Date of Birth</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="phone_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter phone" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      {...field}
-                      placeholder="name@example.com"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+          {/* Personal Information */}
+          <Card className="p-6">
+            <CardHeader className="px-0 pt-0">
+              <CardTitle>Personal Information</CardTitle>
+            </CardHeader>
+            <CardContent className="px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="first_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter first name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="last_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter last name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="id_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID Number</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Enter SA ID number"
+                        maxLength={13}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          const dob = extractDateOfBirthFromSAID(
+                            e.target.value
+                          );
+                          if (dob) {
+                            form.setValue("date_of_birth", dob);
+                          }
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="date_of_birth"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date of Birth</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="date"
+                        readOnly
+                        className="bg-muted"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter phone" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        {...field}
+                        placeholder="name@example.com"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
           </Card>
 
-          <Card className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField
-              control={form.control}
-              name="residential_address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Residential Address</FormLabel>
-                  <FormControl>
-                    <Input
-                      name={field.name}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
-                      onChange={field.onChange}
-                      value={field.value ?? ""}
-                      placeholder="Street and suburb"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>City</FormLabel>
-                  <FormControl>
-                    <Input
-                      name={field.name}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
-                      onChange={field.onChange}
-                      value={field.value ?? ""}
-                      placeholder="City"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="postal_code"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Postal Code</FormLabel>
-                  <FormControl>
-                    <Input
-                      name={field.name}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
-                      onChange={field.onChange}
-                      value={field.value ?? ""}
-                      maxLength={4}
-                      placeholder="0000"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {/* Address Information */}
+          <Card className="p-6">
+            <CardHeader className="px-0 pt-0">
+              <CardTitle>Address Information</CardTitle>
+            </CardHeader>
+            <CardContent className="px-0 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="residential_address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Residential Address</FormLabel>
+                    <FormControl>
+                      <Input
+                        name={field.name}
+                        onBlur={field.onBlur}
+                        ref={field.ref}
+                        onChange={field.onChange}
+                        value={field.value || ""}
+                        placeholder="Street and suburb"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City</FormLabel>
+                    <FormControl>
+                      <Input
+                        name={field.name}
+                        onBlur={field.onBlur}
+                        ref={field.ref}
+                        onChange={field.onChange}
+                        value={field.value || ""}
+                        placeholder="City"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="postal_code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Postal Code</FormLabel>
+                    <FormControl>
+                      <Input
+                        name={field.name}
+                        onBlur={field.onBlur}
+                        ref={field.ref}
+                        onChange={field.onChange}
+                        value={field.value || ""}
+                        maxLength={4}
+                        placeholder="0000"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
           </Card>
 
+          {/* Banking Details */}
+          <Card className="p-6">
+            <CardHeader className="px-0 pt-0">
+              <CardTitle>Banking Details</CardTitle>
+            </CardHeader>
+            <CardContent className="px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="account_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Account Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Account holder name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="bank_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bank Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Bank name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="account_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Account Number</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Account number" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="branch_code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Branch Code</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Branch code"
+                        maxLength={6}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="account_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Account Type</FormLabel>
+                    <FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || ""}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select account type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="savings">Savings</SelectItem>
+                          <SelectItem value="transaction">
+                            Transaction
+                          </SelectItem>
+                          <SelectItem value="current">Current</SelectItem>
+                          <SelectItem value="business">Business</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Covered People (Beneficiaries) */}
+          <Card className="p-6">
+            <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
+              <CardTitle>Covered People ({fields.length})</CardTitle>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    append({
+                      first_name: "",
+                      last_name: "",
+                      id_number: "",
+                      relationship: undefined as any,
+                      percentage: 0,
+                      phone_number: "",
+                      email: "",
+                    })
+                  }
+                  disabled={fields.length >= 10}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Person
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="px-0 space-y-4">
+              {fields.map((field, index) => (
+                <Card key={field.id} className="p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-medium">Person {index + 1}</h4>
+                    {fields.length > 5 && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name={`beneficiaries.${index}.first_name`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>First Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="First name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`beneficiaries.${index}.last_name`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Last name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`beneficiaries.${index}.id_number`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>ID Number</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="SA ID number"
+                              maxLength={13}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`beneficiaries.${index}.relationship`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Relationship</FormLabel>
+                          <FormControl>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value || ""}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select relationship" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="spouse">Spouse</SelectItem>
+                                <SelectItem value="child">Child</SelectItem>
+                                <SelectItem value="parent">Parent</SelectItem>
+                                <SelectItem value="sibling">Sibling</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`beneficiaries.${index}.phone_number`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value || ""}
+                              placeholder="Phone number"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`beneficiaries.${index}.email`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value || ""}
+                              type="email"
+                              placeholder="Email address"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </Card>
+              ))}
+              {fields.length < 5 && (
+                <p className="text-sm text-muted-foreground">
+                  Please add at least 5 covered people.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Terms and Conditions */}
           <Card className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
