@@ -23,7 +23,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Mail, FileText, AlertCircle, Loader2, CheckCircle } from "lucide-react";
+import {
+  Mail,
+  FileText,
+  AlertCircle,
+  Loader2,
+  CheckCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 
 // Schema now supports multiple selected credit report ids
@@ -163,7 +169,9 @@ export function EmailApplication({ id, creditReports }: EmailApplicationProps) {
       setTimeout(() => setIsSuccess(false), 3000);
     } catch (error) {
       console.error("Failed to send email:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to send email");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to send email"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -174,14 +182,16 @@ export function EmailApplication({ id, creditReports }: EmailApplicationProps) {
       <div className="w-full max-w-2xl mx-auto">
         <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Application ID is required to send emails.</AlertDescription>
+          <AlertDescription>
+            Application ID is required to send emails.
+          </AlertDescription>
         </Alert>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full max-w-2xl">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -189,7 +199,8 @@ export function EmailApplication({ id, creditReports }: EmailApplicationProps) {
             Send Email to Applicant
           </CardTitle>
           <CardDescription>
-            Send a message to the loan applicant via email. Optionally attach credit reports and other files.
+            Send a message to the loan applicant via email. Optionally attach
+            credit reports and other files.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -203,7 +214,10 @@ export function EmailApplication({ id, creditReports }: EmailApplicationProps) {
           )}
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-6"
+            >
               <FormField
                 control={form.control}
                 name="subject"
@@ -211,7 +225,11 @@ export function EmailApplication({ id, creditReports }: EmailApplicationProps) {
                   <FormItem>
                     <FormLabel>Email Subject</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter email subject" disabled={isLoading} />
+                      <Input
+                        {...field}
+                        placeholder="Enter email subject"
+                        disabled={isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -242,7 +260,8 @@ export function EmailApplication({ id, creditReports }: EmailApplicationProps) {
                 {creditReports.length > 0 && (
                   <div className="space-y-3">
                     <p className="text-sm font-medium flex items-center gap-2">
-                      <FileText className="h-4 w-4" /> Select Credit Reports to Attach
+                      <FileText className="h-4 w-4" /> Select Credit Reports to
+                      Attach
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {creditReports.map((report, index) => {
@@ -257,22 +276,30 @@ export function EmailApplication({ id, creditReports }: EmailApplicationProps) {
                             onClick={() => toggleReport(report.id)}
                             className={selected ? "border-blue-600" : ""}
                           >
-                            {selected ? "✓ " : ""}Report #{index + 1} – {new Date(report.created_at).toLocaleDateString()}
+                            {selected ? "✓ " : ""}Report #{index + 1} –{" "}
+                            {new Date(report.created_at).toLocaleDateString()}
                           </Button>
                         );
                       })}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {selectedReportIds.length} of {creditReports.length} selected
+                      {selectedReportIds.length} of {creditReports.length}{" "}
+                      selected
                     </p>
                   </div>
                 )}
 
                 <div className="space-y-2">
                   <p className="text-sm font-medium flex items-center gap-2">
-                    <FileText className="h-4 w-4" /> Attach Additional Files (Optional)
+                    <FileText className="h-4 w-4" /> Attach Additional Files
+                    (Optional)
                   </p>
-                  <Input type="file" multiple disabled={isLoading} onChange={handleFileChange} />
+                  <Input
+                    type="file"
+                    multiple
+                    disabled={isLoading}
+                    onChange={handleFileChange}
+                  />
                   {attachedFiles.length > 0 && (
                     <ul className="text-xs text-muted-foreground list-disc ml-4 space-y-1">
                       {attachedFiles.map((f) => (
@@ -284,13 +311,18 @@ export function EmailApplication({ id, creditReports }: EmailApplicationProps) {
                   )}
                   {readingFiles && (
                     <p className="text-xs text-blue-600 flex items-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" /> Preparing attachments...
+                      <Loader2 className="h-3 w-3 animate-spin" /> Preparing
+                      attachments...
                     </p>
                   )}
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading || readingFiles}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || readingFiles}
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
