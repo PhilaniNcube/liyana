@@ -24,6 +24,7 @@ import {
 import { format } from "date-fns";
 import WhoYouIdVerificationResults from "@/components/application-detail/whoyou-id-results";
 import WhoYouBankVerificationResults from "@/components/application-detail/whoyou-bank-results";
+import WhoYouCellphoneVerificationResults from "@/components/application-detail/whoyou-cellphone-results";
 
 interface CreditCheckData {
   creditScore?: number;
@@ -83,6 +84,32 @@ const ApiCheckCard = ({ check }: { check: ApiCheck }) => {
     const p = payload as any;
     const info = p?.detail?.accountVerificationInformation;
     return typeof p.code === "number" && Array.isArray(info);
+  };
+
+  const isWhoYouCellphonePayload = (
+    payload: unknown
+  ): payload is {
+    code: number;
+    detail?: {
+      idNumberProvided?: string;
+      phoneNumberProvided?: string;
+      isMatch?: boolean;
+      score?: number;
+      phoneNumberType?: string;
+    };
+  } => {
+    if (!payload || typeof payload !== "object") return false;
+    const p = payload as any;
+    const d = p?.detail;
+    return (
+      typeof p.code === "number" &&
+      d &&
+      typeof d === "object" &&
+      typeof d.phoneNumberProvided === "string" &&
+      typeof d.idNumberProvided === "string" &&
+      typeof d.isMatch === "boolean" &&
+      typeof d.phoneNumberType === "string"
+    );
   };
 
   const getStatusIcon = (status: string) => {
@@ -439,6 +466,14 @@ const ApiCheckCard = ({ check }: { check: ApiCheck }) => {
 
   if (isWhoYouIdPayload(check.response_payload)) {
     return <WhoYouIdVerificationResults data={check.response_payload as any} />;
+  }
+
+  if (isWhoYouCellphonePayload(check.response_payload)) {
+    return (
+      <WhoYouCellphoneVerificationResults
+        data={check.response_payload as any}
+      />
+    );
   }
 
   switch (check.check_type) {
