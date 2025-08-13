@@ -98,6 +98,8 @@ export async function POST(request: NextRequest) {
   });
 
   if (!verificationResponse.ok) {
+    console.error("Who You API verification error:", verificationResponse.statusText);
+    console.error("Who You API verification response:", await verificationResponse.json());
     return NextResponse.json(
       { error: "Failed to verify ID number" },
       { status: 500 }
