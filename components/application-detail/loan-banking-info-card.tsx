@@ -223,10 +223,16 @@ export function LoanBankingInfoCard({ application }: LoanBankingInfoCardProps) {
 
         <Separator />
 
-        <div className="flex justify-center">
+        <div className="flex justify-between bg-yellow-200 p-3 rounded-lg">
+          <div>
+            <p className="text-sm font-medium">Bank Account Verification</p>
+            <p className="text-sm">
+              Verify the bank account details provided by the applicant.
+            </p>
+          </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="">
                 <Shield className="h-4 w-4 mr-2" />
                 Verify Bank Account
               </Button>

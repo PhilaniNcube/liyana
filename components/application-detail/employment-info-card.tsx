@@ -57,7 +57,7 @@ export function EmploymentInfoCard({ application }: EmploymentInfoCardProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between bg-yellow-200 p-3 rounded-lg">
           <CardTitle className="flex items-center">
             <Building className="h-5 w-5 mr-2" />
             Employment Information
