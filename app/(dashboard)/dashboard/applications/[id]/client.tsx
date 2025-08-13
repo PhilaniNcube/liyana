@@ -425,7 +425,7 @@ export function ApplicationDetailClient({
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between bg-yellow-200 p-3 rounded-lg">
                   <div>
                     <p className="text-sm font-medium">Email Address</p>
                     <p className="text-sm text-muted-foreground">

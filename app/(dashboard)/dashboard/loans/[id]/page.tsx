@@ -14,6 +14,7 @@ import { ProfileDocumentsDisplay } from "@/components/profile-documents-display"
 import { ProfileDocumentUpload } from "../_components/profile-document-upload";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DownloadAgreementButton } from "./_components/download-agreement-button";
+import { DownloadCreditAgreementButton } from "./_components/download-credit-agreement-button";
 
 interface PageProps {
   params: Promise<{ id: number }>;
@@ -46,7 +47,10 @@ const LoanPage = async ({ params }: PageProps) => {
           <CardContent className="pt-4">
             <LoanOverview loan={loan} />
             <div className="mt-4 pt-4 border-t">
-              <DownloadAgreementButton loanId={loan.id} />
+              <div className="flex gap-2 flex-wrap bg-yellow-200 p-3 w-fit">
+                <DownloadAgreementButton loanId={loan.id} />
+                <DownloadCreditAgreementButton loanId={loan.id} />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -54,7 +58,7 @@ const LoanPage = async ({ params }: PageProps) => {
         <Separator />
 
         <BorrowerDetails applicationId={loan.application_id} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 ">
           <ProfileDocumentsDisplay profileId={loan.profile_id} className="" />
           <ProfileDocumentUpload
             className="h-full"

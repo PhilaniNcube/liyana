@@ -218,13 +218,11 @@ export function PersonalInfoCard({ application }: PersonalInfoCardProps) {
       <CardContent className="space-y-4">
         {application.profile && (
           <>
-            <div className="bg-blue-50 p-3 rounded-lg">
+            <div className="bg-yellow-200 p-3 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-900">
-                    Applicant Name
-                  </p>
-                  <p className="text-lg font-semibold text-blue-800">
+                  <p className="text-sm font-medium">Applicant Name</p>
+                  <p className="text-lg font-semibold">
                     {application.profile.full_name || "Name not provided"}
                   </p>
                 </div>
@@ -632,13 +630,11 @@ export function PersonalInfoCard({ application }: PersonalInfoCardProps) {
         {application.profile?.phone_number && (
           <>
             <Separator />
-            <div className="bg-blue-50 p-3 rounded-lg">
+            <div className="bg-yellow-200 p-3 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-900">
-                    Phone Number
-                  </p>
-                  <p className="text-lg font-semibold text-blue-800">
+                  <p className="text-sm font-medium">Phone Number</p>
+                  <p className="text-lg font-semibold">
                     {application.profile.phone_number}
                   </p>
                 </div>
