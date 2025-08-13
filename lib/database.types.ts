@@ -823,6 +823,35 @@ export type Database = {
         }
         Relationships: []
       }
+      resend_emails: {
+        Row: {
+          created_at: string
+          id: number
+          profile_id: string
+          resend_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          profile_id: string
+          resend_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          profile_id?: string
+          resend_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resend_emails_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number

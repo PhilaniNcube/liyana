@@ -90,6 +90,13 @@ export async function POST(request: NextRequest) {
         .eq("id", application.user_id)
         .single();
 
+    if (applicantProfileError || !applicantProfile) {
+      return NextResponse.json(
+        { error: "Applicant profile not found" },
+        { status: 404 }
+      );
+    }
+
     // Get user email from auth user (more reliable than profile table)
     const { data: applicationUser, error: authUserError } =
       await supabase.auth.admin.getUserById(application.user_id);
@@ -226,6 +233,20 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("Email sent successfully:", emailData);
+
+    if (!emailData || !emailData.id) {
+      return NextResponse.json(
+        { error: "Email sent but no ID returned" },
+        { status: 500 }
+      );
+    }
+
+    // when an email is sent successfully, save the email_id in the resend_emails table
+    await supabase
+      .from("resend_emails").insert({
+        resend_id: emailData?.id,
+        profile_id: applicantProfile.id, 
+      });
 
     return NextResponse.json({
       success: true,
