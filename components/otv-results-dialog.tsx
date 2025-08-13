@@ -177,302 +177,334 @@ export function OtvResultsDialog({
 
           {otvData && (
             <>
-              {/* Overall Status */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    Verification Status
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Overall Status:</span>
-                    <Badge
-                      className={getStatusColor(
-                        otvData.otvResults.detail.otvStatus?.name || "N/A"
-                      )}
-                    >
-                      {getStatusIcon(
-                        otvData.otvResults.detail.otvStatus?.name || "N/A"
-                      )}
-                      <span className="ml-2">
-                        {otvData.otvResults.detail.otvStatus?.name || "N/A"}
-                      </span>
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">HANIS Result:</span>
-                    <Badge
-                      className={getStatusColor(
-                        otvData.otvResults.detail.hanisResult || "N/A"
-                      )}
-                    >
-                      {getStatusIcon(
-                        otvData.otvResults.detail.hanisResult || "N/A"
-                      )}
-                      <span className="ml-2">
-                        {otvData.otvResults.detail.hanisResult || "N/A"}
-                      </span>
-                    </Badge>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    <p>
-                      <strong>Status Description:</strong>{" "}
-                      {otvData.otvResults.detail.otvStatus?.description ||
-                        "N/A"}
-                    </p>
-                    <p>
-                      <strong>Data Source:</strong>{" "}
-                      {otvData.otvResults.detail.dataSource || "N/A"}
-                    </p>
-                    <p>
-                      <strong>Verification Date:</strong>{" "}
-                      {formatDate(otvData.otvResults.detail.dateStamp)}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Personal Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Personal Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium">ID Number</p>
-                    <p className="text-sm text-muted-foreground font-mono">
-                      {otvData.otvResults.detail.idNumber || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Full Name</p>
-                    <p className="text-sm text-muted-foreground">
-                      {otvData.otvResults.detail.firstNames || "N/A"}{" "}
-                      {otvData.otvResults.detail.surname || ""}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Date of Birth</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(otvData.otvResults.detail.dateOfBirth) ||
-                        "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Gender</p>
-                    <p className="text-sm text-muted-foreground">
-                      {otvData.otvResults.detail.gender || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Status</p>
-                    <p className="text-sm text-muted-foreground">
-                      {otvData.otvResults.detail.status || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Country Code</p>
-                    <p className="text-sm text-muted-foreground">
-                      {otvData.otvResults.detail.idvCountryCode || "N/A"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Document Verification */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Document Verification
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium">Face Verification</p>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          className={getStatusColor(
-                            otvData.otvResults.detail.documentResult
-                              ?.faceVerificationResult || "N/A"
-                          )}
-                        >
-                          {otvData.otvResults.detail.documentResult
-                            ?.faceVerificationResult || "N/A"}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          Score:{" "}
-                          {otvData.otvResults.detail.documentResult
-                            ?.faceVerificationScore || "N/A"}
-                          {otvData.otvResults.detail.documentResult
-                            ?.faceVerificationScore
-                            ? "%"
-                            : ""}
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">
-                        Information Verification
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          className={getStatusColor(
-                            otvData.otvResults.detail.documentResult
-                              ?.informationResult || "N/A"
-                          )}
-                        >
-                          {otvData.otvResults.detail.documentResult
-                            ?.informationResult || "N/A"}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          Score:{" "}
-                          {otvData.otvResults.detail.documentResult
-                            ?.informationScore || "N/A"}
-                          {otvData.otvResults.detail.documentResult
-                            ?.informationScore
-                            ? "%"
-                            : ""}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div>
-                    <p className="text-sm font-medium mb-2">
-                      Document Information
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              {/* Check if we have detail data */}
+              {!otvData.otvResults.detail ? (
+                <Card className="border-amber-200 bg-amber-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-2 text-amber-700">
+                      <AlertTriangle className="h-5 w-5" />
                       <div>
-                        <p>
-                          <strong>Document Type:</strong>{" "}
-                          {otvData.otvResults.detail.documentResult
-                            ?.allDocumentCaptureInformation?.documentType ||
-                            "N/A"}
+                        <p className="font-medium">OTV Verification Pending</p>
+                        <p className="text-sm text-amber-600">
+                          The OTV verification has been initiated (Code:{" "}
+                          {otvData.otvResults.code}), but the customer has not
+                          yet completed the verification process on their end.
                         </p>
-                        <p>
-                          <strong>Document Number:</strong>{" "}
-                          {otvData.otvResults.detail.documentResult
-                            ?.allDocumentCaptureInformation?.documentNumber ||
-                            "N/A"}
-                        </p>
-                        <p>
-                          <strong>Nationality:</strong>{" "}
-                          {otvData.otvResults.detail.documentResult
-                            ?.allDocumentCaptureInformation?.nationality ||
-                            "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <p>
-                          <strong>Country of Birth:</strong>{" "}
-                          {otvData.otvResults.detail.documentResult
-                            ?.allDocumentCaptureInformation?.countryOfBirth ||
-                            "N/A"}
-                        </p>
-                        <p>
-                          <strong>Issuing Country:</strong>{" "}
-                          {otvData.otvResults.detail.documentResult
-                            ?.allDocumentCaptureInformation
-                            ?.issuingCountryCode || "N/A"}
-                        </p>
-                        <p>
-                          <strong>MRZ Status:</strong>{" "}
-                          {otvData.otvResults.detail.documentResult
-                            ?.allDocumentCaptureInformation?.mrzStatus || "N/A"}
+                        <p className="text-xs text-amber-600 mt-2">
+                          Please ask the customer to complete their identity
+                          verification to proceed.
                         </p>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* HANIS Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    HANIS Verification
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium">HANIS ID</p>
-                    <p className="text-sm text-muted-foreground font-mono">
-                      {otvData.otvResults.detail.hanisID}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">HANIS Reference</p>
-                    <p className="text-sm text-muted-foreground">
-                      {otvData.otvResults.detail.hanisReference}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">HANIS Type</p>
-                    <p className="text-sm text-muted-foreground">
-                      {otvData.otvResults.detail.hanisType}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">DHA Verified</p>
-                    <div className="flex items-center gap-2">
-                      {otvData.otvResults.detail.dhaVerified ? (
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-600" />
-                      )}
-                      <span className="text-sm text-muted-foreground">
-                        {otvData.otvResults.detail.dhaVerified ? "Yes" : "No"}
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">On File Match</p>
-                    <div className="flex items-center gap-2">
-                      {otvData.otvResults.detail.onFileMatch ? (
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-600" />
-                      )}
-                      <span className="text-sm text-muted-foreground">
-                        {otvData.otvResults.detail.onFileMatch ? "Yes" : "No"}
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">HANIS Error Code</p>
-                    <p className="text-sm text-muted-foreground">
-                      {otvData.otvResults.detail.hanisError}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Photos Available */}
-              {otvData.otvResults.detail.photo && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Eye className="h-5 w-5" />
-                      Photo Available
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      Profile photo and document photos have been captured and
-                      are available for verification.
-                    </p>
                   </CardContent>
                 </Card>
+              ) : (
+                <>
+                  {/* Overall Status */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Shield className="h-5 w-5" />
+                        Verification Status
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">Overall Status:</span>
+                        <Badge
+                          className={getStatusColor(
+                            otvData.otvResults.detail.otvStatus?.name || "N/A"
+                          )}
+                        >
+                          {getStatusIcon(
+                            otvData.otvResults.detail.otvStatus?.name || "N/A"
+                          )}
+                          <span className="ml-2">
+                            {otvData.otvResults.detail.otvStatus?.name || "N/A"}
+                          </span>
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">HANIS Result:</span>
+                        <Badge
+                          className={getStatusColor(
+                            otvData.otvResults.detail.hanisResult || "N/A"
+                          )}
+                        >
+                          {getStatusIcon(
+                            otvData.otvResults.detail.hanisResult || "N/A"
+                          )}
+                          <span className="ml-2">
+                            {otvData.otvResults.detail.hanisResult || "N/A"}
+                          </span>
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        <p>
+                          <strong>Status Description:</strong>{" "}
+                          {otvData.otvResults.detail.otvStatus?.description ||
+                            "N/A"}
+                        </p>
+                        <p>
+                          <strong>Data Source:</strong>{" "}
+                          {otvData.otvResults.detail.dataSource || "N/A"}
+                        </p>
+                        <p>
+                          <strong>Verification Date:</strong>{" "}
+                          {formatDate(otvData.otvResults.detail.dateStamp)}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Personal Information */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        Personal Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium">ID Number</p>
+                        <p className="text-sm text-muted-foreground font-mono">
+                          {otvData.otvResults.detail.idNumber || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Full Name</p>
+                        <p className="text-sm text-muted-foreground">
+                          {otvData.otvResults.detail.firstNames || "N/A"}{" "}
+                          {otvData.otvResults.detail.surname || ""}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Date of Birth</p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDate(otvData.otvResults.detail.dateOfBirth) ||
+                            "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Gender</p>
+                        <p className="text-sm text-muted-foreground">
+                          {otvData.otvResults.detail.gender || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Status</p>
+                        <p className="text-sm text-muted-foreground">
+                          {otvData.otvResults.detail.status || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Country Code</p>
+                        <p className="text-sm text-muted-foreground">
+                          {otvData.otvResults.detail.idvCountryCode || "N/A"}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Document Verification */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Document Verification
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium">
+                            Face Verification
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              className={getStatusColor(
+                                otvData.otvResults.detail.documentResult
+                                  ?.faceVerificationResult || "N/A"
+                              )}
+                            >
+                              {otvData.otvResults.detail.documentResult
+                                ?.faceVerificationResult || "N/A"}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">
+                              Score:{" "}
+                              {otvData.otvResults.detail.documentResult
+                                ?.faceVerificationScore || "N/A"}
+                              {otvData.otvResults.detail.documentResult
+                                ?.faceVerificationScore
+                                ? "%"
+                                : ""}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            Information Verification
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              className={getStatusColor(
+                                otvData.otvResults.detail.documentResult
+                                  ?.informationResult || "N/A"
+                              )}
+                            >
+                              {otvData.otvResults.detail.documentResult
+                                ?.informationResult || "N/A"}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">
+                              Score:{" "}
+                              {otvData.otvResults.detail.documentResult
+                                ?.informationScore || "N/A"}
+                              {otvData.otvResults.detail.documentResult
+                                ?.informationScore
+                                ? "%"
+                                : ""}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div>
+                        <p className="text-sm font-medium mb-2">
+                          Document Information
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p>
+                              <strong>Document Type:</strong>{" "}
+                              {otvData.otvResults.detail.documentResult
+                                ?.allDocumentCaptureInformation?.documentType ||
+                                "N/A"}
+                            </p>
+                            <p>
+                              <strong>Document Number:</strong>{" "}
+                              {otvData.otvResults.detail.documentResult
+                                ?.allDocumentCaptureInformation
+                                ?.documentNumber || "N/A"}
+                            </p>
+                            <p>
+                              <strong>Nationality:</strong>{" "}
+                              {otvData.otvResults.detail.documentResult
+                                ?.allDocumentCaptureInformation?.nationality ||
+                                "N/A"}
+                            </p>
+                          </div>
+                          <div>
+                            <p>
+                              <strong>Country of Birth:</strong>{" "}
+                              {otvData.otvResults.detail.documentResult
+                                ?.allDocumentCaptureInformation
+                                ?.countryOfBirth || "N/A"}
+                            </p>
+                            <p>
+                              <strong>Issuing Country:</strong>{" "}
+                              {otvData.otvResults.detail.documentResult
+                                ?.allDocumentCaptureInformation
+                                ?.issuingCountryCode || "N/A"}
+                            </p>
+                            <p>
+                              <strong>MRZ Status:</strong>{" "}
+                              {otvData.otvResults.detail.documentResult
+                                ?.allDocumentCaptureInformation?.mrzStatus ||
+                                "N/A"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* HANIS Information */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Shield className="h-5 w-5" />
+                        HANIS Verification
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium">HANIS ID</p>
+                        <p className="text-sm text-muted-foreground font-mono">
+                          {otvData.otvResults.detail.hanisID}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">HANIS Reference</p>
+                        <p className="text-sm text-muted-foreground">
+                          {otvData.otvResults.detail.hanisReference}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">HANIS Type</p>
+                        <p className="text-sm text-muted-foreground">
+                          {otvData.otvResults.detail.hanisType}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">DHA Verified</p>
+                        <div className="flex items-center gap-2">
+                          {otvData.otvResults.detail.dhaVerified ? (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-600" />
+                          )}
+                          <span className="text-sm text-muted-foreground">
+                            {otvData.otvResults.detail.dhaVerified
+                              ? "Yes"
+                              : "No"}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">On File Match</p>
+                        <div className="flex items-center gap-2">
+                          {otvData.otvResults.detail.onFileMatch ? (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-600" />
+                          )}
+                          <span className="text-sm text-muted-foreground">
+                            {otvData.otvResults.detail.onFileMatch
+                              ? "Yes"
+                              : "No"}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">HANIS Error Code</p>
+                        <p className="text-sm text-muted-foreground">
+                          {otvData.otvResults.detail.hanisError}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Photos Available */}
+                  {otvData.otvResults.detail.photo && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Eye className="h-5 w-5" />
+                          Photo Available
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Profile photo and document photos have been captured
+                          and are available for verification.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
               )}
             </>
           )}
