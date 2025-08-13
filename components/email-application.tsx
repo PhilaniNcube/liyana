@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,27 +22,15 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Mail,
-  FileText,
-  AlertCircle,
-  Loader2,
-  CheckCircle,
-} from "lucide-react";
+import { Mail, FileText, AlertCircle, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
+// Schema now supports multiple selected credit report ids
 const emailSchema = z.object({
   subject: z.string().min(1, "Subject is required"),
   message: z.string().min(1, "Message is required"),
-  selectedReportId: z.string().optional(), // ID of the selected credit report
+  selectedReportIds: z.array(z.string()).optional(),
 });
 
 type EmailFormData = z.infer<typeof emailSchema>;
@@ -52,60 +40,117 @@ interface CreditReport {
   check_type: string;
   status: string;
   created_at: string;
-  report_data?: any;
+  report_data?: any; // expecting report_data.pRetData (base64 of a PDF or ZIP extracted PDF)
 }
 
 interface EmailApplicationProps {
-  applicationId: string;
+  id: number | string; // application id (can be number or string)
   creditReports: CreditReport[];
 }
 
-export function EmailApplication({
-  applicationId,
-  creditReports,
-}: EmailApplicationProps) {
+export function EmailApplication({ id, creditReports }: EmailApplicationProps) {
+  const applicationId = String(id);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [selectedReportIds, setSelectedReportIds] = useState<string[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [readingFiles, setReadingFiles] = useState(false);
 
   const form = useForm<EmailFormData>({
     resolver: zodResolver(emailSchema),
     defaultValues: {
       subject: "",
       message: "",
-      selectedReportId: "",
+      selectedReportIds: [],
     },
   });
+
+  const readFileAsBase64 = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64 = result.includes("base64,")
+          ? result.split("base64,")[1]
+          : result;
+        resolve(base64);
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+
+  const toggleReport = useCallback(
+    (reportId: string) => {
+      setSelectedReportIds((prev) =>
+        prev.includes(reportId)
+          ? prev.filter((id) => id !== reportId)
+          : [...prev, reportId]
+      );
+      const current = form.getValues("selectedReportIds") || [];
+      form.setValue(
+        "selectedReportIds",
+        current.includes(reportId)
+          ? current.filter((id) => id !== reportId)
+          : [...current, reportId]
+      );
+    },
+    [form]
+  );
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setAttachedFiles(Array.from(e.target.files));
+    }
+  };
 
   const handleSubmit = async (data: EmailFormData) => {
     try {
       setIsLoading(true);
 
-      // Find the selected credit report and get its base64 data
-      let attachmentData: string | undefined;
-      if (data.selectedReportId && data.selectedReportId !== "") {
-        const selectedReport = creditReports.find(
-          (report) => report.id === data.selectedReportId
-        );
-        if (selectedReport && selectedReport.report_data?.pRetData) {
-          attachmentData = selectedReport.report_data.pRetData;
+      // Build attachments array (credit reports + arbitrary files)
+      const attachments: Array<{ filename: string; data: string }> = [];
+
+      // Credit report attachments
+      (data.selectedReportIds || []).forEach((rid, idx) => {
+        const report = creditReports.find((r) => r.id === rid);
+        if (report?.report_data?.pRetData) {
+          attachments.push({
+            filename: `credit-report-${idx + 1}.pdf`,
+            data: report.report_data.pRetData,
+          });
         }
+      });
+
+      // Arbitrary file attachments
+      if (attachedFiles.length > 0) {
+        setReadingFiles(true);
+        for (const file of attachedFiles) {
+          try {
+            const base64 = await readFileAsBase64(file);
+            attachments.push({ filename: file.name, data: base64 });
+          } catch (err) {
+            console.error("Failed to read file", file.name, err);
+            toast.error(`Failed to read file: ${file.name}`);
+          }
+        }
+        setReadingFiles(false);
       }
 
       const response = await fetch("/api/emails/application", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           applicationId: parseInt(applicationId),
           message: data.message,
           subject: data.subject,
-          attachmentData: attachmentData,
+          // Backward compatibility: existing API may look for attachmentData
+          attachmentData: attachments[0]?.data,
+          // New multi-attachment payload
+          attachments,
         }),
       });
 
       const result = await response.json();
-
       if (!response.ok) {
         throw new Error(result.error || "Failed to send email");
       }
@@ -113,14 +158,12 @@ export function EmailApplication({
       setIsSuccess(true);
       toast.success("Email sent successfully!");
       form.reset();
-
-      // Reset success state after 3 seconds
+      setSelectedReportIds([]);
+      setAttachedFiles([]);
       setTimeout(() => setIsSuccess(false), 3000);
     } catch (error) {
       console.error("Failed to send email:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to send email"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to send email");
     } finally {
       setIsLoading(false);
     }
@@ -131,9 +174,7 @@ export function EmailApplication({
       <div className="w-full max-w-2xl mx-auto">
         <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Application ID is required to send emails.
-          </AlertDescription>
+          <AlertDescription>Application ID is required to send emails.</AlertDescription>
         </Alert>
       </div>
     );
@@ -148,8 +189,7 @@ export function EmailApplication({
             Send Email to Applicant
           </CardTitle>
           <CardDescription>
-            Send a message to the loan applicant via email. Optionally attach
-            their credit report file.
+            Send a message to the loan applicant via email. Optionally attach credit reports and other files.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -163,10 +203,7 @@ export function EmailApplication({
           )}
 
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSubmit)}
-              className="space-y-6"
-            >
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
                 name="subject"
@@ -174,11 +211,7 @@ export function EmailApplication({
                   <FormItem>
                     <FormLabel>Email Subject</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Enter email subject"
-                        disabled={isLoading}
-                      />
+                      <Input {...field} placeholder="Enter email subject" disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -204,76 +237,60 @@ export function EmailApplication({
                 )}
               />
 
-              {/* Credit Report Attachment Option */}
-              {creditReports.length > 0 && (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="selectedReportId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <FileText className="h-4 w-4" />
-                          Attach Credit Report File (Optional)
-                        </FormLabel>
-                        <FormControl>
-                          <Select
-                            value={field.value || ""}
-                            onValueChange={field.onChange}
-                            disabled={isLoading}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a credit report to attach" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {creditReports.map((report, index) => (
-                                <SelectItem key={report.id} value={report.id}>
-                                  Credit Report #{index + 1} -{" "}
-                                  {new Date(
-                                    report.created_at
-                                  ).toLocaleDateString()}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Credit Report Status */}
-                  <div className="space-y-2">
-                    <p className="text-sm text-green-600 font-medium">
-                      ✓ {creditReports.length} credit report file
-                      {creditReports.length > 1 ? "s" : ""} available
+              {/* Credit Report Multi-Select & File Attachments */}
+              <div className="space-y-6">
+                {creditReports.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <FileText className="h-4 w-4" /> Select Credit Reports to Attach
                     </p>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="flex flex-wrap gap-2">
                       {creditReports.map((report, index) => {
-                        const isSelected =
-                          form.watch("selectedReportId") === report.id;
+                        const selected = selectedReportIds.includes(report.id);
                         return (
-                          <div
+                          <Button
                             key={report.id}
-                            className={`flex items-center gap-2 ${
-                              isSelected ? "font-medium text-blue-600" : ""
-                            }`}
+                            type="button"
+                            variant={selected ? "default" : "outline"}
+                            size="sm"
+                            disabled={isLoading}
+                            onClick={() => toggleReport(report.id)}
+                            className={selected ? "border-blue-600" : ""}
                           >
-                            <FileText
-                              className={`h-3 w-3 ${isSelected ? "text-blue-600" : ""}`}
-                            />
-                            Credit Report File #{index + 1} -{" "}
-                            {new Date(report.created_at).toLocaleDateString()}
-                            {isSelected && " (Selected)"}
-                          </div>
+                            {selected ? "✓ " : ""}Report #{index + 1} – {new Date(report.created_at).toLocaleDateString()}
+                          </Button>
                         );
                       })}
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedReportIds.length} of {creditReports.length} selected
+                    </p>
                   </div>
-                </div>
-              )}
+                )}
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <FileText className="h-4 w-4" /> Attach Additional Files (Optional)
+                  </p>
+                  <Input type="file" multiple disabled={isLoading} onChange={handleFileChange} />
+                  {attachedFiles.length > 0 && (
+                    <ul className="text-xs text-muted-foreground list-disc ml-4 space-y-1">
+                      {attachedFiles.map((f) => (
+                        <li key={f.name}>
+                          {f.name} ({(f.size / 1024).toFixed(1)} KB)
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {readingFiles && (
+                    <p className="text-xs text-blue-600 flex items-center gap-1">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Preparing attachments...
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading || readingFiles}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -19,12 +19,7 @@ const EmailApplicationWrapper = ({
   id,
   creditReports,
 }: EmailApplicationWrapperProps) => {
-  return (
-    <EmailApplication
-      applicationId={id.toString()}
-      creditReports={creditReports}
-    />
-  );
+  return <EmailApplication id={id.toString()} creditReports={creditReports} />;
 };
 
 export default EmailApplicationWrapper;

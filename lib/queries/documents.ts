@@ -63,10 +63,37 @@ export async function getDocumentById(id: number) {
   return data;
 }
 
+/**
+ * Fetch all documents related to an application INCLUDING any profile level documents
+ * that belong to the same user (profile_documents table).
+ *
+ * This keeps the original behaviour (returning application documents) but now
+ * augments the result set with profile documents so consuming UIs can show a
+ * comprehensive list of what has been provided. A `source` discriminator is
+ * added to each returned item ("application" | "profile") so existing code can
+ * filter if necessary. For backward compatibility, application documents keep
+ * their original shape; profile documents are normalised to a similar shape.
+ */
 export async function getDocumentsByApplication(applicationId: number) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  // 1. Get the application to obtain the user_id / profile_id
+  const { data: applicationRow, error: appError } = await supabase
+    .from("applications")
+    .select("id, user_id")
+    .eq("id", applicationId)
+    .single();
+
+  if (appError || !applicationRow) {
+    throw new Error(
+      `Failed to resolve application for documents: ${appError?.message || "not found"}`
+    );
+  }
+
+  const userId = applicationRow.user_id;
+
+  // 2. Fetch application-specific documents (original behaviour)
+  const { data: appDocs, error: appDocsError } = await supabase
     .from("documents")
     .select(
       `
@@ -77,13 +104,54 @@ export async function getDocumentsByApplication(applicationId: number) {
     .eq("application_id", applicationId)
     .order("uploaded_at", { ascending: false });
 
-  if (error) {
+  if (appDocsError) {
     throw new Error(
-      `Failed to fetch documents for application: ${error.message}`
+      `Failed to fetch documents for application: ${appDocsError.message}`
     );
   }
 
-  return data;
+  // 3. Fetch profile documents for the same user
+  const { data: profileDocs, error: profileDocsError } = await supabase
+    .from("profile_documents")
+    .select(
+      `id, created_at, document_type, path, profile_id, profiles(full_name)`
+    )
+    .eq("profile_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (profileDocsError) {
+    throw new Error(
+      `Failed to fetch profile documents: ${profileDocsError.message}`
+    );
+  }
+
+  // 4. Normalise profile documents into a shape similar to application documents
+  const normalisedProfileDocs = (profileDocs || []).map((pd) => ({
+    id: pd.id,
+    application_id: applicationId, // associate for UI grouping (no actual DB relation)
+    user_id: userId,
+    document_type: pd.document_type,
+    file_path: pd.path,
+    uploaded_at: pd.created_at,
+    // Keep original application join field absent; add profile meta
+    profile: { id: pd.profile_id, full_name: (pd as any).profiles?.full_name },
+    source: "profile" as const,
+  }));
+
+  // 5. Tag application docs with source discriminator
+  const taggedAppDocs = (appDocs || []).map((d: any) => ({
+    ...d,
+    source: "application" as const,
+  }));
+
+  // 6. Combine and sort by uploaded_at/created_at desc
+  const combined = [...taggedAppDocs, ...normalisedProfileDocs].sort((a, b) => {
+    const aDate = new Date(a.uploaded_at || a.created_at || 0).getTime();
+    const bDate = new Date(b.uploaded_at || b.created_at || 0).getTime();
+    return bDate - aDate;
+  });
+
+  return combined;
 }
 
 export async function getDocumentsByUser(userId: string) {
