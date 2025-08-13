@@ -43,7 +43,6 @@ import EmailApplication from "./email-application";
 import { EmailVerificationDialog } from "@/components/email-verification-dialog";
 import { ProfileDocumentUpload } from "@/components/profile-document-upload";
 import { ProfileDocumentsDisplay } from "@/components/profile-documents-display";
-import { OtvResultsDialog } from "@/components/otv-results-dialog";
 import { DecryptedApplication } from "@/lib/schemas";
 import { ApproveLoanModal } from "@/components/approve-loan-modal";
 import {
@@ -308,23 +307,6 @@ export function ApplicationDetailClient({
           <Button
             onSelect={(e) => {
               e.preventDefault();
-              handleOtvRequest();
-            }}
-            disabled={isSendingOtv}
-          >
-            <Send className="h-4 w-4" />
-            {isSendingOtv ? "Sending OTV Link..." : "Send OTV Link"}
-          </Button>
-
-          <OtvResultsDialog applicationId={application.id}>
-            <Button>
-              <Shield className="h-4 w-4" /> Check OTV Results
-            </Button>
-          </OtvResultsDialog>
-
-          <Button
-            onSelect={(e) => {
-              e.preventDefault();
               handleDeclineApplication();
             }}
             variant="destructive"
@@ -373,7 +355,11 @@ export function ApplicationDetailClient({
         </TabsList>
         <TabsContent value="personal-info">
           {/* Personal Information */}
-          <PersonalInfoCard application={application} />
+          <PersonalInfoCard
+            application={application}
+            onOtvRequest={handleOtvRequest}
+            isSendingOtv={isSendingOtv}
+          />
         </TabsContent>
         <TabsContent value="contact-info">
           {/* Contact Information */}
