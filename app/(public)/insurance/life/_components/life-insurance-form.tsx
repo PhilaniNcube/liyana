@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Trash2, Plus } from "lucide-react";
 
 type LifeForm = z.infer<typeof lifeInsuranceLeadSchemaWithRefines>;
@@ -83,6 +84,13 @@ export default function LifeInsuranceForm() {
     control: form.control,
     name: "beneficiaries",
   });
+
+  // Relationship category handling (UI-only; does not alter schema or DB enum)
+  const immediateRelationships = ["spouse", "child"] as const;
+  const extendedRelationships = ["parent", "sibling"] as const; // DB currently supports only these extended
+  const [relationshipCategories, setRelationshipCategories] = useState<
+    Record<string, "immediate" | "extended">
+  >({});
 
   const onSubmit = (values: LifeForm) => {
     const fd = new FormData();
@@ -178,7 +186,6 @@ export default function LifeInsuranceForm() {
               )}
             />
           </Card>
-
           {/* Personal Information */}
           <Card className="p-6">
             <CardHeader className="px-0 pt-0">
@@ -431,7 +438,7 @@ export default function LifeInsuranceForm() {
                         onValueChange={field.onChange}
                         value={field.value || ""}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select account type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -554,83 +561,188 @@ export default function LifeInsuranceForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Relationship</FormLabel>
-                          <FormControl>
+                          <div className="grid gap-2">
+                            {/* Category Radio Buttons */}
+                            <RadioGroup
+                              className="flex flex-row gap-6"
+                              value={
+                                relationshipCategories[field.name] ||
+                                (field.value &&
+                                (
+                                  immediateRelationships as readonly string[]
+                                ).includes(field.value)
+                                  ? "immediate"
+                                  : "extended")
+                              }
+                              onValueChange={(
+                                val: "immediate" | "extended"
+                              ) => {
+                                setRelationshipCategories((prev) => ({
+                                  ...prev,
+                                  [field.name]: val,
+                                }));
+                                const current = field.value as
+                                  | string
+                                  | undefined;
+                                if (
+                                  val === "immediate" &&
+                                  (!current ||
+                                    !(
+                                      immediateRelationships as readonly string[]
+                                    ).includes(current))
+                                ) {
+                                  field.onChange("spouse");
+                                } else if (
+                                  val === "extended" &&
+                                  (!current ||
+                                    !(
+                                      extendedRelationships as readonly string[]
+                                    ).includes(current))
+                                ) {
+                                  field.onChange("parent");
+                                }
+                              }}
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem
+                                  value="immediate"
+                                  id={`immediate-${index}`}
+                                />
+                                <label
+                                  htmlFor={`immediate-${index}`}
+                                  className="text-sm font-medium leading-none"
+                                >
+                                  Immediate
+                                </label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem
+                                  value="extended"
+                                  id={`extended-${index}`}
+                                />
+                                <label
+                                  htmlFor={`extended-${index}`}
+                                  className="text-sm font-medium leading-none"
+                                >
+                                  Extended
+                                </label>
+                              </div>
+                            </RadioGroup>
+                            {/* Relationship Value Select filtered by category */}
                             <Select
                               onValueChange={field.onChange}
                               value={field.value || ""}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Select relationship" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="spouse">Spouse</SelectItem>
-                                <SelectItem value="child">Child</SelectItem>
-                                <SelectItem value="parent">Parent</SelectItem>
-                                <SelectItem value="sibling">Sibling</SelectItem>
+                                {(relationshipCategories[field.name] ||
+                                  (field.value &&
+                                  (
+                                    immediateRelationships as readonly string[]
+                                  ).includes(field.value)
+                                    ? "immediate"
+                                    : "extended")) === "immediate" ? (
+                                  <>
+                                    {immediateRelationships.map((r) => (
+                                      <SelectItem key={r} value={r}>
+                                        {r.charAt(0).toUpperCase() +
+                                          r.slice(1).replace("_", " ")}
+                                      </SelectItem>
+                                    ))}
+                                  </>
+                                ) : (
+                                  <>
+                                    {extendedRelationships.map((r) => (
+                                      <SelectItem key={r} value={r}>
+                                        {r.charAt(0).toUpperCase() +
+                                          r.slice(1).replace("_", " ")}
+                                      </SelectItem>
+                                    ))}
+                                  </>
+                                )}
                               </SelectContent>
                             </Select>
-                          </FormControl>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name={`beneficiaries.${index}.percentage`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Percentage (%)</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              type="number"
-                              min="0"
-                              max="100"
-                              onChange={(e) =>
-                                field.onChange(Number(e.target.value))
-                              }
-                              placeholder="Percentage"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`beneficiaries.${index}.phone_number`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone Number (Optional)</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              value={field.value || ""}
-                              placeholder="Phone number"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`beneficiaries.${index}.email`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email (Optional)</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              value={field.value || ""}
-                              type="email"
-                              placeholder="Email address"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="col-span-full">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Enter the percentage allocation for this beneficiary.
+                      </p>
+                      <FormField
+                        control={form.control}
+                        name={`beneficiaries.${index}.percentage`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel
+                              htmlFor={`beneficiaries.${index}.percentage`}
+                            >
+                              Percentage (%)
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                type="number"
+                                min="0"
+                                max="100"
+                                onChange={(e) =>
+                                  field.onChange(Number(e.target.value))
+                                }
+                                placeholder="Percentage"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Phone & Email on a new row */}
+                    <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name={`beneficiaries.${index}.phone_number`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel
+                              htmlFor={`beneficiaries.${index}.phone_number`}
+                            >
+                              Phone Number (Optional)
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                value={field.value || ""}
+                                placeholder="Phone number"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`beneficiaries.${index}.email`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email (Optional)</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                value={field.value || ""}
+                                type="email"
+                                placeholder="Email address"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
                 </Card>
               ))}
