@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { createClient } from '@/lib/server';
+import { createServiceClient } from '@/lib/service';
 import { decryptValue } from '@/lib/encryption';
 
 export async function GET(
@@ -101,11 +102,51 @@ export async function GET(
 
   const pdfBytes = await pdfDoc.save();
 
+  // Attempt to upload the generated PDF to Supabase Storage & record in profile_documents
+  // This is best-effort; failures won't block returning the PDF to the requester.
+  (async () => {
+    try {
+      const service = await createServiceClient();
+      const profileId: string = profile.id;
+      const timestamp = Date.now();
+      const storagePath = `profile-documents/${profileId}/contract-pre-agreement-${applicationId}-${timestamp}.pdf`;
+
+      // Upload PDF bytes to the 'documents' bucket
+      const { error: uploadError } = await service.storage
+        .from('documents')
+        .upload(storagePath, pdfBytes, {
+          contentType: 'application/pdf',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error('[agreement][upload] Failed to upload PDF:', uploadError);
+        return; // Stop if upload failed
+      }
+
+      // Insert a profile_documents record with document_type 'contract'
+      const { error: insertError } = await service
+        .from('profile_documents')
+        .insert({
+          profile_id: profileId,
+          document_type: 'contract',
+          path: storagePath,
+        });
+
+      if (insertError) {
+        console.error('[agreement][insert] Failed to insert profile_documents record:', insertError);
+      }
+    } catch (e) {
+      console.error('[agreement] Unexpected error uploading & recording PDF:', e);
+    }
+  })();
+
   return new NextResponse(pdfBytes, {
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="pre-agreement-${applicationId}.pdf"`,
+      'X-Agreement-Uploaded': 'attempted',
     },
   });
 }

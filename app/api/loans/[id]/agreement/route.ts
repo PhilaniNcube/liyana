@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { createClient } from '@/lib/server';
+import { createServiceClient } from '@/lib/service';
 import { decryptValue } from '@/lib/encryption';
+import { revalidatePath } from 'next/cache';
 
 export async function GET(
   request: Request,
@@ -333,11 +335,48 @@ export async function GET(
 
   const pdfBytes = await pdfDoc.save();
 
+  // Best-effort async upload & DB record insertion (does not block response)
+  (async () => {
+    try {
+      const service = await createServiceClient();
+      const profileId: string = profile.id;
+      const timestamp = Date.now();
+      const storagePath = `profile-documents/${profileId}/contract-loan-pre-agreement-${loanId}-${timestamp}.pdf`;
+
+      const { error: uploadError } = await service.storage
+        .from('documents')
+        .upload(storagePath, pdfBytes, {
+          contentType: 'application/pdf',
+          upsert: false,
+        });
+      if (uploadError) {
+        console.error('[loan-agreement][upload] Failed to upload PDF:', uploadError);
+        return;
+      }
+
+      const { error: insertError } = await service
+        .from('profile_documents')
+        .insert({
+          profile_id: profileId,
+          document_type: 'contract',
+          path: storagePath,
+        });
+      if (insertError) {
+        console.error('[loan-agreement][insert] Failed to insert profile_documents record:', insertError);
+      }
+    } catch (e) {
+      console.error('[loan-agreement] Unexpected error during upload/record:', e);
+    }
+  })();
+
+  revalidatePath(`/dashboard/loans/${loanId}`);
+
   return new NextResponse(pdfBytes, {
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="pre-agreement-loan-${loanId}.pdf"`,
+      'X-Agreement-Uploaded': 'attempted',
     },
   });
 }
