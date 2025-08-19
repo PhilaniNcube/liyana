@@ -46,6 +46,18 @@ import { ProfileDocumentsDisplay } from "@/components/profile-documents-display"
 import { DecryptedApplication } from "@/lib/schemas";
 import { ApproveLoanModal } from "@/components/approve-loan-modal";
 import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { declineApplicationAction } from "@/lib/actions/applications";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -127,52 +139,19 @@ export function ApplicationDetailClient({
     toast.success("Profile document uploaded successfully");
   };
 
-  const handleDeclineApplication = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to decline this application? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
-
-    // Prompt for decline reason
-    const reason = prompt(
-      "Please provide a reason for declining this application (optional):"
-    );
-
+  const handleDeclineApplication = async (reason?: string) => {
     setIsDeclining(true);
     try {
-      const requestBody: any = {
-        status: "declined",
-      };
-
-      if (reason && reason.trim()) {
-        requestBody.decline_reason = reason.trim();
+      const res = await declineApplicationAction(application.id, reason);
+      if (!res.success) {
+        throw new Error(res.error || "Failed to decline application");
       }
-
-      const response = await fetch(
-        `/api/applications/${application.id}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to decline application");
-      }
-
       toast.success("Application has been declined successfully");
-
-      // Refresh the page to update the application status
+      // reload to show updated status (server action revalidated path but client may still have stale state)
       window.location.reload();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error declining application:", error);
-      toast.error("Failed to decline application. Please try again.");
+      toast.error(error.message || "Failed to decline application");
     } finally {
       setIsDeclining(false);
     }
@@ -283,7 +262,7 @@ export function ApplicationDetailClient({
           </ApproveLoanModal>
           {/* Primary action: Submit to BraveLender */}
           <Button
-            onSelect={(e) => {
+            onClick={(e) => {
               e.preventDefault();
               handleFraudCheck(
                 application,
@@ -291,6 +270,7 @@ export function ApplicationDetailClient({
                 setFraudCheckResults
               );
             }}
+            className="cursor-pointer"
             disabled={
               isRunningFraudCheck ||
               isDeclining ||
@@ -304,24 +284,77 @@ export function ApplicationDetailClient({
               : "Run Credit Check"}
           </Button>
 
-          <Button
-            onSelect={(e) => {
-              e.preventDefault();
-              handleDeclineApplication();
-            }}
-            variant="destructive"
-            disabled={
-              isSubmittingToBraveLender ||
-              isRunningFraudCheck ||
-              isDeclining ||
-              application.status === "declined" ||
-              application.status === "approved" ||
-              application.status === "submitted_to_lender"
-            }
-          >
-            <XCircle className="h-4 w-4" />
-            {isDeclining ? "Declining..." : "Decline Application"}
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                className="cursor-pointer"
+                disabled={
+                  isSubmittingToBraveLender ||
+                  isRunningFraudCheck ||
+                  isDeclining ||
+                  application.status === "declined" ||
+                  application.status === "approved" ||
+                  application.status === "submitted_to_lender"
+                }
+              >
+                <XCircle className="h-4 w-4" />
+                {isDeclining ? "Declining..." : "Decline Application"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Decline Application</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action will mark the application as declined. You can
+                  optionally provide a reason below. This cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="space-y-2">
+                <label htmlFor="decline-reason" className="text-sm font-medium">
+                  Decline Reason (optional)
+                </label>
+                <textarea
+                  id="decline-reason"
+                  className="w-full rounded-md border bg-background p-2 text-sm"
+                  rows={4}
+                  placeholder="Provide a brief reason..."
+                  disabled={isDeclining}
+                  onChange={(e) => {
+                    // store temporarily on the element dataset to avoid extra state
+                    (e.currentTarget as any).dataset.value =
+                      e.currentTarget.value;
+                  }}
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeclining}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={isDeclining}
+                  onClick={(e) => {
+                    const textarea = document.getElementById(
+                      "decline-reason"
+                    ) as HTMLTextAreaElement | null;
+                    const reason =
+                      textarea?.dataset.value || textarea?.value || undefined;
+                    handleDeclineApplication(reason);
+                  }}
+                >
+                  {isDeclining ? (
+                    <span className="flex items-center">
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Declining...
+                    </span>
+                  ) : (
+                    "Confirm Decline"
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           <Badge className={getStatusColor(application.status)}>
             {(() => {
