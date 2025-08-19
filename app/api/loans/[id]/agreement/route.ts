@@ -92,10 +92,10 @@ export async function GET(
   drawText('1. CREDIT PROVIDER DETAILS', 50, sectionFontSize, boldFont, true);
   addSpace(5);
   drawLine('Company Name', 'Liyana Financial Services (Pty) Ltd', 70);
-  drawLine('Registration Number', '[TO BE FILLED]', 70);
-  drawLine('NCR Registration Number', '[TO BE FILLED]', 70);
-  drawLine('Physical Address', '[TO BE FILLED]', 70);
-  drawLine('Contact Details', '[TO BE FILLED]', 70);
+  drawLine('Registration Number', '2023/790223/07', 70);
+  drawLine('NCR Registration Number', 'NCRCP18217', 70);
+  drawLine('Physical Address', '1 Hunter Street | Nelspruit | 1200 | Mpumalanga | South Africa', 70);
+  drawLine('Contact Details', '012 004 0889', 70);
   addSpace(15);
 
   // 2. CONSUMER DETAILS
