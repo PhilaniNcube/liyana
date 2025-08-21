@@ -95,7 +95,8 @@ export async function POST(
       principal: validatedData.loan_amount,
       termInDays: validatedData.loan_term,
       loanStartDate: new Date(),
-      monthlyInterestRate: validatedData.interest_rate / 100, // convert % to decimal
+      interestRate: validatedData.interest_rate / 100, // convert % to decimal
+      salaryDay: application.salary_date ? application.salary_date : undefined,
     });
 
     const initiationFee = calculator.getInitiationFee();
