@@ -87,6 +87,37 @@ export function LoanAndBankingStep({ form }: LoanAndBankingStepProps) {
     <div className="space-y-4">
       <FormField
         control={form.control}
+        name="salary_date"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Salary Date (Day of Month)</FormLabel>
+            <Select
+              onValueChange={(value) => field.onChange(Number(value))}
+              defaultValue={field.value ? String(field.value) : undefined}
+            >
+              <FormControl>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select your salary date" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                  <SelectItem key={day} value={String(day)}>
+                    {day}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              We ask for the date your salary reflects so we can align your
+              repayment schedule.
+            </p>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
         name="application_amount"
         render={({ field }) => (
           <FormItem>

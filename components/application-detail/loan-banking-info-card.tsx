@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -40,6 +42,7 @@ interface Application {
   next_of_kin_email: string | null;
   employment_type: string | null;
   monthly_income: number | null;
+  salary_date: number | null;
   job_title: string | null;
   work_experience: string | null;
   employer_name: string | null;
@@ -170,6 +173,27 @@ export function LoanBankingInfoCard({ application }: LoanBankingInfoCardProps) {
             </p>
             <p className="text-sm">{application.term} days</p>
           </div>
+          {application.salary_date && (
+            <div className="col-span-2">
+              <p className="text-sm font-medium text-muted-foreground">
+                Salary Date
+              </p>
+              <p className="text-sm">
+                {(() => {
+                  const d = application.salary_date!;
+                  const suffix =
+                    d % 10 === 1 && d % 100 !== 11
+                      ? "st"
+                      : d % 10 === 2 && d % 100 !== 12
+                        ? "nd"
+                        : d % 10 === 3 && d % 100 !== 13
+                          ? "rd"
+                          : "th";
+                  return `${d}${suffix} of each month`;
+                })()}
+              </p>
+            </div>
+          )}
         </div>
         <div>
           <p className="text-sm font-medium text-muted-foreground">

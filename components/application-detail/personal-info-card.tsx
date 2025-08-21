@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -365,7 +367,7 @@ export function PersonalInfoCard({
                                     <span className="text-xs text-muted-foreground">
                                       Gender
                                     </span>
-                                    <span className="text-xs">
+                                    <span className="text-xs capitalize">
                                       {idVerificationResult.gender}
                                     </span>
                                   </div>
@@ -416,7 +418,7 @@ export function PersonalInfoCard({
                                     <span className="text-xs text-muted-foreground">
                                       Marital Status
                                     </span>
-                                    <span className="text-xs">
+                                    <span className="text-xs capitalize">
                                       {idVerificationResult.maritalStatus}
                                     </span>
                                   </div>
@@ -631,7 +633,7 @@ export function PersonalInfoCard({
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">Gender</p>
-            <p className="text-sm">
+            <p className="text-sm capitalize">
               {application.gender || application.gender_other || "N/A"}
             </p>
           </div>
@@ -639,19 +641,25 @@ export function PersonalInfoCard({
             <p className="text-sm font-medium text-muted-foreground">
               Marital Status
             </p>
-            <p className="text-sm">{application.marital_status || "N/A"}</p>
+            <p className="text-sm capitalize">
+              {application.marital_status || "N/A"}
+            </p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
               Nationality
             </p>
-            <p className="text-sm">{application.nationality || "N/A"}</p>
+            <p className="text-sm capitalize">
+              {application.nationality || "N/A"}
+            </p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
               Language
             </p>
-            <p className="text-sm">{application.language || "N/A"}</p>
+            <p className="text-sm capitalize">
+              {application.language || "N/A"}
+            </p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
@@ -665,11 +673,13 @@ export function PersonalInfoCard({
           <p className="text-sm font-medium text-muted-foreground">
             Home Address
           </p>
-          <p className="text-sm">{application.home_address || "N/A"}</p>
+          <p className="text-sm capitalize">
+            {application.home_address || "N/A"}
+          </p>
         </div>
         <div>
           <p className="text-sm font-medium text-muted-foreground">City</p>
-          <p className="text-sm">{application.city || "N/A"}</p>
+          <p className="text-sm capitalize">{application.city || "N/A"}</p>
         </div>
         <div>
           <p className="text-sm font-medium text-muted-foreground">

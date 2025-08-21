@@ -74,6 +74,7 @@ export const loanApplicationSchema = z
     employer_contact_number: z.string().optional(),
     employment_end_date: z.string().optional(),
     // Loan and Banking Information
+    salary_date: z.number().min(25, "Salary date is required"),
     application_amount: z
       .number()
       .min(500, "Minimum loan amount is R500")
@@ -1400,6 +1401,7 @@ export interface DecryptedApplication {
   bank_account_type: string | null;
   bank_name: string | null;
   branch_code: string | null;
+  salary_date: number | null;
   bravelender_application_id: string | null;
   city: string | null;
   created_at: string;

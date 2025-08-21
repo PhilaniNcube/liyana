@@ -7,7 +7,7 @@
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -22,10 +22,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
+          extensions?: Json
           operationName?: string
           query?: string
           variables?: Json
-          extensions?: Json
         }
         Returns: Json
       }
@@ -108,6 +108,7 @@ export type Database = {
           next_of_kin_phone_number: string | null
           phone_number: string | null
           postal_code: string | null
+          salary_date: number | null
           status: Database["public"]["Enums"]["application_status"]
           term: number
           updated_at: string
@@ -154,6 +155,7 @@ export type Database = {
           next_of_kin_phone_number?: string | null
           phone_number?: string | null
           postal_code?: string | null
+          salary_date?: number | null
           status: Database["public"]["Enums"]["application_status"]
           term: number
           updated_at?: string
@@ -200,6 +202,7 @@ export type Database = {
           next_of_kin_phone_number?: string | null
           phone_number?: string | null
           postal_code?: string | null
+          salary_date?: number | null
           status?: Database["public"]["Enums"]["application_status"]
           term?: number
           updated_at?: string
@@ -920,8 +923,8 @@ export type Database = {
     Functions: {
       handle_new_user_signup: {
         Args:
-          | { user_id: string; user_full_name: string }
-          | { user_id: string; user_full_name: string; phone_number: string }
+          | { phone_number: string; user_full_name: string; user_id: string }
+          | { user_full_name: string; user_id: string }
         Returns: undefined
       }
       is_admin: {

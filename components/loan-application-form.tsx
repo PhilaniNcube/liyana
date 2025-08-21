@@ -378,6 +378,7 @@ export function LoanApplicationForm({
       term: 5,
       loan_purpose: "",
       loan_purpose_reason: "",
+      salary_date: 25,
       affordability: {
         income: [
           { type: "Bonus", amount: 0 },

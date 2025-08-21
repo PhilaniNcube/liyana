@@ -83,6 +83,9 @@ export async function submitLoanApplication(
     monthly_income: formData.get("monthly_income")
       ? parseFloat(formData.get("monthly_income") as string)
       : 0,
+    salary_date: formData.get("salary_date")
+      ? parseInt(formData.get("salary_date") as string)
+      : undefined,
     employer_address: formData.get("employer_address") || undefined,
     employer_contact_number:
       formData.get("employer_contact_number") || undefined,
@@ -184,6 +187,7 @@ export async function submitLoanApplication(
       employer_name: result.data.employer_name,
       job_title: result.data.job_title,
       monthly_income: result.data.monthly_income,
+  salary_date: result.data.salary_date,
       employer_address: result.data.employer_address,
       employer_contact_number: result.data.employer_contact_number,
       employment_end_date: formatDateForDB(result.data.employment_end_date),

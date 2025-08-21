@@ -1,21 +1,34 @@
 import { createClient } from "@/lib/server";
-import { z } from "zod";
-import type { Database } from "@/lib/types";
+import { decryptValue } from "@/lib/encryption";
 
-export async function getLoan(id:number) {
+// Fetch a single approved loan including its originating application
+export async function getLoan(id: number) {
+    const supabase = await createClient();
 
-    const supabase = await createClient()
+    const { data: loan, error: loanError } = await supabase
+        .from("approved_loans")
+        .select(
+            `
+            *,
+            application:applications(*)
+        `
+        )
+        .eq("id", id)
+        .single();
 
-    const {data:loan, error:loanError} = await supabase.from("approved_loans").select("*")
-    .eq("id", id)
-    .single();
-
-   
-    if(loanError || !loan) {
-        console.error(`Failed to fetch loan data ${loanError?.message}`)
-        throw new Error('Failed to fetch loan')
+    if (loanError || !loan) {
+        console.error(`Failed to fetch loan data ${loanError?.message}`);
+        throw new Error("Failed to fetch loan");
     }
 
-    return loan
+    // Decrypt sensitive application fields if present
+    if (loan.application && loan.application.id_number) {
+        try {
+            loan.application.id_number = decryptValue(loan.application.id_number);
+        } catch (e) {
+            console.warn("Failed to decrypt application id_number", e);
+        }
+    }
 
+    return loan;
 }

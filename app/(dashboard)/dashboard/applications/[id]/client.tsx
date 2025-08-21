@@ -65,6 +65,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ApplicationDetailClientProps {
   application: DecryptedApplication;
@@ -314,7 +315,7 @@ export function ApplicationDetailClient({
                 <label htmlFor="decline-reason" className="text-sm font-medium">
                   Decline Reason (optional)
                 </label>
-                <textarea
+                <Textarea
                   id="decline-reason"
                   className="w-full rounded-md border bg-background p-2 text-sm"
                   rows={4}

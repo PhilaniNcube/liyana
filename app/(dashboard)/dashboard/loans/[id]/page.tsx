@@ -15,6 +15,15 @@ import { ProfileDocumentUpload } from "../_components/profile-document-upload";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DownloadAgreementButton } from "./_components/download-agreement-button";
 import { DownloadCreditAgreementButton } from "./_components/download-credit-agreement-button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  PersonalInfoCard,
+  ContactInfoCard,
+  EmploymentInfoCard,
+  LoanBankingInfoCard,
+  AdditionalInfoCard,
+  FraudCheckResults,
+} from "@/components/application-detail";
 
 interface PageProps {
   params: Promise<{ id: number }>;
@@ -44,27 +53,56 @@ const LoanPage = async ({ params }: PageProps) => {
               {"Application and repayment details for the selected record."}
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-4">
+          <CardContent className="pt-4 space-y-6">
             <LoanOverview loan={loan} />
-            <div className="mt-4 pt-4 border-t">
+            <div className="pt-4 border-t">
               <div className="flex gap-2 flex-wrap bg-yellow-200 p-3 w-fit">
                 <DownloadAgreementButton loanId={loan.id} />
                 <DownloadCreditAgreementButton loanId={loan.id} />
               </div>
             </div>
+
+            {loan.application && (
+              <Tabs defaultValue="personal-info" className="mt-4">
+                <TabsList>
+                  <TabsTrigger value="personal-info">Personal Info</TabsTrigger>
+                  <TabsTrigger value="contact-info">Contact Info</TabsTrigger>
+                  <TabsTrigger value="employment-info">
+                    Employment Info
+                  </TabsTrigger>
+                  <TabsTrigger value="loan-banking-info">
+                    Loan & Banking Info
+                  </TabsTrigger>
+                  <TabsTrigger value="documents">Documents</TabsTrigger>
+                </TabsList>
+                <TabsContent value="personal-info">
+                  <PersonalInfoCard application={loan.application as any} />
+                </TabsContent>
+                <TabsContent value="contact-info">
+                  <ContactInfoCard application={loan.application as any} />
+                </TabsContent>
+                <TabsContent value="employment-info">
+                  <EmploymentInfoCard application={loan.application as any} />
+                </TabsContent>
+                <TabsContent value="loan-banking-info">
+                  <LoanBankingInfoCard application={loan.application as any} />
+                  <AdditionalInfoCard application={loan.application as any} />
+                </TabsContent>
+                <TabsContent value="documents">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <ProfileDocumentsDisplay profileId={loan.profile_id} />
+                    <ProfileDocumentUpload profileId={loan.profile_id} />
+                  </div>
+                </TabsContent>
+              </Tabs>
+            )}
           </CardContent>
         </Card>
-
-        <Separator />
-
-        <BorrowerDetails applicationId={loan.application_id} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 ">
-          <ProfileDocumentsDisplay profileId={loan.profile_id} className="" />
-          <ProfileDocumentUpload
-            className="h-full"
-            profileId={loan.profile_id}
-          />
-        </div>
+        {!loan.application && (
+          <p className="text-sm text-muted-foreground mt-4">
+            No application data linked to this loan.
+          </p>
+        )}
       </ScrollArea>
     </div>
   );
