@@ -1,4 +1,4 @@
-import { differenceInCalendarDays } from "date-fns";
+// No external date utilities needed for current logic.
 
 /**
  * @interface LoanParams
@@ -15,8 +15,8 @@ interface LoanParams {
   interestRate?: number;
   /** Monthly service fee cap (maximum charged for service fees in a 30 day period). Defaults to 60. */
   monthlyServiceFeeCap?: number;
-  /** Optional salary (repayment) date supplied by user. If omitted, maturity date is used. */
-  salaryDate?: Date;
+  /** Optional salary day-of-month (1-31). First occurrence on/after start becomes payment date. */
+  salaryDay?: number;
   /** An optional late payment fee. Defaults to 0. */
   latePaymentFee?: number;
 }
@@ -31,7 +31,7 @@ export class PaydayLoanCalculator {
   private readonly loanStartDate: Date;
   private readonly interestRate: number; // monthly nominal rate
   private readonly monthlyServiceFeeCap: number;
-  private readonly salaryDate?: Date;
+  private readonly salaryDay?: number; // 1-31
   private readonly latePaymentFee: number;
 
   // Constants for initiation fee logic & insurance
@@ -51,7 +51,9 @@ export class PaydayLoanCalculator {
     this.loanStartDate = params.loanStartDate;
     this.interestRate = params.interestRate ?? 0.05; // monthly nominal rate (5%)
     this.monthlyServiceFeeCap = params.monthlyServiceFeeCap ?? 60; // cap at R60
-    this.salaryDate = params.salaryDate;
+    if (params.salaryDay && params.salaryDay >= 1 && params.salaryDay <= 31) {
+      this.salaryDay = Math.floor(params.salaryDay);
+    }
     this.latePaymentFee = params.latePaymentFee ?? 0;
   }
 
@@ -100,27 +102,22 @@ export class PaydayLoanCalculator {
    * Payments occur only on the 25th/26th of a month, or the loan end date if it falls before those days in the final month.
    */
   public getPaymentScheduleDates(): Date[] {
-    // Business rule update: single repayment on the first salary date ON or AFTER loan start.
-    // If salaryDate supplied is before loan start, roll forward month-by-month keeping day-of-month (falling back to last day if shorter month) until >= start.
-    // If resulting date is after maturity, use maturity.
+    // Single repayment: first occurrence of salaryDay on/after start; else maturity.
     const maturity = this.getMaturityDate();
-    if (!this.salaryDate) return [maturity];
-
+    if (!this.salaryDay) return [maturity];
     const start = this.loanStartDate;
-    const targetDay = this.salaryDate.getDate();
-    let candidate = new Date(this.salaryDate.getTime());
-
-    // If provided salary date is before loan start, roll forward.
-    while (candidate < start) {
-      const year = candidate.getFullYear();
-      const month = candidate.getMonth() + 1; // next month
-      // last day of next month
-      const lastDayNextMonth = new Date(year, month + 1, 0).getDate();
-      const day = Math.min(targetDay, lastDayNextMonth);
-      candidate = new Date(year, month, day);
+    const year = start.getFullYear();
+    const month = start.getMonth();
+    const lastDayCurrentMonth = new Date(year, month + 1, 0).getDate();
+    // Build candidate in current month
+    let candidate = new Date(year, month, Math.min(this.salaryDay, lastDayCurrentMonth));
+    if (candidate < start) {
+      const nextMonth = month + 1;
+      const year2 = year + Math.floor(nextMonth / 12);
+      const month2 = nextMonth % 12;
+      const lastDayNext = new Date(year2, month2 + 1, 0).getDate();
+      candidate = new Date(year2, month2, Math.min(this.salaryDay, lastDayNext));
     }
-
-    // Cap at maturity
     if (candidate > maturity) candidate = maturity;
     return [candidate];
   }

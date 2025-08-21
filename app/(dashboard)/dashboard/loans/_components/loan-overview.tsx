@@ -8,8 +8,13 @@ import { PaydayLoanCalculator } from "@/lib/utils/loancalculator";
 import { formatDate } from "date-fns";
 import { InfoRow } from "./info-row";
 
+type LoanWithApplication =
+  Database["public"]["Tables"]["approved_loans"]["Row"] & {
+    application: Database["public"]["Tables"]["applications"]["Row"];
+  };
+
 type Props = {
-  loan: Database["public"]["Tables"]["approved_loans"]["Row"];
+  loan: LoanWithApplication;
 };
 
 export function LoanOverview({ loan }: Props) {
@@ -29,6 +34,7 @@ export function LoanOverview({ loan }: Props) {
     created_at,
     updated_at,
     approved_loan_amount,
+    application,
   } = loan;
 
   const approved = new Date(approved_date);
@@ -39,7 +45,8 @@ export function LoanOverview({ loan }: Props) {
     principal: approved_loan_amount ?? 0,
     termInDays: loan_term_days,
     loanStartDate: approved,
-    monthlyInterestRate: interest_rate / 100, // assuming interest_rate is in percent
+    interestRate: interest_rate / 100, // assuming interest_rate is in percent
+    salaryDay: application.salary_date ? application.salary_date : undefined,
   });
 
   const totalRepayment = calculator.getTotalRepayment();
