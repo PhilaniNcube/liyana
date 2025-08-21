@@ -92,7 +92,7 @@ export function ApproveLoanModal({
         principal: watchedValues.loan_amount || currentAmount,
         termInDays: watchedValues.loan_term || currentTerm,
         loanStartDate: new Date(),
-        monthlyInterestRate: (watchedValues.interest_rate || 5) / 100, // Convert percentage to decimal
+        interestRate: (watchedValues.interest_rate || 5) / 100, // Convert percentage to decimal
       });
 
       return {
