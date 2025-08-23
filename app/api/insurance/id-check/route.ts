@@ -4,48 +4,10 @@ import { decryptValue } from "@/lib/encryption";
 import { WhoYouIdVerificationResponse } from "@/lib/schemas";
 
 export async function POST(request: NextRequest) {
-  const { application_id } = await request.json();
+    // receive the encrypted ID Number from the request body
+  const { id_number } = await request.json();
 
-  if (!application_id) {
-    return new Response(
-      JSON.stringify({ error: "Application ID is required" }),
-      {
-        status: 400,
-      }
-    );
-  }
-
-  const supabase = await createClient();
-
-  const { data: application, error: applicationError } = await supabase
-    .from("applications")
-    .select("*")
-    .eq("id", application_id)
-    .single();
-
-  if (applicationError || !application) {
-    console.error("Application fetch error:", applicationError);
-    return new Response(JSON.stringify({ error: "Application not found" }), {
-      status: 404,
-    });
-  }
-
-  // Fetch user profile data
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("full_name")
-    .eq("id", application.user_id)
-    .single();
-
-  if (profileError || !profile) {
-    console.error("Profile fetch error:", profileError);
-    return new Response(JSON.stringify({ error: "User profile not found" }), {
-      status: 404,
-    });
-  }
-
-  const id_number = application.id_number;
-
+  
   const decryptedIdNumber = decryptValue(id_number);
 
   if (!decryptedIdNumber) {
@@ -100,8 +62,22 @@ export async function POST(request: NextRequest) {
   if (!verificationResponse.ok) {
     console.error("Who You API verification error:", verificationResponse.statusText);
     console.error("Who You API verification response:", await verificationResponse.json());
+    return NextResponse.json(
+      { error: "Failed to verify ID number" },
+      { status: 500 }
+    );
+  }
 
-       // stringify the response data for logging
+  const verificationData: WhoYouIdVerificationResponse =
+  await verificationResponse.json();
+
+    const supabase = await createClient();
+
+  console.log("Verification Data:", verificationData);
+
+  if (!verificationData || !verificationData.detail) {
+   
+    // stringify the response data for logging
     const responseText = await verificationResponse.text();
 
 
@@ -116,22 +92,12 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { error: "Failed to verify ID number" },
-      { status: 500 }
-    );
-  }
-
-  const verificationData: WhoYouIdVerificationResponse =
-    await verificationResponse.json();
-
-  console.log("Verification Data:", verificationData);
-
-  if (!verificationData || !verificationData.detail) {
-    return NextResponse.json(
       { error: "Invalid response from Who You API" },
       { status: 500 }
     );
   }
+
+
 
   // Save the API check result to the database
   try {
@@ -151,6 +117,16 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("Error saving API check result:", error);
+
+    await supabase.from("api_checks").insert({
+      id_number: id_number,
+      check_type: "id_verification",
+      status: "failed",
+      vendor: "WhoYou",
+      response_payload: JSON.stringify(error),
+      checked_at: new Date().toISOString(),
+    });
+
   }
 
   return NextResponse.json({

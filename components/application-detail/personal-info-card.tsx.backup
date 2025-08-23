@@ -22,7 +22,7 @@ import {
   IdCard,
   Send,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   WhoYouCellphoneVerificationDetail,
   WhoYouIdVerificationDetail,
@@ -80,12 +80,10 @@ export function PersonalInfoCard({
   const [isIdDialogOpen, setIsIdDialogOpen] = useState(false);
 
   // Stored ID Verification Results state
-  const [storedIdResult, setStoredIdResult] =
+  const [storedIdResult, setStoredIdResult] = 
     useState<WhoYouIdVerificationDetail | null>(null);
   const [isLoadingStoredResult, setIsLoadingStoredResult] = useState(false);
-  const [storedResultError, setStoredResultError] = useState<string | null>(
-    null
-  );
+  const [storedResultError, setStoredResultError] = useState<string | null>(null);
 
   const handleOtvRequest = async () => {
     if (onOtvRequest) {
@@ -260,9 +258,7 @@ export function PersonalInfoCard({
           // No stored results found, this is expected
           setStoredResultError("No previous ID verification found");
         } else {
-          throw new Error(
-            data.error || "Failed to fetch stored ID verification results"
-          );
+          throw new Error(data.error || "Failed to fetch stored ID verification results");
         }
         return;
       }
@@ -280,11 +276,6 @@ export function PersonalInfoCard({
       setIsLoadingStoredResult(false);
     }
   };
-
-  // Auto-fetch stored ID verification results on component mount
-  useEffect(() => {
-    fetchStoredIdVerificationResult();
-  }, [application.id]);
 
   return (
     <Card>
@@ -316,7 +307,7 @@ export function PersonalInfoCard({
                         className="w-20 h-24 object-cover rounded border-2 border-gray-300"
                         onError={(e) => {
                           console.error("Error loading photo");
-                          e.currentTarget.style.display = "none";
+                          e.currentTarget.style.display = 'none';
                         }}
                       />
                       <span className="text-xs text-muted-foreground mt-1">
@@ -325,21 +316,22 @@ export function PersonalInfoCard({
                     </div>
                   )}
 
-                  <Dialog
-                    open={isIdDialogOpen}
-                    onOpenChange={setIsIdDialogOpen}
-                  >
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={fetchStoredIdVerificationResult}
-                      >
-                        <IdCard className="h-4 w-4 mr-2" />
-                        Verify ID
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <div className="flex flex-col gap-2">
+                    <Dialog
+                      open={isIdDialogOpen}
+                      onOpenChange={setIsIdDialogOpen}
+                    >
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={fetchStoredIdVerificationResult}
+                        >
+                          <IdCard className="h-4 w-4 mr-2" />
+                          Verify ID
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle className="flex items-center">
                           <IdCard className="h-5 w-5 mr-2" />
@@ -516,35 +508,31 @@ export function PersonalInfoCard({
                               </Card>
 
                               {/* Photo Display Card */}
-                              {idVerificationResult.photo &&
-                                idVerificationResult.hasPhoto && (
-                                  <Card>
-                                    <CardHeader className="pb-3">
-                                      <CardTitle className="text-sm">
-                                        ID Photo
-                                      </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="flex justify-center">
-                                      <div className="flex flex-col items-center">
-                                        <img
-                                          src={`data:image/jpeg;base64,${idVerificationResult.photo}`}
-                                          alt="ID Photo"
-                                          className="w-32 h-40 object-cover rounded border-2 border-gray-300 shadow-md"
-                                          onError={(e) => {
-                                            console.error(
-                                              "Error loading photo"
-                                            );
-                                            e.currentTarget.style.display =
-                                              "none";
-                                          }}
-                                        />
-                                        <span className="text-xs text-muted-foreground mt-2">
-                                          Official ID Photo
-                                        </span>
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-                                )}
+                              {idVerificationResult.photo && idVerificationResult.hasPhoto && (
+                                <Card>
+                                  <CardHeader className="pb-3">
+                                    <CardTitle className="text-sm">
+                                      ID Photo
+                                    </CardTitle>
+                                  </CardHeader>
+                                  <CardContent className="flex justify-center">
+                                    <div className="flex flex-col items-center">
+                                      <img
+                                        src={`data:image/jpeg;base64,${idVerificationResult.photo}`}
+                                        alt="ID Photo"
+                                        className="w-32 h-40 object-cover rounded border-2 border-gray-300 shadow-md"
+                                        onError={(e) => {
+                                          console.error("Error loading photo");
+                                          e.currentTarget.style.display = 'none';
+                                        }}
+                                      />
+                                      <span className="text-xs text-muted-foreground mt-2">
+                                        Official ID Photo
+                                      </span>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              )}
 
                               <Card>
                                 <CardHeader className="pb-3">
@@ -982,17 +970,11 @@ export function PersonalInfoCard({
                             >
                               Run New Verification
                             </Button>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Button
