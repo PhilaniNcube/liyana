@@ -7,6 +7,8 @@ import EmploymentDetailsTab from "./_components/employment-details-tab";
 import PolicyBeneficiariesTab from "./_components/policy-beneficiaries-tab";
 import PolicyClaimsTab from "./_components/policy-claims-tab";
 import PolicyPaymentsTab from "./_components/policy-payments-tab";
+import { Button } from "@/components/ui/button";
+import { Code2Icon } from "lucide-react";
 
 type PolicyPageProps = {
   params: Promise<{
@@ -25,11 +27,18 @@ const PolicyPage = async ({ params }: PolicyPageProps) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Policy #{policyData.id}</h1>
-        <p className="text-muted-foreground capitalize">
-          {policyData.product_type?.replaceAll("_", " ") ?? "Insurance Policy"}
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Policy #{policyData.id}</h1>
+          <p className="text-muted-foreground capitalize">
+            {policyData.product_type?.replaceAll("_", " ") ??
+              "Insurance Policy"}
+          </p>
+        </div>
+        <Button>
+          <Code2Icon className="h-4 w-4 mr-2" />
+          Send To Linar
+        </Button>
       </div>
 
       <Tabs defaultValue="personal" className="w-full">
