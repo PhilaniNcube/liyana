@@ -1,7 +1,9 @@
 import { getCompletePolicyData } from "@/lib/queries/policy-details";
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import PolicyDetailsTab from "./_components/policy-details-tab";
+import PersonalInfoTab from "./_components/personal-info-tab";
+import PolicyInfoTab from "./_components/policy-info-tab";
+import EmploymentDetailsTab from "./_components/employment-details-tab";
 import PolicyBeneficiariesTab from "./_components/policy-beneficiaries-tab";
 import PolicyClaimsTab from "./_components/policy-claims-tab";
 import PolicyPaymentsTab from "./_components/policy-payments-tab";
@@ -30,9 +32,11 @@ const PolicyPage = async ({ params }: PolicyPageProps) => {
         </p>
       </div>
 
-      <Tabs defaultValue="details" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="details">Policy Details</TabsTrigger>
+      <Tabs defaultValue="personal" className="w-full">
+        <TabsList className="grid w-full grid-cols-6 gap-2">
+          <TabsTrigger value="personal">Personal Info</TabsTrigger>
+          <TabsTrigger value="policy">Policy Info</TabsTrigger>
+          <TabsTrigger value="employment">Employment & Banking</TabsTrigger>
           <TabsTrigger value="beneficiaries">
             Beneficiaries ({policyData.beneficiaries.length})
           </TabsTrigger>
@@ -42,8 +46,16 @@ const PolicyPage = async ({ params }: PolicyPageProps) => {
           <TabsTrigger value="payments">Payments</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details" className="mt-6">
-          <PolicyDetailsTab policy={policyData} />
+        <TabsContent value="personal" className="mt-6">
+          <PersonalInfoTab policy={policyData} />
+        </TabsContent>
+
+        <TabsContent value="policy" className="mt-6">
+          <PolicyInfoTab policy={policyData} />
+        </TabsContent>
+
+        <TabsContent value="employment" className="mt-6">
+          <EmploymentDetailsTab policy={policyData} />
         </TabsContent>
 
         <TabsContent value="beneficiaries" className="mt-6">

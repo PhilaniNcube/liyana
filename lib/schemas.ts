@@ -734,6 +734,26 @@ export const funeralPolicyLeadSchema = z
 
 export const funeralPolicyLeadSchemaWithRefines = funeralPolicyLeadSchema;
 
+// Policy Update Schema
+export const policyUpdateSchema = z.object({
+  policy_id: z.number().min(1, "Policy ID is required"),
+  coverage_amount: z
+    .number()
+    .min(1000, "Minimum coverage amount is R1,000")
+    .max(1000000, "Maximum coverage amount is R1,000,000"),
+  premium_amount: z.number().min(1, "Premium amount is required").optional(),
+  policy_status: z.enum(["pending", "active", "suspended", "cancelled"], {
+    required_error: "Policy status is required",
+  }).optional(),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
+  frequency: z.enum(["monthly", "quarterly", "annually"], {
+    required_error: "Payment frequency is required",
+  }).optional(),
+});
+
+export type PolicyUpdateType = z.infer<typeof policyUpdateSchema>;
+
 // WhoYou Email Verification Response Types
 export interface WhoYouDomainDetails {
   id: string;

@@ -4,7 +4,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "../server";
 import { getCurrentUser } from "../queries";
-import { funeralPolicyLeadSchemaWithRefines as funeralPolicyLeadSchema } from "../schemas";
+import { funeralPolicyLeadSchemaWithRefines as funeralPolicyLeadSchema, policyUpdateSchema } from "../schemas";
 import { encryptValue } from "../encryption";
 
 export async function createFuneralPolicy(prevState: any, formData: FormData) {
@@ -194,6 +194,118 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
     return {
       error: true,
       message: "An unexpected error occurred while creating the policy.",
+      details: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function updatePolicy(prevState: any, formData: FormData) {
+  // Parse FormData entries
+  const entries = Object.fromEntries(formData.entries());
+
+  // Convert string values to appropriate types
+  const parsed: any = {
+    ...entries,
+    policy_id: parseInt(entries.policy_id as string),
+    coverage_amount: parseFloat(entries.coverage_amount as string),
+  };
+
+  // Only include premium_amount if it was provided
+  if (entries.premium_amount) {
+    parsed.premium_amount = parseFloat(entries.premium_amount as string);
+  }
+
+  const validatedFields = policyUpdateSchema.safeParse(parsed);
+
+  if (!validatedFields.success) {
+    console.error("Validation failed:", validatedFields.error);
+    return {
+      error: true,
+      message: "Invalid form data",
+      errors: validatedFields.error.flatten().fieldErrors,
+    };
+  }
+
+  const supabase = await createClient();
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return {
+      error: true,
+      message: "You must be logged in to update a policy.",
+    };
+  }
+
+  const { data: validatedData } = validatedFields;
+
+  try {
+    // First, verify that the policy exists and belongs to the user or is accessible
+    const { data: existingPolicy, error: fetchError } = await supabase
+      .from("policies")
+      .select("id, policy_holder_id, policy_status")
+      .eq("id", validatedData.policy_id)
+      .single();
+
+    if (fetchError || !existingPolicy) {
+      return {
+        error: true,
+        message: "Policy not found or access denied.",
+        details: fetchError?.message,
+      };
+    }
+
+    // Prepare update object with only the fields that were provided
+    const updateData: any = {
+      coverage_amount: validatedData.coverage_amount,
+    };
+
+    // Only include optional fields if they were provided
+    if (validatedData.premium_amount !== undefined) {
+      updateData.premium_amount = validatedData.premium_amount;
+    }
+    if (validatedData.policy_status) {
+      updateData.policy_status = validatedData.policy_status;
+    }
+    if (validatedData.start_date) {
+      updateData.start_date = validatedData.start_date;
+    }
+    if (validatedData.end_date) {
+      updateData.end_date = validatedData.end_date;
+    }
+    if (validatedData.frequency) {
+      updateData.frequency = validatedData.frequency;
+    }
+
+    // Update the policy
+    const { data: updatedPolicy, error: updateError } = await supabase
+      .from("policies")
+      .update(updateData)
+      .eq("id", validatedData.policy_id)
+      .select("id, coverage_amount, premium_amount, policy_status")
+      .single();
+
+    if (updateError || !updatedPolicy) {
+      return {
+        error: true,
+        message: "Failed to update policy.",
+        details: updateError?.message,
+      };
+    }
+
+    // Revalidate relevant paths
+    revalidatePath("/dashboard/insurance");
+    revalidatePath(`/dashboard/insurance/${validatedData.policy_id}`);
+
+    return {
+      error: false,
+      message: "Policy updated successfully.",
+      data: updatedPolicy,
+    };
+  } catch (error) {
+    console.error("Error updating policy:", error);
+    return {
+      error: true,
+      message: "An unexpected error occurred while updating the policy.",
       details: error instanceof Error ? error.message : "Unknown error",
     };
   }
