@@ -98,6 +98,8 @@ export function PersonalInfoCard({
       check.response_payload?.photo &&
       check.response_payload?.hasPhoto
   );
+  console.log(apiChecks);
+  console.log("ID Verification Check:", idVerificationCheck);
 
   const storedIdResult = idVerificationCheck?.response_payload || null;
 
