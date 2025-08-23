@@ -101,19 +101,26 @@ export async function POST(request: NextRequest) {
     console.error("Who You API verification error:", verificationResponse.statusText);
     console.error("Who You API verification response:", await verificationResponse.json());
 
-       // stringify the response data for logging
-    const responseText = await verificationResponse.text();
+
 
 
     // save the stringified response to the api-checks table
-    await supabase.from("api_checks").insert({
+   const { error: insertError } = await supabase.from("api_checks").insert({
       id_number: id_number,
       check_type: "id_verification",
       status: "failed",
       vendor: "WhoYou",
-      response_payload: responseText,
+      response_payload: {
+        code: verificationResponse.status,
+        error: verificationResponse.statusText,
+        data: null
+      },
       checked_at: new Date().toISOString(),
     });
+
+    if (insertError) {
+      console.error("Error saving API check result:", insertError);
+    }
 
     return NextResponse.json(
       { error: "Failed to verify ID number" },
