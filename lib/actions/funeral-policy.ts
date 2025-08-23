@@ -205,6 +205,7 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
       .insert(policyBeneficiariesRows);
 
     if (pbError) {
+      console.error("Error linking beneficiaries to policy:", pbError);
       return {
         error: true,
         message: "Failed to link beneficiaries to the policy.",
