@@ -74,7 +74,7 @@ export default function PolicyBeneficiariesTab({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="grid grid-cols-4 gap-4">
             {beneficiaries.map((beneficiary) => (
               <div
                 key={beneficiary.id}
