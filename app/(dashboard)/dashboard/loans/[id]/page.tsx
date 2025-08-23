@@ -79,7 +79,10 @@ const LoanPage = async ({ params }: PageProps) => {
 
               {loan.application && (
                 <TabsContent value="personal-info" className="mt-4 space-y-4">
-                  <PersonalInfoCard application={loan.application as any} />
+                  <PersonalInfoCard
+                    application={loan.application as any}
+                    apiChecks={[]}
+                  />
                 </TabsContent>
               )}
 

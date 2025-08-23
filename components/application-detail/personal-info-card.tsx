@@ -22,7 +22,7 @@ import {
   IdCard,
   Send,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   WhoYouCellphoneVerificationDetail,
   WhoYouIdVerificationDetail,
@@ -51,14 +51,25 @@ interface Application {
   } | null;
 }
 
+interface ApiCheck {
+  id: number;
+  check_type: string;
+  status: string;
+  vendor: string;
+  response_payload: any;
+  checked_at: string;
+}
+
 interface PersonalInfoCardProps {
   application: Application;
+  apiChecks?: ApiCheck[];
   onOtvRequest?: () => Promise<void>;
   isSendingOtv?: boolean;
 }
 
 export function PersonalInfoCard({
   application,
+  apiChecks = [],
   onOtvRequest,
   isSendingOtv = false,
 }: PersonalInfoCardProps) {
@@ -79,13 +90,16 @@ export function PersonalInfoCard({
   );
   const [isIdDialogOpen, setIsIdDialogOpen] = useState(false);
 
-  // Stored ID Verification Results state
-  const [storedIdResult, setStoredIdResult] =
-    useState<WhoYouIdVerificationDetail | null>(null);
-  const [isLoadingStoredResult, setIsLoadingStoredResult] = useState(false);
-  const [storedResultError, setStoredResultError] = useState<string | null>(
-    null
+  // Extract ID verification result with photo from API checks
+  const idVerificationCheck = apiChecks.find(
+    (check) =>
+      check.check_type === "id_verification" &&
+      check.status === "passed" &&
+      check.response_payload?.photo &&
+      check.response_payload?.hasPhoto
   );
+
+  const storedIdResult = idVerificationCheck?.response_payload || null;
 
   const handleOtvRequest = async () => {
     if (onOtvRequest) {
@@ -236,56 +250,6 @@ export function PersonalInfoCard({
     );
   };
 
-  const fetchStoredIdVerificationResult = async () => {
-    if (!application.id || storedIdResult) return; // Don't fetch if already loaded
-
-    setIsLoadingStoredResult(true);
-    setStoredResultError(null);
-
-    try {
-      const response = await fetch("/api/kyc/id-verification-results", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          application_id: application.id,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          // No stored results found, this is expected
-          setStoredResultError("No previous ID verification found");
-        } else {
-          throw new Error(
-            data.error || "Failed to fetch stored ID verification results"
-          );
-        }
-        return;
-      }
-
-      if (data.success && data.data) {
-        setStoredIdResult(data.data);
-      }
-    } catch (error) {
-      setStoredResultError(
-        error instanceof Error
-          ? error.message
-          : "An error occurred while fetching stored results"
-      );
-    } finally {
-      setIsLoadingStoredResult(false);
-    }
-  };
-
-  // Auto-fetch stored ID verification results on component mount
-  useEffect(() => {
-    fetchStoredIdVerificationResult();
-  }, [application.id]);
-
   return (
     <Card>
       <CardHeader>
@@ -330,11 +294,7 @@ export function PersonalInfoCard({
                     onOpenChange={setIsIdDialogOpen}
                   >
                     <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={fetchStoredIdVerificationResult}
-                      >
+                      <Button variant="outline" size="sm">
                         <IdCard className="h-4 w-4 mr-2" />
                         Verify ID
                       </Button>

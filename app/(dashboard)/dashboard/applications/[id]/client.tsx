@@ -391,6 +391,7 @@ export function ApplicationDetailClient({
           {/* Personal Information */}
           <PersonalInfoCard
             application={application}
+            apiChecks={apiChecks}
             onOtvRequest={handleOtvRequest}
             isSendingOtv={isSendingOtv}
           />
