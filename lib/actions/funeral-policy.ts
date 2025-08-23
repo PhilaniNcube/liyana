@@ -129,39 +129,6 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
       };
     }
 
-    // Create funeral policy with the same ID
-    // const { error: funeralPolicyCreateError } = await supabase
-    //   .from("funeral_policies")
-    //   .insert({
-    //     policy_holder_id: party.id,
-    //     frequency: "monthly",
-    //     policy_status: "pending",
-    //     premium_amount: null,
-    //     product_type: validatedData.product_type,
-    //     start_date: null,
-    //     end_date: null,
-    //     employment_details: {
-    //       employment_type: validatedData.employment_type,
-    //       employer_name: validatedData.employer_name,
-    //       job_title: validatedData.job_title,
-    //       monthly_income: validatedData.monthly_income,
-    //       employer_address: validatedData.employer_address || null,
-    //       employer_contact_number: validatedData.employer_contact_number || null,
-    //       employment_end_date: validatedData.employment_end_date || null,
-    //     },
-    //     covered_members: [],
-    //   });
-
-    // if (funeralPolicyCreateError) {
-    //   return {
-    //     error: true,
-    //     message: "Failed to create funeral policy record.",
-    //     details: funeralPolicyCreateError.message,
-    //     partyId: party.id,
-    //     policyId: newPolicy.id,
-    //   };
-    // }
-
     // Create beneficiary parties and link in policy_beneficiaries
     // We will create minimal party rows for beneficiaries and then insert policy_beneficiaries with allocation_percentage and relation_type
     const beneficiaryInserts = validatedData.beneficiaries.map((b: any) => ({
@@ -179,8 +146,7 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
     const { data: beneficiaryParties, error: benPartyError } = await supabase
       .from("parties")
       .insert(beneficiaryInserts)
-      .select("id")
- 
+      .select("*");
 
     if (benPartyError || !beneficiaryParties || beneficiaryParties.length !== validatedData.beneficiaries.length) {
       return {
@@ -196,7 +162,7 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
     const policyBeneficiariesRows = validatedData.beneficiaries.map((b: any, idx: number) => ({
       policy_id: newPolicy.id,
       beneficiary_party_id: beneficiaryParties[idx].id,
-      allocation_percentage: b.percentage,
+      allocation_percentage: 0,
       relation_type: b.relationship,
     }));
 

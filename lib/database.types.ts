@@ -405,118 +405,6 @@ export type Database = {
           },
         ]
       }
-      funeral_policies: {
-        Row: {
-          covered_members: Json
-          created_at: string
-          employment_details: Json | null
-          end_date: string | null
-          frequency: Database["public"]["Enums"]["frequency"]
-          id: number
-          policy_holder_id: string
-          policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number | null
-          product_type: Database["public"]["Enums"]["product_type"] | null
-          start_date: string | null
-          updated_at: string
-        }
-        Insert: {
-          covered_members: Json
-          created_at?: string
-          employment_details?: Json | null
-          end_date?: string | null
-          frequency: Database["public"]["Enums"]["frequency"]
-          id?: number
-          policy_holder_id: string
-          policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount?: number | null
-          product_type?: Database["public"]["Enums"]["product_type"] | null
-          start_date?: string | null
-          updated_at?: string
-        }
-        Update: {
-          covered_members?: Json
-          created_at?: string
-          employment_details?: Json | null
-          end_date?: string | null
-          frequency?: Database["public"]["Enums"]["frequency"]
-          id?: number
-          policy_holder_id?: string
-          policy_status?: Database["public"]["Enums"]["policy_status"]
-          premium_amount?: number | null
-          product_type?: Database["public"]["Enums"]["product_type"] | null
-          start_date?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "funeral_policies_policy_holder_id_fkey"
-            columns: ["policy_holder_id"]
-            isOneToOne: false
-            referencedRelation: "parties"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      life_insurance_policies: {
-        Row: {
-          coverage_amount: number
-          created_at: string
-          employment_details: Json | null
-          end_date: string | null
-          frequency: Database["public"]["Enums"]["frequency"]
-          id: number
-          payout_structure: string
-          policy_holder_id: string
-          policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount: number | null
-          product_type: Database["public"]["Enums"]["product_type"] | null
-          start_date: string | null
-          underwriting_details: Json
-          updated_at: string
-        }
-        Insert: {
-          coverage_amount: number
-          created_at?: string
-          employment_details?: Json | null
-          end_date?: string | null
-          frequency: Database["public"]["Enums"]["frequency"]
-          id: number
-          payout_structure: string
-          policy_holder_id: string
-          policy_status: Database["public"]["Enums"]["policy_status"]
-          premium_amount?: number | null
-          product_type?: Database["public"]["Enums"]["product_type"] | null
-          start_date?: string | null
-          underwriting_details?: Json
-          updated_at?: string
-        }
-        Update: {
-          coverage_amount?: number
-          created_at?: string
-          employment_details?: Json | null
-          end_date?: string | null
-          frequency?: Database["public"]["Enums"]["frequency"]
-          id?: number
-          payout_structure?: string
-          policy_holder_id?: string
-          policy_status?: Database["public"]["Enums"]["policy_status"]
-          premium_amount?: number | null
-          product_type?: Database["public"]["Enums"]["product_type"] | null
-          start_date?: string | null
-          underwriting_details?: Json
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "life_insurance_policies_policy_holder_id_fkey"
-            columns: ["policy_holder_id"]
-            isOneToOne: false
-            referencedRelation: "parties"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       loan_payments: {
         Row: {
           approved_loan_id: number
@@ -645,6 +533,7 @@ export type Database = {
       }
       policies: {
         Row: {
+          coverage_amount: number | null
           created_at: string
           employment_details: Json | null
           end_date: string | null
@@ -658,6 +547,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          coverage_amount?: number | null
           created_at?: string
           employment_details?: Json | null
           end_date?: string | null
@@ -671,6 +561,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          coverage_amount?: number | null
           created_at?: string
           employment_details?: Json | null
           end_date?: string | null

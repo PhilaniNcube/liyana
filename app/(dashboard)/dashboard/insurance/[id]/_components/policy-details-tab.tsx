@@ -4,29 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils/format-currency";
 import { formatDate } from "date-fns";
+import { PolicyWithAllData } from "@/lib/queries/policy-details";
+import { decryptValue } from "@/lib/encryption";
 
 interface PolicyDetailsTabProps {
-  policy: {
-    id: number;
-    product_type: string | null;
-    policy_status: string;
-    premium_amount: number | null;
-    frequency: string | null;
-    start_date: string | null;
-    end_date: string | null;
-    created_at: string;
-    coverage_amount?: number | null;
-    policy_holder: {
-      id?: string;
-      first_name?: string | null;
-      last_name?: string | null;
-      organization_name?: string | null;
-      date_of_birth?: string | null;
-      party_type?: string | null;
-      contact_details?: any;
-      employment_details?: any;
-    } | null;
-  };
+  policy: PolicyWithAllData;
 }
 
 export default function PolicyDetailsTab({ policy }: PolicyDetailsTabProps) {
@@ -35,8 +17,193 @@ export default function PolicyDetailsTab({ policy }: PolicyDetailsTabProps) {
     holder?.organization_name ||
     [holder?.first_name, holder?.last_name].filter(Boolean).join(" ");
 
+  console.log("policy", policy);
+
   return (
     <div className="space-y-6">
+      {/* Policy Holder Information */}
+      {holder && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Policy Holder Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                  <div className="text-xs text-muted-foreground">Name</div>
+                  <div className="font-medium">{holderName || "—"}</div>
+                </div>
+                {holder.date_of_birth && (
+                  <div>
+                    <div className="text-xs text-muted-foreground">
+                      Date of Birth
+                    </div>
+                    <div>{formatDate(holder.date_of_birth, "PP")}</div>
+                  </div>
+                )}
+                <div>
+                  <div className="text-xs text-muted-foreground">
+                    Party Type
+                  </div>
+                  <div className="capitalize">{holder.party_type || "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">ID Number</div>
+                  <div className="capitalize">
+                    {decryptValue(holder.id_number!) || "—"}
+                  </div>
+                </div>
+              </div>
+
+              {holder.contact_details && (
+                <>
+                  <Separator />
+                  <div>
+                    <h4 className="text-sm font-medium mb-3">
+                      Contact Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {(holder.contact_details as any)?.phone && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Phone
+                          </div>
+                          <div>{(holder.contact_details as any).phone}</div>
+                        </div>
+                      )}
+                      {(holder.contact_details as any)?.email && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Email
+                          </div>
+                          <div>{(holder.contact_details as any).email}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {holder.address_details && (
+                <>
+                  <Separator />
+                  <div>
+                    <h4 className="text-sm font-medium mb-3">
+                      Address Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {(holder.address_details as any)?.physical && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Physical Address
+                          </div>
+                          <div>{(holder.address_details as any).physical}</div>
+                        </div>
+                      )}
+                      {(holder.address_details as any)?.city && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            City
+                          </div>
+                          <div>{(holder.address_details as any).city}</div>
+                        </div>
+                      )}
+                      {(holder.address_details as any)?.postal_code && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Postal Code
+                          </div>
+                          <div>
+                            {(holder.address_details as any).postal_code}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {policy.employment_details && (
+                <>
+                  <Separator />
+                  <div>
+                    <h4 className="text-sm font-medium mb-3">
+                      Employment Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {policy.employment_details.employer_name && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Employer
+                          </div>
+                          <div>{policy.employment_details.employer_name}</div>
+                        </div>
+                      )}
+                      {policy.employment_details.job_title && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Job Title
+                          </div>
+                          <div>{policy.employment_details.job_title}</div>
+                        </div>
+                      )}
+                      {policy.employment_details.employment_type && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Employment Type
+                          </div>
+                          <div className="capitalize">
+                            {policy.employment_details.employment_type.replace(
+                              /_/g,
+                              " "
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {policy.employment_details.monthly_income && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Monthly Income
+                          </div>
+                          <div>
+                            {formatCurrency(
+                              parseFloat(
+                                policy.employment_details.monthly_income
+                              )
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {policy.employment_details.employer_address && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Employer Address
+                          </div>
+                          <div>
+                            {policy.employment_details.employer_address}
+                          </div>
+                        </div>
+                      )}
+                      {policy.employment_details.employer_contact_number && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Employer Contact
+                          </div>
+                          <div>
+                            {policy.employment_details.employer_contact_number}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Policy Information */}
       <Card>
         <CardHeader>
@@ -65,16 +232,6 @@ export default function PolicyDetailsTab({ policy }: PolicyDetailsTabProps) {
                     : "—"}
                 </div>
               </div>
-              {policy.coverage_amount && (
-                <div>
-                  <div className="text-xs text-muted-foreground">
-                    Coverage Amount
-                  </div>
-                  <div className="font-medium">
-                    {formatCurrency(policy.coverage_amount)}
-                  </div>
-                </div>
-              )}
             </div>
             <div className="space-y-2">
               <div>
@@ -99,118 +256,6 @@ export default function PolicyDetailsTab({ policy }: PolicyDetailsTabProps) {
           </div>
         </CardContent>
       </Card>
-
-      {/* Policy Holder Information */}
-      {holder && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Policy Holder Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div>
-                  <div className="text-xs text-muted-foreground">Name</div>
-                  <div className="font-medium">{holderName || "—"}</div>
-                </div>
-                {holder.date_of_birth && (
-                  <div>
-                    <div className="text-xs text-muted-foreground">
-                      Date of Birth
-                    </div>
-                    <div>{formatDate(holder.date_of_birth, "PP")}</div>
-                  </div>
-                )}
-                <div>
-                  <div className="text-xs text-muted-foreground">
-                    Party Type
-                  </div>
-                  <div className="capitalize">{holder.party_type || "—"}</div>
-                </div>
-              </div>
-
-              {holder.contact_details && (
-                <>
-                  <Separator />
-                  <div>
-                    <h4 className="text-sm font-medium mb-3">
-                      Contact Information
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {holder.contact_details.phone && (
-                        <div>
-                          <div className="text-xs text-muted-foreground">
-                            Phone
-                          </div>
-                          <div>{holder.contact_details.phone}</div>
-                        </div>
-                      )}
-                      {holder.contact_details.email && (
-                        <div>
-                          <div className="text-xs text-muted-foreground">
-                            Email
-                          </div>
-                          <div>{holder.contact_details.email}</div>
-                        </div>
-                      )}
-                      {holder.contact_details.address && (
-                        <div className="md:col-span-2">
-                          <div className="text-xs text-muted-foreground">
-                            Address
-                          </div>
-                          <div>{holder.contact_details.address}</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {holder.employment_details && (
-                <>
-                  <Separator />
-                  <div>
-                    <h4 className="text-sm font-medium mb-3">
-                      Employment Information
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {holder.employment_details.employer_name && (
-                        <div>
-                          <div className="text-xs text-muted-foreground">
-                            Employer
-                          </div>
-                          <div>{holder.employment_details.employer_name}</div>
-                        </div>
-                      )}
-                      {holder.employment_details.job_title && (
-                        <div>
-                          <div className="text-xs text-muted-foreground">
-                            Job Title
-                          </div>
-                          <div>{holder.employment_details.job_title}</div>
-                        </div>
-                      )}
-                      {holder.employment_details.employment_type && (
-                        <div>
-                          <div className="text-xs text-muted-foreground">
-                            Employment Type
-                          </div>
-                          <div className="capitalize">
-                            {holder.employment_details.employment_type.replace(
-                              /_/g,
-                              " "
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

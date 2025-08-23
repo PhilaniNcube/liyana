@@ -12,6 +12,9 @@ type PolicyBeneficiaryRow = Database["public"]["Tables"]["policy_beneficiaries"]
 export type PolicyWithAllData = PolicyRow & {
   policy_holder: Partial<PartyRow> | null;
   product_type: Database["public"]["Enums"]["product_type"] | null;
+  employment_details: {
+    [key: string]: string;
+  } | null;
   beneficiaries: Array<PolicyBeneficiaryRow & { 
     party: Partial<PartyRow> | null; 
     id_number: string | null; 
