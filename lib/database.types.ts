@@ -409,6 +409,7 @@ export type Database = {
         Row: {
           covered_members: Json
           created_at: string
+          employment_details: Json | null
           end_date: string | null
           frequency: Database["public"]["Enums"]["frequency"]
           id: number
@@ -422,6 +423,7 @@ export type Database = {
         Insert: {
           covered_members: Json
           created_at?: string
+          employment_details?: Json | null
           end_date?: string | null
           frequency: Database["public"]["Enums"]["frequency"]
           id: number
@@ -435,6 +437,7 @@ export type Database = {
         Update: {
           covered_members?: Json
           created_at?: string
+          employment_details?: Json | null
           end_date?: string | null
           frequency?: Database["public"]["Enums"]["frequency"]
           id?: number
@@ -459,6 +462,7 @@ export type Database = {
         Row: {
           coverage_amount: number
           created_at: string
+          employment_details: Json | null
           end_date: string | null
           frequency: Database["public"]["Enums"]["frequency"]
           id: number
@@ -474,6 +478,7 @@ export type Database = {
         Insert: {
           coverage_amount: number
           created_at?: string
+          employment_details?: Json | null
           end_date?: string | null
           frequency: Database["public"]["Enums"]["frequency"]
           id: number
@@ -489,6 +494,7 @@ export type Database = {
         Update: {
           coverage_amount?: number
           created_at?: string
+          employment_details?: Json | null
           end_date?: string | null
           frequency?: Database["public"]["Enums"]["frequency"]
           id?: number
@@ -640,6 +646,7 @@ export type Database = {
       policies: {
         Row: {
           created_at: string
+          employment_details: Json | null
           end_date: string | null
           frequency: Database["public"]["Enums"]["frequency"]
           id: number
@@ -652,6 +659,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          employment_details?: Json | null
           end_date?: string | null
           frequency: Database["public"]["Enums"]["frequency"]
           id?: number
@@ -664,6 +672,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          employment_details?: Json | null
           end_date?: string | null
           frequency?: Database["public"]["Enums"]["frequency"]
           id?: number

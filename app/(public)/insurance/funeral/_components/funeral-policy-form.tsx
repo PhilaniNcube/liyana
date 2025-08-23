@@ -45,27 +45,40 @@ export default function FuneralPolicyForm() {
     {}
   );
   const [isPending, startTransition] = useTransition();
-  // Products are provided from the server component
   const loading = false;
+
+  // Multistep state
+  const [currentStep, setCurrentStep] = useState(0);
 
   const form = useForm<FuneralForm>({
     resolver: zodResolver(funeralPolicyLeadSchemaWithRefines),
     defaultValues: {
+      // Step 0: product + personal
+      product_type: "funeral_policy" as const,
       first_name: "",
       last_name: "",
       id_number: "",
       date_of_birth: "",
       phone_number: "",
       email: "",
-      product_type: "funeral_policy" as const,
+      // Step 1: address + employment
       residential_address: "",
       city: "",
       postal_code: "",
+      employment_type: undefined as any,
+      employer_name: "",
+      job_title: "",
+      monthly_income: 0,
+      employer_address: "",
+      employer_contact_number: "",
+      employment_end_date: "",
+      // Step 2: banking
       account_name: "",
       bank_name: "",
       account_number: "",
       branch_code: "",
       account_type: undefined as any,
+      // Step 3: beneficiaries + declarations
       beneficiaries: Array.from({ length: 5 }, () => ({
         first_name: "",
         last_name: "",
@@ -84,6 +97,71 @@ export default function FuneralPolicyForm() {
     control: form.control,
     name: "beneficiaries",
   });
+
+  // Define steps with the fields they are responsible for (for per-step validation)
+  const steps: {
+    title: string;
+    description?: string;
+    fields: (keyof FuneralForm)[];
+  }[] = [
+    {
+      title: "Personal",
+      description: "Your basic personal details",
+      fields: [
+        "first_name",
+        "last_name",
+        "id_number",
+        "date_of_birth",
+        "phone_number",
+        "email",
+      ],
+    },
+    {
+      title: "Address & Employment",
+      description: "Where you live and work",
+      fields: [
+        "residential_address",
+        "city",
+        "postal_code",
+        "employment_type",
+        "employer_name",
+        "job_title",
+        "monthly_income",
+        "employer_address",
+        "employer_contact_number",
+        "employment_end_date",
+      ],
+    },
+    {
+      title: "Banking",
+      description: "Payment details",
+      fields: [
+        "account_name",
+        "bank_name",
+        "account_number",
+        "branch_code",
+        "account_type",
+      ],
+    },
+    {
+      title: "Beneficiaries",
+      description: "Covered people & declarations",
+      fields: ["beneficiaries", "terms_and_conditions", "privacy_policy"],
+    },
+  ];
+
+  const totalSteps = steps.length;
+
+  const goNext = async () => {
+    const stepFields = steps[currentStep].fields;
+    const valid = await form.trigger(stepFields as any, { shouldFocus: true });
+    if (!valid) return;
+    if (currentStep < totalSteps - 1) setCurrentStep((s) => s + 1);
+  };
+
+  const goBack = () => {
+    if (currentStep > 0) setCurrentStep((s) => s - 1);
+  };
 
   // Relationship category handling (UI-only; not part of schema submission)
   const immediateRelationships = ["spouse", "child"] as const;
@@ -117,12 +195,18 @@ export default function FuneralPolicyForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-8">
-      <div className="text-center">
+    <div className="max-w-3xl mx-auto p-6 space-y-8">
+      <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold">Funeral Policy Application</h1>
-        <p className="text-muted-foreground mt-2">
-          Provide your details and we'll contact you to complete your policy.
+        <p className="text-muted-foreground">
+          Step {currentStep + 1} of {totalSteps}: {steps[currentStep].title}
         </p>
+        <div className="w-full bg-muted h-2 rounded overflow-hidden">
+          <div
+            className="h-full bg-primary transition-all"
+            style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
+          />
+        </div>
       </div>
 
       {state?.error && (
@@ -135,7 +219,6 @@ export default function FuneralPolicyForm() {
           </AlertDescription>
         </Alert>
       )}
-
       {!state?.error && state?.message && (
         <Alert>
           <AlertDescription>{state.message}</AlertDescription>
@@ -143,607 +226,722 @@ export default function FuneralPolicyForm() {
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Card className="p-6 grid grid-cols-1 gap-4">
-            <FormField
-              control={form.control}
-              name="product_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Product</FormLabel>
-                  <FormControl>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value || ""}
-                      disabled={loading}
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-6"
+          noValidate
+        >
+          {/* Step Content */}
+          {currentStep === 0 && (
+            <div className="space-y-6">
+              <Card className="p-6">
+                <CardHeader className="px-0 pt-0">
+                  <CardTitle>Personal Information</CardTitle>
+                </CardHeader>
+                <CardContent className="px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="first_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter first name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="last_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter last name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="id_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ID Number</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Enter SA ID number"
+                            maxLength={13}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              const dob = extractDateOfBirthFromSAID(
+                                e.target.value
+                              );
+                              if (dob) form.setValue("date_of_birth", dob);
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="date_of_birth"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Date of Birth</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="date"
+                            readOnly
+                            className="bg-muted"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter phone" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            {...field}
+                            placeholder="name@example.com"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              <Card className="p-6">
+                <CardHeader className="px-0 pt-0">
+                  <CardTitle>Address Information</CardTitle>
+                </CardHeader>
+                <CardContent className="px-0 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="residential_address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Residential Address</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value || ""}
+                            placeholder="Street and suburb"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value || ""}
+                            placeholder="City"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="postal_code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Postal Code</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value || ""}
+                            maxLength={4}
+                            placeholder="0000"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+              <Card className="p-6">
+                <CardHeader className="px-0 pt-0">
+                  <CardTitle>Employment Details</CardTitle>
+                </CardHeader>
+                <CardContent className="px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="employment_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Employment Type</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || ""}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select employment type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="employed">Employed</SelectItem>
+                              <SelectItem value="self_employed">
+                                Self Employed
+                              </SelectItem>
+                              <SelectItem value="contract">Contract</SelectItem>
+                              <SelectItem value="unemployed">
+                                Unemployed
+                              </SelectItem>
+                              <SelectItem value="retired">Retired</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="employer_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Employer Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Employer name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="job_title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Job Title</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Job title" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="monthly_income"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Monthly Income</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={field.value || ""}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              field.onChange(value === "" ? 0 : Number(value));
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="employer_address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Employer Address (Optional)</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Employer address" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="employer_contact_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Employer Contact (Optional)</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Contact number" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {(form.watch("employment_type") === "contract" ||
+                    form.watch("employment_type") === "retired") && (
+                    <FormField
+                      control={form.control}
+                      name="employment_end_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Employment End Date</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {currentStep === 2 && (
+            <Card className="p-6">
+              <CardHeader className="px-0 pt-0">
+                <CardTitle>Banking Details</CardTitle>
+              </CardHeader>
+              <CardContent className="px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="account_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Account Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Account holder name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="bank_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bank Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Bank name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="account_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Account Number</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Account number" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="branch_code"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Branch Code</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Branch code"
+                          maxLength={6}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="account_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Account Type</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || ""}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select account type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="savings">Savings</SelectItem>
+                            <SelectItem value="transaction">
+                              Transaction
+                            </SelectItem>
+                            <SelectItem value="current">Current</SelectItem>
+                            <SelectItem value="business">Business</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              <Card className="p-6">
+                <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
+                  <CardTitle>Covered People ({fields.length})</CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        append({
+                          first_name: "",
+                          last_name: "",
+                          id_number: "",
+                          relationship: undefined as any,
+                          percentage: 0,
+                          phone_number: "",
+                          email: "",
+                        })
+                      }
+                      disabled={fields.length >= 10}
                     >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a product" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="funeral_policy">
-                          Funeral Policy
-                        </SelectItem>
-                        <SelectItem value="life_insurance">
-                          Life Insurance
-                        </SelectItem>
-                        <SelectItem value="payday_loan">Payday Loan</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </Card>
+                      <Plus className="h-4 w-4 mr-2" /> Add Person
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="px-0 space-y-4">
+                  {fields.map((field, index) => (
+                    <Card key={field.id} className="p-4">
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-medium">Person {index + 1}</h4>
+                        {fields.length > 5 && (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => remove(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name={`beneficiaries.${index}.first_name`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>First Name</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="First name" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`beneficiaries.${index}.last_name`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Last Name</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Last name" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`beneficiaries.${index}.id_number`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>ID Number</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="SA ID number"
+                                  maxLength={13}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`beneficiaries.${index}.relationship`}
+                          render={({ field }) => (
+                            <FormItem className="col-span-full md:col-span-1">
+                              <FormLabel>Relationship</FormLabel>
+                              <div className="space-y-3">
+                                <RadioGroup
+                                  className="flex flex-row gap-6"
+                                  value={
+                                    relationshipCategories[field.name] ||
+                                    (field.value &&
+                                    (
+                                      immediateRelationships as readonly string[]
+                                    ).includes(field.value)
+                                      ? "immediate"
+                                      : "extended")
+                                  }
+                                  onValueChange={(
+                                    val: "immediate" | "extended"
+                                  ) => {
+                                    setRelationshipCategories((prev) => ({
+                                      ...prev,
+                                      [field.name]: val,
+                                    }));
+                                    const current = field.value as
+                                      | string
+                                      | undefined;
+                                    if (
+                                      val === "immediate" &&
+                                      (!current ||
+                                        !(
+                                          immediateRelationships as readonly string[]
+                                        ).includes(current))
+                                    ) {
+                                      field.onChange("spouse");
+                                    } else if (
+                                      val === "extended" &&
+                                      (!current ||
+                                        !(
+                                          extendedRelationships as readonly string[]
+                                        ).includes(current))
+                                    ) {
+                                      field.onChange("parent");
+                                    }
+                                  }}
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem
+                                      value="immediate"
+                                      id={`immediate-${index}`}
+                                    />
+                                    <label
+                                      htmlFor={`immediate-${index}`}
+                                      className="text-sm font-medium leading-none"
+                                    >
+                                      Immediate
+                                    </label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem
+                                      value="extended"
+                                      id={`extended-${index}`}
+                                    />
+                                    <label
+                                      htmlFor={`extended-${index}`}
+                                      className="text-sm font-medium leading-none"
+                                    >
+                                      Extended
+                                    </label>
+                                  </div>
+                                </RadioGroup>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value || ""}
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select relationship" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {(relationshipCategories[field.name] ||
+                                      (field.value &&
+                                      (
+                                        immediateRelationships as readonly string[]
+                                      ).includes(field.value)
+                                        ? "immediate"
+                                        : "extended")) === "immediate" ? (
+                                      <>
+                                        {immediateRelationships.map((r) => (
+                                          <SelectItem key={r} value={r}>
+                                            {r.charAt(0).toUpperCase() +
+                                              r.slice(1).replace("_", " ")}
+                                          </SelectItem>
+                                        ))}
+                                      </>
+                                    ) : (
+                                      <>
+                                        {extendedRelationships.map((r) => (
+                                          <SelectItem key={r} value={r}>
+                                            {r.charAt(0).toUpperCase() +
+                                              r.slice(1).replace("_", " ")}
+                                          </SelectItem>
+                                        ))}
+                                      </>
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name={`beneficiaries.${index}.phone_number`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Phone Number (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    value={field.value || ""}
+                                    placeholder="Phone number"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`beneficiaries.${index}.email`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    value={field.value || ""}
+                                    type="email"
+                                    placeholder="Email address"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                  {fields.length < 5 && (
+                    <p className="text-sm text-muted-foreground">
+                      Please add at least 5 covered people.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+              <Card className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="terms_and_conditions"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                      <FormLabel className="!m-0">
+                        I agree to the Terms & Conditions
+                      </FormLabel>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="privacy_policy"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                      <FormLabel className="!m-0">
+                        I agree to the Privacy Policy
+                      </FormLabel>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </Card>
+            </div>
+          )}
 
-          {/* Personal Information */}
-          <Card className="p-6">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle>Personal Information</CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="first_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Enter first name" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="last_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Enter last name" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="id_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ID Number</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Enter SA ID number"
-                        maxLength={13}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          const dob = extractDateOfBirthFromSAID(
-                            e.target.value
-                          );
-                          if (dob) {
-                            form.setValue("date_of_birth", dob);
-                          }
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="date_of_birth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date of Birth</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="date"
-                        readOnly
-                        className="bg-muted"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Enter phone" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        {...field}
-                        placeholder="name@example.com"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Address Information */}
-          <Card className="p-6">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle>Address Information</CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="residential_address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Residential Address</FormLabel>
-                    <FormControl>
-                      <Input
-                        name={field.name}
-                        onBlur={field.onBlur}
-                        ref={field.ref}
-                        onChange={field.onChange}
-                        value={field.value || ""}
-                        placeholder="Street and suburb"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>City</FormLabel>
-                    <FormControl>
-                      <Input
-                        name={field.name}
-                        onBlur={field.onBlur}
-                        ref={field.ref}
-                        onChange={field.onChange}
-                        value={field.value || ""}
-                        placeholder="City"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="postal_code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Postal Code</FormLabel>
-                    <FormControl>
-                      <Input
-                        name={field.name}
-                        onBlur={field.onBlur}
-                        ref={field.ref}
-                        onChange={field.onChange}
-                        value={field.value || ""}
-                        maxLength={4}
-                        placeholder="0000"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Banking Details */}
-          <Card className="p-6">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle>Banking Details</CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="account_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Account Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Account holder name" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="bank_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bank Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Bank name" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="account_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Account Number</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Account number" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="branch_code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Branch Code</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Branch code"
-                        maxLength={6}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="account_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Account Type</FormLabel>
-                    <FormControl>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || ""}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select account type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="savings">Savings</SelectItem>
-                          <SelectItem value="transaction">
-                            Transaction
-                          </SelectItem>
-                          <SelectItem value="current">Current</SelectItem>
-                          <SelectItem value="business">Business</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Covered People (Beneficiaries) */}
-          <Card className="p-6">
-            <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
-              <CardTitle>Covered People ({fields.length})</CardTitle>
-              <div className="flex gap-2">
+          {/* Navigation Buttons */}
+          <div className="flex flex-col md:flex-row gap-4 justify-between pt-4">
+            <div>
+              {currentStep > 0 && (
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    append({
-                      first_name: "",
-                      last_name: "",
-                      id_number: "",
-                      relationship: undefined as any,
-                      percentage: 0,
-                      phone_number: "",
-                      email: "",
-                    })
-                  }
-                  disabled={fields.length >= 10}
+                  onClick={goBack}
+                  disabled={isPending}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Person
+                  Back
                 </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="px-0 space-y-4">
-              {fields.map((field, index) => (
-                <Card key={field.id} className="p-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="font-medium">Person {index + 1}</h4>
-                    {fields.length > 5 && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => remove(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name={`beneficiaries.${index}.first_name`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>First Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="First name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`beneficiaries.${index}.last_name`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Last Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Last name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`beneficiaries.${index}.id_number`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>ID Number</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="SA ID number"
-                              maxLength={13}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`beneficiaries.${index}.relationship`}
-                      render={({ field }) => (
-                        <FormItem className="col-span-full md:col-span-1">
-                          <FormLabel>Relationship</FormLabel>
-                          <div className="space-y-3">
-                            <RadioGroup
-                              className="flex flex-row gap-6"
-                              value={
-                                relationshipCategories[field.name] ||
-                                (field.value &&
-                                (
-                                  immediateRelationships as readonly string[]
-                                ).includes(field.value)
-                                  ? "immediate"
-                                  : "extended")
-                              }
-                              onValueChange={(
-                                val: "immediate" | "extended"
-                              ) => {
-                                setRelationshipCategories((prev) => ({
-                                  ...prev,
-                                  [field.name]: val,
-                                }));
-                                const current = field.value as
-                                  | string
-                                  | undefined;
-                                if (
-                                  val === "immediate" &&
-                                  (!current ||
-                                    !(
-                                      immediateRelationships as readonly string[]
-                                    ).includes(current))
-                                ) {
-                                  field.onChange("spouse");
-                                } else if (
-                                  val === "extended" &&
-                                  (!current ||
-                                    !(
-                                      extendedRelationships as readonly string[]
-                                    ).includes(current))
-                                ) {
-                                  field.onChange("parent");
-                                }
-                              }}
-                            >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem
-                                  value="immediate"
-                                  id={`immediate-${index}`}
-                                />
-                                <label
-                                  htmlFor={`immediate-${index}`}
-                                  className="text-sm font-medium leading-none"
-                                >
-                                  Immediate
-                                </label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem
-                                  value="extended"
-                                  id={`extended-${index}`}
-                                />
-                                <label
-                                  htmlFor={`extended-${index}`}
-                                  className="text-sm font-medium leading-none"
-                                >
-                                  Extended
-                                </label>
-                              </div>
-                            </RadioGroup>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value || ""}
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select relationship" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {(relationshipCategories[field.name] ||
-                                  (field.value &&
-                                  (
-                                    immediateRelationships as readonly string[]
-                                  ).includes(field.value)
-                                    ? "immediate"
-                                    : "extended")) === "immediate" ? (
-                                  <>
-                                    {immediateRelationships.map((r) => (
-                                      <SelectItem key={r} value={r}>
-                                        {r.charAt(0).toUpperCase() +
-                                          r.slice(1).replace("_", " ")}
-                                      </SelectItem>
-                                    ))}
-                                  </>
-                                ) : (
-                                  <>
-                                    {extendedRelationships.map((r) => (
-                                      <SelectItem key={r} value={r}>
-                                        {r.charAt(0).toUpperCase() +
-                                          r.slice(1).replace("_", " ")}
-                                      </SelectItem>
-                                    ))}
-                                  </>
-                                )}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    {/* Phone & Email on a new row */}
-                    <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name={`beneficiaries.${index}.phone_number`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone Number (Optional)</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                value={field.value || ""}
-                                placeholder="Phone number"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`beneficiaries.${index}.email`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email (Optional)</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                value={field.value || ""}
-                                type="email"
-                                placeholder="Email address"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              ))}
-              {fields.length < 5 && (
-                <p className="text-sm text-muted-foreground">
-                  Please add at least 5 covered people.
-                </p>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Terms and Conditions */}
-          <Card className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="terms_and_conditions"
-              render={({ field }) => (
-                <FormItem className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={field.value}
-                    onChange={(e) => field.onChange(e.target.checked)}
-                  />
-                  <FormLabel className="!m-0">
-                    I agree to the Terms & Conditions
-                  </FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="privacy_policy"
-              render={({ field }) => (
-                <FormItem className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={field.value}
-                    onChange={(e) => field.onChange(e.target.checked)}
-                  />
-                  <FormLabel className="!m-0">
-                    I agree to the Privacy Policy
-                  </FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </Card>
-
-          <div className="flex justify-center">
-            <Button
-              type="submit"
-              size="lg"
-              disabled={isPending}
-              className="w-full max-w-md"
-            >
-              {isPending ? "Submitting..." : "Submit Application"}
-            </Button>
+            </div>
+            <div className="flex-1" />
+            {currentStep < totalSteps - 1 && (
+              <Button type="button" onClick={goNext} disabled={isPending}>
+                Next
+              </Button>
+            )}
+            {currentStep === totalSteps - 1 && (
+              <Button
+                type="submit"
+                size="lg"
+                disabled={isPending}
+                className="min-w-[180px]"
+              >
+                {isPending ? "Submitting..." : "Submit Application"}
+              </Button>
+            )}
           </div>
         </form>
       </Form>

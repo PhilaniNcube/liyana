@@ -639,65 +639,97 @@ export const lifeInsuranceLeadSchemaWithRefines = lifeInsuranceLeadSchema.refine
   }
 );
 
-export const funeralPolicyLeadSchema = z.object({
-  first_name: z.string().min(1, "First name is required"),
-  last_name: z.string().min(1, "Last name is required"),
-  id_number: z
-    .string()
-    .min(13, "SA ID Number must be 13 digits")
-    .max(13, "SA ID Number must be 13 digits"),
-  date_of_birth: z.string().min(1, "Date of birth is required"),
-  phone_number: z.string().min(10, "Phone number must be at least 10 digits"),
-  email: z.string().email("Please enter a valid email address"),
-  product_type: z
-    .enum(["funeral_policy", "life_insurance", "payday_loan"], {
-      required_error: "Please select a product",
-      invalid_type_error: "Please select a product",
+export const funeralPolicyLeadSchema = z
+  .object({
+    first_name: z.string().min(1, "First name is required"),
+    last_name: z.string().min(1, "Last name is required"),
+    id_number: z
+      .string()
+      .min(13, "SA ID Number must be 13 digits")
+      .max(13, "SA ID Number must be 13 digits"),
+    date_of_birth: z.string().min(1, "Date of birth is required"),
+    phone_number: z.string().min(10, "Phone number must be at least 10 digits"),
+    email: z.string().email("Please enter a valid email address"),
+    product_type: z
+      .enum(["funeral_policy", "life_insurance", "payday_loan"], {
+        required_error: "Please select a product",
+        invalid_type_error: "Please select a product",
+      }),
+    residential_address: z.string().optional().nullable(),
+    city: z.string().optional().nullable(),
+    postal_code: z.string().optional().nullable(),
+
+    // Employment details aligned with loanApplicationSchema
+    employment_type: z.enum(
+      ["employed", "self_employed", "contract", "unemployed", "retired"],
+      { required_error: "Employment status is required" }
+    ),
+    employer_name: z.string().min(1, "Employer is required"),
+    job_title: z.string().min(1, "Job title is required"),
+    monthly_income: z.coerce.number().min(1, "Monthly income is required"),
+    employer_address: z.string().optional(),
+    employer_contact_number: z.string().optional(),
+    employment_end_date: z.string().optional(),
+
+    // Required banking details for policy holder party.banking_details
+    account_name: z.string().min(1, "Account name is required"),
+    bank_name: z.string().min(1, "Bank name is required"),
+    account_number: z
+      .string()
+      .min(8, "Account number must be at least 8 digits"),
+    branch_code: z
+      .string()
+      .min(6, "Branch code must be at least 6 digits")
+      .max(6, "Branch code must be exactly 6 digits"),
+    account_type: z.enum(["savings", "transaction", "current", "business"], {
+      required_error: "Account type is required",
     }),
-  residential_address: z.string().optional().nullable(),
-  city: z.string().optional().nullable(),
-  postal_code: z.string().optional().nullable(),
-  // Required banking details for policy holder party.banking_details
-  account_name: z.string().min(1, "Account name is required"),
-  bank_name: z.string().min(1, "Bank name is required"),
-  account_number: z.string().min(8, "Account number must be at least 8 digits"),
-  branch_code: z
-    .string()
-    .min(6, "Branch code must be at least 6 digits")
-    .max(6, "Branch code must be exactly 6 digits"),
-  account_type: z.enum(["savings", "transaction", "current", "business"], {
-    required_error: "Account type is required",
-  }),
 
-  // Require between 5 and 10 beneficiaries
-  beneficiaries: z
-    .array(
-      z.object({
-        first_name: z.string().min(1, "First name is required"),
-        last_name: z.string().min(1, "Last name is required"),
-        id_number: z
-          .string()
-          .min(13, "SA ID Number must be 13 digits")
-          .max(13, "SA ID Number must be 13 digits"),
-        relationship: z.enum(["spouse", "child", "parent", "sibling"], {
-          required_error: "Relationship is required",
-        }),
-        percentage: z
-          .number(),
-        phone_number: z.string().min(10).optional(),
-        email: z.string().email().optional(),
-      })
-    )
-    .min(5, "Provide at least 5 beneficiaries")
-    .max(10, "No more than 10 beneficiaries allowed"),
-  terms_and_conditions: z.boolean().refine((v) => v === true, {
-    message: "Terms and conditions must be accepted",
-  }),
-  privacy_policy: z.boolean().refine((v) => v === true, {
-    message: "Privacy policy must be accepted",
-  }),
-
-});
+    // Require between 5 and 10 beneficiaries
+    beneficiaries: z
+      .array(
+        z.object({
+          first_name: z.string().min(1, "First name is required"),
+          last_name: z.string().min(1, "Last name is required"),
+          id_number: z
+            .string()
+            .min(13, "SA ID Number must be 13 digits")
+            .max(13, "SA ID Number must be 13 digits"),
+          relationship: z.enum(["spouse", "child", "parent", "sibling"], {
+            required_error: "Relationship is required",
+          }),
+          percentage: z.number(),
+          phone_number: z.string().min(10).optional(),
+          email: z.string().email().optional(),
+        })
+      )
+      .min(5, "Provide at least 5 beneficiaries")
+      .max(10, "No more than 10 beneficiaries allowed"),
+    terms_and_conditions: z.boolean().refine((v) => v === true, {
+      message: "Terms and conditions must be accepted",
+    }),
+    privacy_policy: z.boolean().refine((v) => v === true, {
+      message: "Privacy policy must be accepted",
+    }),
+  })
+  .refine(
+    (data) => {
+      // Require employment_end_date for contract and retired types
+      if (
+        (data.employment_type === "contract" ||
+          data.employment_type === "retired") &&
+        (!data.employment_end_date || data.employment_end_date.trim() === "")
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message:
+        "Employment end date is required for contract and retired employment types",
+      path: ["employment_end_date"],
+    }
+  );
 
 
 export const funeralPolicyLeadSchemaWithRefines = funeralPolicyLeadSchema;
