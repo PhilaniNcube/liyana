@@ -250,27 +250,12 @@ export function PersonalInfoCard({
     idVerificationResponse &&
     typeof idVerificationResponse === "object" &&
     !Array.isArray(idVerificationResponse)
-      ? (idVerificationResponse as any)?.details
+      ? (idVerificationResponse as any)?.detail
       : undefined;
 
   // get the photo from this object, it is a base64 string
   const idVerificationPhoto: string | undefined =
     idVerificationDetails && idVerificationDetails.photo;
-
-  // now use this photo in the UI to display it in the same section as the ID number, email address and the other demographic information
-  const renderIdVerificationPhoto = () => {
-    if (!idVerificationPhoto) return null;
-
-    return (
-      <div className="mt-4">
-        <img
-          src={`data:image/jpeg;base64,${idVerificationPhoto}`}
-          alt="ID Verification"
-          className="max-w-full h-auto rounded-lg"
-        />
-      </div>
-    );
-  };
 
   return (
     <Card>
@@ -427,7 +412,6 @@ export function PersonalInfoCard({
                                       )}
                                     </span>
                                   </div>
-                                  {renderIdVerificationPhoto()}
                                 </CardContent>
                               </Card>
 
@@ -686,66 +670,80 @@ export function PersonalInfoCard({
             <Separator />
           </>
         )}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              ID Number
-            </p>
-            <p className="text-sm">
-              {application.id_number_decrypted || "N/A"}
-            </p>
+        <div className="grid grid-cols-3">
+          <div className="grid grid-cols-2 col-span-2 gap-4">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                ID Number
+              </p>
+              <p className="text-sm">
+                {application.id_number_decrypted || "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Email Address
+              </p>
+              <p className="text-sm">
+                {application.profile?.email || application.email || "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Date of Birth
+              </p>
+              <p className="text-sm">{formatDate(application.date_of_birth)}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Gender
+              </p>
+              <p className="text-sm capitalize">
+                {application.gender || application.gender_other || "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Marital Status
+              </p>
+              <p className="text-sm capitalize">
+                {application.marital_status || "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Nationality
+              </p>
+              <p className="text-sm capitalize">
+                {application.nationality || "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Language
+              </p>
+              <p className="text-sm capitalize">
+                {application.language || "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Dependants
+              </p>
+              <p className="text-sm">{application.dependants || "N/A"}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Email Address
-            </p>
-            <p className="text-sm">
-              {application.profile?.email || application.email || "N/A"}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Date of Birth
-            </p>
-            <p className="text-sm">{formatDate(application.date_of_birth)}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Gender</p>
-            <p className="text-sm capitalize">
-              {application.gender || application.gender_other || "N/A"}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Marital Status
-            </p>
-            <p className="text-sm capitalize">
-              {application.marital_status || "N/A"}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Nationality
-            </p>
-            <p className="text-sm capitalize">
-              {application.nationality || "N/A"}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Language
-            </p>
-            <p className="text-sm capitalize">
-              {application.language || "N/A"}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Dependants
-            </p>
-            <p className="text-sm">{application.dependants || "N/A"}</p>
-          </div>
+          {idVerificationDetails?.hasPhoto && (
+            <div>
+              <img
+                src={`data:image/jpeg;base64,${idVerificationDetails.photo}`}
+                alt="ID Photo"
+                className="w-full max-w-[260px] rounded border"
+              />
+            </div>
+          )}
         </div>
+
         <Separator />
         <div>
           <p className="text-sm font-medium text-muted-foreground">
