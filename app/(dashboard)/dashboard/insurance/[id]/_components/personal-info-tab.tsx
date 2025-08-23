@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatDate } from "date-fns";
 import { PolicyWithAllData } from "@/lib/queries/policy-details";
 import { decryptValue } from "@/lib/encryption";
+import VerifyIdDialog from "./verify-id";
 
 interface PersonalInfoTabProps {
   policy: PolicyWithAllData;
@@ -29,9 +30,13 @@ export default function PersonalInfoTab({ policy }: PersonalInfoTabProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Personal Information</CardTitle>
+      <CardHeader className="">
+        <div className="flex items-center justify-between bg-yellow-200 p-4 rounded-md">
+          <CardTitle className="text-2xl">Personal Information</CardTitle>
+          {holder.id_number && <VerifyIdDialog idNumber={holder.id_number} />}
+        </div>
       </CardHeader>
+
       <CardContent>
         <div className="space-y-6">
           {/* Basic Personal Details */}

@@ -47,6 +47,8 @@ export async function POST(request: NextRequest) {
 
   const verificationURL = `${process.env.WHO_YOU_URL}/hanis/enquire/v1/demographic/${decryptedIdNumber}`;
 
+  const supabase = await createClient();
+
   const verificationResponse = await fetch(verificationURL, {
     method: "POST",
     headers: {
@@ -60,8 +62,22 @@ export async function POST(request: NextRequest) {
   });
 
   if (!verificationResponse.ok) {
-    console.error("Who You API verification error:", verificationResponse.statusText);
-    console.error("Who You API verification response:", await verificationResponse.json());
+   
+   
+
+    await supabase.from("api_checks").insert({
+      id_number: id_number,
+      check_type: "id_verification",
+      status: "failed",
+      vendor: "WhoYou",
+      response_payload: {
+        code: verificationResponse.status,
+        error: verificationResponse.statusText,
+        data: null
+      },
+      checked_at: new Date().toISOString(),
+    });
+
     return NextResponse.json(
       { error: "Failed to verify ID number" },
       { status: 500 }
@@ -71,7 +87,7 @@ export async function POST(request: NextRequest) {
   const verificationData: WhoYouIdVerificationResponse =
   await verificationResponse.json();
 
-    const supabase = await createClient();
+ 
 
   console.log("Verification Data:", verificationData);
 
