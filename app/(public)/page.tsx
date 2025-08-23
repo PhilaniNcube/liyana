@@ -11,7 +11,7 @@ import {
 import { getCurrentUser } from "@/lib/queries/user";
 import Link from "next/link";
 
-import { CheckCircle, Heart, Shield } from "lucide-react";
+import { CheckCircle, Shield } from "lucide-react";
 
 export default async function Home() {
   const currentUser = await getCurrentUser();
@@ -38,8 +38,8 @@ export default async function Home() {
                 </h1>
                 <p className="max-w-[600px] mx-auto text-gray-500 md:text-xl">
                   Liyana Finance offers comprehensive financial services
-                  including payday loans, life insurance, and funeral policies
-                  to protect what matters most.
+                  including payday loans and funeral policies to protect what
+                  matters most.
                 </p>
               </div>
             </div>
@@ -86,7 +86,7 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-2">
             {/* Loans Card */}
             <Card className="relative overflow-hidden">
               <CardHeader>
@@ -108,31 +108,6 @@ export default async function Home() {
                 </ul>
                 <Button asChild className="w-full">
                   <Link href="/apply">Apply Now</Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Life Insurance Card */}
-            <Card className="relative overflow-hidden">
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <Heart className="h-6 w-6 text-red-500" />
-                  <CardTitle>Life Insurance</CardTitle>
-                </div>
-                <CardDescription>
-                  Protect your family's financial future with comprehensive life
-                  insurance coverage
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm text-gray-600 mb-4">
-                  <li>• Comprehensive coverage</li>
-                  <li>• Affordable premiums</li>
-                  <li>• Multiple payout options</li>
-                  <li>• Easy claims process</li>
-                </ul>
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/insurance/life">Learn More</Link>
                 </Button>
               </CardContent>
             </Card>
