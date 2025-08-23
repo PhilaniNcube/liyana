@@ -29,6 +29,7 @@ import {
 } from "@/lib/schemas";
 import { OtvResultsDialog } from "@/components/otv-results-dialog";
 import { toast } from "sonner";
+import type { Database } from "@/lib/types";
 
 interface Application {
   id: number;
@@ -51,18 +52,9 @@ interface Application {
   } | null;
 }
 
-interface ApiCheck {
-  id: number;
-  check_type: string;
-  status: string;
-  vendor: string;
-  response_payload: any;
-  checked_at: string;
-}
-
 interface PersonalInfoCardProps {
   application: Application;
-  apiChecks?: ApiCheck[];
+  apiChecks?: Database["public"]["Tables"]["api_checks"]["Row"][];
   onOtvRequest?: () => Promise<void>;
   isSendingOtv?: boolean;
 }
@@ -89,19 +81,6 @@ export function PersonalInfoCard({
     null
   );
   const [isIdDialogOpen, setIsIdDialogOpen] = useState(false);
-
-  // Extract ID verification result with photo from API checks
-  const idVerificationCheck = apiChecks.find(
-    (check) =>
-      check.check_type === "id_verification" &&
-      check.status === "passed" &&
-      check.response_payload?.photo &&
-      check.response_payload?.hasPhoto
-  );
-  console.log(apiChecks);
-  console.log("ID Verification Check:", idVerificationCheck);
-
-  const storedIdResult = idVerificationCheck?.response_payload || null;
 
   const handleOtvRequest = async () => {
     if (onOtvRequest) {
@@ -252,6 +231,47 @@ export function PersonalInfoCard({
     );
   };
 
+  // get the first api check of type id_verification
+  const idVerificationCheck = apiChecks.find(
+    (
+      check
+    ): check is Database["public"]["Tables"]["api_checks"]["Row"] & {
+      check_type: "id_verification";
+    } => check.check_type === "id_verification"
+  );
+
+  // get the response payload
+  const idVerificationResponse = idVerificationCheck?.response_payload;
+
+  console.log("id-verification-check", idVerificationResponse);
+
+  // if this is a passed id_verification then the response_payload would have had a details object and the type for that details object is WhoYouIdVerificationDetail
+  const idVerificationDetails: WhoYouIdVerificationDetail | undefined =
+    idVerificationResponse &&
+    typeof idVerificationResponse === "object" &&
+    !Array.isArray(idVerificationResponse)
+      ? (idVerificationResponse as any)?.details
+      : undefined;
+
+  // get the photo from this object, it is a base64 string
+  const idVerificationPhoto: string | undefined =
+    idVerificationDetails && idVerificationDetails.photo;
+
+  // now use this photo in the UI to display it in the same section as the ID number, email address and the other demographic information
+  const renderIdVerificationPhoto = () => {
+    if (!idVerificationPhoto) return null;
+
+    return (
+      <div className="mt-4">
+        <img
+          src={`data:image/jpeg;base64,${idVerificationPhoto}`}
+          alt="ID Verification"
+          className="max-w-full h-auto rounded-lg"
+        />
+      </div>
+    );
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -274,22 +294,6 @@ export function PersonalInfoCard({
 
                 <div className="flex items-center gap-2">
                   {/* Display photo if available from stored results */}
-                  {storedIdResult?.photo && storedIdResult.hasPhoto && (
-                    <div className="flex flex-col items-center">
-                      <img
-                        src={`data:image/jpeg;base64,${storedIdResult.photo}`}
-                        alt="ID Photo"
-                        className="w-20 h-24 object-cover rounded border-2 border-gray-300"
-                        onError={(e) => {
-                          console.error("Error loading photo");
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                      <span className="text-xs text-muted-foreground mt-1">
-                        ID Photo
-                      </span>
-                    </div>
-                  )}
 
                   <Dialog
                     open={isIdDialogOpen}
@@ -423,6 +427,7 @@ export function PersonalInfoCard({
                                       )}
                                     </span>
                                   </div>
+                                  {renderIdVerificationPhoto()}
                                 </CardContent>
                               </Card>
 

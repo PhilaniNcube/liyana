@@ -69,7 +69,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 interface ApplicationDetailClientProps {
   application: DecryptedApplication;
-  apiChecks: any[];
+  apiChecks: Database["public"]["Tables"]["api_checks"]["Row"][];
   documents: Database["public"]["Tables"]["documents"]["Row"][];
 }
 
@@ -92,12 +92,12 @@ export function ApplicationDetailClient({
   // Filter for credit reports from Credit Check API checks
   const creditReports = apiChecks
     .filter(
-      (check: any) =>
+      (check) =>
         check.check_type === "fraud_check" &&
         check.status === "passed" &&
         check.response_payload
     )
-    .map((check: any) => ({
+    .map((check) => ({
       id: check.id.toString(),
       check_type: check.check_type,
       status: check.status,
@@ -106,7 +106,9 @@ export function ApplicationDetailClient({
     }));
 
   // Filter API checks to show only the latest of each type
-  const getLatestApiChecks = (checks: any[]) => {
+  const getLatestApiChecks = (
+    checks: Database["public"]["Tables"]["api_checks"]["Row"][]
+  ) => {
     const latestChecks = new Map();
 
     checks.forEach((check) => {
