@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { funeralPolicyLeadSchemaWithRefines } from "@/lib/schemas";
 import { createFuneralPolicy } from "@/lib/actions/funeral-policy";
 import { useActionState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Form,
   FormControl,
@@ -45,7 +47,22 @@ export default function FuneralPolicyForm() {
     {}
   );
   const [isPending, startTransition] = useTransition();
-  const loading = false;
+  const router = useRouter();
+
+  // Handle successful submission
+  useEffect(() => {
+    if (state && !state.error && state.message && !isPending) {
+      toast.success("Application submitted successfully!", {
+        description: state.message,
+        duration: 5000,
+      });
+
+      // Redirect to home page after a short delay
+      setTimeout(() => {
+        router.push("/");
+      }, 2000);
+    }
+  }, [state, isPending, router]);
 
   // Multistep state
   const [currentStep, setCurrentStep] = useState(0);
@@ -167,7 +184,12 @@ export default function FuneralPolicyForm() {
   const immediateRelationships = ["spouse", "child"] as const;
   // NOTE: Only parent & sibling are currently supported extended values in schema/DB.
   // Future values requested (cousin, in_laws, grandparent) require enum + DB migration.
-  const extendedRelationships = ["parent", "sibling"] as const;
+  const extendedRelationships = [
+    "parent",
+    "sibling",
+    "grandparent",
+    "cousin",
+  ] as const;
   const [relationshipCategories, setRelationshipCategories] = useState<
     Record<string, "immediate" | "extended">
   >({});
@@ -219,9 +241,11 @@ export default function FuneralPolicyForm() {
           </AlertDescription>
         </Alert>
       )}
-      {!state?.error && state?.message && (
-        <Alert>
-          <AlertDescription>{state.message}</AlertDescription>
+      {!state?.error && state?.message && !isPending && (
+        <Alert className="border-green-200 bg-green-50">
+          <AlertDescription className="text-green-800">
+            ✅ {state.message} Redirecting to home page...
+          </AlertDescription>
         </Alert>
       )}
 
@@ -936,10 +960,14 @@ export default function FuneralPolicyForm() {
               <Button
                 type="submit"
                 size="lg"
-                disabled={isPending}
+                disabled={isPending || (!state?.error && !!state?.message)}
                 className="min-w-[180px]"
               >
-                {isPending ? "Submitting..." : "Submit Application"}
+                {isPending
+                  ? "Submitting..."
+                  : !state?.error && state?.message
+                    ? "✅ Submitted!"
+                    : "Submit Application"}
               </Button>
             )}
           </div>

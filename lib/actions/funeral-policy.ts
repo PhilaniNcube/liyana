@@ -1,6 +1,6 @@
 "use server";
 
-import { z } from "zod";
+
 import { revalidatePath } from "next/cache";
 import { createClient } from "../server";
 import { getCurrentUser } from "../queries";
@@ -96,17 +96,18 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
       };
     }
 
-    // Create a minimal generic policy record linked to the party
-    const { data: newPolicy, error: policyError } = await supabase.from("policies").insert({
-      policy_holder_id: party.id,
-      frequency: "monthly",
-      policy_status: "pending",
-      premium_amount: null,
-      product_type: validatedData.product_type ?? null,
-      start_date: null,
-      end_date: null,
-      // Add employment details to policies table
-      employment_details: {
+    // Create a base policy record first
+    const { data: newPolicy, error: policyError } = await supabase
+      .from("policies")
+      .insert({
+        policy_holder_id: party.id,
+        frequency: "monthly",
+        policy_status: "pending",
+        premium_amount: null,
+        product_type: validatedData.product_type ?? null,
+        start_date: null,
+        end_date: null,
+        employment_details: {
           employment_type: validatedData.employment_type,
           employer_name: validatedData.employer_name,
           job_title: validatedData.job_title,
@@ -115,16 +116,51 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
           employer_contact_number: validatedData.employer_contact_number || null,
           employment_end_date: validatedData.employment_end_date || null,
         },
-    }).select("id").single();
+      })
+      .select("id")
+      .single();
 
-    if (policyError) {
+    if (policyError || !newPolicy) {
       return {
         error: true,
-        message: "Party created but failed to create policy record.",
-        details: policyError.message,
+        message: "Failed to create policy record.",
+        details: policyError?.message,
         partyId: party.id,
       };
     }
+
+    // Create funeral policy with the same ID
+    // const { error: funeralPolicyCreateError } = await supabase
+    //   .from("funeral_policies")
+    //   .insert({
+    //     policy_holder_id: party.id,
+    //     frequency: "monthly",
+    //     policy_status: "pending",
+    //     premium_amount: null,
+    //     product_type: validatedData.product_type,
+    //     start_date: null,
+    //     end_date: null,
+    //     employment_details: {
+    //       employment_type: validatedData.employment_type,
+    //       employer_name: validatedData.employer_name,
+    //       job_title: validatedData.job_title,
+    //       monthly_income: validatedData.monthly_income,
+    //       employer_address: validatedData.employer_address || null,
+    //       employer_contact_number: validatedData.employer_contact_number || null,
+    //       employment_end_date: validatedData.employment_end_date || null,
+    //     },
+    //     covered_members: [],
+    //   });
+
+    // if (funeralPolicyCreateError) {
+    //   return {
+    //     error: true,
+    //     message: "Failed to create funeral policy record.",
+    //     details: funeralPolicyCreateError.message,
+    //     partyId: party.id,
+    //     policyId: newPolicy.id,
+    //   };
+    // }
 
     // Create beneficiary parties and link in policy_beneficiaries
     // We will create minimal party rows for beneficiaries and then insert policy_beneficiaries with allocation_percentage and relation_type
@@ -144,7 +180,7 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
       .from("parties")
       .insert(beneficiaryInserts)
       .select("id")
-      .returns<{ id: string }[]>();
+ 
 
     if (benPartyError || !beneficiaryParties || beneficiaryParties.length !== validatedData.beneficiaries.length) {
       return {
@@ -152,13 +188,13 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
         message: "Failed to create beneficiary records.",
         details: benPartyError?.message,
         partyId: party.id,
-        policyId: newPolicy?.id,
+        policyId: newPolicy.id,
       };
     }
 
     // Prepare policy_beneficiaries rows
     const policyBeneficiariesRows = validatedData.beneficiaries.map((b: any, idx: number) => ({
-      policy_id: newPolicy!.id,
+      policy_id: newPolicy.id,
       beneficiary_party_id: beneficiaryParties[idx].id,
       allocation_percentage: b.percentage,
       relation_type: b.relationship,
@@ -174,48 +210,12 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
         message: "Failed to link beneficiaries to the policy.",
         details: pbError.message,
         partyId: party.id,
-        policyId: newPolicy?.id,
+        policyId: newPolicy.id,
       };
     }
 
-    // Create funeral_policies entry with employment and lead details
-    const { error: funeralPolicyError } = await supabase
-      .from("funeral_policies")
-      .insert({
-        id: newPolicy!.id, // Use the policy id as the funeral_policies id
-        policy_holder_id: party.id,
-        frequency: "monthly",
-        policy_status: "pending",
-        premium_amount: null,
-        product_type: validatedData.product_type,
-        start_date: null,
-        end_date: null,
-        // Employment details as JSON
-        employment_details: {
-          employment_type: validatedData.employment_type,
-          employer_name: validatedData.employer_name,
-          job_title: validatedData.job_title,
-          monthly_income: validatedData.monthly_income,
-          employer_address: validatedData.employer_address || null,
-          employer_contact_number: validatedData.employer_contact_number || null,
-          employment_end_date: validatedData.employment_end_date || null,
-        },
-        // Empty covered_members for now (could be populated later with beneficiaries data)
-        covered_members: [],
-      });
-
-    if (funeralPolicyError) {
-      return {
-        error: true,
-        message: "Failed to create funeral policy record.",
-        details: funeralPolicyError.message,
-        partyId: party.id,
-        policyId: newPolicy?.id,
-      };
-    }
-
-  // Party + minimal policy application for now
-  revalidatePath("/insurance/funeral");
+    // Policy creation and linking completed successfully
+    revalidatePath("/insurance/funeral");
 
     return {
       error: false,

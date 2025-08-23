@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   BoxIcon,
   VaultIcon,
+  ShieldIcon,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -69,14 +70,30 @@ const sidebarItems = [
     ],
   },
   {
-    title: "Life Insurance",
-    href: "/dashboard/insurance/life",
-    icon: Shield,
-  },
-  {
     title: "Funeral Insurance",
-    href: "/dashboard/insurance/funeral",
-    icon: VaultIcon,
+    icon: ShieldIcon,
+    subItems: [
+      {
+        title: "Pending Policies",
+        href: "/dashboard/insurance/funeral/pending",
+        icon: FileText,
+      },
+      {
+        title: "Declined Policies",
+        href: "/dashboard/insurance/funeral/declined",
+        icon: UserX,
+      },
+      {
+        title: "Active Policies",
+        href: "/dashboard/insurance/funeral/active",
+        icon: UserCheck,
+      },
+      {
+        title: "All Policies",
+        href: "/dashboard/insurance/funeral",
+        icon: BoxIcon,
+      },
+    ],
   },
   {
     title: "API Checks",

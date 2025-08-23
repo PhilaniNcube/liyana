@@ -695,7 +695,7 @@ export const funeralPolicyLeadSchema = z
             .string()
             .min(13, "SA ID Number must be 13 digits")
             .max(13, "SA ID Number must be 13 digits"),
-          relationship: z.enum(["spouse", "child", "parent", "sibling"], {
+          relationship: z.enum(["spouse", "child", "parent", "sibling", "grandparent", "cousin"], {
             required_error: "Relationship is required",
           }),
           percentage: z.number(),

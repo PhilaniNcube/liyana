@@ -426,7 +426,7 @@ export type Database = {
           employment_details?: Json | null
           end_date?: string | null
           frequency: Database["public"]["Enums"]["frequency"]
-          id: number
+          id?: number
           policy_holder_id: string
           policy_status: Database["public"]["Enums"]["policy_status"]
           premium_amount?: number | null
@@ -995,7 +995,13 @@ export type Database = {
       party_type: "individual" | "organization"
       policy_status: "pending" | "active" | "lapsed" | "cancelled"
       product_type: "funeral_policy" | "life_insurance" | "payday_loan"
-      relation_type: "spouse" | "child" | "parent" | "sibling"
+      relation_type:
+        | "spouse"
+        | "child"
+        | "parent"
+        | "sibling"
+        | "cousin"
+        | "grandparent"
       transaction_status: "pending" | "completed" | "failed"
       transaction_type:
         | "premium_payment"
@@ -1187,7 +1193,14 @@ export const Constants = {
       party_type: ["individual", "organization"],
       policy_status: ["pending", "active", "lapsed", "cancelled"],
       product_type: ["funeral_policy", "life_insurance", "payday_loan"],
-      relation_type: ["spouse", "child", "parent", "sibling"],
+      relation_type: [
+        "spouse",
+        "child",
+        "parent",
+        "sibling",
+        "cousin",
+        "grandparent",
+      ],
       transaction_status: ["pending", "completed", "failed"],
       transaction_type: [
         "premium_payment",
