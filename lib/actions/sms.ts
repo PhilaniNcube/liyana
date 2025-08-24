@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+
 
 const SMS_PORTAL_CLIENT_ID = process.env.SMS_PORTAL_CLIENT_ID;
 const SMS_PORTAL_API_SECRET = process.env.SMS_PORTAL_API_SECRET;

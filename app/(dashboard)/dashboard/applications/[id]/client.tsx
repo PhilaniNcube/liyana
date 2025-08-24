@@ -145,7 +145,11 @@ export function ApplicationDetailClient({
   const handleDeclineApplication = async (reason?: string) => {
     setIsDeclining(true);
     try {
-      const res = await declineApplicationAction(application.id, reason);
+      const res = await declineApplicationAction(
+        application.id,
+        reason,
+        application.profile?.phone_number || undefined
+      );
       if (!res.success) {
         throw new Error(res.error || "Failed to decline application");
       }
