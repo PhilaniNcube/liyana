@@ -570,7 +570,7 @@ export default function FuneralPolicyForm() {
                   name="account_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Account Name</FormLabel>
+                      <FormLabel>Account Holder Name</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="Account holder name" />
                       </FormControl>
@@ -640,7 +640,9 @@ export default function FuneralPolicyForm() {
                             <SelectItem value="transaction">
                               Transaction
                             </SelectItem>
-                            <SelectItem value="current">Current</SelectItem>
+                            <SelectItem value="current">
+                              Current/Cheque
+                            </SelectItem>
                             <SelectItem value="business">Business</SelectItem>
                           </SelectContent>
                         </Select>

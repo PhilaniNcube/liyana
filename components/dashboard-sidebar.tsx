@@ -70,7 +70,7 @@ const sidebarItems = [
     ],
   },
   {
-    title: "Funeral Insurance",
+    title: "Funeral Cover",
     icon: ShieldIcon,
     subItems: [
       {
