@@ -754,6 +754,34 @@ export const policyUpdateSchema = z.object({
 
 export type PolicyUpdateType = z.infer<typeof policyUpdateSchema>;
 
+
+export const createClaimSchema = z.object({
+  policy_id: z.coerce.number().min(1, "Policy ID is required"),
+  claimant_party_id: z.string().uuid("Invalid claimant party ID"),
+  claim_number: z.string().min(1, "Claim number is required"),
+  date_of_incident: z.date().min(new Date("2000-01-01"), "Invalid incident date"),
+  date_filed: z.date().min(new Date("2000-01-01"), "Invalid date filed"),
+  status: z.enum(["submitted", "under_review", "approved", "denied", "paid"], {
+    required_error: "Claim status is required",
+  })
+});
+
+export type CreateClaimType = z.infer<typeof createClaimSchema>;
+
+export const updateClaimSchema = z.object({
+  id: z.coerce.number().min(1, "Claim ID is required"),
+  policy_id: z.coerce.number().min(1, "Policy ID is required"),
+  claimant_party_id: z.string().uuid("Invalid claimant party ID"),
+  claim_number: z.string().min(1, "Claim number is required"),
+  date_of_incident: z.date().min(new Date("2000-01-01"), "Invalid incident date"),
+  date_filed: z.date().min(new Date("2000-01-01"), "Invalid date filed"),
+  status: z.enum(["submitted", "under_review", "approved", "denied", "paid"], {
+    required_error: "Claim status is required",
+  })
+});
+
+export type UpdateClaimType = z.infer<typeof updateClaimSchema>;
+
 // WhoYou Email Verification Response Types
 export interface WhoYouDomainDetails {
   id: string;

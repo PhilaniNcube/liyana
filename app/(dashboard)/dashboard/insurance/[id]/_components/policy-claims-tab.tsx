@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils/format-currency";
 import { formatDate } from "date-fns";
+import { PolicyWithAllData } from "@/lib/queries/policy-details";
+import CreateClaimForm from "./create-claim-form";
 
 type Claim = {
   id: number;
@@ -57,12 +59,22 @@ function getStatusVariant(status: string) {
 
 interface PolicyClaimsTabProps {
   claims: Claim[];
+  policy: PolicyWithAllData;
 }
 
-export default function PolicyClaimsTab({ claims }: PolicyClaimsTabProps) {
+export default function PolicyClaimsTab({
+  claims,
+  policy,
+}: PolicyClaimsTabProps) {
   if (claims.length === 0) {
     return (
       <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-medium">Claims</CardTitle>
+            <CreateClaimForm policy={policy} />
+          </div>
+        </CardHeader>
         <CardContent className="pt-6">
           <div className="text-center text-muted-foreground">
             No claims found for this policy.
@@ -74,6 +86,10 @@ export default function PolicyClaimsTab({ claims }: PolicyClaimsTabProps) {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium">Claims</h3>
+        <CreateClaimForm policy={policy} />
+      </div>
       <div className="grid gap-4">
         {claims.map((claim) => (
           <Card key={claim.id}>
