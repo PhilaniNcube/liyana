@@ -8,7 +8,7 @@ import PolicyBeneficiariesTab from "./_components/policy-beneficiaries-tab";
 import PolicyClaimsTab from "./_components/policy-claims-tab";
 import PolicyPaymentsTab from "./_components/policy-payments-tab";
 import { Button } from "@/components/ui/button";
-import { Code2Icon } from "lucide-react";
+import { Code2Icon, PlaneIcon } from "lucide-react";
 
 type PolicyPageProps = {
   params: Promise<{
@@ -36,7 +36,7 @@ const PolicyPage = async ({ params }: PolicyPageProps) => {
           </p>
         </div>
         <Button>
-          <Code2Icon className="h-4 w-4 mr-2" />
+          <PlaneIcon className="h-4 w-4 mr-2" />
           Send To Linar
         </Button>
       </div>
@@ -47,7 +47,7 @@ const PolicyPage = async ({ params }: PolicyPageProps) => {
           <TabsTrigger value="policy">Policy Info</TabsTrigger>
           <TabsTrigger value="employment">Employment & Banking</TabsTrigger>
           <TabsTrigger value="beneficiaries">
-            Beneficiaries ({policyData.beneficiaries.length})
+            Covered Persons ({policyData.beneficiaries.length})
           </TabsTrigger>
           <TabsTrigger value="claims">
             Claims ({policyData.claims.length})
