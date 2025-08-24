@@ -3,7 +3,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { IdCard, User2, CalendarClock, ShieldCheck } from "lucide-react";
+import {
+  IdCard,
+  User2,
+  CalendarClock,
+  ShieldCheck,
+  CircleCheck,
+} from "lucide-react";
 
 type WhoYouIdDetail = {
   id: string;
@@ -61,7 +67,7 @@ export function WhoYouIdVerificationResults({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center justify-between gap-2">
           <IdCard className="h-5 w-5" />
           WHOYou ID Verification
           {typeof data.code === "number" && (
@@ -69,7 +75,14 @@ export function WhoYouIdVerificationResults({
               variant={data.code === 0 ? "default" : "destructive"}
               className="ml-2"
             >
-              Code: {data.code}
+              {data.code === 0 ? (
+                <span className="flex items-center gap-1">
+                  <CircleCheck className="h-4 w-4" />
+                  PASSED
+                </span>
+              ) : (
+                `FAILED`
+              )}
             </Badge>
           )}
         </CardTitle>
