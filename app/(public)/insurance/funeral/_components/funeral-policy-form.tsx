@@ -32,6 +32,22 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Trash2, Plus } from "lucide-react";
 import { z } from "zod";
 
+// South African banks with their branch codes
+const southAfricanBanks = [
+  { name: "ABSA Bank", code: "632005" },
+  { name: "African Bank", code: "430000" },
+  { name: "Bidvest Bank", code: "462005" },
+  { name: "Capitec Bank", code: "470010" },
+  { name: "Discovery Bank", code: "679000" },
+  { name: "FNB (First National Bank)", code: "250655" },
+  { name: "Investec Bank", code: "580105" },
+  { name: "Nedbank", code: "198765" },
+  { name: "Standard Bank", code: "051001" },
+  { name: "TymeBank", code: "678910" },
+  { name: "Ubank", code: "431010" },
+  { name: "VBS Mutual Bank", code: "588000" },
+] as const;
+
 type FuneralForm = z.infer<typeof funeralPolicyLeadSchemaWithRefines>;
 
 type ActionState = {
@@ -195,6 +211,18 @@ export default function FuneralPolicyForm() {
   const [relationshipCategories, setRelationshipCategories] = useState<
     Record<string, "immediate" | "extended">
   >({});
+
+  // Auto-populate branch code when bank is selected
+  useEffect(() => {
+    const selectedBankName = form.watch("bank_name");
+    const selectedBank = southAfricanBanks.find(
+      (bank) => bank.name === selectedBankName
+    );
+
+    if (selectedBank && form.getValues("branch_code") !== selectedBank.code) {
+      form.setValue("branch_code", selectedBank.code);
+    }
+  }, [form.watch("bank_name"), form]);
 
   const onSubmit = (values: FuneralForm) => {
     const fd = new FormData();
@@ -585,7 +613,21 @@ export default function FuneralPolicyForm() {
                     <FormItem>
                       <FormLabel>Bank Name</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Bank name" />
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || ""}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select your bank" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {southAfricanBanks.map((bank) => (
+                              <SelectItem key={bank.name} value={bank.name}>
+                                {bank.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -613,8 +655,9 @@ export default function FuneralPolicyForm() {
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder="Branch code"
-                          maxLength={6}
+                          placeholder="Auto-filled based on bank selection"
+                          readOnly
+                          className="bg-gray-50 cursor-not-allowed"
                         />
                       </FormControl>
                       <FormMessage />
