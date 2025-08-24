@@ -207,6 +207,7 @@ export default function FuneralPolicyForm() {
     "sibling",
     "grandparent",
     "cousin",
+    "in-law",
   ] as const;
   const [relationshipCategories, setRelationshipCategories] = useState<
     Record<string, "immediate" | "extended">

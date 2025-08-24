@@ -16,15 +16,21 @@ import {
   Plus,
   ArrowRight,
   Settings,
+  DollarSign,
+  Shield,
+  CreditCard,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResetPasswordComponent } from "@/components/reset-password-component";
 import type { Database } from "@/lib/types";
 
 interface ProfilePageClientProps {
   applications: Database["public"]["Tables"]["applications"]["Row"][] | null;
+  loans: Database["public"]["Tables"]["approved_loans"]["Row"][] | null;
+  policies: any[] | null; // Using any for now as the type is complex with joins
   userEmail?: string;
   userFullName?: string;
 }
@@ -47,7 +53,37 @@ const getStatusColor = (status: string) => {
   }
 };
 
-// Helper function to get status icon
+// Helper function to get loan status color
+const getLoanStatusColor = (status: string) => {
+  switch (status) {
+    case "active":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "paid":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "overdue":
+      return "bg-red-100 text-red-800 border-red-200";
+    case "defaulted":
+      return "bg-gray-100 text-gray-800 border-gray-200";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200";
+  }
+};
+
+// Helper function to get policy status color
+const getPolicyStatusColor = (status: string) => {
+  switch (status) {
+    case "active":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "pending":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "cancelled":
+      return "bg-red-100 text-red-800 border-red-200";
+    case "expired":
+      return "bg-gray-100 text-gray-800 border-gray-200";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200";
+  }
+};
 const getStatusIcon = (status: string) => {
   switch (status) {
     case "approved":
@@ -64,11 +100,18 @@ const getStatusIcon = (status: string) => {
 
 export function ProfilePageClient({
   applications,
+  loans,
+  policies,
   userEmail,
   userFullName,
 }: ProfilePageClientProps) {
   const router = useRouter();
   const hasApplications = applications && applications.length > 0;
+  const hasLoans = loans && loans.length > 0;
+  const hasPolicies = policies && policies.length > 0;
+  const hasAnyData = hasApplications || hasLoans || hasPolicies;
+
+  console.log({ applications, loans, policies });
 
   const handleApplicationClick = (applicationId: number) => {
     router.push(`/profile/${applicationId}`);
@@ -76,125 +119,385 @@ export function ProfilePageClient({
 
   return (
     <div className="space-y-8">
-      {/* User Settings Section */}
-
-      {hasApplications ? (
-        // Show applications with option to create new
+      {hasAnyData ? (
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">My Applications</h1>
+              <h1 className="text-3xl font-bold">My Dashboard</h1>
               <p className="text-muted-foreground mt-1">
-                Manage and track your loan applications
+                View and manage your applications, loans, and policies
               </p>
             </div>
-            <Button asChild className="flex items-center gap-2">
-              <Link href="/apply">
-                <Plus className="h-4 w-4" />
-                New Application
-              </Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button asChild variant="outline">
+                <Link href="/insurance/funeral">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Get Funeral Cover
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/apply">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Loan Application
+                </Link>
+              </Button>
+            </div>
           </div>
 
-          {/* Responsive grid of applications */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {applications.map((application, index) => (
-              <Card
-                key={application.id}
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] group"
-                onClick={() => handleApplicationClick(application.id)}
+          <Tabs defaultValue="applications" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger
+                value="applications"
+                className="flex items-center gap-2"
               >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">
-                      Application #{application.id}
-                    </CardTitle>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="secondary"
-                      className={getStatusColor(application.status)}
-                    >
-                      {getStatusIcon(application.status)}
-                      <span className="ml-1 capitalize">
-                        {application.status.replace("_", " ")}
-                      </span>
-                    </Badge>
-                    {index === 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        Latest
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        Amount
-                      </span>
-                      <span className="font-semibold text-lg">
-                        R
-                        {application.application_amount?.toLocaleString() ||
-                          "0"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        Term
-                      </span>
-                      <span className="font-medium">
-                        {application.term || "N/A"} days
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        Submitted
-                      </span>
-                      <span className="font-medium text-sm">
-                        {new Date(application.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
+                <FileText className="h-4 w-4" />
+                Applications ({applications?.length || 0})
+              </TabsTrigger>
+              <TabsTrigger value="loans" className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Loans ({loans?.length || 0})
+              </TabsTrigger>
+              <TabsTrigger value="policies" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Funeral Cover ({policies?.length || 0})
+              </TabsTrigger>
+            </TabsList>
 
-                  {/* Status-specific message */}
-                  <div className="pt-2 border-t">
-                    {application.status === "in_review" && (
-                      <p className="text-sm text-blue-600">
-                        Under review by our team
-                      </p>
-                    )}
-                    {application.status === "approved" && (
-                      <p className="text-sm text-green-600">
-                        ✓ Application approved
-                      </p>
-                    )}
-                    {application.status === "declined" && (
-                      <p className="text-sm text-red-600">
-                        Application declined
-                      </p>
-                    )}
-                    {application.status === "pre_qualifier" && (
-                      <p className="text-sm text-gray-600">
-                        Application in progress
-                      </p>
-                    )}
-                    {application.status === "pending_documents" && (
-                      <p className="text-sm text-yellow-600">
-                        Documents required
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+            <TabsContent value="applications" className="mt-6">
+              {hasApplications ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {applications.map((application, index) => (
+                    <Card
+                      key={application.id}
+                      className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] group"
+                      onClick={() => handleApplicationClick(application.id)}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">
+                            Application #{application.id}
+                          </CardTitle>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="secondary"
+                            className={getStatusColor(application.status)}
+                          >
+                            {getStatusIcon(application.status)}
+                            <span className="ml-1 capitalize">
+                              {application.status.replace("_", " ")}
+                            </span>
+                          </Badge>
+                          {index === 0 && (
+                            <Badge variant="outline" className="text-xs">
+                              Latest
+                            </Badge>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">
+                              Amount
+                            </span>
+                            <span className="font-semibold text-lg">
+                              R
+                              {application.application_amount?.toLocaleString() ||
+                                "0"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">
+                              Term
+                            </span>
+                            <span className="font-medium">
+                              {application.term || "N/A"} days
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">
+                              Submitted
+                            </span>
+                            <span className="font-medium text-sm">
+                              {new Date(
+                                application.created_at
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t">
+                          {application.status === "in_review" && (
+                            <p className="text-sm text-blue-600">
+                              Under review by our team
+                            </p>
+                          )}
+                          {application.status === "approved" && (
+                            <p className="text-sm text-green-600">
+                              ✓ Application approved
+                            </p>
+                          )}
+                          {application.status === "declined" && (
+                            <p className="text-sm text-red-600">
+                              Application declined
+                            </p>
+                          )}
+                          {application.status === "pre_qualifier" && (
+                            <p className="text-sm text-gray-600">
+                              Application in progress
+                            </p>
+                          )}
+                          {application.status === "pending_documents" && (
+                            <p className="text-sm text-yellow-600">
+                              Documents required
+                            </p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      No Applications Yet
+                    </h3>
+                    <p className="text-muted-foreground text-center mb-4">
+                      You haven't submitted any loan applications yet.
+                    </p>
+                    <Button asChild>
+                      <Link href="/apply">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Apply for a Loan
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="loans" className="mt-6">
+              {hasLoans ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {loans.map((loan, index) => (
+                    <Card
+                      key={loan.id}
+                      className="hover:shadow-lg transition-all duration-200"
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">
+                            Loan #{loan.id}
+                          </CardTitle>
+                          <Badge
+                            variant="secondary"
+                            className={getLoanStatusColor(loan.status)}
+                          >
+                            <DollarSign className="h-3 w-3 mr-1" />
+                            {loan.status}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">
+                              Loan Amount
+                            </span>
+                            <span className="font-semibold text-lg">
+                              R
+                              {loan.approved_loan_amount?.toLocaleString() ||
+                                "0"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">
+                              Monthly Payment
+                            </span>
+                            <span className="font-medium">
+                              R{loan.monthly_payment?.toLocaleString() || "0"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">
+                              Term
+                            </span>
+                            <span className="font-medium">
+                              {loan.loan_term_days} days
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">
+                              Interest Rate
+                            </span>
+                            <span className="font-medium">
+                              {loan.interest_rate}%
+                            </span>
+                          </div>
+                          {loan.next_payment_date && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">
+                                Next Payment
+                              </span>
+                              <span className="font-medium text-sm">
+                                {new Date(
+                                  loan.next_payment_date
+                                ).toLocaleDateString()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <DollarSign className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      No Active Loans
+                    </h3>
+                    <p className="text-muted-foreground text-center mb-4">
+                      You don't have any approved loans at the moment.
+                    </p>
+                    <Button asChild>
+                      <Link href="/apply">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Apply for a Loan
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="policies" className="mt-6">
+              {hasPolicies ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {policies.map((policy, index) => (
+                    <Link
+                      href={`/profile/policies/${policy.id}`}
+                      key={policy.id}
+                    >
+                      <Card
+                        key={policy.id}
+                        className="hover:shadow-lg transition-all duration-200"
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-lg">
+                              Policy #{policy.id}
+                            </CardTitle>
+                            <Badge
+                              variant="secondary"
+                              className={getPolicyStatusColor(
+                                policy.policy_status
+                              )}
+                            >
+                              <Shield className="h-3 w-3 mr-1" />
+                              {policy.policy_status}
+                            </Badge>
+                          </div>
+                          {policy.product_type && (
+                            <div className="text-sm text-muted-foreground capitalize">
+                              {policy.product_type.replace("_", " ")}
+                            </div>
+                          )}
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="space-y-3">
+                            {policy.coverage_amount && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground">
+                                  Coverage Amount
+                                </span>
+                                <span className="font-semibold text-lg">
+                                  R
+                                  {policy.coverage_amount?.toLocaleString() ||
+                                    "0"}
+                                </span>
+                              </div>
+                            )}
+                            {policy.premium_amount && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground">
+                                  Premium
+                                </span>
+                                <span className="font-medium">
+                                  R
+                                  {policy.premium_amount?.toLocaleString() ||
+                                    "0"}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">
+                                Frequency
+                              </span>
+                              <span className="font-medium capitalize">
+                                {policy.frequency}
+                              </span>
+                            </div>
+                            {policy.start_date && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground">
+                                  Start Date
+                                </span>
+                                <span className="font-medium text-sm">
+                                  {new Date(
+                                    policy.start_date
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                            )}
+                            {policy.end_date && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground">
+                                  End Date
+                                </span>
+                                <span className="font-medium text-sm">
+                                  {new Date(
+                                    policy.end_date
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <Shield className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      No Insurance Policies
+                    </h3>
+                    <p className="text-muted-foreground text-center mb-4">
+                      You don't have any insurance policies yet.
+                    </p>
+                    <Button asChild>
+                      <Link href="/insurance/funeral">
+                        <Shield className="h-4 w-4 mr-2" />
+                        Get Funeral Cover
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          </Tabs>
         </section>
       ) : (
         // Show welcome message for new users
         <section className="space-y-8">
-          {/* Welcome Section */}
           <div className="text-center space-y-6 py-12">
             <div className="max-w-md mx-auto">
               <h1 className="text-3xl font-bold mb-4">Welcome to Liyana</h1>
@@ -203,59 +506,66 @@ export function ProfilePageClient({
                 applying for a payday cash loan. The process is quick and easy.
               </p>
             </div>
-            <Button
-              asChild
-              size="lg"
-              className="flex items-center gap-2 mx-auto"
-            >
-              <Link href="/apply">
-                <Plus className="h-4 w-4" />
-                Apply for a Loan
-              </Link>
-            </Button>
+            <div className="flex gap-2 justify-center">
+              <Button asChild size="lg" className="flex items-center gap-2">
+                <Link href="/apply">
+                  <Plus className="h-4 w-4" />
+                  Apply for a Loan
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="flex items-center gap-2"
+              >
+                <Link href="/insurance/funeral">
+                  <Shield className="h-4 w-4" />
+                  Get Funeral Cover
+                </Link>
+              </Button>
+            </div>
           </div>
-          {/* User Settings Section for new users */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
-                    Account Settings
-                  </CardTitle>
-                  <CardDescription>
-                    Manage your account preferences and security settings
-                  </CardDescription>
-                </div>
-                <ResetPasswordComponent
-                  userEmail={userEmail}
-                  className="ml-auto"
-                />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Full Name</p>
-                  <p className="text-sm text-muted-foreground">
-                    {userFullName || "Not provided"}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Email Address</p>
-                  <p className="text-sm text-muted-foreground">
-                    {userEmail || "Not provided"}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Password</p>
-                  <p className="text-sm text-muted-foreground">••••••••••••</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </section>
       )}
+
+      {/* Account Settings Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Account Settings
+              </CardTitle>
+              <CardDescription>
+                Manage your account preferences and security settings
+              </CardDescription>
+            </div>
+            <ResetPasswordComponent userEmail={userEmail} className="ml-auto" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Full Name</p>
+              <p className="text-sm text-muted-foreground">
+                {userFullName || "Not provided"}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Email Address</p>
+              <p className="text-sm text-muted-foreground">
+                {userEmail || "Not provided"}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Password</p>
+              <p className="text-sm text-muted-foreground">••••••••••••</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -90,6 +90,23 @@ export async function getLifeInsurancePolicies(): Promise<PolicyWithHolder[]> {
 export async function getPolicyBeneficiaries(policyId: number) {
     const supabase = await createClient();
 
+    // Check if user is logged in
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) throw new Error(userError.message);
+    if (!user) throw new Error("User not found");
+
+    // First verify that the policy belongs to this user
+    const { data: policy, error: policyError } = await supabase
+        .from("policies")
+        .select("id")
+        .eq("id", policyId)
+        .eq("user_id", user.id)
+        .single();
+
+    if (policyError || !policy) {
+        throw new Error("Policy not found or access denied");
+    }
+
     const { data: beneficiaries, error } = await supabase
         .from("policy_beneficiaries")
         .select("*")
@@ -124,3 +141,53 @@ export async function getPolicyBeneficiaries(policyId: number) {
     return enriched;
 }
 
+// Fetch policies by user (policy holder)
+export async function getPoliciesByUser(): Promise<PolicyWithHolder[]> {
+    const supabase = await createClient();
+
+    const {data:{user}, error:userError} = await supabase.auth.getUser();
+
+    if (userError) throw new Error(userError.message);
+    if (!user) throw new Error("User not found");
+
+
+
+    const { data, error } = await supabase
+        .from("policies")
+        .select("*, policy_holder:policy_holder_id(*)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+        
+    if (error) throw new Error(error.message);
+    return (data ?? []) as PolicyWithHolder[];
+}
+
+
+export async function getPolicyByPolicyId(policyId: number): Promise<PolicyWithHolder | null> {
+    const supabase = await createClient();
+
+    // check if user is logged in
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError) throw new Error(userError.message);
+    if (!user) throw new Error("User not found");
+
+    const { data: policy, error } = await supabase
+        .from("policies")
+        .select("*, policy_holder:policy_holder_id(*)")
+        .eq("id", policyId).eq("user_id", user.id)
+        .single();
+
+    if (error) throw new Error(error.message);
+
+    // decrypt id number before sending back the data
+    if (policy) {
+        try {
+            policy.policy_holder.id_number = policy.policy_holder.id_number ? decryptValue(policy.policy_holder.id_number) : null;
+        } catch {
+            policy.policy_holder.id_number = null;
+        }
+    }
+
+    return policy ?? null;
+}

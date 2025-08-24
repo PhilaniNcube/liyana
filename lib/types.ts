@@ -545,6 +545,7 @@ export type Database = {
           product_type: Database["public"]["Enums"]["product_type"] | null
           start_date: string | null
           updated_at: string
+          user_id: string
         }
         Insert: {
           coverage_amount?: number | null
@@ -559,6 +560,7 @@ export type Database = {
           product_type?: Database["public"]["Enums"]["product_type"] | null
           start_date?: string | null
           updated_at?: string
+          user_id?: string
         }
         Update: {
           coverage_amount?: number | null
@@ -573,6 +575,7 @@ export type Database = {
           product_type?: Database["public"]["Enums"]["product_type"] | null
           start_date?: string | null
           updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -893,6 +896,7 @@ export type Database = {
         | "sibling"
         | "cousin"
         | "grandparent"
+        | "in-law"
       transaction_status: "pending" | "completed" | "failed"
       transaction_type:
         | "premium_payment"
@@ -1091,6 +1095,7 @@ export const Constants = {
         "sibling",
         "cousin",
         "grandparent",
+        "in-law",
       ],
       transaction_status: ["pending", "completed", "failed"],
       transaction_type: [

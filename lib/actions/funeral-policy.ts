@@ -107,6 +107,7 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
         product_type: validatedData.product_type ?? null,
         start_date: null,
         end_date: null,
+        user_id: user.id,
         employment_details: {
           employment_type: validatedData.employment_type,
           employer_name: validatedData.employer_name,

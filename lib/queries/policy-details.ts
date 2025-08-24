@@ -170,6 +170,24 @@ export async function getCompletePolicyData(id: number): Promise<PolicyWithAllDa
 export async function getPolicyClaims(policyId: number) {
   const supabase = await createClient();
   
+  // Check if user is logged in
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError) throw new Error(userError.message);
+  if (!user) throw new Error("User not found");
+
+  // First verify that the policy belongs to this user
+  const { data: policy, error: policyError } = await supabase
+    .from("policies")
+    .select("id")
+    .eq("id", policyId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (policyError || !policy) {
+    throw new Error("Policy not found or access denied");
+  }
+
+  // Now get the claims for this policy
   const { data: claims, error } = await supabase
     .from("claims")
     .select(`
