@@ -1,7 +1,21 @@
+import PoliciesDataTable from "@/components/policies-data-table";
+import { getFuneralActivePolicies } from "@/lib/queries/policies";
 import React from "react";
 
-const ActiveFuneralPolicies = async () => {
-  return <div>ActiveFuneralPolicies</div>;
+const ActiveFuneralPolicyPage = async () => {
+  // fetch funeral policies
+  const funeralPolicies = await getFuneralActivePolicies();
+
+  console.log(funeralPolicies);
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold">
+        Active Funeral Insurance Policies
+      </h1>
+      <PoliciesDataTable data={funeralPolicies} />
+    </div>
+  );
 };
 
-export default ActiveFuneralPolicies;
+export default ActiveFuneralPolicyPage;

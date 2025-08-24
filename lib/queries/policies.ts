@@ -40,6 +40,41 @@ export async function getFuneralPolicies(): Promise<PolicyWithHolder[]> {
         return policies;    
 }
 
+export async function getFuneralActivePolicies(): Promise<PolicyWithHolder[]> {
+    const supabase = await createClient();
+                const { data: policies, error } = await supabase
+                    .from("policies")
+                    .select("*, policy_holder:policy_holder_id(*)")
+            .eq("policy_status", "active").eq("product_type", "funeral_policy");
+        if (error) throw new Error(error.message);
+        if (!policies) return [];
+        return policies;    
+}
+
+export async function getFuneralPendingPolicies(): Promise<PolicyWithHolder[]> {
+    const supabase = await createClient();
+                const { data: policies, error } = await supabase
+                    .from("policies")
+                    .select("*, policy_holder:policy_holder_id(*)")
+            .eq("policy_status", "pending").eq("product_type", "funeral_policy");
+        if (error) throw new Error(error.message);
+        if (!policies) return [];
+        return policies;    
+}
+
+export async function getFuneralDeclinedPolicies(): Promise<PolicyWithHolder[]> {
+    const supabase = await createClient();
+                const { data: policies, error } = await supabase
+                    .from("policies")
+                    .select("*, policy_holder:policy_holder_id(*)")
+            .eq("policy_status", "cancelled").eq("product_type", "funeral_policy");
+        if (error) throw new Error(error.message);
+        if (!policies) return [];
+        return policies;    
+}
+
+
+
 export async function getLifeInsurancePolicies(): Promise<PolicyWithHolder[]> {
     const supabase = await createClient();
         const { data: policies, error } = await supabase
