@@ -96,15 +96,17 @@ export default function FuneralPolicyForm() {
       branch_code: "",
       account_type: undefined as any,
       // Step 3: beneficiaries + declarations
-      beneficiaries: Array.from({ length: 5 }, () => ({
-        first_name: "",
-        last_name: "",
-        id_number: "",
-        relationship: undefined as any,
-        percentage: 0,
-        phone_number: "",
-        email: "",
-      })),
+      beneficiaries: [
+        {
+          first_name: "",
+          last_name: "",
+          id_number: "",
+          relationship: undefined as any,
+          percentage: 0,
+          phone_number: "",
+          email: "",
+        },
+      ],
       terms_and_conditions: false,
       privacy_policy: false,
     },
@@ -162,7 +164,7 @@ export default function FuneralPolicyForm() {
     },
     {
       title: "Beneficiaries",
-      description: "Covered people & declarations",
+      description: "Beneficiaries & declarations",
       fields: ["beneficiaries", "terms_and_conditions", "privacy_policy"],
     },
   ];
@@ -655,7 +657,7 @@ export default function FuneralPolicyForm() {
             <div className="space-y-6">
               <Card className="p-6">
                 <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
-                  <CardTitle>Covered People ({fields.length})</CardTitle>
+                  <CardTitle>Beneficiaries ({fields.length})</CardTitle>
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -674,7 +676,7 @@ export default function FuneralPolicyForm() {
                       }
                       disabled={fields.length >= 10}
                     >
-                      <Plus className="h-4 w-4 mr-2" /> Add Person
+                      <Plus className="h-4 w-4 mr-2" /> Add Beneficiary
                     </Button>
                   </div>
                 </CardHeader>
@@ -682,8 +684,8 @@ export default function FuneralPolicyForm() {
                   {fields.map((field, index) => (
                     <Card key={field.id} className="p-4">
                       <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-medium">Person {index + 1}</h4>
-                        {fields.length > 5 && (
+                        <h4 className="font-medium">Beneficiary {index + 1}</h4>
+                        {fields.length > 1 && (
                           <Button
                             type="button"
                             variant="destructive"
@@ -890,11 +892,6 @@ export default function FuneralPolicyForm() {
                       </div>
                     </Card>
                   ))}
-                  {fields.length < 5 && (
-                    <p className="text-sm text-muted-foreground">
-                      Please add at least 5 covered people.
-                    </p>
-                  )}
                 </CardContent>
               </Card>
               <Card className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">

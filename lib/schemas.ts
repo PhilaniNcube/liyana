@@ -703,7 +703,7 @@ export const funeralPolicyLeadSchema = z
           email: z.string().email().optional(),
         })
       )
-      .min(5, "Provide at least 5 beneficiaries")
+      .min(0, "Provide at least 5 beneficiaries")
       .max(10, "No more than 10 beneficiaries allowed"),
     terms_and_conditions: z.boolean().refine((v) => v === true, {
       message: "Terms and conditions must be accepted",
