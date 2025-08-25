@@ -4,10 +4,10 @@ import { createClient } from "@/lib/server";
 // DELETE /api/policy-documents/[id] - Delete a policy document
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const documentId = parseInt(params.id);
+    const documentId = parseInt((await params).id);
 
     if (isNaN(documentId)) {
       return NextResponse.json(
