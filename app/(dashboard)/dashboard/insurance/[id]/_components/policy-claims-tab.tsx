@@ -1,10 +1,12 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils/format-currency";
 import { formatDate } from "date-fns";
 import { PolicyWithAllData } from "@/lib/queries/policy-details";
 import CreateClaimForm from "./create-claim-form";
+import { Send } from "lucide-react";
 
 type Claim = {
   id: number;
@@ -94,12 +96,21 @@ export default function PolicyClaimsTab({
         {claims.map((claim) => (
           <Card key={claim.id}>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Claim #{claim.claim_number}</span>
-                <Badge variant={getStatusVariant(claim.status)}>
-                  {claim.status.charAt(0).toUpperCase() + claim.status.slice(1)}
-                </Badge>
-              </CardTitle>
+              <div className="flex items-center justify-between w-full">
+                <CardTitle className="flex items-center gap-2">
+                  <span>Claim #{claim.claim_number}</span>
+                  <Badge variant={getStatusVariant(claim.status)}>
+                    {claim.status.charAt(0).toUpperCase() +
+                      claim.status.slice(1)}
+                  </Badge>
+                </CardTitle>
+                <form action="#send-claim">
+                  <Button size="sm" className="bg-black">
+                    <Send className="h-4 w-4 mr-2" />
+                    Send to Linar
+                  </Button>
+                </form>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

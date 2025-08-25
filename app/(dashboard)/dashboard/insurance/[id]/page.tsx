@@ -9,7 +9,7 @@ import PolicyClaimsTab from "./_components/policy-claims-tab";
 import PolicyPaymentsTab from "./_components/policy-payments-tab";
 import PolicyEmailTab from "./_components/policy-email-tab";
 import { Button } from "@/components/ui/button";
-import { Code2Icon, PlaneIcon } from "lucide-react";
+import { Send } from "lucide-react";
 
 type PolicyPageProps = {
   params: Promise<{
@@ -37,7 +37,7 @@ const PolicyPage = async ({ params }: PolicyPageProps) => {
           </p>
         </div>
         <Button>
-          <PlaneIcon className="h-4 w-4 mr-2" />
+          <Send className="h-4 w-4 mr-2" />
           Send To Linar
         </Button>
       </div>
