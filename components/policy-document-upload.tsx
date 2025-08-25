@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { policyDocumentSchema, type PolicyDocumentInput } from "@/lib/schemas";
 import type { Database } from "@/lib/database.types";
+import { createClient } from "@/lib/client";
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];
@@ -70,6 +71,15 @@ export default function PolicyDocumentUpload({
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Function to get public URL for viewing documents
+  const getDocumentViewUrl = (documentPath: string) => {
+    const supabase = createClient();
+    const { data } = supabase.storage
+      .from("documents")
+      .getPublicUrl(documentPath);
+    return data.publicUrl;
+  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -383,7 +393,9 @@ export default function PolicyDocumentUpload({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(document.path, "_blank")}
+                      onClick={() =>
+                        window.open(getDocumentViewUrl(document.path), "_blank")
+                      }
                     >
                       <Download className="h-4 w-4 mr-1" />
                       View

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
+import { createClient } from "@/lib/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,31 +32,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create Supabase client
+    const supabase = await createClient();
+
+    // Get the current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     // Create a unique filename
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
     const fileExtension = file.name.split(".").pop();
     const fileName = `${timestamp}_${randomString}.${fileExtension}`;
 
-    // Create upload directory if it doesn't exist
-    const uploadDir = join(process.cwd(), "public", "uploads", folder);
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
+    // Create the storage path
+    const storagePath = `${folder}/${user.id}/${fileName}`;
+
+    // Upload file to Supabase storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("documents")
+      .upload(storagePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error("Storage upload error:", uploadError);
+      return NextResponse.json(
+        { error: "Failed to upload file to storage" },
+        { status: 500 }
+      );
     }
 
-    // Save the file
-    const filePath = join(uploadDir, fileName);
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    await writeFile(filePath, buffer);
-
-    // Return the public URL path
-    const publicPath = `/uploads/${folder}/${fileName}`;
+    // Get the public URL for the uploaded file
+    const { data: urlData } = supabase.storage
+      .from("documents")
+      .getPublicUrl(uploadData.path);
 
     return NextResponse.json({
       message: "File uploaded successfully",
-      path: publicPath,
+      path: uploadData.path,
+      publicUrl: urlData.publicUrl,
       fileName,
       size: file.size,
       type: file.type,
