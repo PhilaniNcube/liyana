@@ -278,9 +278,11 @@ export function EmailApplication({ id, creditReports }: EmailApplicationProps) {
                           >
                             {selected ? "✓ " : ""}
                             {report.check_type
-                              ? report.check_type
-                                  .replace(/_/g, " ")
-                                  .replace(/\b\w/g, (c) => c.toUpperCase())
+                              ? report.check_type === "fraud_check"
+                                ? "Credit Check"
+                                : report.check_type
+                                    .replace(/_/g, " ")
+                                    .replace(/\b\w/g, (c) => c.toUpperCase())
                               : `Report #${index + 1}`}
                             {" – "}
                             {new Date(report.created_at).toLocaleDateString()}
