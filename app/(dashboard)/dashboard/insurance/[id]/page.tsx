@@ -7,6 +7,7 @@ import EmploymentDetailsTab from "./_components/employment-details-tab";
 import PolicyBeneficiariesTab from "./_components/policy-beneficiaries-tab";
 import PolicyClaimsTab from "./_components/policy-claims-tab";
 import PolicyPaymentsTab from "./_components/policy-payments-tab";
+import PolicyEmailTab from "./_components/policy-email-tab";
 import { Button } from "@/components/ui/button";
 import { Code2Icon, PlaneIcon } from "lucide-react";
 
@@ -42,7 +43,7 @@ const PolicyPage = async ({ params }: PolicyPageProps) => {
       </div>
 
       <Tabs defaultValue="personal" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 gap-2">
+        <TabsList className="grid w-full grid-cols-7 gap-2">
           <TabsTrigger value="personal">Personal Info</TabsTrigger>
           <TabsTrigger value="policy">Policy Info</TabsTrigger>
           <TabsTrigger value="employment">Employment & Banking</TabsTrigger>
@@ -53,6 +54,7 @@ const PolicyPage = async ({ params }: PolicyPageProps) => {
             Claims ({policyData.claims.length})
           </TabsTrigger>
           <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="email">Email Client</TabsTrigger>
         </TabsList>
 
         <TabsContent value="personal" className="mt-6">
@@ -79,6 +81,26 @@ const PolicyPage = async ({ params }: PolicyPageProps) => {
           <PolicyPaymentsTab
             payments={policyData.premium_payments}
             policy={policyData}
+          />
+        </TabsContent>
+        <TabsContent value="email" className="mt-6">
+          <PolicyEmailTab
+            policyId={policyData.id}
+            policyHolderEmail={
+              typeof policyData.policy_holder?.contact_details === "object" &&
+              policyData.policy_holder?.contact_details !== null
+                ? (policyData.policy_holder.contact_details as any).email || ""
+                : ""
+            }
+            policyHolderName={
+              [
+                policyData.policy_holder?.first_name,
+                policyData.policy_holder?.last_name,
+              ]
+                .filter(Boolean)
+                .join(" ") || ""
+            }
+            documents={[]}
           />
         </TabsContent>
       </Tabs>
