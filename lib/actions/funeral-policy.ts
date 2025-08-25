@@ -105,6 +105,7 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
         frequency: "monthly",
         policy_status: "pending",
         premium_amount: null,
+        coverage_amount: validatedData.coverage_amount,
         product_type: validatedData.product_type ?? null,
         start_date: null,
         end_date: null,

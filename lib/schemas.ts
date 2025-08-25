@@ -655,6 +655,7 @@ export const funeralPolicyLeadSchema = z
         required_error: "Please select a product",
         invalid_type_error: "Please select a product",
       }),
+    coverage_amount: z.coerce.number().min(1000, "Coverage amount must be at least R1,000").max(100000, "Coverage amount cannot exceed R100,000"),
     residential_address: z.string().optional().nullable(),
     city: z.string().optional().nullable(),
     postal_code: z.string().optional().nullable(),

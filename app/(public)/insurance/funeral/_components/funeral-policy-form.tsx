@@ -75,7 +75,7 @@ export default function FuneralPolicyForm() {
 
       // Redirect to home page after a short delay
       setTimeout(() => {
-        router.push("/");
+        router.push("/profile");
       }, 2000);
     }
   }, [state, isPending, router]);
@@ -88,6 +88,7 @@ export default function FuneralPolicyForm() {
     defaultValues: {
       // Step 0: product + personal
       product_type: "funeral_policy" as const,
+      coverage_amount: 10000,
       first_name: "",
       last_name: "",
       id_number: "",
@@ -140,9 +141,10 @@ export default function FuneralPolicyForm() {
     fields: (keyof FuneralForm)[];
   }[] = [
     {
-      title: "Personal",
-      description: "Your basic personal details",
+      title: "Coverage & Personal",
+      description: "Select coverage and provide your basic details",
       fields: [
+        "coverage_amount",
         "first_name",
         "last_name",
         "id_number",
@@ -289,6 +291,47 @@ export default function FuneralPolicyForm() {
           {/* Step Content */}
           {currentStep === 0 && (
             <div className="space-y-6">
+              <Card className="p-6">
+                <CardHeader className="px-0 pt-0">
+                  <CardTitle>Coverage Selection</CardTitle>
+                </CardHeader>
+                <CardContent className="px-0">
+                  <FormField
+                    control={form.control}
+                    name="coverage_amount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Coverage Amount</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={(value) =>
+                              field.onChange(Number(value))
+                            }
+                            value={field.value?.toString() || ""}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select coverage amount" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="5000">R5,000</SelectItem>
+                              <SelectItem value="10000">R10,000</SelectItem>
+                              <SelectItem value="15000">R15,000</SelectItem>
+                              <SelectItem value="20000">R20,000</SelectItem>
+                              <SelectItem value="25000">R25,000</SelectItem>
+                              <SelectItem value="30000">R30,000</SelectItem>
+                              <SelectItem value="40000">R40,000</SelectItem>
+                              <SelectItem value="50000">R50,000</SelectItem>
+                              <SelectItem value="75000">R75,000</SelectItem>
+                              <SelectItem value="100000">R100,000</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
               <Card className="p-6">
                 <CardHeader className="px-0 pt-0">
                   <CardTitle>Personal Information</CardTitle>
