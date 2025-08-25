@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -27,6 +27,8 @@ import { formatCurrency } from "@/lib/utils/format-currency";
 import { formatDate } from "date-fns";
 import type { PolicyWithProduct } from "@/lib/queries/policies";
 import type { Database } from "@/lib/database.types";
+import PolicyDocumentUpload from "@/components/policy-document-upload";
+import CreateClaimDialog from "@/components/create-claim-dialog";
 
 // Types
 type ClaimRow = Database["public"]["Tables"]["claims"]["Row"];
@@ -34,6 +36,8 @@ type PartyRow = Database["public"]["Tables"]["parties"]["Row"];
 type ClaimPayoutRow = Database["public"]["Tables"]["claim_payouts"]["Row"];
 type PolicyBeneficiaryRow =
   Database["public"]["Tables"]["policy_beneficiaries"]["Row"];
+type PolicyDocumentRow =
+  Database["public"]["Tables"]["policy_documents"]["Row"];
 
 type ClaimWithDetails = ClaimRow & {
   claimant: Partial<PartyRow> | null;
@@ -57,9 +61,56 @@ interface PolicyDetailProps {
 
 export default function PolicyDetail({
   policy,
-  claims,
+  claims: initialClaims,
   beneficiaries,
 }: PolicyDetailProps) {
+  const [documents, setDocuments] = useState<PolicyDocumentRow[]>([]);
+  const [documentsLoading, setDocumentsLoading] = useState(true);
+  const [claims, setClaims] = useState<ClaimWithDetails[]>(initialClaims);
+  const [claimsLoading, setClaimsLoading] = useState(false);
+
+  // Fetch policy documents
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const response = await fetch(
+          `/api/policy-documents?policy_id=${policy.id}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setDocuments(data);
+        }
+      } catch (error) {
+        console.error("Error fetching documents:", error);
+      } finally {
+        setDocumentsLoading(false);
+      }
+    };
+
+    fetchDocuments();
+  }, [policy.id]);
+
+  // Function to refresh claims
+  const refreshClaims = async () => {
+    setClaimsLoading(true);
+    try {
+      // This would need to be implemented in your API or you can trigger a page refresh
+      window.location.reload();
+    } catch (error) {
+      console.error("Error refreshing claims:", error);
+    } finally {
+      setClaimsLoading(false);
+    }
+  };
+
+  const handleDocumentUploaded = (document: PolicyDocumentRow) => {
+    setDocuments((prev) => [document, ...prev]);
+  };
+
+  const handleDocumentDeleted = (documentId: number) => {
+    setDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
+  };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
@@ -162,11 +213,12 @@ export default function PolicyDetail({
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="holder">Policy Holder</TabsTrigger>
           <TabsTrigger value="financial">Financial Details</TabsTrigger>
           <TabsTrigger value="employment">Employment</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="claims">
             Claims {claims.length > 0 && `(${claims.length})`}
           </TabsTrigger>
@@ -645,6 +697,30 @@ export default function PolicyDetail({
         {/* Claims Tab */}
         <TabsContent value="claims">
           <div className="space-y-6">
+            {/* Create Claim Button */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-semibold">Policy Claims</h3>
+                <p className="text-sm text-muted-foreground">
+                  Manage and create claims for this policy
+                </p>
+              </div>
+              <CreateClaimDialog
+                policyId={policy.id}
+                policyHolderId={policy.policy_holder_id || ""}
+                policyHolder={policy.policy_holder}
+                beneficiaries={beneficiaries.map((b) => ({
+                  id: b.id,
+                  beneficiary_party_id: b.beneficiary_party_id,
+                  allocation_percentage: b.allocation_percentage,
+                  relation_type: b.relation_type,
+                  party: b.party,
+                }))}
+                documents={documents}
+                onClaimCreated={refreshClaims}
+              />
+            </div>
+
             {claims && claims.length > 0 ? (
               claims.map((claim) => (
                 <Card key={claim.id}>
@@ -685,19 +761,6 @@ export default function PolicyDetail({
                               : "Unknown"}
                           </p>
                         </div>
-                        {claim.claimant?.id_number && (
-                          <>
-                            <Separator />
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium">
-                                Claimant ID Number
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {claim.claimant.id_number}
-                              </p>
-                            </div>
-                          </>
-                        )}
                       </div>
 
                       <div className="space-y-4">
@@ -784,9 +847,24 @@ export default function PolicyDetail({
                   <h3 className="text-lg font-semibold mb-2">
                     No Claims Found
                   </h3>
-                  <p className="text-muted-foreground">
-                    There are no claims associated with this policy.
+                  <p className="text-muted-foreground mb-6">
+                    There are no claims associated with this policy. You can
+                    create a new claim to get started.
                   </p>
+                  <CreateClaimDialog
+                    policyId={policy.id}
+                    policyHolderId={policy.policy_holder_id || ""}
+                    policyHolder={policy.policy_holder}
+                    beneficiaries={beneficiaries.map((b) => ({
+                      id: b.id,
+                      beneficiary_party_id: b.beneficiary_party_id,
+                      allocation_percentage: b.allocation_percentage,
+                      relation_type: b.relation_type,
+                      party: b.party,
+                    }))}
+                    documents={documents}
+                    onClaimCreated={refreshClaims}
+                  />
                 </CardContent>
               </Card>
             )}
@@ -1034,6 +1112,16 @@ export default function PolicyDetail({
               </Card>
             )}
           </div>
+        </TabsContent>
+
+        {/* Documents Tab */}
+        <TabsContent value="documents">
+          <PolicyDocumentUpload
+            policyId={policy.id}
+            existingDocuments={documents}
+            onDocumentUploaded={handleDocumentUploaded}
+            onDocumentDeleted={handleDocumentDeleted}
+          />
         </TabsContent>
       </Tabs>
     </div>

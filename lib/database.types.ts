@@ -629,6 +629,41 @@ export type Database = {
           },
         ]
       }
+      policy_documents: {
+        Row: {
+          created_at: string
+          document_type: Database["public"]["Enums"]["policy_document_type"]
+          id: number
+          path: string
+          policy_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_type: Database["public"]["Enums"]["policy_document_type"]
+          id?: number
+          path: string
+          policy_id: number
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: Database["public"]["Enums"]["policy_document_type"]
+          id?: number
+          path?: string
+          policy_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_documents_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       policy_versions: {
         Row: {
           created_at: string
@@ -887,6 +922,12 @@ export type Database = {
         | "widowed"
         | "life_partner"
       party_type: "individual" | "organization"
+      policy_document_type:
+        | "birth_certificate"
+        | "death_certificate"
+        | "marriage_certificate"
+        | "identity_document"
+        | "passport"
       policy_status: "pending" | "active" | "lapsed" | "cancelled"
       product_type: "funeral_policy" | "life_insurance" | "payday_loan"
       relation_type:
@@ -1086,6 +1127,13 @@ export const Constants = {
         "life_partner",
       ],
       party_type: ["individual", "organization"],
+      policy_document_type: [
+        "birth_certificate",
+        "death_certificate",
+        "marriage_certificate",
+        "identity_document",
+        "passport",
+      ],
       policy_status: ["pending", "active", "lapsed", "cancelled"],
       product_type: ["funeral_policy", "life_insurance", "payday_loan"],
       relation_type: [

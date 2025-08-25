@@ -1530,3 +1530,84 @@ export interface DecryptedApplication {
   first_name: string | null;
   last_name: string | null;
 }
+
+// Policy Document Schema for creating entries in policy_documents table
+export const policyDocumentSchema = z.object({
+  policy_id: z.number().positive("Policy ID is required"),
+  document_type: z.enum(
+    [
+      "birth_certificate",
+      "death_certificate", 
+      "marriage_certificate",
+      "identity_document",
+      "passport"
+    ],
+    {
+      required_error: "Document type is required",
+      invalid_type_error: "Please select a valid document type"
+    }
+  ),
+  path: z.string().min(1, "Document path is required"),
+  user_id: z.string().uuid("Valid user ID is required").optional(),
+});
+
+// Type for the policy document schema
+export type PolicyDocumentInput = z.infer<typeof policyDocumentSchema>;
+
+// Schema for creating multiple policy documents at once
+export const multiplePolicyDocumentsSchema = z.object({
+  policy_id: z.number().positive("Policy ID is required"),
+  documents: z
+    .array(
+      z.object({
+        document_type: z.enum(
+          [
+            "birth_certificate",
+            "death_certificate",
+            "marriage_certificate", 
+            "identity_document",
+            "passport"
+          ],
+          {
+            required_error: "Document type is required",
+            invalid_type_error: "Please select a valid document type"
+          }
+        ),
+        path: z.string().min(1, "Document path is required"),
+      })
+    )
+    .min(1, "At least one document is required")
+    .max(10, "Maximum 10 documents allowed per upload"),
+  user_id: z.string().uuid("Valid user ID is required").optional(),
+});
+
+// Type for multiple policy documents
+export type MultiplePolicyDocumentsInput = z.infer<typeof multiplePolicyDocumentsSchema>;
+
+// Schema for updating a policy document
+export const updatePolicyDocumentSchema = z.object({
+  document_type: z.enum(
+    [
+      "birth_certificate", 
+      "death_certificate",
+      "marriage_certificate",
+      "identity_document",
+      "passport"
+    ],
+    {
+      required_error: "Document type is required",
+      invalid_type_error: "Please select a valid document type"
+    }
+  ).optional(),
+  path: z.string().min(1, "Document path is required").optional(),
+  policy_id: z.number().positive("Policy ID is required").optional(),
+  user_id: z.string().uuid("Valid user ID is required").optional(),
+}).refine(
+  (data) => Object.keys(data).length > 0,
+  {
+    message: "At least one field must be provided for update",
+  }
+);
+
+// Type for updating policy document
+export type UpdatePolicyDocumentInput = z.infer<typeof updatePolicyDocumentSchema>;
