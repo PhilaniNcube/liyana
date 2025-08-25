@@ -134,6 +134,8 @@ export default function PolicyDetail({
   const bankingDetails = parseJsonField(holder?.banking_details);
   const employmentDetails = parseJsonField(policy.employment_details);
 
+  console.log(employmentDetails);
+
   return (
     <div className="container mx-auto py-6 max-w-6xl">
       {/* Header */}
@@ -571,27 +573,27 @@ export default function PolicyDetail({
             <CardContent>
               {employmentDetails ? (
                 <div className="grid gap-4 md:grid-cols-2">
-                  {employmentDetails.employer && (
+                  {employmentDetails.employer_name && (
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Employer</p>
                       <p className="text-sm text-muted-foreground">
-                        {employmentDetails.employer}
+                        {employmentDetails.employer_name}
                       </p>
                     </div>
                   )}
-                  {employmentDetails.position && (
+                  {employmentDetails.job_title && (
                     <div className="space-y-2">
-                      <p className="text-sm font-medium">Position</p>
+                      <p className="text-sm font-medium">Job Title</p>
                       <p className="text-sm text-muted-foreground">
-                        {employmentDetails.position}
+                        {employmentDetails.job_title}
                       </p>
                     </div>
                   )}
-                  {employmentDetails.income && (
+                  {employmentDetails.monthly_income && (
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Monthly Income</p>
                       <p className="text-sm text-muted-foreground">
-                        {formatCurrency(employmentDetails.income)}
+                        {formatCurrency(employmentDetails.monthly_income)}
                       </p>
                     </div>
                   )}
@@ -606,21 +608,27 @@ export default function PolicyDetail({
                       </p>
                     </div>
                   )}
-                  {employmentDetails.start_date && (
+                  {employmentDetails.end_date && (
                     <div className="space-y-2">
-                      <p className="text-sm font-medium">
-                        Employment Start Date
-                      </p>
+                      <p className="text-sm font-medium">Employment End Date</p>
                       <p className="text-sm text-muted-foreground">
-                        {formatDate(employmentDetails.start_date, "PP")}
+                        {formatDate(employmentDetails.end_date, "PP")}
                       </p>
                     </div>
                   )}
-                  {employmentDetails.work_phone && (
+                  {employmentDetails.employer_contact_number && (
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Work Phone</p>
                       <p className="text-sm text-muted-foreground">
-                        {employmentDetails.work_phone}
+                        {employmentDetails.employer_contact_number}
+                      </p>
+                    </div>
+                  )}
+                  {employmentDetails.employer_address && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Work Address</p>
+                      <p className="text-sm text-muted-foreground">
+                        {employmentDetails.employer_address}
                       </p>
                     </div>
                   )}
