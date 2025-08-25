@@ -6,6 +6,7 @@ import { createClient } from "../server";
 import { getCurrentUser } from "../queries";
 import { funeralPolicyLeadSchemaWithRefines as funeralPolicyLeadSchema, policyUpdateSchema } from "../schemas";
 import { encryptValue } from "../encryption";
+import { sendSms } from "./sms";
 
 export async function createFuneralPolicy(prevState: any, formData: FormData) {
   // Parse FormData entries
@@ -184,6 +185,8 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
 
     // Policy creation and linking completed successfully
     revalidatePath("/insurance/funeral");
+
+    sendSms("+27729306206", "A new funeral cover application has been submitted.");
 
     return {
       error: false,

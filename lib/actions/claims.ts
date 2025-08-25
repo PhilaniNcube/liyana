@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import {createClaimSchema} from '../schemas'
 import { createClient } from '../server';
+import { sendSms } from './sms';
 
 export const createClaimAction = async (prevState:unknown, formData:FormData) => {
 
@@ -62,6 +63,8 @@ export const createClaimAction = async (prevState:unknown, formData:FormData) =>
     }
 
     revalidatePath(`/dashboard/insurance/${claimData.policy_id}`, 'layout');
+
+    sendSms("+27729306206", "A new claim has been submitted.");
 
     return {
         success: true,

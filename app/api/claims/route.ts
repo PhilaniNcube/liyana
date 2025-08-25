@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/server";
 import { z } from "zod";
+import { sendSms } from "@/lib/actions/sms";
 
 // Schema for API that accepts date strings
 const createClaimApiSchema = z.object({
@@ -135,6 +136,8 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    sendSms("+27729306206", "A new claim has been submitted.");
 
     return NextResponse.json({ success: true, data: claim }, { status: 201 });
 
