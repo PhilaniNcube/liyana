@@ -4,7 +4,9 @@ import { Separator } from "@/components/ui/separator";
 import { formatDate } from "date-fns";
 import { PolicyWithAllData } from "@/lib/queries/policy-details";
 import { decryptValue } from "@/lib/encryption";
+
 import VerifyIdDialog from "./verify-id";
+import SendOtvDialog from "./send-otv";
 
 interface PersonalInfoTabProps {
   policy: PolicyWithAllData;
@@ -33,7 +35,32 @@ export default function PersonalInfoTab({ policy }: PersonalInfoTabProps) {
       <CardHeader className="">
         <div className="flex items-center justify-between bg-yellow-200 p-4 rounded-md">
           <CardTitle className="text-2xl">Personal Information</CardTitle>
-          {holder.id_number && <VerifyIdDialog idNumber={holder.id_number} />}
+          <div className="flex items-center gap-2">
+            {holder.id_number && <VerifyIdDialog idNumber={holder.id_number} />}
+            {(() => {
+              const decryptedIdNumber = holder.id_number
+                ? decryptValue(holder.id_number) || ""
+                : "";
+              let cellNumber = "";
+              if (
+                holder.contact_details &&
+                typeof holder.contact_details === "object" &&
+                !Array.isArray(holder.contact_details)
+              ) {
+                cellNumber = (holder.contact_details as any).phone || "";
+              }
+              if (decryptedIdNumber && cellNumber) {
+                return (
+                  <SendOtvDialog
+                    policyId={policy.id}
+                    decryptedIdNumber={decryptedIdNumber}
+                    cellNumber={cellNumber}
+                  />
+                );
+              }
+              return null;
+            })()}
+          </div>
         </div>
       </CardHeader>
 
