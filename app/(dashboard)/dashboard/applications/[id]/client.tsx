@@ -318,24 +318,29 @@ export function ApplicationDetailClient({
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="space-y-2">
-                <label htmlFor="decline-reason" className="text-sm font-medium">
-                  Decline Reason (optional)
+                <label
+                  htmlFor="decline-reason-select"
+                  className="text-sm font-medium"
+                >
+                  Decline Reason
                 </label>
-                <Textarea
-                  id="decline-reason"
+                <select
+                  id="decline-reason-select"
                   className="w-full rounded-md border bg-background p-2 text-sm"
-                  rows={4}
-                  placeholder="Provide a brief reason..."
                   disabled={isDeclining}
-                  defaultValue={
-                    "Thank you for your loan application. Unfortunately it has not been approved at this time. We appreciate your interest and you're welcome to reapply in future. NCRCP18217"
-                  }
-                  onChange={(e) => {
-                    // store temporarily on the element dataset to avoid extra state
-                    (e.currentTarget as any).dataset.value =
-                      e.currentTarget.value;
-                  }}
-                />
+                  defaultValue="Thank you for your loan application. Unfortunately it has not been approved at this time. We appreciate your interest and you're welcome to reapply in future. NCRCP18217"
+                >
+                  <option value="Thank you for your recent loan application with Liyana Finance. Due to missing key information on your application, we cannot approve your application at this time. NCRCP18217">
+                    Thank you for your recent loan application with Liyana
+                    Finance. Due to missing key information on your application,
+                    we cannot approve your application at this time. NCRCP18217
+                  </option>
+                  <option value="Thank you for your loan application. Unfortunately it has not been approved at this time. We appreciate your interest and you're welcome to reapply in future. NCRCP18217">
+                    Thank you for your loan application. Unfortunately it has
+                    not been approved at this time. We appreciate your interest
+                    and you're welcome to reapply in future. NCRCP18217
+                  </option>
+                </select>
               </div>
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={isDeclining}>
@@ -344,11 +349,11 @@ export function ApplicationDetailClient({
                 <AlertDialogAction
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   disabled={isDeclining}
-                  onClick={(e) => {
-                    const textarea = document.getElementById(
-                      "decline-reason"
-                    ) as HTMLTextAreaElement | null;
-                    let reason = textarea?.dataset.value || textarea?.value;
+                  onClick={() => {
+                    const select = document.getElementById(
+                      "decline-reason-select"
+                    ) as HTMLSelectElement | null;
+                    let reason = select?.value;
                     if (!reason) {
                       reason =
                         "Thank you for your loan application. Unfortunately it has not been approved at this time. We appreciate your interest and you're welcome to reapply in future. NCRCP18217";

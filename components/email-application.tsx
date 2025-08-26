@@ -279,7 +279,7 @@ export function EmailApplication({ id, creditReports }: EmailApplicationProps) {
                             {selected ? "✓ " : ""}
                             {report.check_type
                               ? report.check_type === "fraud_check"
-                                ? "Credit Check"
+                                ? "Credit Report"
                                 : report.check_type
                                     .replace(/_/g, " ")
                                     .replace(/\b\w/g, (c) => c.toUpperCase())
