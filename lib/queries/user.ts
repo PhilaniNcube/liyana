@@ -270,11 +270,55 @@ export async function getUsersWithoutApplicationsPaginated(
     applications.map((app) => app.user_id),
   );
 
-  // Filter out users who have submitted applications and exclude admin users
-  const usersWithoutApplications = allProfiles.filter(
-    (profile) =>
-      !userIdsWithApplications.has(profile.id) && profile.role !== "admin",
-  );
+  // Get all api_checks for credit_bureau
+  const { data: apiChecks, error: apiChecksError } = await supabase
+    .from("api_checks")
+    .select("id_number, response_payload, checked_at, check_type")
+    .eq("check_type", "credit_bureau")
+    .order("checked_at", { ascending: false });
+
+  if (apiChecksError) {
+    throw new Error(`Failed to fetch api_checks: ${apiChecksError.message}`);
+  }
+
+  // Map from id_number to latest credit score
+  const creditScoreMap = new Map();
+  for (const check of apiChecks) {
+    const idNum = check.id_number;
+    if (!creditScoreMap.has(idNum)) {
+      let score = null;
+      try {
+        const payload = check.response_payload;
+        if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+          if ("score" in payload && typeof payload["score"] === "number") {
+            score = payload["score"];
+          } else if ("Score" in payload && typeof payload["Score"] === "number") {
+            score = payload["Score"];
+          } else if ("data" in payload && payload["data"] && typeof payload["data"] === "object" && !Array.isArray(payload["data"])) {
+            const dataObj = payload["data"];
+            if ("score" in dataObj && typeof dataObj["score"] === "number") {
+              score = dataObj["score"];
+            }
+          }
+        }
+      } catch {}
+      if (score !== null && !isNaN(Number(score))) {
+        creditScoreMap.set(idNum, Number(score));
+      }
+    }
+  }
+
+  // Only include users who:
+  // - have not submitted any applications
+  // - are not admin
+  // - have an id_number
+  // - have a credit_bureau api-check with score < 600
+  const usersWithoutApplications = allProfiles.filter((profile) => {
+    if (profile.role === "admin" || userIdsWithApplications.has(profile.id)) return false;
+    if (!profile.id_number) return false;
+    const score = creditScoreMap.get(profile.id_number);
+    return score !== undefined && score < 600;
+  });
 
   // Apply pagination
   const from = (page - 1) * pageSize;
