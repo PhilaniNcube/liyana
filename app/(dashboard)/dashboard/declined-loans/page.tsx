@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getDeclinedUsersAndApplicationsPaginated } from "@/lib/queries/user";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { getApiChecksByType } from "@/lib/queries/api-checks";
 import { formatDistanceToNow } from "date-fns";
 import {
   parseAsInteger,
@@ -74,13 +74,43 @@ export default async function DeclinedLoansPage(props: {
     sortOrder as "asc" | "desc"
   );
 
-  // Split users into two groups for the tabs
-  const declinedOnly = declinedUsersAndApplications.filter(
-    (u) => u.application_status === "declined"
-  );
-  const idNoApp = declinedUsersAndApplications.filter(
-    (u) => u.application_status === "no_application"
-  );
+  // Fetch all credit_bureau api-checks for mapping
+  const apiChecks = await getApiChecksByType("credit_bureau");
+  // Map: id_number (decrypted) -> latest credit score
+  const creditScoreMap = new Map();
+  for (const check of apiChecks) {
+    let idNum = check.id_number;
+    if (idNum && typeof idNum === "string" && idNum.length > 13) {
+      try {
+        idNum = require("@/lib/encryption").decryptValue(idNum);
+      } catch {}
+    }
+    if (!idNum) continue;
+    if (!creditScoreMap.has(idNum)) {
+      let score = null;
+      const payload = check.response_payload;
+      if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+        if ("score" in payload && typeof payload["score"] === "number") {
+          score = payload["score"];
+        } else if ("Score" in payload && typeof payload["Score"] === "number") {
+          score = payload["Score"];
+        } else if (
+          "data" in payload &&
+          payload["data"] &&
+          typeof payload["data"] === "object" &&
+          !Array.isArray(payload["data"])
+        ) {
+          const dataObj = payload["data"];
+          if ("score" in dataObj && typeof dataObj["score"] === "number") {
+            score = dataObj["score"];
+          }
+        }
+      }
+      if (score !== null && !isNaN(Number(score))) {
+        creditScoreMap.set(idNum, Number(score));
+      }
+    }
+  }
 
   const getRoleVariant = (role: string) => {
     switch (role) {
@@ -347,18 +377,48 @@ export default async function DeclinedLoansPage(props: {
         </Card>
       </div>
 
-      {/* Users Table with Tabs */}
-      <Tabs defaultValue="declined" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="declined">Declined Loans</TabsTrigger>
-          <TabsTrigger value="noapp">ID Number, No Application</TabsTrigger>
-        </TabsList>
-        <TabsContent value="declined">
-          <Card>
-            <CardHeader>
-              <CardTitle>Declined Loans ({declinedOnly.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
+      {/* Users Table */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex flex-col md:flex-row md:items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-600" />
+              Declined & Non-Applicant Users ({total})
+              {(dateFrom || dateTo) && (
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                  Filtered
+                </span>
+              )}
+              {(sortBy !== "registration_date" || sortOrder !== "desc") && (
+                <span className="text-xs text-center bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                  Sorted: {sortBy.replace("_", " ")} (
+                  {sortOrder === "asc" ? "↑" : "↓"})
+                </span>
+              )}
+              <div className="text-sm text-muted-foreground">
+                Showing {(page - 1) * pageSize + 1} to{" "}
+                {Math.min(page * pageSize, total)} of {total} users
+              </div>
+            </CardTitle>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Users with declined loan applications or who haven't submitted any
+            applications yet.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {total === 0 ? (
+            <div className="text-center py-8">
+              <UserCheck className="mx-auto h-12 w-12 text-green-600 mb-4" />
+              <h3 className="text-lg font-semibold text-green-700">
+                Excellent!
+              </h3>
+              <p className="text-muted-foreground">
+                All registered users have submitted successful applications.
+              </p>
+            </div>
+          ) : (
+            <>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -374,62 +434,61 @@ export default async function DeclinedLoansPage(props: {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {declinedOnly.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center">
-                        No declined loans found.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    declinedOnly.map((profile) => {
-                      const daysSinceRegistration = Math.floor(
-                        (new Date().getTime() -
-                          new Date(profile.created_at).getTime()) /
-                          (1000 * 60 * 60 * 24)
-                      );
-                      return (
-                        <TableRow key={profile.id}>
-                          <TableCell className="font-medium capitalize">
-                            {profile.full_name || "No name"}
-                          </TableCell>
-                          <TableCell>{profile.email || "No email"}</TableCell>
-                          <TableCell>
-                            {profile.phone_number || "No phone"}
-                          </TableCell>
-                          <TableCell className="font-mono text-sm">
-                            {profile.decrypted_id_number || "Not provided"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getRoleVariant(profile.role)}>
-                              {profile.role}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={getApplicationStatusVariant(
-                                profile.application_status!
-                              )}
-                            >
-                              Declined
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {profile.credit_score !== undefined &&
-                            profile.credit_score !== null ? (
-                              <span
-                                className={
-                                  profile.credit_score < 600
-                                    ? "text-red-600 font-bold"
-                                    : ""
-                                }
-                              >
-                                {profile.credit_score}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">N/A</span>
+                  {declinedUsersAndApplications.map((profile) => {
+                    const daysSinceRegistration = Math.floor(
+                      (new Date().getTime() -
+                        new Date(profile.created_at).getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    );
+                    // Find credit score by id_number
+                    const creditScore = profile.decrypted_id_number
+                      ? creditScoreMap.get(profile.decrypted_id_number)
+                      : undefined;
+                    return (
+                      <TableRow key={profile.id}>
+                        <TableCell className="font-medium capitalize">
+                          {profile.full_name || "No name"}
+                        </TableCell>
+                        <TableCell>{profile.email || "No email"}</TableCell>
+                        <TableCell>
+                          {profile.phone_number || "No phone"}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {profile.decrypted_id_number || "Not provided"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getRoleVariant(profile.role)}>
+                            {profile.role}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={getApplicationStatusVariant(
+                              profile.application_status!
                             )}
-                          </TableCell>
-                          <TableCell>
+                          >
+                            {profile.application_status === "declined"
+                              ? "Declined"
+                              : "No Application"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {creditScore !== undefined && creditScore !== null ? (
+                            <span
+                              className={
+                                creditScore < 600
+                                  ? "text-red-600 font-bold"
+                                  : ""
+                              }
+                            >
+                              {creditScore}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">N/A</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {profile.application_status === "declined" ? (
                             <div className="space-y-1">
                               {profile.latest_application_id && (
                                 <Link
@@ -454,149 +513,50 @@ export default async function DeclinedLoansPage(props: {
                                 </div>
                               )}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <div className="text-sm">
-                                {formatDistanceToNow(
-                                  new Date(profile.created_at),
-                                  {
-                                    addSuffix: true,
-                                  }
-                                )}
-                              </div>
-                              <Badge
-                                variant={
-                                  daysSinceRegistration > 30
-                                    ? "destructive"
-                                    : daysSinceRegistration > 7
-                                      ? "secondary"
-                                      : "default"
+                          ) : (
+                            <span className="text-sm text-muted-foreground">
+                              No applications
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="text-sm">
+                              {formatDistanceToNow(
+                                new Date(profile.created_at),
+                                {
+                                  addSuffix: true,
                                 }
-                              >
-                                {daysSinceRegistration} days
-                              </Badge>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="noapp">
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                ID Number, No Application ({idNoApp.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>ID Number</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Credit Score</TableHead>
-                    <TableHead>Registered</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {idNoApp.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center">
-                        No users found.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    idNoApp.map((profile) => {
-                      const daysSinceRegistration = Math.floor(
-                        (new Date().getTime() -
-                          new Date(profile.created_at).getTime()) /
-                          (1000 * 60 * 60 * 24)
-                      );
-                      return (
-                        <TableRow key={profile.id}>
-                          <TableCell className="font-medium capitalize">
-                            {profile.full_name || "No name"}
-                          </TableCell>
-                          <TableCell>{profile.email || "No email"}</TableCell>
-                          <TableCell>
-                            {profile.phone_number || "No phone"}
-                          </TableCell>
-                          <TableCell className="font-mono text-sm">
-                            {profile.decrypted_id_number || "Not provided"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getRoleVariant(profile.role)}>
-                              {profile.role}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={getApplicationStatusVariant(
-                                profile.application_status!
                               )}
-                            >
-                              No Application
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {profile.credit_score !== undefined &&
-                            profile.credit_score !== null ? (
-                              <span
-                                className={
-                                  profile.credit_score < 600
-                                    ? "text-red-600 font-bold"
-                                    : ""
-                                }
-                              >
-                                {profile.credit_score}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">N/A</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <div className="text-sm">
-                                {formatDistanceToNow(
-                                  new Date(profile.created_at),
-                                  {
-                                    addSuffix: true,
-                                  }
-                                )}
-                              </div>
-                              <Badge
-                                variant={
-                                  daysSinceRegistration > 30
-                                    ? "destructive"
-                                    : daysSinceRegistration > 7
-                                      ? "secondary"
-                                      : "default"
-                                }
-                              >
-                                {daysSinceRegistration} days
-                              </Badge>
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
+                            <Badge
+                              variant={
+                                daysSinceRegistration > 30
+                                  ? "destructive"
+                                  : daysSinceRegistration > 7
+                                    ? "secondary"
+                                    : "default"
+                              }
+                            >
+                              {daysSinceRegistration} days
+                            </Badge>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <UsersPagination currentPage={page} totalPages={totalPages} />
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
