@@ -327,6 +327,9 @@ export function ApplicationDetailClient({
                   rows={4}
                   placeholder="Provide a brief reason..."
                   disabled={isDeclining}
+                  defaultValue={
+                    "Thank you for your loan application. Unfortunately it has not been approved at this time. We appreciate your interest and you're welcome to reapply in future. NCRCP18217"
+                  }
                   onChange={(e) => {
                     // store temporarily on the element dataset to avoid extra state
                     (e.currentTarget as any).dataset.value =
@@ -345,8 +348,11 @@ export function ApplicationDetailClient({
                     const textarea = document.getElementById(
                       "decline-reason"
                     ) as HTMLTextAreaElement | null;
-                    const reason =
-                      textarea?.dataset.value || textarea?.value || undefined;
+                    let reason = textarea?.dataset.value || textarea?.value;
+                    if (!reason) {
+                      reason =
+                        "Thank you for your loan application. Unfortunately it has not been approved at this time. We appreciate your interest and you're welcome to reapply in future. NCRCP18217";
+                    }
                     handleDeclineApplication(reason);
                   }}
                 >

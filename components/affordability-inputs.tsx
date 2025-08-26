@@ -431,7 +431,7 @@ export function AffordabilityInputs({
         )}
 
         {/* Low Expenses Warning */}
-        {expensesTooLow && (
+        {/* {expensesTooLow && (
           <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-start space-x-3">
               <AlertTriangle className="h-6 w-6 text-yellow-600 mt-1 flex-shrink-0" />
@@ -463,7 +463,7 @@ export function AffordabilityInputs({
               </div>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

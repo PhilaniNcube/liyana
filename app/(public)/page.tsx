@@ -131,7 +131,7 @@ export default async function Home() {
                   <li>• No waiting periods</li>
                   <li>• 24/7 support</li>
                 </ul>
-                <Button asChild variant="outline" className="w-full">
+                <Button asChild className="w-full bg-black">
                   <Link href="/insurance/funeral">Apply Now</Link>
                 </Button>
               </CardContent>

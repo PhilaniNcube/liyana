@@ -19,7 +19,7 @@ export async function declineApplicationAction(
     const message = 'Thank you for your loan application. Unfortunately it has not been approved at this time. We appreciate your interest and you\'re welcome to reapply in future. NCRCP18217';
 
     if (phoneNumber) {
-      await sendSms(phoneNumber, message);
+      await sendSms(phoneNumber, reason || message);
     }
 
     // Revalidate the application detail page and list
