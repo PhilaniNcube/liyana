@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { getDeclinedUsersAndApplicationsPaginated } from "@/lib/queries/user";
 import { getApiChecksByType } from "@/lib/queries/api-checks";
+import { decryptValue } from "@/lib/encryption";
 import { formatDistanceToNow } from "date-fns";
 import {
   parseAsInteger,
@@ -82,7 +83,7 @@ export default async function DeclinedLoansPage(props: {
     let idNum = check.id_number;
     if (idNum && typeof idNum === "string" && idNum.length > 13) {
       try {
-        idNum = require("@/lib/encryption").decryptValue(idNum);
+        idNum = decryptValue(idNum);
       } catch {}
     }
     if (!idNum) continue;
