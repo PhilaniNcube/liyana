@@ -431,6 +431,9 @@ export async function getDeclinedUsersAndApplicationsPaginated(
   const declinedUsers: DeclinedUserProfile[] = allProfiles
     .filter((profile) => profile.role !== "admin")
     .filter((profile) => {
+      // Exclude users with no id_number (cannot check credit score)
+      if (!profile.id_number) return false;
+
       const hasApplication = userApplicationMap.has(profile.id);
       const hasDeclinedApplication = declinedApplications.has(profile.id);
 
