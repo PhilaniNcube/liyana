@@ -8,11 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  getAllApplications,
-  type ApplicationWithProfile,
-} from "@/lib/queries/applications";
-import { decryptValue } from "@/lib/encryption";
+import { getAllApplications } from "@/lib/queries/applications";
 import Link from "next/link";
 
 function getStatusBadge(status: string) {

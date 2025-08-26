@@ -85,7 +85,6 @@ export default async function DeclinedLoansPage(props: {
         return "outline";
     }
   };
-
   const getApplicationStatusVariant = (
     status: "declined" | "no_application"
   ) => {
@@ -110,10 +109,10 @@ export default async function DeclinedLoansPage(props: {
         <div className="flex flex-col md:flex-row md:items-center gap-3 justify-between">
           <div>
             <h1 className="text-xl md:text-3xl font-bold">
-              Declined Loans & Non-Applicants
+              Declined Loans & Low Credit Score Users
             </h1>
             <p className="text-sm md:text-base text-muted-foreground">
-              Users with declined applications or who haven't applied yet
+              Users with declined applications or credit report score below 600
               {(dateFrom || dateTo) && (
                 <span className="block text-sm text-blue-600 mt-1">
                   Filtered by registration date
@@ -160,6 +159,7 @@ export default async function DeclinedLoansPage(props: {
                 <Label htmlFor="dateFrom" className="text-xs">
                   From Date (Registration)
                 </Label>
+                <TableHead>Credit Score</TableHead>
                 <Input
                   id="dateFrom"
                   name="dateFrom"
@@ -389,6 +389,7 @@ export default async function DeclinedLoansPage(props: {
                     <TableHead>ID Number</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Credit Score</TableHead>
                     <TableHead>Application Details</TableHead>
                     <TableHead>Registered</TableHead>
                   </TableRow>
@@ -400,7 +401,6 @@ export default async function DeclinedLoansPage(props: {
                         new Date(profile.created_at).getTime()) /
                         (1000 * 60 * 60 * 24)
                     );
-
                     return (
                       <TableRow key={profile.id}>
                         <TableCell className="font-medium capitalize">
@@ -428,6 +428,22 @@ export default async function DeclinedLoansPage(props: {
                               ? "Declined"
                               : "No Application"}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {profile.credit_score !== undefined &&
+                          profile.credit_score !== null ? (
+                            <span
+                              className={
+                                profile.credit_score < 600
+                                  ? "text-red-600 font-bold"
+                                  : ""
+                              }
+                            >
+                              {profile.credit_score}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">N/A</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           {profile.application_status === "declined" ? (

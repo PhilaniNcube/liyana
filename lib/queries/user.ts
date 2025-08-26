@@ -305,6 +305,7 @@ export interface DeclinedUserProfile extends Profile {
   latest_application_id?: number;
   application_amount?: number;
   declined_at?: string;
+  credit_score?: number | null;
 }
 
 export async function getDeclinedUsersAndApplicationsPaginated(
@@ -349,6 +350,7 @@ export async function getDeclinedUsersAndApplicationsPaginated(
     throw new Error(`Failed to fetch user profiles: ${profilesError.message}`);
   }
 
+
   // Get all applications with status
   const { data: applications, error: applicationsError } = await supabase
     .from("applications")
@@ -361,6 +363,45 @@ export async function getDeclinedUsersAndApplicationsPaginated(
     throw new Error(
       `Failed to fetch applications: ${applicationsError.message}`,
     );
+  }
+
+  // Get all api_checks for credit_bureau
+  const { data: apiChecks, error: apiChecksError } = await supabase
+    .from("api_checks")
+    .select("id_number, response_payload, checked_at, check_type")
+    .eq("check_type", "credit_bureau")
+    .order("checked_at", { ascending: false });
+
+  if (apiChecksError) {
+    throw new Error(`Failed to fetch api_checks: ${apiChecksError.message}`);
+  }
+
+  // Map from id_number to latest credit score (score < 600)
+  const creditScoreMap = new Map();
+  for (const check of apiChecks) {
+    const idNum = check.id_number;
+    if (!creditScoreMap.has(idNum)) {
+      let score = null;
+      try {
+        const payload = check.response_payload;
+        if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+          // Try common keys
+          if ("score" in payload && typeof payload["score"] === "number") {
+            score = payload["score"];
+          } else if ("Score" in payload && typeof payload["Score"] === "number") {
+            score = payload["Score"];
+          } else if ("data" in payload && payload["data"] && typeof payload["data"] === "object" && !Array.isArray(payload["data"])) {
+            const dataObj = payload["data"];
+            if ("score" in dataObj && typeof dataObj["score"] === "number") {
+              score = dataObj["score"];
+            }
+          }
+        }
+      } catch {}
+      if (score !== null && !isNaN(Number(score))) {
+        creditScoreMap.set(idNum, Number(score));
+      }
+    }
   }
 
   // Create maps for application data
@@ -386,21 +427,30 @@ export async function getDeclinedUsersAndApplicationsPaginated(
   // Filter profiles to include:
   // 1. Users without any applications (excluding admins)
   // 2. Users with declined applications
+  // 3. Users whose latest credit report score is less than 600
   const declinedUsers: DeclinedUserProfile[] = allProfiles
     .filter((profile) => profile.role !== "admin")
     .filter((profile) => {
       const hasApplication = userApplicationMap.has(profile.id);
       const hasDeclinedApplication = declinedApplications.has(profile.id);
 
-      // Include if: no application OR has declined application
-      return !hasApplication || hasDeclinedApplication;
+      // Use ID number from application if available, otherwise from profile
+      const application = userApplicationMap.get(profile.id);
+      const idNumberToCheck = application?.id_number || profile.id_number;
+      const creditScore = creditScoreMap.get(idNumberToCheck);
+
+      // Include if: no application OR has declined application OR credit score < 600
+      return (
+        !hasApplication ||
+        hasDeclinedApplication ||
+        (creditScore !== undefined && creditScore < 600)
+      );
     })
     .map((profile) => {
       const application = userApplicationMap.get(profile.id);
       const hasDeclinedApplication = declinedApplications.has(profile.id);
-
-      // Use ID number from application if available, otherwise from profile
       const idNumberToDecrypt = application?.id_number || profile.id_number;
+      const creditScore = creditScoreMap.get(idNumberToDecrypt);
 
       return {
         ...profile,
@@ -414,6 +464,7 @@ export async function getDeclinedUsersAndApplicationsPaginated(
         declined_at: hasDeclinedApplication
           ? application?.updated_at
           : undefined,
+        credit_score: creditScore,
       };
     })
     .sort((a, b) => {
