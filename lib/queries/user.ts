@@ -281,30 +281,30 @@ export async function getUsersWithoutApplicationsPaginated(
     throw new Error(`Failed to fetch api_checks: ${apiChecksError.message}`);
   }
 
-  // Map from id_number to latest credit score
+  // Map from id_number to latest credit score (only the most recent check per id_number)
   const creditScoreMap = new Map();
   for (const check of apiChecks) {
     const idNum = check.id_number;
-    if (!creditScoreMap.has(idNum)) {
-      let score = null;
-      try {
-        const payload = check.response_payload;
-        if (payload && typeof payload === "object" && !Array.isArray(payload)) {
-          if ("score" in payload && typeof payload["score"] === "number") {
-            score = payload["score"];
-          } else if ("Score" in payload && typeof payload["Score"] === "number") {
-            score = payload["Score"];
-          } else if ("data" in payload && payload["data"] && typeof payload["data"] === "object" && !Array.isArray(payload["data"])) {
-            const dataObj = payload["data"];
-            if ("score" in dataObj && typeof dataObj["score"] === "number") {
-              score = dataObj["score"];
-            }
+    // Only set if not already set (apiChecks is ordered by checked_at DESC)
+    if (!idNum || creditScoreMap.has(idNum)) continue;
+    let score = null;
+    try {
+      const payload = check.response_payload;
+      if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+        if ("score" in payload && typeof payload["score"] === "number") {
+          score = payload["score"];
+        } else if ("Score" in payload && typeof payload["Score"] === "number") {
+          score = payload["Score"];
+        } else if ("data" in payload && payload["data"] && typeof payload["data"] === "object" && !Array.isArray(payload["data"])) {
+          const dataObj = payload["data"];
+          if ("score" in dataObj && typeof dataObj["score"] === "number") {
+            score = dataObj["score"];
           }
         }
-      } catch {}
-      if (score !== null && !isNaN(Number(score))) {
-        creditScoreMap.set(idNum, Number(score));
       }
+    } catch {}
+    if (score !== null && !isNaN(Number(score))) {
+      creditScoreMap.set(idNum, Number(score));
     }
   }
 
@@ -420,31 +420,30 @@ export async function getDeclinedUsersAndApplicationsPaginated(
     throw new Error(`Failed to fetch api_checks: ${apiChecksError.message}`);
   }
 
-  // Map from id_number to latest credit score (score < 600)
+  // Map from id_number to latest credit score (only the most recent check per id_number)
   const creditScoreMap = new Map();
   for (const check of apiChecks) {
     const idNum = check.id_number;
-    if (!creditScoreMap.has(idNum)) {
-      let score = null;
-      try {
-        const payload = check.response_payload;
-        if (payload && typeof payload === "object" && !Array.isArray(payload)) {
-          // Try common keys
-          if ("score" in payload && typeof payload["score"] === "number") {
-            score = payload["score"];
-          } else if ("Score" in payload && typeof payload["Score"] === "number") {
-            score = payload["Score"];
-          } else if ("data" in payload && payload["data"] && typeof payload["data"] === "object" && !Array.isArray(payload["data"])) {
-            const dataObj = payload["data"];
-            if ("score" in dataObj && typeof dataObj["score"] === "number") {
-              score = dataObj["score"];
-            }
+    // Only set if not already set (apiChecks is ordered by checked_at DESC)
+    if (!idNum || creditScoreMap.has(idNum)) continue;
+    let score = null;
+    try {
+      const payload = check.response_payload;
+      if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+        if ("score" in payload && typeof payload["score"] === "number") {
+          score = payload["score"];
+        } else if ("Score" in payload && typeof payload["Score"] === "number") {
+          score = payload["Score"];
+        } else if ("data" in payload && payload["data"] && typeof payload["data"] === "object" && !Array.isArray(payload["data"])) {
+          const dataObj = payload["data"];
+          if ("score" in dataObj && typeof dataObj["score"] === "number") {
+            score = dataObj["score"];
           }
         }
-      } catch {}
-      if (score !== null && !isNaN(Number(score))) {
-        creditScoreMap.set(idNum, Number(score));
       }
+    } catch {}
+    if (score !== null && !isNaN(Number(score))) {
+      creditScoreMap.set(idNum, Number(score));
     }
   }
 
