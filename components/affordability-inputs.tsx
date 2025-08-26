@@ -21,15 +21,15 @@ const formatCurrency = (value: number) => {
 // Calculate minimum norms based on income bands
 const calculateMinimumNorms = (grossIncome: number) => {
   if (grossIncome <= 800) {
-    return { fixedFactor: 0, percentageAbove: 0 };
+    return { fixedFactor: 0, percentageAbove: 0, threshold: 0 };
   } else if (grossIncome <= 6250) {
-    return { fixedFactor: 800, percentageAbove: 0 };
+    return { fixedFactor: 800, percentageAbove: 0, threshold: 0 };
   } else if (grossIncome <= 25000) {
-    return { fixedFactor: 1167.88, percentageAbove: 0.082 };
+    return { fixedFactor: 1167.88, percentageAbove: 0, threshold: 0 };
   } else if (grossIncome <= 50000) {
-    return { fixedFactor: 2855.38, percentageAbove: 0.082 };
+    return { fixedFactor: 2855.38, percentageAbove: 0.082, threshold: 25000 };
   } else {
-    return { fixedFactor: 4905.38, percentageAbove: 0.082 };
+    return { fixedFactor: 4905.38, percentageAbove: 0, threshold: 0 };
   }
 };
 
@@ -124,11 +124,11 @@ export function AffordabilityInputs({
 
   // Calculate minimum norms - updates automatically when totalGrossIncome changes
   const minNorms = calculateMinimumNorms(totalGrossIncome);
-  const minimumDisposableIncome =
-    minNorms.fixedFactor +
-    (totalGrossIncome > 6250
-      ? (totalGrossIncome - 6250) * minNorms.percentageAbove
-      : 0);
+  let minimumDisposableIncome = minNorms.fixedFactor;
+  if (minNorms.percentageAbove > 0 && totalGrossIncome > minNorms.threshold) {
+    minimumDisposableIncome +=
+      (totalGrossIncome - minNorms.threshold) * minNorms.percentageAbove;
+  }
 
   // Calculate minimum expected expenses (approximately 70% of gross income as baseline)
   const minimumExpectedExpenses = totalGrossIncome * 0.7;
@@ -445,7 +445,7 @@ export function AffordabilityInputs({
                   {formatCurrency(totalGrossIncome)}. Please review and ensure
                   all your monthly expenses are accurately captured. The minimum
                   expected expenses for your income level should be around{" "}
-                  {formatCurrency(minimumExpectedExpenses)}.
+                  {formatCurrency(minimumDisposableIncome)}.
                 </p>
                 <p className="text-sm text-yellow-700 font-medium">
                   You cannot proceed until your expenses are properly
