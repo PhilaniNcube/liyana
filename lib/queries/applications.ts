@@ -471,3 +471,137 @@ export async function getDeclinedApplications(
   const end = start + per_page;
   return unifiedArray.slice(start, end);
 }
+
+// Incomplete application candidates:
+// 1. User (profile) has at least one PASSED credit_bureau api_check (matched via decrypted id_number)
+// 2. User does NOT have any application with a "completed" status (assumed: approved | declined | in_review)
+// 3. Include users with either no application at all or only applications in pre_qualifier | pending_documents
+// Returns paginated user-centric list similar to declined applications output: [{ profile, application?, credit_check, id_number, reason }]
+export async function getIncompleteApplicationUsers(
+  page: number = 1,
+  per_page: number = 50,
+  start_date: string,
+  end_date: string
+) {
+  const supabase = await createClient();
+
+  // Fetch passed credit bureau checks in range
+  const { data: passedChecks, error: passedChecksError } = await supabase
+    .from("api_checks")
+    .select("*")
+    .eq("check_type", "credit_bureau")
+    .eq("status", "passed")
+    .gte("checked_at", start_date)
+    .lte("checked_at", end_date);
+  if (passedChecksError) {
+    throw new Error(`Failed to fetch passed credit checks: ${passedChecksError.message}`);
+  }
+
+  // Decrypt passed checks id_numbers
+  const decryptedPassedChecks = (passedChecks || []).map(check => {
+    let decrypted: string | null = null;
+    try { decrypted = decryptValue(check.id_number); } catch { decrypted = check.id_number; }
+    return { ...check, id_number: decrypted };
+  });
+
+  if (decryptedPassedChecks.length === 0) return [];
+
+  // Candidate profiles within date range (loosely align with checks range) that have id_number
+  const { data: candidateProfiles, error: candidateProfilesError } = await supabase
+    .from("profiles")
+    .select("*")
+    .not("id_number", "is", null)
+    .gte("created_at", start_date)
+    .lte("created_at", end_date);
+  if (candidateProfilesError) {
+    console.warn("Failed to fetch candidate profiles for incomplete applications:", candidateProfilesError.message);
+  }
+
+  // Build map of decrypted profile id_numbers -> profile
+  const profileByDecryptedId = new Map<string, Profile>();
+  (candidateProfiles || []).forEach(p => {
+    if (!p.id_number) return;
+    try {
+      const dec = decryptValue(p.id_number);
+      profileByDecryptedId.set(dec, p);
+    } catch {
+      // ignore decryption failure
+    }
+  });
+
+  // Match passed checks to profiles
+  const matches: { profile: Profile; credit_check: any; id_number: string | null }[] = [];
+  decryptedPassedChecks.forEach(ch => {
+    const prof = profileByDecryptedId.get(ch.id_number);
+    if (prof) {
+      matches.push({ profile: prof, credit_check: ch, id_number: ch.id_number });
+    }
+  });
+
+  if (matches.length === 0) return [];
+
+  const uniqueProfileIds = Array.from(new Set(matches.map(m => m.profile.id)));
+
+  // Fetch applications for these profiles
+  const { data: relatedApplications, error: relatedAppsError } = await supabase
+    .from("applications")
+    .select("*")
+    .in("user_id", uniqueProfileIds);
+  if (relatedAppsError) {
+    console.warn("Failed to fetch related applications for incomplete users:", relatedAppsError.message);
+  }
+
+  const appsByUser = new Map<string, any[]>();
+  (relatedApplications || []).forEach(app => {
+    const arr = appsByUser.get(app.user_id) || [];
+    arr.push(app);
+    appsByUser.set(app.user_id, arr);
+  });
+  // Sort each user's apps newest first
+  appsByUser.forEach(arr => arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+
+  const COMPLETED_STATUSES = new Set(["approved", "declined", "in_review"]);
+
+  interface IncompleteUserRow {
+    profile: Profile;
+    application?: any | null; // latest in-progress application if any
+    credit_check: any;
+    id_number: string | null;
+    reason: 'no_application' | 'in_progress';
+  }
+
+  const rows: IncompleteUserRow[] = [];
+
+  uniqueProfileIds.forEach(pid => {
+    const profile = profileByDecryptedId.get(
+      // Need to find any decrypted id number -> profile that matches pid
+      [...profileByDecryptedId.entries()].find(([, p]) => p.id === pid)?.[0] || ""
+    );
+    if (!profile) return;
+    const userApps = appsByUser.get(pid) || [];
+    const hasCompleted = userApps.some(a => COMPLETED_STATUSES.has(a.status));
+    if (hasCompleted) return; // exclude
+    const inProgress = userApps.find(a => a.status === 'pending_documents' || a.status === 'pre_qualifier') || null;
+    // Find credit check (first matched in matches list)
+    const credit_check = matches.find(m => m.profile.id === pid)?.credit_check;
+    const id_number = matches.find(m => m.profile.id === pid)?.id_number || null;
+    rows.push({
+      profile,
+      application: inProgress,
+      credit_check,
+      id_number,
+      reason: inProgress ? 'in_progress' : 'no_application'
+    });
+  });
+
+  // Sort by recency (credit_check.checked_at or application.created_at or profile.created_at)
+  rows.sort((a, b) => {
+    const aDate = new Date(a.application?.created_at || a.credit_check?.checked_at || a.profile.created_at || 0).getTime();
+    const bDate = new Date(b.application?.created_at || b.credit_check?.checked_at || b.profile.created_at || 0).getTime();
+    return bDate - aDate;
+  });
+
+  const start = (page - 1) * per_page;
+  const end = start + per_page;
+  return rows.slice(start, end);
+}

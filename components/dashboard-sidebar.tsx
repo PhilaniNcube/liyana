@@ -63,6 +63,11 @@ const sidebarItems = [
         icon: UserCheck,
       },
       {
+        title: "Incomplete Loans",
+        href: "/dashboard/applications/incomplete",
+        icon: UserX,
+      },
+      {
         title: "All Users",
         href: "/dashboard/users",
         icon: Users,
