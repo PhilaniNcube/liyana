@@ -86,7 +86,7 @@ export default async function ApplicationsPage() {
                         {displayName}
                       </Link>
                     </TableCell>
-                    <TableCell className="font-mono text-sm text-muted-foreground">
+                    <TableCell className="text-sm text-muted-foreground">
                       <Link
                         href={`/dashboard/applications/${app.id}`}
                         className="block"

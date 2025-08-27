@@ -268,7 +268,7 @@ export function OtvResultsDialog({
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium">ID Number</p>
-                        <p className="text-sm text-muted-foreground font-mono">
+                        <p className="text-sm text-muted-foreground">
                           {otvData.otvResults.detail.idNumber || "N/A"}
                         </p>
                       </div>
@@ -432,7 +432,7 @@ export function OtvResultsDialog({
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium">HANIS ID</p>
-                        <p className="text-sm text-muted-foreground font-mono">
+                        <p className="text-sm text-muted-foreground">
                           {otvData.otvResults.detail.hanisID}
                         </p>
                       </div>

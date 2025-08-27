@@ -374,7 +374,7 @@ export function PersonalInfoCard({
                                     <span className="text-xs text-muted-foreground">
                                       ID Number
                                     </span>
-                                    <span className="text-xs font-mono">
+                                    <span className="text-xs">
                                       {idVerificationResult.idNumber}
                                     </span>
                                   </div>
@@ -597,7 +597,7 @@ export function PersonalInfoCard({
                                     <span className="text-xs text-muted-foreground">
                                       Verification ID
                                     </span>
-                                    <span className="text-xs font-mono">
+                                    <span className="text-xs">
                                       {idVerificationResult.id}
                                     </span>
                                   </div>
@@ -867,7 +867,7 @@ export function PersonalInfoCard({
                                   <span className="text-xs text-muted-foreground">
                                     ID Number
                                   </span>
-                                  <span className="text-xs font-mono">
+                                  <span className="text-xs">
                                     {verificationResult.idNumberProvided}
                                   </span>
                                 </div>
@@ -875,7 +875,7 @@ export function PersonalInfoCard({
                                   <span className="text-xs text-muted-foreground">
                                     Phone Number
                                   </span>
-                                  <span className="text-xs font-mono">
+                                  <span className="text-xs">
                                     {verificationResult.phoneNumberProvided}
                                   </span>
                                 </div>

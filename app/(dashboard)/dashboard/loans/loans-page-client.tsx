@@ -181,7 +181,7 @@ export function LoansPageClient({ initialLoans }: LoansPageClientProps) {
                           {displayName}
                         </Link>
                       </TableCell>
-                      <TableCell className="font-mono text-sm text-muted-foreground">
+                      <TableCell className="text-sm text-muted-foreground">
                         <Link
                           href={`/dashboard/loans/${loan.id}`}
                           className="block"

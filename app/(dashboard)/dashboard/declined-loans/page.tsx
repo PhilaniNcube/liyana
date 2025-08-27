@@ -128,7 +128,7 @@ export default async function DeclinedLoansPage(props: {
                       )}
                     </Link>
                   </TableCell>
-                  <TableCell className="font-mono text-xs">
+                  <TableCell className="text-xs">
                     {item.id_number || "—"}
                   </TableCell>
                   <TableCell>

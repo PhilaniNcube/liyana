@@ -86,7 +86,7 @@ export default function PersonalInfoTab({ policy }: PersonalInfoTabProps) {
             </div>
             <div>
               <div className="text-xs text-muted-foreground">ID Number</div>
-              <div className="font-mono">
+              <div className="">
                 {holder.id_number ? decryptValue(holder.id_number) || "—" : "—"}
               </div>
             </div>

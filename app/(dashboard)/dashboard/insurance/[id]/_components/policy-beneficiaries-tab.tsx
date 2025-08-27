@@ -88,7 +88,7 @@ export default function PolicyBeneficiariesTab({
                     {formatRelationship(beneficiary.relation_type)}
                   </div>
                   {beneficiary.id_number && (
-                    <div className="text-xs text-muted-foreground font-mono">
+                    <div className="text-xs text-muted-foreground">
                       ID: {beneficiary.id_number}
                     </div>
                   )}

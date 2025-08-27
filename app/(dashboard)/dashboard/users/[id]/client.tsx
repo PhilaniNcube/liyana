@@ -284,7 +284,7 @@ export function ProfilePageClient({
                     <p className="text-sm font-medium text-muted-foreground">
                       ID Number
                     </p>
-                    <p className="text-sm font-mono">
+                    <p className="text-sm">
                       {profile.decrypted_id_number || "Not provided"}
                     </p>
                   </div>

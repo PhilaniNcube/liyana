@@ -644,7 +644,7 @@ export default function FraudCheckPage() {
                       <div>
                         <p className="font-medium">Response Data:</p>
                         <div className="space-y-2">
-                          <div className="bg-gray-100 p-2 rounded text-xs font-mono max-h-40 overflow-y-auto">
+                          <div className="bg-gray-100 p-2 rounded text-xs max-h-40 overflow-y-auto">
                             Base64 encoded data available for
                             download/processing
                           </div>

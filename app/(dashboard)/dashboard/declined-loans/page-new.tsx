@@ -235,7 +235,7 @@ export default async function DeclinedLoansPage(props: {
                         <TableCell>
                           {profile.phone_number || "No phone"}
                         </TableCell>
-                        <TableCell className="font-mono text-sm">
+                        <TableCell className="text-sm">
                           {profile.decrypted_id_number || "Not provided"}
                         </TableCell>
                         <TableCell>

@@ -170,14 +170,14 @@ export default function WhoYouCellphoneVerificationResults({
               <p className="text-sm font-medium text-muted-foreground">
                 ID Number Provided
               </p>
-              <p className="text-sm font-mono">{detail.idNumberProvided}</p>
+              <p className="text-sm">{detail.idNumberProvided}</p>
             </div>
 
             <div>
               <p className="text-sm font-medium text-muted-foreground">
                 Phone Number Provided
               </p>
-              <p className="text-sm font-mono">{detail.phoneNumberProvided}</p>
+              <p className="text-sm">{detail.phoneNumberProvided}</p>
             </div>
           </div>
 
@@ -186,7 +186,7 @@ export default function WhoYouCellphoneVerificationResults({
               <p className="text-sm font-medium text-muted-foreground">
                 Phone Number Type
               </p>
-              <Badge variant="outline" className="font-mono">
+              <Badge variant="outline" className="">
                 {detail.phoneNumberType}
               </Badge>
             </div>
@@ -197,7 +197,7 @@ export default function WhoYouCellphoneVerificationResults({
               </p>
               <Badge
                 variant={data.code === 0 ? "default" : "destructive"}
-                className="font-mono"
+                className=""
               >
                 {data.code}
               </Badge>

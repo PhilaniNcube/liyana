@@ -451,7 +451,7 @@ export function LoanBankingInfoCard({ application }: LoanBankingInfoCardProps) {
                           <span className="text-xs text-muted-foreground">
                             Reference
                           </span>
-                          <span className="text-xs font-mono">
+                          <span className="text-xs">
                             {verificationResult.reference}
                           </span>
                         </div>
@@ -467,7 +467,7 @@ export function LoanBankingInfoCard({ application }: LoanBankingInfoCardProps) {
                           <span className="text-xs text-muted-foreground">
                             Verification ID
                           </span>
-                          <span className="text-xs font-mono">
+                          <span className="text-xs">
                             {verificationResult.id}
                           </span>
                         </div>

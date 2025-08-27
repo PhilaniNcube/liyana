@@ -124,7 +124,7 @@ export default function EmploymentDetailsTab({
                   <div className="text-xs text-muted-foreground">
                     Account Number
                   </div>
-                  <div className="font-mono">
+                  <div className="">
                     {(holder.banking_details as any).account_number}
                   </div>
                 </div>
@@ -134,7 +134,7 @@ export default function EmploymentDetailsTab({
                   <div className="text-xs text-muted-foreground">
                     Branch Code
                   </div>
-                  <div className="font-mono">
+                  <div className="">
                     {(holder.banking_details as any).branch_code}
                   </div>
                 </div>
