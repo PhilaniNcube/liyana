@@ -23,6 +23,7 @@ import { parseAsInteger, createSearchParamsCache } from "nuqs/server";
 import { Suspense } from "react";
 import { UsersPagination } from "@/components/users-pagination";
 import Link from "next/link";
+import { decryptValue } from "@/lib/encryption";
 
 const searchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -79,6 +80,7 @@ export default async function UsersPage(props: {
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>ID Number</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -95,6 +97,10 @@ export default async function UsersPage(props: {
                     <Badge variant={getRoleVariant(profile.role)}>
                       {profile.role}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {(profile.id_number && decryptValue(profile.id_number)) ||
+                      "—"}
                   </TableCell>
                   <TableCell>
                     {formatDistanceToNow(new Date(profile.created_at), {
