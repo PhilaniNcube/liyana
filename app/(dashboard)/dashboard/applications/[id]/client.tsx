@@ -66,6 +66,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface ApplicationDetailClientProps {
   application: DecryptedApplication;
@@ -309,7 +317,7 @@ export function ApplicationDetailClient({
                 {isDeclining ? "Declining..." : "Decline Application"}
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="sm:max-w-3xl w-full">
               <AlertDialogHeader>
                 <AlertDialogTitle>Decline Application</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -318,29 +326,40 @@ export function ApplicationDetailClient({
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="space-y-2">
-                <label
+                <Label
                   htmlFor="decline-reason-select"
                   className="text-sm font-medium"
                 >
                   Decline Reason
-                </label>
-                <select
-                  id="decline-reason-select"
-                  className="w-full rounded-md border bg-background p-2 text-sm"
-                  disabled={isDeclining}
-                  defaultValue="Thank you for your loan application. Unfortunately it has not been approved at this time. We appreciate your interest and you're welcome to reapply in future. NCRCP18217"
-                >
-                  <option value="Thank you for your recent loan application with Liyana Finance. Due to missing key information on your application, we cannot approve your application at this time. NCRCP18217">
-                    Thank you for your recent loan application with Liyana
-                    Finance. Due to missing key information on your application,
-                    we cannot approve your application at this time. NCRCP18217
-                  </option>
-                  <option value="Thank you for your loan application. Unfortunately it has not been approved at this time. We appreciate your interest and you're welcome to reapply in future. NCRCP18217">
-                    Thank you for your loan application. Unfortunately it has
-                    not been approved at this time. We appreciate your interest
-                    and you're welcome to reapply in future. NCRCP18217
-                  </option>
-                </select>
+                </Label>
+                <Select disabled={isDeclining}>
+                  <SelectTrigger
+                    className="w-full max-w-2xl"
+                    id="decline-reason-select"
+                  >
+                    <SelectValue placeholder="Select a reason" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem
+                      className="w-full max-w-2xl"
+                      value="Thank you for your recent loan application with Liyana Finance. Due to missing key information on your application, we cannot approve your application at this time. NCRCP18217"
+                    >
+                      Thank you for your recent loan application with Liyana
+                      Finance. Due to missing key information on your
+                      application, we cannot approve your application at this
+                      time. NCRCP18217
+                    </SelectItem>
+                    <SelectItem
+                      className="w-full max-w-2xl"
+                      value="Thank you for your loan application. Unfortunately it has not been approved at this time. We appreciate your interest and you're welcome to reapply in future. NCRCP18217"
+                    >
+                      Thank you for your loan application. Unfortunately it has
+                      not been approved at this time. We appreciate your
+                      interest and you're welcome to reapply in future.
+                      NCRCP18217
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={isDeclining}>
