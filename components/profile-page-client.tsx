@@ -16,9 +16,10 @@ import {
   Plus,
   ArrowRight,
   Settings,
-  DollarSign,
   Shield,
   CreditCard,
+  CoinsIcon,
+  PlusIcon,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -129,10 +130,10 @@ export function ProfilePageClient({
               </p>
             </div>
             <div className="flex gap-2">
-              <Button asChild variant="outline">
+              <Button asChild className="bg-black text-white">
                 <Link href="/insurance/funeral">
-                  <Shield className="h-4 w-4 mr-2" />
-                  Get Funeral Cover
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  New Funeral Cover
                 </Link>
               </Button>
               <Button asChild>
@@ -145,16 +146,9 @@ export function ProfilePageClient({
           </div>
 
           <Tabs defaultValue="applications" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger
-                value="applications"
-                className="flex items-center gap-2"
-              >
-                <FileText className="h-4 w-4" />
-                Applications ({applications?.length || 0})
-              </TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="loans" className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
+                <div className="font-mono"> R</div>
                 Loans ({loans?.length || 0})
               </TabsTrigger>
               <TabsTrigger value="policies" className="flex items-center gap-2">
@@ -163,126 +157,9 @@ export function ProfilePageClient({
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="applications" className="mt-6">
-              {hasApplications ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {applications.map((application, index) => (
-                    <Card
-                      key={application.id}
-                      className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] group"
-                      onClick={() => handleApplicationClick(application.id)}
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg">
-                            Application #{application.id}
-                          </CardTitle>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant="secondary"
-                            className={getStatusColor(application.status)}
-                          >
-                            {getStatusIcon(application.status)}
-                            <span className="ml-1 capitalize">
-                              {application.status.replace("_", " ")}
-                            </span>
-                          </Badge>
-                          {index === 0 && (
-                            <Badge variant="outline" className="text-xs">
-                              Latest
-                            </Badge>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">
-                              Amount
-                            </span>
-                            <span className="font-semibold text-lg">
-                              R
-                              {application.application_amount?.toLocaleString() ||
-                                "0"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">
-                              Term
-                            </span>
-                            <span className="font-medium">
-                              {application.term || "N/A"} days
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">
-                              Submitted
-                            </span>
-                            <span className="font-medium text-sm">
-                              {new Date(
-                                application.created_at
-                              ).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="pt-2 border-t">
-                          {application.status === "in_review" && (
-                            <p className="text-sm text-blue-600">
-                              Under review by our team
-                            </p>
-                          )}
-                          {application.status === "approved" && (
-                            <p className="text-sm text-green-600">
-                              ✓ Application approved
-                            </p>
-                          )}
-                          {application.status === "declined" && (
-                            <p className="text-sm text-red-600">
-                              Application declined
-                            </p>
-                          )}
-                          {application.status === "pre_qualifier" && (
-                            <p className="text-sm text-gray-600">
-                              Application in progress
-                            </p>
-                          )}
-                          {application.status === "pending_documents" && (
-                            <p className="text-sm text-yellow-600">
-                              Documents required
-                            </p>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-12">
-                    <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">
-                      No Applications Yet
-                    </h3>
-                    <p className="text-muted-foreground text-center mb-4">
-                      You haven't submitted any loan applications yet.
-                    </p>
-                    <Button asChild>
-                      <Link href="/apply">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Apply for a Loan
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
             <TabsContent value="loans" className="mt-6">
               {hasLoans ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {loans.map((loan, index) => (
                     <Card
                       key={loan.id}
@@ -297,7 +174,7 @@ export function ProfilePageClient({
                             variant="secondary"
                             className={getLoanStatusColor(loan.status)}
                           >
-                            <DollarSign className="h-3 w-3 mr-1" />
+                            <div className="font-mono text-3xl"> R</div>
                             {loan.status}
                           </Badge>
                         </div>
@@ -358,7 +235,7 @@ export function ProfilePageClient({
               ) : (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-12">
-                    <DollarSign className="h-12 w-12 text-muted-foreground mb-4" />
+                    <div className="font-mono text-3xl">R</div>
                     <h3 className="text-lg font-semibold mb-2">
                       No Active Loans
                     </h3>
@@ -393,15 +270,6 @@ export function ProfilePageClient({
                             <CardTitle className="text-lg">
                               Policy #{policy.id}
                             </CardTitle>
-                            <Badge
-                              variant="secondary"
-                              className={getPolicyStatusColor(
-                                policy.policy_status
-                              )}
-                            >
-                              <Shield className="h-3 w-3 mr-1" />
-                              {policy.policy_status}
-                            </Badge>
                           </div>
                           {policy.product_type && (
                             <div className="text-sm text-muted-foreground capitalize">
@@ -411,18 +279,16 @@ export function ProfilePageClient({
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <div className="space-y-3">
-                            {policy.coverage_amount && (
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">
-                                  Coverage Amount
-                                </span>
-                                <span className="font-semibold text-lg">
-                                  R
-                                  {policy.coverage_amount?.toLocaleString() ||
-                                    "0"}
-                                </span>
-                              </div>
-                            )}
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">
+                                Coverage Amount
+                              </span>
+                              <span className="font-semibold text-lg">
+                                R
+                                {policy.coverage_amount?.toLocaleString() ||
+                                  "0"}
+                              </span>
+                            </div>
                             {policy.premium_amount && (
                               <div className="flex justify-between items-center">
                                 <span className="text-sm text-muted-foreground">
@@ -435,14 +301,7 @@ export function ProfilePageClient({
                                 </span>
                               </div>
                             )}
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-muted-foreground">
-                                Frequency
-                              </span>
-                              <span className="font-medium capitalize">
-                                {policy.frequency}
-                              </span>
-                            </div>
+
                             {policy.start_date && (
                               <div className="flex justify-between items-center">
                                 <span className="text-sm text-muted-foreground">
@@ -483,10 +342,10 @@ export function ProfilePageClient({
                     <p className="text-muted-foreground text-center mb-4">
                       You don't have any insurance policies yet.
                     </p>
-                    <Button asChild>
+                    <Button asChild className="bg-black text-white">
                       <Link href="/insurance/funeral">
-                        <Shield className="h-4 w-4 mr-2" />
-                        Get Funeral Cover
+                        <Plus className="h-4 w-4 mr-2" />
+                        New Funeral Cover
                       </Link>
                     </Button>
                   </CardContent>
@@ -520,8 +379,8 @@ export function ProfilePageClient({
                 className="flex items-center gap-2"
               >
                 <Link href="/insurance/funeral">
-                  <Shield className="h-4 w-4" />
-                  Get Funeral Cover
+                  <Plus className="h-4 w-4" />
+                  New Funeral Cover
                 </Link>
               </Button>
             </div>

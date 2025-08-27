@@ -7,6 +7,8 @@ import { decryptValue } from "@/lib/encryption";
 
 import VerifyIdDialog from "./verify-id";
 import SendOtvDialog from "./send-otv";
+import { Button } from "@/components/ui/button";
+import { CheckCheckIcon, ShieldCheck } from "lucide-react";
 
 interface PersonalInfoTabProps {
   policy: PolicyWithAllData;
@@ -51,11 +53,17 @@ export default function PersonalInfoTab({ policy }: PersonalInfoTabProps) {
               }
               if (decryptedIdNumber && cellNumber) {
                 return (
-                  <SendOtvDialog
-                    policyId={policy.id}
-                    decryptedIdNumber={decryptedIdNumber}
-                    cellNumber={cellNumber}
-                  />
+                  <div className="flex items-center gap-2">
+                    <SendOtvDialog
+                      policyId={policy.id}
+                      decryptedIdNumber={decryptedIdNumber}
+                      cellNumber={cellNumber}
+                    />
+                    <Button className="bg-white text-black" size="sm">
+                      <ShieldCheck className="h-4 w-4" />
+                      Check OTV Results
+                    </Button>
+                  </div>
                 );
               }
               return null;

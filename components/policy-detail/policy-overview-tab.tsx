@@ -128,7 +128,7 @@ export default function PolicyOverviewTab({
       <Card className="md:col-span-2">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+            <div className="font-mono text-3xl">R</div>
             Financial Summary
           </CardTitle>
         </CardHeader>
