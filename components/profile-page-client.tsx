@@ -376,7 +376,7 @@ export function ProfilePageClient({
                 asChild
                 variant="outline"
                 size="lg"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-black text-white"
               >
                 <Link href="/insurance/funeral">
                   <Plus className="h-4 w-4" />
