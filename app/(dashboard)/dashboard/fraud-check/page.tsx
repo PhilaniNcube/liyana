@@ -443,7 +443,7 @@ export default function FraudCheckPage() {
                     name="address2"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Address Line 2 (Optional)</FormLabel>
+                        <FormLabel>Address Line 2</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Apartment, suite, etc."
@@ -461,7 +461,7 @@ export default function FraudCheckPage() {
                       name="address3"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>City (Optional)</FormLabel>
+                          <FormLabel>City</FormLabel>
                           <FormControl>
                             <Input placeholder="Cape Town" {...field} />
                           </FormControl>
@@ -475,7 +475,7 @@ export default function FraudCheckPage() {
                       name="address4"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Province (Optional)</FormLabel>
+                          <FormLabel>Province</FormLabel>
                           <FormControl>
                             <Input placeholder="Western Cape" {...field} />
                           </FormControl>
@@ -502,9 +502,7 @@ export default function FraudCheckPage() {
 
                 {/* Contact Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">
-                    Contact Information (Optional)
-                  </h3>
+                  <h3 className="text-lg font-semibold">Contact Information</h3>
 
                   <div className="grid grid-cols-2 gap-4">
                     <FormField

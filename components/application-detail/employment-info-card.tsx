@@ -86,13 +86,15 @@ export function EmploymentInfoCard({ application }: EmploymentInfoCardProps) {
             <p className="text-sm font-medium text-muted-foreground">
               Employment Type
             </p>
-            <p className="text-sm">{application.employment_type || "N/A"}</p>
+            <p className="text-sm capitalize">
+              {application.employment_type || "N/A"}
+            </p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
               Monthly Income
             </p>
-            <p className="text-sm">
+            <p className="text-sm capitalize">
               {formatCurrency(application.monthly_income)}
             </p>
           </div>
@@ -100,13 +102,17 @@ export function EmploymentInfoCard({ application }: EmploymentInfoCardProps) {
             <p className="text-sm font-medium text-muted-foreground">
               Job Title
             </p>
-            <p className="text-sm">{application.job_title || "N/A"}</p>
+            <p className="text-sm capitalize">
+              {application.job_title || "N/A"}
+            </p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
               Work Experience
             </p>
-            <p className="text-sm">{application.work_experience || "N/A"}</p>
+            <p className="text-sm capitalize">
+              {application.work_experience || "N/A"}
+            </p>
           </div>
         </div>
         <Separator />
@@ -114,19 +120,23 @@ export function EmploymentInfoCard({ application }: EmploymentInfoCardProps) {
           <p className="text-sm font-medium text-muted-foreground">
             Employer Name
           </p>
-          <p className="text-sm">{application.employer_name || "N/A"}</p>
+          <p className="text-sm capitalize">
+            {application.employer_name || "N/A"}
+          </p>
         </div>
         <div>
           <p className="text-sm font-medium text-muted-foreground">
             Employer Address
           </p>
-          <p className="text-sm">{application.employer_address || "N/A"}</p>
+          <p className="text-sm capitalize">
+            {application.employer_address || "N/A"}
+          </p>
         </div>
         <div>
           <p className="text-sm font-medium text-muted-foreground">
             Employer Contact
           </p>
-          <p className="text-sm">
+          <p className="text-sm capitalize">
             {application.employer_contact_number || "N/A"}
           </p>
         </div>
@@ -135,7 +145,7 @@ export function EmploymentInfoCard({ application }: EmploymentInfoCardProps) {
             <p className="text-sm font-medium text-muted-foreground">
               Employment End Date
             </p>
-            <p className="text-sm">
+            <p className="text-sm capitalize">
               {formatDate(application.employment_end_date)}
             </p>
           </div>
@@ -158,7 +168,9 @@ export function EmploymentInfoCard({ application }: EmploymentInfoCardProps) {
                   >
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="font-medium">Employer:</span>{" "}
+                        <span className="font-medium capitalize">
+                          Employer:
+                        </span>{" "}
                         {employer.employerName}
                       </div>
                       <div>

@@ -50,6 +50,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { z } from "zod";
 import type { Database } from "@/lib/database.types";
+import PolicyDocumentUpload from "@/components/policy-document-upload";
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];
@@ -105,6 +106,7 @@ export default function CreateClaimDialog({
 }: CreateClaimDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [claimDocuments, setClaimDocuments] = useState(documents);
 
   const form = useForm<CreateClaimFormData>({
     resolver: zodResolver(createClaimSchema),
@@ -394,19 +396,19 @@ export default function CreateClaimDialog({
                     Supporting Documents
                   </h3>
 
-                  {documents.length > 0 ? (
+                  {claimDocuments.length > 0 ? (
                     <FormField
                       control={form.control}
                       name="supporting_documents"
                       render={() => (
                         <FormItem>
                           <FormLabel className="text-sm text-muted-foreground">
-                            Select documents to support your claim (optional)
+                            Select documents to support your claim
                           </FormLabel>
                           <Card>
                             <CardContent className="pt-6">
                               <div className="space-y-3">
-                                {documents.map((document) => (
+                                {claimDocuments.map((document) => (
                                   <FormField
                                     key={document.id}
                                     control={form.control}
@@ -469,12 +471,42 @@ export default function CreateClaimDialog({
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        No documents have been uploaded yet. You can upload
-                        supporting documents in the Documents tab before
-                        creating a claim.
+                        No documents have been selected yet. Upload or add
+                        supporting documents below.
                       </AlertDescription>
                     </Alert>
                   )}
+
+                  {/* Inline upload component */}
+                  <div className="mt-6">
+                    <PolicyDocumentUpload
+                      policyId={policyId}
+                      existingDocuments={claimDocuments}
+                      onDocumentUploaded={(doc) => {
+                        setClaimDocuments((prev) => [doc, ...prev]);
+                        // Auto-select newly uploaded document
+                        const current =
+                          form.getValues("supporting_documents") || [];
+                        if (!current.includes(doc.id)) {
+                          form.setValue("supporting_documents", [
+                            doc.id,
+                            ...current,
+                          ]);
+                        }
+                      }}
+                      onDocumentDeleted={(id) => {
+                        setClaimDocuments((prev) =>
+                          prev.filter((d) => d.id !== id)
+                        );
+                        form.setValue(
+                          "supporting_documents",
+                          (form.getValues("supporting_documents") || []).filter(
+                            (d) => d !== id
+                          )
+                        );
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

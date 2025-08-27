@@ -711,7 +711,7 @@ export default function LifeInsuranceForm() {
                             <FormLabel
                               htmlFor={`beneficiaries.${index}.phone_number`}
                             >
-                              Phone Number (Optional)
+                              Phone Number
                             </FormLabel>
                             <FormControl>
                               <Input
@@ -729,7 +729,7 @@ export default function LifeInsuranceForm() {
                         name={`beneficiaries.${index}.email`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email (Optional)</FormLabel>
+                            <FormLabel>Email</FormLabel>
                             <FormControl>
                               <Input
                                 {...field}

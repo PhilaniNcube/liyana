@@ -18,6 +18,7 @@ import {
   Send,
   Mail,
   MoreHorizontal,
+  SendHorizonal,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -392,6 +393,10 @@ export function ApplicationDetailClient({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          <Button>
+            <SendHorizonal />
+            Send To LMS
+          </Button>
 
           <Badge className={getStatusColor(application.status)}>
             {(() => {

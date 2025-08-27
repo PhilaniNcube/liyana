@@ -300,7 +300,6 @@ export function EmailApplication({ id, creditReports }: EmailApplicationProps) {
                 <div className="space-y-2">
                   <p className="text-sm font-medium flex items-center gap-2">
                     <FileText className="h-4 w-4" /> Attach Additional Files
-                    (Optional)
                   </p>
                   <Input
                     type="file"

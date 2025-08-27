@@ -589,7 +589,7 @@ export default function FuneralPolicyForm() {
                     name="employer_address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Employer Address (Optional)</FormLabel>
+                        <FormLabel>Employer Address</FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Employer address" />
                         </FormControl>
@@ -602,7 +602,7 @@ export default function FuneralPolicyForm() {
                     name="employer_contact_number"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Employer Contact (Optional)</FormLabel>
+                        <FormLabel>Employer Contact</FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Contact number" />
                         </FormControl>
@@ -947,7 +947,7 @@ export default function FuneralPolicyForm() {
                             name={`beneficiaries.${index}.phone_number`}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Phone Number (Optional)</FormLabel>
+                                <FormLabel>Phone Number</FormLabel>
                                 <FormControl>
                                   <Input
                                     {...field}
@@ -964,7 +964,7 @@ export default function FuneralPolicyForm() {
                             name={`beneficiaries.${index}.email`}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Email (Optional)</FormLabel>
+                                <FormLabel>Email</FormLabel>
                                 <FormControl>
                                   <Input
                                     {...field}
