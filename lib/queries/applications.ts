@@ -14,17 +14,13 @@ export type ApplicationWithProfile = Application & {
   id_number_decrypted?: string | null;
 };
 
-// Application query schemas
-export const getApplicationByIdSchema = z.object({
-  id: z.number(),
-});
-
+// Schemas
+export const getApplicationByIdSchema = z.object({ id: z.number() });
 export const getApplicationsByUserSchema = z.object({
   userId: z.string().uuid(),
   limit: z.number().min(1).max(100).optional(),
   offset: z.number().min(0).optional(),
 });
-
 export const getApplicationsByStatusSchema = z.object({
   status: z.enum([
     "pre_qualifier",
@@ -35,7 +31,6 @@ export const getApplicationsByStatusSchema = z.object({
   ]),
   limit: z.number().min(1).max(100).optional(),
 });
-
 export const createApplicationSchema = z.object({
   user_id: z.string().uuid(),
   id_number: z.string().min(1),
@@ -51,20 +46,14 @@ export const createApplicationSchema = z.object({
   ]),
 });
 
-// Query functions
 export async function getApplicationById(id: number) {
   const supabase = await createClient();
-
   const { data, error } = await supabase
     .from("applications")
     .select("*")
     .eq("id", id)
     .single();
-
-  if (error) {
-    throw new Error(`Failed to fetch application: ${error.message}`);
-  }
-
+  if (error) throw new Error(`Failed to fetch application: ${error.message}`);
   return data;
 }
 
@@ -72,29 +61,21 @@ export async function getApplicationByIdWithProfile(
   id: number
 ): Promise<ApplicationWithProfile> {
   const supabase = await createClient();
-
   const { data: application, error } = await supabase
     .from("applications")
     .select("*")
     .eq("id", id)
     .single();
-
-  if (error) {
-    throw new Error(`Failed to fetch application: ${error.message}`);
-  }
-
-  // Fetch profile data
+  if (error) throw new Error(`Failed to fetch application: ${error.message}`);
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", application.user_id)
     .single();
-
   if (profileError) {
     console.warn("Failed to fetch profile details:", profileError.message);
     return { ...application, profile: null };
   }
-
   return { ...application, profile };
 }
 
@@ -103,30 +84,19 @@ export async function getApplicationsByUser(
   options: { limit?: number; offset?: number } = {}
 ) {
   const supabase = await createClient();
-
   let query = supabase
     .from("applications")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
-
-  if (options.limit) {
-    query = query.limit(options.limit);
-  }
-
-  if (options.offset) {
+  if (options.limit) query = query.limit(options.limit);
+  if (options.offset)
     query = query.range(
       options.offset,
       options.offset + (options.limit || 10) - 1
     );
-  }
-
   const { data, error } = await query;
-
-  if (error) {
-    throw new Error(`Failed to fetch applications: ${error.message}`);
-  }
-
+  if (error) throw new Error(`Failed to fetch applications: ${error.message}`);
   return data;
 }
 
@@ -135,23 +105,17 @@ export async function getApplicationsByStatus(
   options: { limit?: number } = {}
 ) {
   const supabase = await createClient();
-
   let query = supabase
     .from("applications")
     .select("*")
     .eq("status", status)
     .order("created_at", { ascending: false });
-
-  if (options.limit) {
-    query = query.limit(options.limit);
-  }
-
+  if (options.limit) query = query.limit(options.limit);
   const { data, error } = await query;
-
-  if (error) {
-    throw new Error(`Failed to fetch applications by status: ${error.message}`);
-  }
-
+  if (error)
+    throw new Error(
+      `Failed to fetch applications by status: ${error.message}`
+    );
   return data;
 }
 
@@ -354,4 +318,156 @@ export async function getApplicationStats() {
   );
 
   return stats;
+}
+
+
+export async function getDeclinedApplications(
+  page: number = 1,
+  per_page: number = 50,
+  start_date: string,
+  end_date: string
+) {
+  const supabase = await createClient();
+
+  // 1. Fetch declined applications within date range
+  const { data: declinedApps, error: declinedError } = await supabase
+    .from("applications")
+    .select("*")
+    .eq("status", "declined")
+    .gte("created_at", start_date)
+    .lte("created_at", end_date);
+  if (declinedError) {
+    throw new Error(`Failed to fetch declined applications: ${declinedError.message}`);
+  }
+
+  const declinedUserIds = Array.from(new Set(declinedApps.map(a => a.user_id)));
+
+  // Fetch profiles for those declined applications
+  let profileMap: Map<string, Profile> = new Map();
+  if (declinedUserIds.length > 0) {
+    const { data: declinedProfiles, error: declinedProfilesError } = await supabase
+      .from("profiles")
+      .select("*")
+      .in("id", declinedUserIds);
+    if (!declinedProfilesError && declinedProfiles) {
+      profileMap = new Map(declinedProfiles.map(p => [p.id, p]));
+    }
+  }
+
+  // Decrypt id_numbers for applications
+  const declinedAppRecords = declinedApps.map(app => {
+    let decrypted: string | null = null;
+    try { decrypted = decryptValue(app.id_number); } catch { decrypted = app.id_number; }
+    return { ...app, id_number: decrypted };
+  });
+
+  // 2. Fetch failed credit bureau checks within date range
+  const { data: failedChecks, error: failedChecksError } = await supabase
+    .from("api_checks")
+    .select("*")
+    .eq("check_type", "credit_bureau")
+    .eq("status", "failed")
+    .gte("checked_at", start_date)
+    .lte("checked_at", end_date);
+  if (failedChecksError) {
+    throw new Error(`Failed to fetch failed credit checks: ${failedChecksError.message}`);
+  }
+
+  // Decrypt credit check id_numbers
+  const decryptedFailedChecks = failedChecks.map(check => {
+    let decrypted: string | null = null;
+    try { decrypted = decryptValue(check.id_number); } catch { decrypted = check.id_number; }
+    return { ...check, id_number: decrypted };
+  });
+
+  // 3. Fetch candidate profiles (with id_number not null, created within range) to match failed checks
+  const { data: candidateProfiles, error: candidateProfilesError } = await supabase
+    .from("profiles")
+    .select("*")
+    .not("id_number", "is", null)
+    .gte("created_at", start_date)
+    .lte("created_at", end_date);
+  if (candidateProfilesError) {
+    console.warn("Failed to fetch candidate profiles for failed checks:", candidateProfilesError.message);
+  }
+
+  // Build decrypted profile id number map
+  const profileByDecryptedId = new Map<string, Profile>();
+  (candidateProfiles || []).forEach(p => {
+    if (!p.id_number) return;
+    try {
+      const dec = decryptValue(p.id_number);
+      profileByDecryptedId.set(dec, p);
+    } catch {
+      // ignore decryption failure
+    }
+  });
+
+  // Match failed checks to profiles
+  const failedCheckMatches: { profile: Profile; credit_check: any; id_number: string | null }[] = [];
+  decryptedFailedChecks.forEach(ch => {
+    const prof = profileByDecryptedId.get(ch.id_number);
+    if (prof) {
+      failedCheckMatches.push({ profile: prof, credit_check: ch, id_number: ch.id_number });
+      // ensure profileMap contains this profile for potential merging
+      if (!profileMap.has(prof.id)) profileMap.set(prof.id, prof);
+    }
+  });
+
+  // Combine into user-centric list
+  interface UnifiedUser {
+    profile: Profile | null;
+    application?: any | null;
+    credit_check?: any | null;
+    id_number: string | null;
+    reason: 'declined_application' | 'failed_credit_check' | 'both';
+  }
+  const unified = new Map<string, UnifiedUser>();
+
+  declinedAppRecords.forEach(app => {
+    const prof = profileMap.get(app.user_id) || null;
+    const current = unified.get(app.user_id);
+    if (current) {
+      current.application = app;
+      current.reason = current.reason === 'failed_credit_check' ? 'both' : 'declined_application';
+    } else {
+      unified.set(app.user_id, {
+        profile: prof,
+        application: app,
+        credit_check: null,
+        id_number: app.id_number,
+        reason: 'declined_application'
+      });
+    }
+  });
+
+  failedCheckMatches.forEach(({ profile, credit_check, id_number }) => {
+    const key = profile.id;
+    const current = unified.get(key);
+    if (current) {
+      current.credit_check = credit_check;
+      current.reason = current.reason === 'declined_application' ? 'both' : 'failed_credit_check';
+      if (!current.id_number) current.id_number = id_number;
+    } else {
+      unified.set(key, {
+        profile,
+        application: null,
+        credit_check,
+        id_number,
+        reason: 'failed_credit_check'
+      });
+    }
+  });
+
+  // Convert to array and sort by most recent event (application.created_at or credit_check.checked_at or profile.created_at)
+  const unifiedArray = Array.from(unified.values()).sort((a, b) => {
+    const aDate = new Date(a.application?.created_at || a.credit_check?.checked_at || a.profile?.created_at || 0).getTime();
+    const bDate = new Date(b.application?.created_at || b.credit_check?.checked_at || b.profile?.created_at || 0).getTime();
+    return bDate - aDate;
+  });
+
+  // Pagination in memory
+  const start = (page - 1) * per_page;
+  const end = start + per_page;
+  return unifiedArray.slice(start, end);
 }
