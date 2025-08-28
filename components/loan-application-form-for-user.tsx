@@ -324,10 +324,101 @@ export function LoanApplicationFormForUser({
 
   return (
     <div className={cn("w-full max-w-5xl mx-auto space-y-6", className)}>
+      {/* Step Indicator */}
       <StepIndicator currentStep={currentStep} steps={steps} />
-      {/* Previous Application Notice, Form Errors, Main Form, Navigation Buttons... (copy from original) */}
-      {/* ...omitted for brevity, but should match LoanApplicationForm structure... */}
-      {/* The key difference is the use of submitLoanApplicationForUser and targetUserId */}
+
+      {/* Previous Application Notice */}
+      {hasPreviousApplication && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Previous Application Data Loaded</AlertTitle>
+          <AlertDescription>
+            We've pre-filled the form with information from your previous loan
+            application submitted on{" "}
+            {previousApplicationData?.created_at &&
+              new Date(previousApplicationData.created_at).toLocaleDateString()}
+            . Please review and update any information that may have changed
+            since your last application.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Form Errors */}
+      {state.errors && Object.keys(state.errors).length > 0 && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Form Errors</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc list-inside">
+              {Object.entries(state.errors).map(([field, messages]) => (
+                <li key={field}>
+                  <strong>{field}:</strong> {messages.join(", ")}
+                </li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Main Form */}
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>
+            Step {currentStep}: {currentStepDef?.title}
+          </CardTitle>
+          <CardDescription>{currentStepDef?.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+              {getCurrentStepContent()}
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between">
+        {currentStep > 1 && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={currentStep === 1 || isPending}
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Previous
+          </Button>
+        )}
+
+        <div className={`flex gap-2 ${currentStep === 1 ? "ml-auto" : ""}`}>
+          {currentStep < documentsStepId && (
+            <Button
+              type="button"
+              onClick={handleNext}
+              disabled={
+                isPending ||
+                (creditStepPresent &&
+                  currentStepDef?.key === "credit" &&
+                  (creditCheckStatus !== "success" ||
+                    creditCheckResults?.creditScoreFailed))
+              }
+            >
+              {currentStep === loanStepId && isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  {currentStep === loanStepId ? "Submit Application" : "Next"}
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

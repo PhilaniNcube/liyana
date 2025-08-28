@@ -381,7 +381,7 @@ export async function submitLoanApplicationForUser(
     loan_purpose: result.data.loan_purpose,
     loan_purpose_reason: result.data.loan_purpose_reason,
     term: result.data.term,
-    status: "pre_qualifier" as const,
+    status: "in_review" as const,
     employment_type: result.data.employment_type as any,
     employer_name: result.data.employer_name,
     job_title: result.data.job_title,
