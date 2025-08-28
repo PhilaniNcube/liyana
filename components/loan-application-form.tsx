@@ -125,7 +125,7 @@ const convertApplicationToFormData = (
 
 type LoanApplicationData = z.infer<typeof loanApplicationSchema>;
 
-const ALL_STEPS = [
+export const ALL_STEPS = [
   {
     id: 1,
     key: "credit" as const,
@@ -196,7 +196,7 @@ interface LoanApplicationFormProps {
 }
 
 // Step Indicator Component
-function StepIndicator({
+export function StepIndicator({
   currentStep,
   steps,
 }: {

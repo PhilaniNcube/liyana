@@ -241,3 +241,177 @@ export async function submitLoanApplication(
     };
   }
 }
+
+// Admin/server action: submit loan application on behalf of another user (client)
+// Requires current authenticated user to have admin or editor role.
+export async function submitLoanApplicationForUser(
+  prevState: LoanApplicationState,
+  formData: FormData
+): Promise<LoanApplicationState> {
+  // Expect a target_user_id field specifying the user for whom we create the application
+  const targetUserId = formData.get("target_user_id");
+  if (!targetUserId || typeof targetUserId !== "string") {
+    return { errors: { _form: ["target_user_id is required"] } };
+  }
+
+  // Reuse existing parsing logic
+  let affordabilityData = null;
+  const affordabilityStr = formData.get("affordability") as string;
+  if (affordabilityStr) {
+    try {
+      affordabilityData = JSON.parse(affordabilityStr);
+    } catch (error) {
+      console.error("Failed to parse affordability data:", error);
+    }
+  }
+
+  const result = loanApplicationSchema.safeParse({
+    first_name: formData.get("first_name"),
+    last_name: formData.get("last_name"),
+    id_number: formData.get("id_number"),
+    date_of_birth: formData.get("date_of_birth"),
+    phone_number: formData.get("phone_number"),
+    email: formData.get("email"),
+    gender: formData.get("gender"),
+    gender_other: formData.get("gender_other") || undefined,
+    language: formData.get("language"),
+    nationality: formData.get("nationality"),
+    dependants: formData.get("dependants")
+      ? parseInt(formData.get("dependants") as string)
+      : 0,
+    marital_status: formData.get("marital_status"),
+    residential_address: formData.get("residential_address"),
+    city: formData.get("city"),
+    postal_code: formData.get("postal_code"),
+    next_of_kin_name: formData.get("next_of_kin_name"),
+    next_of_kin_phone_number: formData.get("next_of_kin_phone_number"),
+    next_of_kin_email: formData.get("next_of_kin_email"),
+    employment_type: formData.get("employment_type"),
+    employer_name: formData.get("employer_name"),
+    job_title: formData.get("job_title"),
+    monthly_income: formData.get("monthly_income")
+      ? parseFloat(formData.get("monthly_income") as string)
+      : 0,
+    salary_date: formData.get("salary_date")
+      ? parseInt(formData.get("salary_date") as string)
+      : undefined,
+    employer_address: formData.get("employer_address") || undefined,
+    employer_contact_number:
+      formData.get("employer_contact_number") || undefined,
+    employment_end_date: formData.get("employment_end_date") || undefined,
+    application_amount: formData.get("application_amount")
+      ? parseFloat(formData.get("application_amount") as string)
+      : 1000,
+    loan_purpose: formData.get("loan_purpose"),
+    loan_purpose_reason: formData.get("loan_purpose_reason") || undefined,
+    affordability: affordabilityData,
+    term: formData.get("term") ? parseInt(formData.get("term") as string) : 1,
+    bank_name: formData.get("bank_name"),
+    bank_account_holder: formData.get("bank_account_holder"),
+    bank_account_type: formData.get("bank_account_type"),
+    bank_account_number: formData.get("bank_account_number"),
+    branch_code: formData.get("branch_code"),
+  });
+
+  if (!result.success) {
+    return { errors: result.error.flatten().fieldErrors };
+  }
+
+  const supabase = await createClient();
+
+  // Authorize current user
+  const {
+    data: { user: currentUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !currentUser) {
+    return { errors: { _form: ["Not authenticated"] } };
+  }
+
+  // Fetch current user's profile to check role
+  const { data: currentProfile } = await supabase
+    .from("profiles")
+    .select("id, role")
+    .eq("id", currentUser.id)
+    .single();
+  if (!currentProfile || (currentProfile.role !== "admin" && currentProfile.role !== "editor")) {
+    return { errors: { _form: ["Insufficient permissions"] } };
+  }
+
+  // Ensure target user exists (optional safeguard)
+  const { data: targetProfile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", targetUserId)
+    .single();
+  if (!targetProfile) {
+    return { errors: { _form: ["Target user not found"] } };
+  }
+
+  const identificationNumber = result.data.id_number;
+  if (!identificationNumber) {
+    return { errors: { _form: ["ID number is required"] } };
+  }
+
+  let encryptedIdNumber: string;
+  try {
+    encryptedIdNumber = encryptValue(identificationNumber);
+  } catch {
+    return { errors: { _form: ["Failed to encrypt ID number"] } };
+  }
+
+  const applicationData = {
+    user_id: targetUserId as string,
+    id_number: encryptedIdNumber,
+    phone_number: result.data.phone_number,
+    date_of_birth: formatDateForDB(result.data.date_of_birth),
+    gender: result.data.gender as any,
+    gender_other: result.data.gender_other || null,
+    language: result.data.language || null,
+    nationality: result.data.nationality || null,
+    dependants: result.data.dependants,
+    marital_status: result.data.marital_status as any,
+    home_address: result.data.residential_address,
+    city: result.data.city || null,
+    postal_code: result.data.postal_code || null,
+    next_of_kin_name: result.data.next_of_kin_name,
+    next_of_kin_phone_number: result.data.next_of_kin_phone_number,
+    next_of_kin_email: result.data.next_of_kin_email,
+    application_amount: result.data.application_amount,
+    loan_purpose: result.data.loan_purpose,
+    loan_purpose_reason: result.data.loan_purpose_reason,
+    term: result.data.term,
+    status: "pre_qualifier" as const,
+    employment_type: result.data.employment_type as any,
+    employer_name: result.data.employer_name,
+    job_title: result.data.job_title,
+    monthly_income: result.data.monthly_income,
+    salary_date: result.data.salary_date,
+    employer_address: result.data.employer_address,
+    employer_contact_number: result.data.employer_contact_number,
+    employment_end_date: formatDateForDB(result.data.employment_end_date),
+    bank_name: result.data.bank_name,
+    bank_account_holder: result.data.bank_account_holder,
+    bank_account_type: result.data.bank_account_type as any,
+    bank_account_number: result.data.bank_account_number,
+    branch_code: result.data.branch_code,
+    affordability: affordabilityData,
+  };
+
+  const { data: insertedApplication, error } = await supabase
+    .from("applications")
+    .insert(applicationData)
+    .select("id")
+    .single();
+
+  if (error) {
+    return { errors: { _form: ["Failed to submit application"] } };
+  }
+
+  await sendSms(
+    "+27729306206",
+    `Admin created loan application for user ${targetUserId}. Application ID: ${insertedApplication.id}`
+  );
+
+  return { success: true, applicationId: insertedApplication.id.toString() };
+}

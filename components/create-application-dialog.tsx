@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus, FileText } from "lucide-react";
-import { LoanApplicationForm } from "@/components/loan-application-form";
+import { LoanApplicationFormForUser } from "@/components/loan-application-form-for-user";
 import type { Database } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -69,13 +69,14 @@ export function CreateApplicationDialog({
         </div>
         <Separator />
         <div className="p-6 pt-4">
-          <LoanApplicationForm
+          <LoanApplicationFormForUser
             previousApplicationData={previousApplication || undefined}
             hasPreviousApplication={!!previousApplication}
             userEmail={userEmail}
             userFullName={userFullName}
             skipCreditCheck
             prefillIdNumber={(profile as any).decrypted_id_number || null}
+            targetUserId={profile.id}
             onCreated={() => {
               router.refresh();
             }}
