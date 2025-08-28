@@ -20,13 +20,48 @@ import { loanApplicationSchema } from "@/lib/schemas";
 
 interface PersonalInfoStepProps {
   form: UseFormReturn<z.infer<typeof loanApplicationSchema>>;
+  // When credit check step is skipped we still need to capture ID number & DOB here
+  showIdFields?: boolean;
 }
 
-export function PersonalInfoStep({ form }: PersonalInfoStepProps) {
+export function PersonalInfoStep({
+  form,
+  showIdFields = false,
+}: PersonalInfoStepProps) {
   const watchedGender = form.watch("gender");
 
   return (
     <div className="space-y-4">
+      {showIdFields && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="id_number"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>South African ID Number</FormLabel>
+                <FormControl>
+                  <Input placeholder="13 digit ID number" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="date_of_birth"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Date of Birth</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={form.control}

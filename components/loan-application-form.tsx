@@ -191,6 +191,8 @@ interface LoanApplicationFormProps {
   skipCreditCheck?: boolean;
   // Callback invoked after successful submission (before moving to documents)
   onCreated?: (applicationId: string) => void;
+  // Optional ID number to prefill (decrypted from profile when admin creating)
+  prefillIdNumber?: string | null;
 }
 
 // Step Indicator Component
@@ -274,6 +276,7 @@ export function LoanApplicationForm({
   userFullName,
   skipCreditCheck = false,
   onCreated,
+  prefillIdNumber,
 }: LoanApplicationFormProps) {
   const router = useRouter();
 
@@ -455,11 +458,20 @@ export function LoanApplicationForm({
         if (lastName) form.setValue("last_name", lastName);
       }
     }
+
+    // Prefill ID number from profile if provided and current value invalid
+    if (prefillIdNumber) {
+      const currentId = form.getValues("id_number");
+      if (!currentId || currentId.length !== 13) {
+        form.setValue("id_number", prefillIdNumber);
+      }
+    }
   }, [
     hasPreviousApplication,
     previousApplicationData,
     userEmail,
     userFullName,
+    prefillIdNumber,
     form,
   ]);
 
@@ -662,7 +674,7 @@ export function LoanApplicationForm({
           />
         );
       case "personal":
-        return <PersonalInfoStep form={form} />;
+        return <PersonalInfoStep form={form} showIdFields={skipCreditCheck} />;
       case "employment":
         return <EmploymentInfoStep form={form} />;
       case "loan":

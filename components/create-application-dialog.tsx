@@ -75,6 +75,7 @@ export function CreateApplicationDialog({
             userEmail={userEmail}
             userFullName={userFullName}
             skipCreditCheck
+            prefillIdNumber={(profile as any).decrypted_id_number || null}
             onCreated={() => {
               router.refresh();
             }}

@@ -379,9 +379,10 @@ export function ProfilePageClient({
                         </p>
                       )}
                       {application.loan_purpose && (
-                        <p className="text-sm">
-                          <span className="font-medium">Purpose:</span>{" "}
-                          {application.loan_purpose}
+                        <p className="text-sm capitalize">
+                          <span className="font-medium ">Purpose:</span>{" "}
+                          {/* Replace any underscores with spaces */}
+                          {application.loan_purpose.replace("_", " ")}
                         </p>
                       )}
                     </div>
