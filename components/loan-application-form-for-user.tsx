@@ -92,16 +92,24 @@ export function LoanApplicationFormForUser({
   const { data: documents = [], isLoading: isLoadingDocuments } =
     useDocuments(applicationId);
 
+  // Parse first and last name from userFullName
+  let defaultFirstName = "";
+  let defaultLastName = "";
+  if (userFullName) {
+    const nameParts = userFullName.split(" ");
+    defaultFirstName = nameParts[0] || "";
+    defaultLastName = nameParts.slice(1).join(" ") || "";
+  }
   const form = useForm<z.infer<typeof loanApplicationSchema>>({
     resolver: zodResolver(loanApplicationSchema),
     mode: "onChange",
     defaultValues: {
-      first_name: "",
-      last_name: "",
-      id_number: "",
-      date_of_birth: "",
+      first_name: defaultFirstName,
+      last_name: defaultLastName,
+      id_number: prefillIdNumber || "",
+      date_of_birth: "", // If you have a prop for DOB, use it here
       phone_number: "",
-      email: "",
+      email: userEmail || "",
       gender: "male",
       gender_other: "",
       language: "English",
