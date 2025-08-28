@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useActionState, useTransition } from "react";
@@ -125,33 +125,38 @@ const convertApplicationToFormData = (
 
 type LoanApplicationData = z.infer<typeof loanApplicationSchema>;
 
-const STEPS = [
+const ALL_STEPS = [
   {
     id: 1,
+    key: "credit" as const,
     title: "Credit Check",
     description: "Quick pre-qualification check",
     icon: CheckCircle,
   },
   {
     id: 2,
+    key: "personal" as const,
     title: "Personal Information",
     description: "Tell us about yourself",
     icon: User,
   },
   {
     id: 3,
+    key: "employment" as const,
     title: "Employment Details",
     description: "Your work information",
     icon: Briefcase,
   },
   {
     id: 4,
+    key: "loan" as const,
     title: "Loan & Banking",
     description: "Banking information",
     icon: Calculator,
   },
   {
     id: 5,
+    key: "documents" as const,
     title: "Documents",
     description: "Upload required documents",
     icon: FileText,
@@ -182,14 +187,29 @@ interface LoanApplicationFormProps {
   hasPreviousApplication?: boolean;
   userEmail?: string;
   userFullName?: string;
+  // When true (admin creating on behalf of user) skip credit check step
+  skipCreditCheck?: boolean;
+  // Callback invoked after successful submission (before moving to documents)
+  onCreated?: (applicationId: string) => void;
 }
 
 // Step Indicator Component
-function StepIndicator({ currentStep }: { currentStep: number }) {
+function StepIndicator({
+  currentStep,
+  steps,
+}: {
+  currentStep: number;
+  steps: Array<{
+    id: number;
+    title: string;
+    description: string;
+    icon: any;
+  }>;
+}) {
   return (
     <div className="w-full max-w-5xl mx-auto mb-8 ">
       <div className="flex items-center justify-between w-full">
-        {STEPS.map((step, index) => {
+        {steps.map((step, index) => {
           const isActive = currentStep === step.id;
           const isCompleted = currentStep > step.id;
           const IconComponent = step.icon;
@@ -228,7 +248,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
                   </p>
                 </div>
               </div>
-              {index < STEPS.length - 1 && (
+              {index < steps.length - 1 && (
                 <div
                   className={cn(
                     "flex-1 h-0.5 mx-4",
@@ -252,13 +272,15 @@ export function LoanApplicationForm({
   hasPreviousApplication = false,
   userEmail,
   userFullName,
+  skipCreditCheck = false,
+  onCreated,
 }: LoanApplicationFormProps) {
   const router = useRouter();
 
   // Use nuqs for step management and applicationId via search params
   const [currentStep, setCurrentStep] = useQueryState(
     "step",
-    parseAsInteger.withDefault(1) // Start from step 1 (Credit Check)
+    parseAsInteger.withDefault(1) // Will map to first visible step (credit or personal)
   );
 
   const [applicationId, setApplicationId] = useQueryState(
@@ -328,21 +350,7 @@ export function LoanApplicationForm({
   const { data: documents = [], isLoading: isLoadingDocuments } =
     useDocuments(applicationId);
 
-  // When application is successfully submitted, move to document upload step
-  useEffect(() => {
-    if (state.success && state.applicationId && currentStep < 5) {
-      setApplicationId(state.applicationId);
-      setCurrentStep(5); // Move to document upload step
-      // Scroll to top after successful submission
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, [
-    state.success,
-    state.applicationId,
-    currentStep,
-    setCurrentStep,
-    setApplicationId,
-  ]);
+  // (moved) success effect placed after dynamic steps declaration
 
   // Form for all steps (unified form)
   const form = useForm<LoanApplicationData>({
@@ -474,27 +482,62 @@ export function LoanApplicationForm({
     return () => subscription.unsubscribe();
   }, [form]);
 
-  const handleNext = async () => {
-    // If we're on step 1 (Credit Check), check if credit check passed
-    if (currentStep === 1) {
-      if (creditCheckStatus !== "success") {
-        // Don't allow proceeding if credit check hasn't passed
-        return;
-      }
+  // Build dynamic steps (renumbered) depending on skipCreditCheck
+  const steps = useMemo(() => {
+    if (skipCreditCheck) {
+      const filtered = ALL_STEPS.filter((s) => s.key !== "credit");
+      return filtered.map((s, idx) => ({ ...s, id: idx + 1 }));
+    }
+    return ALL_STEPS;
+  }, [skipCreditCheck]);
 
-      // Check if credit score failed (below 600)
-      if (creditCheckResults?.creditScoreFailed) {
-        // Don't allow proceeding if credit score is below 600
+  const creditStepPresent = !skipCreditCheck;
+  const loanStepId = useMemo(
+    () => steps.find((s) => s.key === "loan")?.id || 0,
+    [steps]
+  );
+  const documentsStepId = useMemo(
+    () => steps.find((s) => s.key === "documents")?.id || 0,
+    [steps]
+  );
+  const currentStepDef = steps.find((s) => s.id === currentStep);
+
+  // When application is successfully submitted, invoke callback and move to documents step
+  useEffect(() => {
+    if (state.success && state.applicationId) {
+      onCreated?.(state.applicationId);
+      setApplicationId(state.applicationId);
+      const docsId = steps.find((s) => s.key === "documents")?.id || 5;
+      if (currentStep !== docsId) {
+        setCurrentStep(docsId);
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [
+    state.success,
+    state.applicationId,
+    onCreated,
+    steps,
+    currentStep,
+    setCurrentStep,
+    setApplicationId,
+  ]);
+
+  const handleNext = async () => {
+    // Only enforce credit check if present
+    if (creditStepPresent && currentStepDef?.key === "credit") {
+      if (
+        creditCheckStatus !== "success" ||
+        creditCheckResults?.creditScoreFailed
+      ) {
         return;
       }
     }
 
-    // If we're on step 4, submit the application before moving to step 5
-    if (currentStep === 4) {
+    if (currentStep === loanStepId) {
       await handleSubmitApplication();
-    } else if (currentStep < 5) {
+    } else if (currentStep < documentsStepId) {
       await setCurrentStep(currentStep + 1);
-      // Scroll to top after navigation
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -502,7 +545,6 @@ export function LoanApplicationForm({
   const handlePrevious = async () => {
     if (currentStep > 1) {
       await setCurrentStep(currentStep - 1);
-      // Scroll to top after navigation
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -516,10 +558,9 @@ export function LoanApplicationForm({
       console.log("Form validation errors:", errors);
 
       // Determine which step contains the first error
-      let errorStep = 1; // Default to first step
+      let errorStep = 1; // Will map to first visible step
 
-      // Step 1 is credit check (no specific form errors, proceed to step 2)
-      // Step 2 fields (Personal Info)
+      // Determine which logical step has errors and map to dynamic id
       if (
         errors.first_name ||
         errors.last_name ||
@@ -540,10 +581,8 @@ export function LoanApplicationForm({
         errors.next_of_kin_phone_number ||
         errors.next_of_kin_email
       ) {
-        errorStep = 2;
-      }
-      // Step 3 fields (Employment)
-      else if (
+        errorStep = steps.find((s) => s.key === "personal")?.id || 1;
+      } else if (
         errors.employment_type ||
         errors.employer_name ||
         errors.job_title ||
@@ -552,10 +591,8 @@ export function LoanApplicationForm({
         errors.employer_contact_number ||
         errors.employment_end_date
       ) {
-        errorStep = 3;
-      }
-      // Step 4 fields (Loan & Banking)
-      else if (
+        errorStep = steps.find((s) => s.key === "employment")?.id || errorStep;
+      } else if (
         errors.application_amount ||
         errors.loan_purpose ||
         errors.loan_purpose_reason ||
@@ -567,7 +604,7 @@ export function LoanApplicationForm({
         errors.bank_account_number ||
         errors.branch_code
       ) {
-        errorStep = 4;
+        errorStep = steps.find((s) => s.key === "loan")?.id || errorStep;
       }
 
       await setCurrentStep(errorStep);
@@ -611,8 +648,9 @@ export function LoanApplicationForm({
   };
 
   const getCurrentStepContent = () => {
-    switch (currentStep) {
-      case 1:
+    if (!currentStepDef) return <div>Invalid Step</div>;
+    switch (currentStepDef.key) {
+      case "credit":
         return (
           <CreditCheckStep
             onCheckComplete={async (idNumber: string) => {
@@ -623,13 +661,13 @@ export function LoanApplicationForm({
             form={form}
           />
         );
-      case 2:
+      case "personal":
         return <PersonalInfoStep form={form} />;
-      case 3:
+      case "employment":
         return <EmploymentInfoStep form={form} />;
-      case 4:
+      case "loan":
         return <LoanAndBankingStep form={form} />;
-      case 5:
+      case "documents":
         return (
           <DocumentUploadForm
             applicationId={applicationId}
@@ -644,7 +682,7 @@ export function LoanApplicationForm({
   return (
     <div className={cn("w-full max-w-5xl mx-auto space-y-6", className)}>
       {/* Step Indicator */}
-      <StepIndicator currentStep={currentStep} />
+      <StepIndicator currentStep={currentStep} steps={steps} />
 
       {/* Previous Application Notice */}
       {hasPreviousApplication && (
@@ -683,11 +721,9 @@ export function LoanApplicationForm({
       <Card className="w-full">
         <CardHeader>
           <CardTitle>
-            Step {currentStep}: {STEPS.find((s) => s.id === currentStep)?.title}
+            Step {currentStep}: {currentStepDef?.title}
           </CardTitle>
-          <CardDescription>
-            {STEPS.find((s) => s.id === currentStep)?.description}
-          </CardDescription>
+          <CardDescription>{currentStepDef?.description}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -713,25 +749,26 @@ export function LoanApplicationForm({
         )}
 
         <div className={`flex gap-2 ${currentStep === 1 ? "ml-auto" : ""}`}>
-          {currentStep < 5 && ( // Allow all steps except step 5 to show Next button
+          {currentStep < documentsStepId && (
             <Button
               type="button"
               onClick={handleNext}
               disabled={
                 isPending ||
-                (currentStep === 1 &&
+                (creditStepPresent &&
+                  currentStepDef?.key === "credit" &&
                   (creditCheckStatus !== "success" ||
                     creditCheckResults?.creditScoreFailed))
               }
             >
-              {currentStep === 4 && isPending ? (
+              {currentStep === loanStepId && isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Submitting...
                 </>
               ) : (
                 <>
-                  {currentStep === 4 ? "Submit Application" : "Next"}
+                  {currentStep === loanStepId ? "Submit Application" : "Next"}
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </>
               )}

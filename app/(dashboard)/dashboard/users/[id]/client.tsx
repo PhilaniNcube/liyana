@@ -32,6 +32,7 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { ProfileDocumentUpload } from "@/components/profile-document-upload";
 import { ProfileDocumentsDisplay } from "@/components/profile-documents-display";
+import { CreateApplicationDialog } from "@/components/create-application-dialog";
 import { toast } from "sonner";
 import type { Database } from "@/lib/types";
 
@@ -318,6 +319,21 @@ export function ProfilePageClient({
               <CardDescription>
                 All loan applications submitted by this user
               </CardDescription>
+              <div className="mt-4">
+                <CreateApplicationDialog
+                  profile={profile as any}
+                  previousApplication={
+                    applications.length > 0
+                      ? [...applications].sort(
+                          (a, b) =>
+                            new Date(b.created_at).getTime() -
+                            new Date(a.created_at).getTime()
+                        )[0]
+                      : null
+                  }
+                  applicationsCount={applications.length}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               {applications.length === 0 ? (
