@@ -43,7 +43,7 @@ export function CreateApplicationDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" className="gap-2">
-          <Plus className="h-4 w-4" /> New Application
+          <Plus className="h-4 w-4" /> New Loan Application
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-5xl max-h-[95vh] overflow-y-auto p-0">

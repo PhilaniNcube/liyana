@@ -240,7 +240,7 @@ export function ProfilePageClient({
         <TabsList>
           <TabsTrigger value="profile">Profile Info</TabsTrigger>
           <TabsTrigger value="applications">
-            Applications ({totalApplications})
+            Loan Applications ({totalApplications})
           </TabsTrigger>
           <TabsTrigger value="api-checks">
             API Checks ({totalApiChecks})
