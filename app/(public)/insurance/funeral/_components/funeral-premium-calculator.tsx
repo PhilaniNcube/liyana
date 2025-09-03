@@ -361,7 +361,7 @@ export default function FuneralPremiumCalculator() {
           <Card className="bg-green-50 border-green-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-green-800">
-                <DollarSign className="h-5 w-5" />
+                <p className="text-4xl font-mono">R</p>
                 Your Premium Calculation
               </CardTitle>
             </CardHeader>
