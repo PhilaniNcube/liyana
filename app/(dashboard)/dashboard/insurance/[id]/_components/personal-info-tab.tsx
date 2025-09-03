@@ -8,7 +8,8 @@ import { decryptValue } from "@/lib/encryption";
 import VerifyIdDialog from "./verify-id";
 import SendOtvDialog from "./send-otv";
 import { Button } from "@/components/ui/button";
-import { CheckCheckIcon, ShieldCheck } from "lucide-react";
+import { CheckCheckIcon, ShieldCheck, Mail } from "lucide-react";
+import { EmailVerificationDialog } from "@/components/email-verification-dialog";
 
 interface PersonalInfoTabProps {
   policy: PolicyWithAllData;
@@ -31,6 +32,8 @@ export default function PersonalInfoTab({ policy }: PersonalInfoTabProps) {
       </Card>
     );
   }
+
+  const email = (holder?.contact_details as any)?.email;
 
   return (
     <Card>
@@ -108,17 +111,40 @@ export default function PersonalInfoTab({ policy }: PersonalInfoTabProps) {
                 <h4 className="text-sm font-medium mb-3">
                   Contact Information
                 </h4>
+                {(holder.contact_details as any)?.email && (
+                  <div className="my-3">
+                    <p className="font-medium">Email</p>
+                    <div className="flex items-center justify-between bg-yellow-200 p-2 rounded-md">
+                      <div className="text-muted-foreground">
+                        <span className="">
+                          {(holder.contact_details as any).email}
+                        </span>
+                      </div>
+
+                      <EmailVerificationDialog
+                        email={(holder.contact_details as any).email}
+                        idNumber={
+                          holder.id_number
+                            ? decryptValue(holder.id_number) || ""
+                            : ""
+                        }
+                      >
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-1"
+                        >
+                          <Mail className="h-4 w-4" /> Verify Email
+                        </Button>
+                      </EmailVerificationDialog>
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {(holder.contact_details as any)?.phone && (
                     <div>
                       <div className="text-xs text-muted-foreground">Phone</div>
                       <div>{(holder.contact_details as any).phone}</div>
-                    </div>
-                  )}
-                  {(holder.contact_details as any)?.email && (
-                    <div>
-                      <div className="text-xs text-muted-foreground">Email</div>
-                      <div>{(holder.contact_details as any).email}</div>
                     </div>
                   )}
                 </div>

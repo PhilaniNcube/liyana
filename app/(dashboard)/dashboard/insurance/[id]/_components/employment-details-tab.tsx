@@ -13,7 +13,6 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Mail,
 } from "lucide-react";
 import {
   Dialog,
@@ -25,7 +24,6 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { EmailVerificationDialog } from "@/components/email-verification-dialog";
 
 interface EmploymentDetailsTabProps {
   policy: PolicyWithAllData;
@@ -50,8 +48,7 @@ export default function EmploymentDetailsTab({
     string | null
   >(null);
 
-  const encryptedIdNumber = holder?.id_number;
-  const email = (holder?.contact_details as any)?.email;
+  // (email verification moved to Personal Info tab)
 
   const handleEmploymentVerification = async () => {
     if (!policy.id) return;
@@ -550,39 +547,6 @@ export default function EmploymentDetailsTab({
                   </div>
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Email Verification */}
-      {email && encryptedIdNumber && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" /> Email Verification
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between bg-yellow-200 p-3 rounded-lg">
-              <div>
-                <p className="text-sm font-medium">Email Address</p>
-                <p className="text-sm text-muted-foreground">{email}</p>
-              </div>
-              <EmailVerificationDialog
-                email={email}
-                idNumber={
-                  "" /* policy id number not decrypted here intentionally */
-                }
-              >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <Mail className="h-4 w-4" /> Verify Email
-                </Button>
-              </EmailVerificationDialog>
             </div>
           </CardContent>
         </Card>
