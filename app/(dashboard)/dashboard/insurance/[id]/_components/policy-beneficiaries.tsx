@@ -162,7 +162,7 @@ export default async function PolicyBeneficiaries({
                         {typeLabel}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{allocation}</td>
+
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
                         {phone ? (

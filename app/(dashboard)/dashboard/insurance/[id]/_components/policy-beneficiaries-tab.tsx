@@ -107,13 +107,6 @@ export default function PolicyBeneficiariesTab({
                     </div>
                   )}
                 </div>
-                <div className="text-right">
-                  {beneficiary.allocation_percentage !== null && (
-                    <Badge variant="outline">
-                      {beneficiary.allocation_percentage}%
-                    </Badge>
-                  )}
-                </div>
               </div>
             ))}
           </div>
