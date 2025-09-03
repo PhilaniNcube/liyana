@@ -37,10 +37,10 @@ export default async function DeclinedLoansPage(props: {
     end_date: parsedEnd,
   } = searchParamsCache.parse(raw);
 
-  // Fallbacks for dates (current month)
+  // Fallbacks for dates (last month)
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startDateObj = parsedStart ?? startOfMonth;
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const startDateObj = parsedStart ?? startOfLastMonth;
   const endDateObj = parsedEnd ?? now;
 
   const start_date = startDateObj.toISOString();
