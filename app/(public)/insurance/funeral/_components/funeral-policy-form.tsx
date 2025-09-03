@@ -18,7 +18,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { extractDateOfBirthFromSAID } from "@/lib/utils/sa-id";
 import {
@@ -31,6 +37,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Trash2, Plus } from "lucide-react";
 import { z } from "zod";
+import FuneralPremiumCalculatorDialog from "./funeral-premium-calculator-dialog";
 
 // South African banks with their branch codes
 const southAfricanBanks = [
@@ -333,6 +340,16 @@ export default function FuneralPolicyForm() {
                     )}
                   />
                 </CardContent>
+                <CardFooter>
+                  <div className="space-y-4">
+                    <p className="text-muted-foreground max-w-2xl mx-auto">
+                      Get comprehensive funeral cover for you and your family.
+                      Calculate your premium first to see what your monthly
+                      costs would be.
+                    </p>
+                    <FuneralPremiumCalculatorDialog />
+                  </div>
+                </CardFooter>
               </Card>
               <Card className="p-6">
                 <CardHeader className="px-0 pt-0">
