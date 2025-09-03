@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,15 +42,41 @@ export function EmailVerificationDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [verificationData, setVerificationData] =
     useState<WhoYouEmailVerificationResponse | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Abort any in-flight request when dialog closes
+  useEffect(() => {
+    if (!isOpen && abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+  }, [isOpen]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleEmailVerification = async () => {
     if (isLoading) return; // guard against double clicks
     setIsLoading(true);
     try {
+      // Abort previous if somehow still active
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       const res = await fetch("/api/kyc/email-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, idNumber }),
+        signal: controller.signal,
       });
 
       // Attempt to parse JSON; fall back to text
@@ -91,7 +117,12 @@ export function EmailVerificationDialog({
 
       setVerificationData(payload.data);
       toast.success("Email verification completed successfully");
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.name === "AbortError") {
+        // eslint-disable-next-line no-console
+        console.warn("Email verification aborted");
+        return; // silently ignore aborts
+      }
       // eslint-disable-next-line no-console
       console.error("Email verification error:", error);
       toast.error(
@@ -99,6 +130,7 @@ export function EmailVerificationDialog({
       );
     } finally {
       setIsLoading(false);
+      abortRef.current = null;
     }
   };
 
