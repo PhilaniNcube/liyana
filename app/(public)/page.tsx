@@ -58,7 +58,7 @@ export default async function Home() {
                         started.
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="space-y-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Button asChild size="lg" className="w-full">
                         <Link href="/apply">Apply for Loan</Link>
                       </Button>
