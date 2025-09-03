@@ -10,6 +10,7 @@ import { PolicyWithAllData } from "@/lib/queries/policy-details";
 import CreateClaimForm from "./create-claim-form";
 import { Plus, Send } from "lucide-react";
 import type { Database } from "@/lib/database.types";
+import ClaimDetailsCard from "./claim-details-card";
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];
@@ -167,98 +168,7 @@ export default function PolicyClaimsTab({
       </div>
       <div className="grid gap-4">
         {claims.map((claim) => (
-          <Card key={claim.id} className="max-w-7xl w-full mx-auto">
-            <CardHeader>
-              <div className="flex items-center justify-between w-full">
-                <CardTitle className="flex items-center gap-2">
-                  <span>Claim #{claim.claim_number}</span>
-                  <Badge variant={getStatusVariant(claim.status)}>
-                    {claim.status.charAt(0).toUpperCase() +
-                      claim.status.slice(1)}
-                  </Badge>
-                </CardTitle>
-                <form action="#send-claim">
-                  <Button size="sm" className="bg-black">
-                    <Send className="h-4 w-4 mr-2" />
-                    Send to Linar
-                  </Button>
-                </form>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <div className="text-xs text-muted-foreground">Claimant</div>
-                  <div className="font-medium">
-                    {formatName(claim.claimant)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground">
-                    Incident Date
-                  </div>
-                  <div>{formatDate(claim.date_of_incident, "PP")}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground">Submitted</div>
-                  <div>{formatDate(claim.created_at, "PP")}</div>
-                </div>
-                {claim.claim_amount && (
-                  <div>
-                    <div className="text-xs text-muted-foreground">
-                      Claim Amount
-                    </div>
-                    <div className="font-medium">
-                      {formatCurrency(claim.claim_amount)}
-                    </div>
-                  </div>
-                )}
-                {claim.approved_amount && (
-                  <div>
-                    <div className="text-xs text-muted-foreground">
-                      Approved Amount
-                    </div>
-                    <div className="font-medium">
-                      {formatCurrency(claim.approved_amount)}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {claim.payouts.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="text-sm font-medium mb-3">Payouts</h4>
-                  <div className="space-y-2">
-                    {claim.payouts.map((payout) => (
-                      <div
-                        key={payout.id}
-                        className="flex items-center justify-between p-3 bg-muted rounded-lg"
-                      >
-                        <div>
-                          <div className="text-sm font-medium">
-                            {formatName(payout.beneficiary)}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatDate(payout.payout_date, "PP")}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          {payout.amount && (
-                            <div className="font-medium">
-                              {formatCurrency(payout.amount)}
-                            </div>
-                          )}
-                          <div className="text-xs text-muted-foreground">
-                            {formatDate(payout.payout_date, "PP")}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ClaimDetailsCard key={claim.id} claim={claim} policyId={policy.id} />
         ))}
       </div>
     </div>
