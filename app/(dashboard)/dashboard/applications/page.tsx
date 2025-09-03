@@ -37,15 +37,15 @@ export default async function ApplicationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Active Applications</h1>
+        <h1 className="text-3xl font-bold">Pending Applications</h1>
         <p className="text-muted-foreground">
-          Manage pending and approved loan applications
+          Manage loan applications that are pending review and processing
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Active Applications</CardTitle>
+          <CardTitle>Pending Applications</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>

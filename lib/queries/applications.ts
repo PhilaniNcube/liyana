@@ -127,7 +127,7 @@ export async function getAllApplications(
   let query = supabase
     .from("applications")
     .select("*")
-    .neq("status", "declined") // Exclude declined applications
+    .not("status", "in", '("declined","approved")') // Exclude declined and approved applications
     .order("created_at", { ascending: false });
 
   if (options.limit) {
