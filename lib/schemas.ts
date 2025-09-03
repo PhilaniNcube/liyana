@@ -685,6 +685,9 @@ export const funeralPolicyLeadSchema = z
     account_type: z.enum(["savings", "transaction", "current", "business"], {
       required_error: "Account type is required",
     }),
+    payment_method: z.enum(["debit_order", "cash_deposit"], {
+      required_error: "Payment method is required",
+    }),
 
     // Require between 5 and 10 beneficiaries
     beneficiaries: z

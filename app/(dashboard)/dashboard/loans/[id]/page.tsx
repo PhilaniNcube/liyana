@@ -24,6 +24,8 @@ import {
   AdditionalInfoCard,
   FraudCheckResults,
 } from "@/components/application-detail";
+import LoanEmailTab from "./_components/loan-email-tab";
+import { createClient } from "@/lib/server";
 
 interface PageProps {
   params: Promise<{ id: number }>;
@@ -32,6 +34,35 @@ interface PageProps {
 const LoanPage = async ({ params }: PageProps) => {
   const { id } = await params;
   const loan = await getLoan(id);
+
+  // Get borrower profile for email
+  const supabase = await createClient();
+  let borrowerProfile = null;
+
+  if (loan.profile_id) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, email, full_name")
+      .eq("id", loan.profile_id)
+      .single();
+    borrowerProfile = profile;
+  }
+
+  // Get borrower email from auth user if profile doesn't have it
+  let borrowerEmail = borrowerProfile?.email;
+  let borrowerName = borrowerProfile?.full_name;
+
+  if (loan.profile_id && !borrowerEmail) {
+    try {
+      const { data: authUser } = await supabase.auth.admin.getUserById(
+        loan.profile_id
+      );
+      borrowerEmail = authUser?.user?.email;
+      borrowerName = borrowerName || authUser?.user?.user_metadata?.full_name;
+    } catch (error) {
+      console.warn("Could not fetch auth user for loan email");
+    }
+  }
 
   // Render loan details in a card UI
   return (
@@ -56,9 +87,9 @@ const LoanPage = async ({ params }: PageProps) => {
           <CardContent className="pt-4">
             <Tabs
               defaultValue={loan.application ? "personal-info" : "loan-details"}
-              className="mt-0"
+              className="mt-0 w-full"
             >
-              <TabsList className="flex flex-wrap">
+              <TabsList className="flex w-full flex-wrap">
                 {loan.application && (
                   <TabsTrigger value="personal-info">Personal Info</TabsTrigger>
                 )}
@@ -75,6 +106,7 @@ const LoanPage = async ({ params }: PageProps) => {
                   </>
                 )}
                 <TabsTrigger value="documents">Documents</TabsTrigger>
+                <TabsTrigger value="emails">Emails</TabsTrigger>
               </TabsList>
 
               {loan.application && (
@@ -124,6 +156,14 @@ const LoanPage = async ({ params }: PageProps) => {
                   <ProfileDocumentsDisplay profileId={loan.profile_id} />
                   <ProfileDocumentUpload profileId={loan.profile_id} />
                 </div>
+              </TabsContent>
+
+              <TabsContent value="emails" className="mt-4 w-full">
+                <LoanEmailTab
+                  loanId={loan.id}
+                  borrowerEmail={borrowerEmail || undefined}
+                  borrowerName={borrowerName || undefined}
+                />
               </TabsContent>
             </Tabs>
           </CardContent>

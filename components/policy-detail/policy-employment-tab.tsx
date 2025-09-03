@@ -72,7 +72,7 @@ export default function PolicyEmploymentTab({
             {employmentDetails.employment_type && (
               <div className="space-y-2">
                 <p className="text-sm font-medium">Employment Type</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground capitalize">
                   {employmentDetails.employment_type.charAt(0).toUpperCase() +
                     employmentDetails.employment_type.slice(1)}
                 </p>
@@ -81,7 +81,7 @@ export default function PolicyEmploymentTab({
             {employmentDetails.end_date && (
               <div className="space-y-2">
                 <p className="text-sm font-medium">Employment End Date</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm capitalize text-muted-foreground">
                   {formatDate(employmentDetails.end_date, "PP")}
                 </p>
               </div>
@@ -89,7 +89,7 @@ export default function PolicyEmploymentTab({
             {employmentDetails.employer_contact_number && (
               <div className="space-y-2">
                 <p className="text-sm font-medium">Work Phone</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground capitalize">
                   {employmentDetails.employer_contact_number}
                 </p>
               </div>
@@ -97,7 +97,7 @@ export default function PolicyEmploymentTab({
             {employmentDetails.employer_address && (
               <div className="space-y-2">
                 <p className="text-sm font-medium">Work Address</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground capitalize">
                   {employmentDetails.employer_address}
                 </p>
               </div>

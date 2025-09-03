@@ -82,6 +82,7 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
           account_number: validatedData.account_number,
           branch_code: validatedData.branch_code,
           account_type: validatedData.account_type,
+          payment_method: validatedData.payment_method,
         },
         party_type: "individual",
         profile_id: user.id,

@@ -766,24 +766,54 @@ export type Database = {
       }
       resend_emails: {
         Row: {
+          application_id: number | null
           created_at: string
           id: number
+          loan_id: number | null
+          policy_id: number | null
           profile_id: string
           resend_id: string
         }
         Insert: {
+          application_id?: number | null
           created_at?: string
           id?: number
+          loan_id?: number | null
+          policy_id?: number | null
           profile_id: string
           resend_id: string
         }
         Update: {
+          application_id?: number | null
           created_at?: string
           id?: number
+          loan_id?: number | null
+          policy_id?: number | null
           profile_id?: string
           resend_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "resend_emails_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resend_emails_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "approved_loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resend_emails_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "policies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "resend_emails_profile_id_fkey"
             columns: ["profile_id"]

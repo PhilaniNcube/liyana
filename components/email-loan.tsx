@@ -10,26 +10,26 @@ interface CreditReport {
   report_data?: any;
 }
 
-interface EmailApplicationProps {
+interface EmailLoanProps {
   id: number | string;
-  creditReports: CreditReport[];
-  applicantName?: string;
-  applicantEmail?: string;
+  creditReports?: CreditReport[];
+  borrowerName?: string;
+  borrowerEmail?: string;
 }
 
-export function EmailApplication({
+export function EmailLoan({
   id,
-  creditReports,
-  applicantName,
-  applicantEmail,
-}: EmailApplicationProps) {
+  creditReports = [],
+  borrowerName,
+  borrowerEmail,
+}: EmailLoanProps) {
   return (
     <EmailApplicationComponent
       id={id}
       creditReports={creditReports}
-      type="application"
-      recipientName={applicantName}
-      recipientEmail={applicantEmail}
+      type="loan"
+      recipientName={borrowerName}
+      recipientEmail={borrowerEmail}
     />
   );
 }

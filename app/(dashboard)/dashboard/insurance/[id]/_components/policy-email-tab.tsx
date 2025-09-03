@@ -1,6 +1,6 @@
 "use client";
 
-import { EmailApplication } from "@/components/email-application";
+import { EmailPolicy } from "@/components/email-policy";
 
 interface PolicyDocument {
   id: number;
@@ -22,11 +22,14 @@ const PolicyEmailTab = ({
   policyHolderName,
   documents,
 }: PolicyEmailTabProps) => {
-  // For now, we pass empty creditReports as this is not a loan application
-  // and allow file uploads via EmailApplication
   return (
-    <div className="max-w-2xl mx-auto">
-      <EmailApplication id={policyId} creditReports={[]} />
+    <div className="w-full mx-auto">
+      <EmailPolicy
+        id={policyId}
+        creditReports={[]}
+        policyHolderName={policyHolderName}
+        policyHolderEmail={policyHolderEmail}
+      />
     </div>
   );
 };

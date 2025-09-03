@@ -552,16 +552,16 @@ export function ApplicationDetailClient({
             </div>
           </div>
         </TabsContent>
-        <TabsContent value="emails">
+        <TabsContent className="w-full" value="emails">
           {/* Emails Section */}
-          <Card>
+          <Card className="w-full">
             <CardHeader>
               <CardTitle>Emails</CardTitle>
               <CardDescription>
                 All emails sent to the applicant regarding this application
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="w-full">
               <EmailApplication
                 id={application.id}
                 creditReports={creditReports}

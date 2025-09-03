@@ -112,6 +112,7 @@ export default function FuneralPolicyForm() {
       account_number: "",
       branch_code: "",
       account_type: undefined as any,
+      payment_method: undefined as any,
       // Step 3: beneficiaries + declarations
       beneficiaries: [
         {
@@ -178,6 +179,7 @@ export default function FuneralPolicyForm() {
         "account_number",
         "branch_code",
         "account_type",
+        "payment_method",
       ],
     },
     {
@@ -731,6 +733,34 @@ export default function FuneralPolicyForm() {
                               Current/Cheque
                             </SelectItem>
                             <SelectItem value="business">Business</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="payment_method"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Preferred Payment Method</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || ""}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select payment method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="debit_order">
+                              Debit Order
+                            </SelectItem>
+                            <SelectItem value="cash_deposit">
+                              Cash Deposit
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </FormControl>

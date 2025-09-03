@@ -13,13 +13,24 @@ interface CreditReport {
 interface EmailApplicationWrapperProps {
   id: number;
   creditReports: CreditReport[];
+  applicantName?: string;
+  applicantEmail?: string;
 }
 
 const EmailApplicationWrapper = ({
   id,
   creditReports,
+  applicantName,
+  applicantEmail,
 }: EmailApplicationWrapperProps) => {
-  return <EmailApplication id={id.toString()} creditReports={creditReports} />;
+  return (
+    <EmailApplication
+      id={id.toString()}
+      creditReports={creditReports}
+      applicantName={applicantName}
+      applicantEmail={applicantEmail}
+    />
+  );
 };
 
 export default EmailApplicationWrapper;

@@ -10,26 +10,26 @@ interface CreditReport {
   report_data?: any;
 }
 
-interface EmailApplicationProps {
+interface EmailPolicyProps {
   id: number | string;
-  creditReports: CreditReport[];
-  applicantName?: string;
-  applicantEmail?: string;
+  creditReports?: CreditReport[];
+  policyHolderName?: string;
+  policyHolderEmail?: string;
 }
 
-export function EmailApplication({
+export function EmailPolicy({
   id,
-  creditReports,
-  applicantName,
-  applicantEmail,
-}: EmailApplicationProps) {
+  creditReports = [],
+  policyHolderName,
+  policyHolderEmail,
+}: EmailPolicyProps) {
   return (
     <EmailApplicationComponent
       id={id}
       creditReports={creditReports}
-      type="application"
-      recipientName={applicantName}
-      recipientEmail={applicantEmail}
+      type="policy"
+      recipientName={policyHolderName}
+      recipientEmail={policyHolderEmail}
     />
   );
 }
