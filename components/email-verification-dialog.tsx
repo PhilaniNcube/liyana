@@ -44,28 +44,55 @@ export function EmailVerificationDialog({
     useState<WhoYouEmailVerificationResponse | null>(null);
 
   const handleEmailVerification = async () => {
+    if (isLoading) return; // guard against double clicks
     setIsLoading(true);
     try {
-      const response = await fetch("/api/kyc/email-verification", {
+      const res = await fetch("/api/kyc/email-verification", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          idNumber,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, idNumber }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to verify email");
+      // Attempt to parse JSON; fall back to text
+      const contentType = res.headers.get("content-type") || "";
+      let payload: any = null;
+      try {
+        if (contentType.includes("application/json")) {
+          payload = await res.json();
+        } else {
+          const txt = await res.text();
+          payload = txt ? { raw: txt } : {};
+        }
+      } catch (e) {
+        // swallow parse errors; keep payload null
+        payload = {};
       }
 
-      const result = await response.json();
-      setVerificationData(result.data);
+      if (!res.ok) {
+        // Debug log (remove or gate behind env flag for production if needed)
+        // eslint-disable-next-line no-console
+        console.error("Email verification failed response", {
+          status: res.status,
+          statusText: res.statusText,
+          payload,
+        });
+        const message =
+          payload?.error ||
+          payload?.message ||
+          `Failed to verify email (${res.status} ${res.statusText})`;
+        throw new Error(message);
+      }
+
+      if (!payload || !payload.data) {
+        // eslint-disable-next-line no-console
+        console.error("Email verification malformed success payload", payload);
+        throw new Error("Malformed response from verification endpoint");
+      }
+
+      setVerificationData(payload.data);
       toast.success("Email verification completed successfully");
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Email verification error:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to verify email"
