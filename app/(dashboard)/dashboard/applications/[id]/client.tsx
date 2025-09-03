@@ -46,6 +46,7 @@ import { ProfileDocumentUpload } from "@/components/profile-document-upload";
 import { ProfileDocumentsDisplay } from "@/components/profile-documents-display";
 import { DecryptedApplication } from "@/lib/schemas";
 import { ApproveLoanModal } from "@/components/approve-loan-modal";
+import SmsApplication from "@/components/sms-application";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -417,7 +418,7 @@ export function ApplicationDetailClient({
       </div>
 
       <Tabs defaultValue="personal-info" className="mt-4">
-        <TabsList>
+        <TabsList className="w-full ">
           <TabsTrigger value="personal-info">Personal Info</TabsTrigger>
           <TabsTrigger value="contact-info">Contact Info</TabsTrigger>
           <TabsTrigger value="employment-info"> Employment Info</TabsTrigger>
@@ -427,6 +428,7 @@ export function ApplicationDetailClient({
           <TabsTrigger value="checks">Credit Checks</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="emails">Emails</TabsTrigger>
+          <TabsTrigger value="sms">SMS</TabsTrigger>
         </TabsList>
         <TabsContent value="personal-info">
           {/* Personal Information */}
@@ -565,6 +567,25 @@ export function ApplicationDetailClient({
               <EmailApplication
                 id={application.id}
                 creditReports={creditReports}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent className="w-full" value="sms">
+          {/* SMS Section */}
+          <Card className="w-full">
+            <CardHeader>
+              <CardTitle>SMS Communication</CardTitle>
+              <CardDescription>
+                Send SMS messages and view SMS history for this applicant
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="w-full">
+              <SmsApplication
+                applicationId={application.id}
+                profileId={application.user_id}
+                phoneNumber={application.profile?.phone_number || ""}
+                applicantName={application.profile?.full_name || "Applicant"}
               />
             </CardContent>
           </Card>

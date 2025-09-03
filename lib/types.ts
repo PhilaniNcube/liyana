@@ -836,6 +836,38 @@ export type Database = {
           },
         ]
       }
+      sms_logs: {
+        Row: {
+          created_at: string
+          id: number
+          message: string
+          phone_number: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          message: string
+          phone_number: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          message?: string
+          phone_number?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number
