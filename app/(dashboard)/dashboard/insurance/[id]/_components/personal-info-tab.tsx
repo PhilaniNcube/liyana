@@ -9,6 +9,7 @@ import VerifyIdDialog from "./verify-id";
 import SendOtvDialog from "./send-otv";
 import { Button } from "@/components/ui/button";
 import { CheckCheckIcon, ShieldCheck, Mail } from "lucide-react";
+import { CellphoneVerificationDialog } from "./cellphone-verification-dialog";
 import { EmailVerificationDialog } from "@/components/email-verification-dialog";
 
 interface PersonalInfoTabProps {
@@ -113,10 +114,10 @@ export default function PersonalInfoTab({ policy }: PersonalInfoTabProps) {
                 </h4>
                 {(holder.contact_details as any)?.email && (
                   <div className="my-3">
-                    <p className="font-medium">Email</p>
                     <div className="flex items-center justify-between bg-yellow-200 p-2 rounded-md">
                       <div className="text-muted-foreground">
-                        <span className="">
+                        <p className="font-medium">Email</p>
+                        <span className="font-medium">
                           {(holder.contact_details as any).email}
                         </span>
                       </div>
@@ -140,11 +141,26 @@ export default function PersonalInfoTab({ policy }: PersonalInfoTabProps) {
                     </div>
                   </div>
                 )}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1  gap-4">
                   {(holder.contact_details as any)?.phone && (
                     <div>
-                      <div className="text-xs text-muted-foreground">Phone</div>
-                      <div>{(holder.contact_details as any).phone}</div>
+                      <div className="flex items-center justify-between bg-yellow-200 p-2 rounded-md">
+                        <div>
+                          <p className="font-medium text-lg text-muted-foreground">
+                            Phone
+                          </p>
+                          <span>{(holder.contact_details as any).phone}</span>
+                        </div>
+                        <CellphoneVerificationDialog
+                          policyId={policy.id}
+                          phone={(holder.contact_details as any).phone}
+                          idNumber={
+                            holder.id_number
+                              ? decryptValue(holder.id_number) || ""
+                              : undefined
+                          }
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
