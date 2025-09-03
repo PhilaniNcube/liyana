@@ -207,7 +207,12 @@ export async function getPolicyClaims(policyId: number) {
 export async function getPolicyDocuments(policyId: number) {
   const supabase = await createClient();
   
-  // This would depend on your documents table structure
-  // For now returning an empty array
-  return [];
+  const { data: documents, error } = await supabase
+    .from("policy_documents")
+    .select("*")
+    .eq("policy_id", policyId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return documents || [];
 }

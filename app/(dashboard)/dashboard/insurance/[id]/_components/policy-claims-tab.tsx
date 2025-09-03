@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +8,11 @@ import { formatCurrency } from "@/lib/utils/format-currency";
 import { formatDate } from "date-fns";
 import { PolicyWithAllData } from "@/lib/queries/policy-details";
 import CreateClaimForm from "./create-claim-form";
-import { Send } from "lucide-react";
+import { Plus, Send } from "lucide-react";
+import type { Database } from "@/lib/database.types";
+
+type PolicyDocumentRow =
+  Database["public"]["Tables"]["policy_documents"]["Row"];
 
 type Claim = {
   id: number;
@@ -64,17 +70,85 @@ interface PolicyClaimsTabProps {
   policy: PolicyWithAllData;
 }
 
+function CreateClaimFormWrapper({
+  policy,
+  onClaimCreated,
+}: {
+  policy: PolicyWithAllData;
+  onClaimCreated?: () => void;
+}) {
+  const [documents, setDocuments] = useState<PolicyDocumentRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const response = await fetch(
+          `/api/policy-documents?policy_id=${policy.id}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch documents");
+        }
+        const docs = await response.json();
+        setDocuments(docs);
+      } catch (error) {
+        console.error("Failed to fetch policy documents:", error);
+        setDocuments([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDocuments();
+  }, [policy.id]);
+
+  const handleClaimCreated = () => {
+    setOpen(false);
+    onClaimCreated?.();
+  };
+
+  if (loading) {
+    return <Button disabled>Loading...</Button>;
+  }
+
+  return (
+    <CreateClaimForm
+      policyId={policy.id}
+      policyHolderId={policy.policy_holder?.id || ""}
+      policyHolder={policy.policy_holder}
+      beneficiaries={policy.beneficiaries.map((b) => ({
+        id: b.id,
+        beneficiary_party_id: b.beneficiary_party_id,
+        allocation_percentage: b.allocation_percentage || 0,
+        relation_type: b.relation_type || "",
+        party: b.party,
+      }))}
+      documents={documents}
+      onClaimCreated={handleClaimCreated}
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <Button className="w-full sm:w-auto">
+          <Plus className="mr-2 h-4 w-4" />
+          Create New Claim
+        </Button>
+      }
+    />
+  );
+}
+
 export default function PolicyClaimsTab({
   claims,
   policy,
 }: PolicyClaimsTabProps) {
   if (claims.length === 0) {
     return (
-      <Card>
+      <Card className="max-w-7xl w-full mx-auto">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-medium">Claims</CardTitle>
-            <CreateClaimForm policy={policy} />
+          <div className="flex w-full items-center justify-between">
+            {/* <CardTitle className="text-lg font-medium">Claims</CardTitle> */}
+            <CreateClaimFormWrapper policy={policy} />
           </div>
         </CardHeader>
         <CardContent className="pt-6">
@@ -88,13 +162,12 @@ export default function PolicyClaimsTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Claims</h3>
-        <CreateClaimForm policy={policy} />
+      <div className="flex items-center flex-col justify-between w-full">
+        <CreateClaimFormWrapper policy={policy} />
       </div>
       <div className="grid gap-4">
         {claims.map((claim) => (
-          <Card key={claim.id}>
+          <Card key={claim.id} className="max-w-7xl w-full mx-auto">
             <CardHeader>
               <div className="flex items-center justify-between w-full">
                 <CardTitle className="flex items-center gap-2">

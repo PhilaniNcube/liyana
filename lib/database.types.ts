@@ -326,6 +326,7 @@ export type Database = {
         Row: {
           claim_number: string
           claimant_party_id: string
+          contact_details: Json | null
           created_at: string
           date_filed: string
           date_of_incident: string
@@ -336,6 +337,7 @@ export type Database = {
         Insert: {
           claim_number: string
           claimant_party_id: string
+          contact_details?: Json | null
           created_at?: string
           date_filed: string
           date_of_incident: string
@@ -346,6 +348,7 @@ export type Database = {
         Update: {
           claim_number?: string
           claimant_party_id?: string
+          contact_details?: Json | null
           created_at?: string
           date_filed?: string
           date_of_incident?: string
@@ -631,6 +634,7 @@ export type Database = {
       }
       policy_documents: {
         Row: {
+          claim_id: number | null
           created_at: string
           document_type: Database["public"]["Enums"]["policy_document_type"]
           id: number
@@ -639,6 +643,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          claim_id?: number | null
           created_at?: string
           document_type: Database["public"]["Enums"]["policy_document_type"]
           id?: number
@@ -647,6 +652,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          claim_id?: number | null
           created_at?: string
           document_type?: Database["public"]["Enums"]["policy_document_type"]
           id?: number
@@ -655,6 +661,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "policy_documents_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "policy_documents_policy_id_fkey"
             columns: ["policy_id"]

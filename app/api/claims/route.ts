@@ -15,6 +15,13 @@ const createClaimApiSchema = z.object({
     .min(1, "Date filed is required")
     .refine((date) => !isNaN(Date.parse(date)), "Invalid date format for date filed"),
   status: z.enum(["submitted", "under_review", "approved", "denied", "paid"]).optional(),
+  contact_details: z.object({
+    is_policy_holder: z.enum(["yes", "no"]),
+    relationship: z.string().optional(),
+    name: z.string().min(1, "Name is required"),
+    email: z.string().email("Please enter a valid email address"),
+    phone: z.string().min(1, "Phone number is required"),
+  }).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -125,6 +132,7 @@ export async function POST(request: NextRequest) {
         status: claimData.status || "submitted", // Always start as submitted for public users
         date_filed: new Date(claimData.date_filed).toISOString(),
         date_of_incident: new Date(claimData.date_of_incident).toISOString(),
+        contact_details: claimData.contact_details || null,
       })
       .select()
       .single();
@@ -139,7 +147,7 @@ export async function POST(request: NextRequest) {
 
     sendSms("+27729306206", `New claim filed: ${claim.claim_number} for policy https://apply.liyanafinance.co.za/dashboard/insurance/${policy.id}`);
 
-    return NextResponse.json({ success: true, data: claim }, { status: 201 });
+    return NextResponse.json({ success: true, claim: claim }, { status: 201 });
 
   } catch (error) {
     console.error("Unexpected error:", error);
