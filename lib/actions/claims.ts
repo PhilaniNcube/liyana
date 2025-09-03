@@ -64,7 +64,7 @@ export const createClaimAction = async (prevState:unknown, formData:FormData) =>
 
     revalidatePath(`/dashboard/insurance/${claimData.policy_id}`, 'layout');
 
-    sendSms("+27729306206", "A new claim has been submitted.");
+    sendSms("+27729306206", `New claim filed: ${claimData.claim_number} for policy https://apply.liyanafinance.co.za/dashboard/insurance/${claimData.policy_id}`);
 
     return {
         success: true,

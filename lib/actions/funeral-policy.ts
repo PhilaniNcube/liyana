@@ -187,7 +187,7 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
     // Policy creation and linking completed successfully
     revalidatePath("/insurance/funeral");
 
-    sendSms("+27729306206", "A new funeral cover application has been submitted.");
+    sendSms("+27729306206", `New funeral policy lead: Policy ID ${newPolicy.id} for ${validatedData.first_name} ${validatedData.last_name}. Review at https://apply.liyanafinance.co.za/dashboard/insurance/${newPolicy.id}`);
 
     return {
       error: false,
