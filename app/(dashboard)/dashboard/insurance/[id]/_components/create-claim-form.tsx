@@ -922,7 +922,7 @@ export default function CreateClaimForm({
                   ) : !hasValidDocuments ? (
                     "Upload Required Documents to Continue"
                   ) : (
-                    "Create Claim"
+                    "Save"
                   )}
                 </Button>
               </div>
