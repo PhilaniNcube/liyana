@@ -3,6 +3,7 @@ import { createClient } from "@/lib/server";
 import { encryptValue } from "@/lib/encryption";
 import { getCurrentUser } from "@/lib/queries/user";
 import { createServiceClient } from "@/lib/service";
+import { createPreApplication } from "@/lib/actions/pre-applications";
 
 interface ScoreReason {
   reasonCode: string;
@@ -36,23 +37,30 @@ async function saveApiCheckResult(
 ) {
   try {
     const supabase = await createServiceClient();
+    const currentUser = await getCurrentUser();
 
-    const { error } = await supabase.from("api_checks").insert({
+    const { data, error } = await supabase.from("api_checks").insert({
       id_number: encryptValue(idNumber),
       check_type: "credit_bureau",
       vendor: "Experian",
       status: status,
       response_payload: responsePayload,
       checked_at: new Date().toISOString(),
-    });
+      profile_id: currentUser ? currentUser.id : null,
+    }).select('*').single();
+
+    
 
     if (error) {
       console.error("Error saving API check result:", error);
+      return null; // Return null on error
     } else {
       console.log("API check result saved successfully");
+      return data.id;
     }
   } catch (error) {
     console.error("Error saving API check result:", error);
+    return null;
   }
 }
 
@@ -233,7 +241,7 @@ export async function GET(request: NextRequest) {
 
   // If the score is sufficient, return a success response
   // Save successful API check result
-  await saveApiCheckResult(idNumber, "passed", {
+const result = await saveApiCheckResult(idNumber, "passed", {
     ...apiResponse,
     parsedData: data,
     creditScore: score,
@@ -242,6 +250,15 @@ export async function GET(request: NextRequest) {
 
   // Update user profile with encrypted ID number
   await updateUserProfileWithIdNumber(idNumber);
+
+  // Create a pre-application record
+  if (result) {
+    await createPreApplication(
+      idNumber,
+      result,
+      score
+    );
+  }
 
   return NextResponse.json(
     {

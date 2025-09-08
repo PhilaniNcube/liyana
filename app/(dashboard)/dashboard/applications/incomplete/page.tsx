@@ -14,7 +14,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { getIncompleteApplicationUsers } from "@/lib/queries";
+import { getCreditPassedPreApplications } from "@/lib/queries";
 
 const searchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -41,7 +41,7 @@ export default async function IncompleteLoansPage(props: {
   const start_date = startDateObj.toISOString();
   const end_date = endDateObj.toISOString();
 
-  const rows = await getIncompleteApplicationUsers(
+  const rows = await getCreditPassedPreApplications(
     page,
     per_page,
     start_date,
@@ -53,8 +53,8 @@ export default async function IncompleteLoansPage(props: {
       <div className="space-y-2">
         <h1 className="text-xl font-semibold">Incomplete Applications</h1>
         <p className="text-sm text-muted-foreground">
-          Users with a passed credit check but no completed application from{" "}
-          {startDateObj.toLocaleDateString()} to{" "}
+          Users who passed credit check but haven't completed their application
+          from {startDateObj.toLocaleDateString()} to{" "}
           {endDateObj.toLocaleDateString()} (page {page})
         </p>
       </div>
@@ -77,7 +77,7 @@ export default async function IncompleteLoansPage(props: {
                   colSpan={6}
                   className="text-center text-sm text-muted-foreground py-6"
                 >
-                  No incomplete application users in this range.
+                  No incomplete applications in this range.
                 </TableCell>
               </TableRow>
             )}
@@ -86,12 +86,17 @@ export default async function IncompleteLoansPage(props: {
               const app = item.application;
               const check = item.credit_check;
               const lastEvent =
-                app?.created_at || check?.checked_at || profile?.created_at;
+                app?.created_at ||
+                check?.checked_at ||
+                profile?.created_at ||
+                item.created_at;
               const targetHref = app
                 ? `/dashboard/applications/${app.id}`
-                : `/dashboard/users/${profile.id}`;
+                : `/dashboard/users/${profile?.id}`;
               return (
-                <TableRow key={profile.id + (app?.id || "") + check.id}>
+                <TableRow
+                  key={`pre-app-${item.id}-${profile?.id || ""}-${app?.id || ""}`}
+                >
                   <TableCell className="max-w-[200px]">
                     <Link
                       href={targetHref}
@@ -99,16 +104,19 @@ export default async function IncompleteLoansPage(props: {
                       prefetch={false}
                     >
                       <span className="font-medium underline-offset-2 group-hover:underline">
-                        {profile.full_name || "Unknown"}
+                        {profile?.full_name || "Unknown"}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {profile.email || profile.phone_number || ""}
+                        {profile?.email || profile?.phone_number || ""}
                       </span>
                       {app && (
                         <span className="mt-0.5 text-[10px] text-muted-foreground">
                           App ID: {app.id}
                         </span>
                       )}
+                      <span className="mt-0.5 text-[10px] text-muted-foreground">
+                        Pre-App ID: {item.id}
+                      </span>
                     </Link>
                   </TableCell>
                   <TableCell className="text-xs">
@@ -116,11 +124,17 @@ export default async function IncompleteLoansPage(props: {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1 flex-wrap">
+                      <Badge
+                        variant="secondary"
+                        className="bg-green-100 text-green-800"
+                      >
+                        Credit Passed
+                      </Badge>
                       {item.reason === "no_application" && (
                         <Badge variant="secondary">No Application</Badge>
                       )}
-                      {item.reason === "in_progress" && (
-                        <Badge variant="outline">In Progress</Badge>
+                      {item.reason === "application_started" && (
+                        <Badge variant="outline">Application Started</Badge>
                       )}
                     </div>
                   </TableCell>
@@ -138,6 +152,11 @@ export default async function IncompleteLoansPage(props: {
                         <span className="text-muted-foreground">
                           {new Date(check.checked_at).toLocaleDateString()}
                         </span>
+                        {item.credit_score && (
+                          <span className="text-muted-foreground">
+                            Score: {item.credit_score}
+                          </span>
+                        )}
                       </div>
                     ) : (
                       "—"

@@ -67,11 +67,6 @@ const sidebarItems = [
         href: "/dashboard/applications/incomplete",
         icon: UserX,
       },
-      {
-        title: "All Users",
-        href: "/dashboard/users",
-        icon: Users,
-      },
     ],
   },
   {
@@ -109,6 +104,11 @@ const sidebarItems = [
     title: "Credit Check",
     href: "/dashboard/fraud-check",
     icon: Shield,
+  },
+  {
+    title: "All Users",
+    href: "/dashboard/users",
+    icon: Users,
   },
   // {
   //   title: "Loans",

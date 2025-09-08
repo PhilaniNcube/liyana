@@ -786,6 +786,19 @@ export const updateClaimSchema = z.object({
 
 export type UpdateClaimType = z.infer<typeof updateClaimSchema>;
 
+
+export type PreApplication = Database["public"]["Tables"]["pre_applications"]["Row"];
+export type PreApplicationInsert = Database["public"]["Tables"]["pre_applications"]["Insert"];
+export type PreApplicationUpdate = Database["public"]["Tables"]["pre_applications"]["Update"];
+
+export interface PreApplicationWithDetails extends PreApplication {
+  profile?: Database["public"]["Tables"]["profiles"]["Row"] | null;
+  credit_check?: Database["public"]["Tables"]["api_checks"]["Row"] | null;
+  application?: Database["public"]["Tables"]["applications"]["Row"] | null;
+  reason?: 'no_application' | 'application_started';
+}
+
+
 // WhoYou Email Verification Response Types
 export interface WhoYouDomainDetails {
   id: string;

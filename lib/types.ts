@@ -45,6 +45,7 @@ export type Database = {
           checked_at: string
           id: number
           id_number: string
+          profile_id: string | null
           response_payload: Json
           status: Database["public"]["Enums"]["api_check_status"]
           vendor: Database["public"]["Enums"]["api_vendor"]
@@ -54,6 +55,7 @@ export type Database = {
           checked_at?: string
           id?: number
           id_number: string
+          profile_id?: string | null
           response_payload: Json
           status: Database["public"]["Enums"]["api_check_status"]
           vendor: Database["public"]["Enums"]["api_vendor"]
@@ -63,11 +65,20 @@ export type Database = {
           checked_at?: string
           id?: number
           id_number?: string
+          profile_id?: string | null
           response_payload?: Json
           status?: Database["public"]["Enums"]["api_check_status"]
           vendor?: Database["public"]["Enums"]["api_vendor"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "api_checks_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       applications: {
         Row: {
@@ -715,6 +726,70 @@ export type Database = {
           },
         ]
       }
+      pre_applications: {
+        Row: {
+          application_id: number | null
+          created_at: string
+          credit_check_id: number
+          credit_score: number
+          expires_at: string | null
+          id: number
+          id_number: string
+          profile_id: string
+          status: Database["public"]["Enums"]["pre_application_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          application_id?: number | null
+          created_at?: string
+          credit_check_id: number
+          credit_score: number
+          expires_at?: string | null
+          id?: number
+          id_number: string
+          profile_id: string
+          status: Database["public"]["Enums"]["pre_application_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          application_id?: number | null
+          created_at?: string
+          credit_check_id?: number
+          credit_score?: number
+          expires_at?: string | null
+          id?: number
+          id_number?: string
+          profile_id?: string
+          status?: Database["public"]["Enums"]["pre_application_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pre_applications_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_applications_credit_check_id_fkey"
+            columns: ["credit_check_id"]
+            isOneToOne: false
+            referencedRelation: "api_checks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_applications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_documents: {
         Row: {
           created_at: string
@@ -1004,6 +1079,12 @@ export type Database = {
         | "identity_document"
         | "passport"
       policy_status: "pending" | "active" | "lapsed" | "cancelled"
+      pre_application_status:
+        | "credit_passed"
+        | "application_started"
+        | "application_completed"
+        | "abandoned"
+        | "cancelled"
       product_type: "funeral_policy" | "life_insurance" | "payday_loan"
       relation_type:
         | "spouse"
@@ -1210,6 +1291,13 @@ export const Constants = {
         "passport",
       ],
       policy_status: ["pending", "active", "lapsed", "cancelled"],
+      pre_application_status: [
+        "credit_passed",
+        "application_started",
+        "application_completed",
+        "abandoned",
+        "cancelled",
+      ],
       product_type: ["funeral_policy", "life_insurance", "payday_loan"],
       relation_type: [
         "spouse",
