@@ -146,29 +146,20 @@ export async function getCreditPassedPreApplications(
       credit_check:credit_check_id(id, check_type, status, response_payload, checked_at, vendor),
       application:application_id(id, status, created_at, application_amount, term)
     `)
-    .eq("status", "credit_passed")
-    .gte("created_at", start_date)
-    .lte("created_at", end_date)
+    .eq("status", 'credit_passed')
     .order("created_at", { ascending: false })
     .range(offset, offset + per_page - 1);
 
   if (error) {
     throw new Error(`Failed to fetch credit passed pre-applications: ${error.message}`);
+    
   }
 
   // Decrypt ID numbers and transform data to match expected format
-  return (data || []).map((preApp: any) => ({
-    ...preApp,
-    id_number: (() => {
-      try {
-        return decryptValue(preApp.id_number);
-      } catch {
-        return preApp.id_number; // Return as-is if decryption fails
-      }
-    })(),
-    // Add reason field for compatibility with existing UI
-    reason: preApp.application_id ? 'application_started' : 'no_application',
-  }));
+  return data.map((item) => ({
+    ...item,
+    id_number: decryptValue(item.id_number),
+  })) as PreApplicationWithDetails[];
 }
 
 export async function markPreApplicationAsAbandoned(preApplicationId: number): Promise<void> {
