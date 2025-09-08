@@ -15,6 +15,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { getCreditPassedPreApplications } from "@/lib/queries";
+import { CancelPreApplicationButton } from "@/components/cancel-pre-application-button";
 
 const searchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -66,17 +67,19 @@ export default async function IncompleteLoansPage(props: {
             <TableRow>
               <TableHead>User</TableHead>
               <TableHead>ID Number</TableHead>
+              <TableHead>Credit Score</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Latest Application</TableHead>
               <TableHead>Credit Check</TableHead>
               <TableHead>Last Event</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={8}
                   className="text-center text-sm text-muted-foreground py-6"
                 >
                   No incomplete applications in this range.
@@ -124,6 +127,23 @@ export default async function IncompleteLoansPage(props: {
                   <TableCell className="text-xs">
                     {item.id_number || "—"}
                   </TableCell>
+                  <TableCell className="text-center">
+                    {item.credit_score ? (
+                      <span
+                        className={`font-semibold text-lg ${
+                          item.credit_score >= 600
+                            ? "text-green-600"
+                            : item.credit_score >= 500
+                              ? "text-yellow-600"
+                              : "text-red-600"
+                        }`}
+                      >
+                        {item.credit_score}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-1 flex-wrap">
                       <Badge
@@ -154,11 +174,6 @@ export default async function IncompleteLoansPage(props: {
                         <span className="text-muted-foreground">
                           {new Date(check.checked_at).toLocaleDateString()}
                         </span>
-                        {item.credit_score && (
-                          <span className="text-muted-foreground">
-                            Score: {item.credit_score}
-                          </span>
-                        )}
                       </div>
                     ) : (
                       "—"
@@ -166,6 +181,12 @@ export default async function IncompleteLoansPage(props: {
                   </TableCell>
                   <TableCell>
                     {lastEvent ? new Date(lastEvent).toLocaleDateString() : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <CancelPreApplicationButton
+                      preApplicationId={item.id}
+                      userName={profile?.full_name || "Unknown User"}
+                    />
                   </TableCell>
                 </TableRow>
               );
