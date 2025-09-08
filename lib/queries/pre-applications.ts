@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/client";
+import { createClient } from "@/lib/server";
 import { Database } from "@/lib/types";
 import { encryptValue, decryptValue } from "@/lib/encryption";
 import { PreApplication, PreApplicationWithDetails } from "../schemas";
