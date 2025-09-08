@@ -35,7 +35,7 @@ export default async function IncompleteLoansPage(props: {
   } = searchParamsCache.parse(raw);
 
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 2);
   const startDateObj = parsedStart ?? startOfMonth;
   const endDateObj = parsedEnd ?? now;
   const start_date = startDateObj.toISOString();
@@ -47,6 +47,8 @@ export default async function IncompleteLoansPage(props: {
     start_date,
     end_date
   );
+
+  console.log("Incomplete applications:", rows);
 
   return (
     <div className="space-y-6">
