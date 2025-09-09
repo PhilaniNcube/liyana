@@ -1,31 +1,84 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Calendar, User, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Mail,
+  Calendar,
+  User,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import type { EmailWithDetails } from "@/lib/queries/emails";
+import type {
+  EmailWithDetails,
+  EmailDetails,
+  EmailRecord,
+} from "@/lib/queries/emails";
 
 interface EmailHistoryProps {
-  emails: EmailWithDetails[];
+  emails: EmailWithDetails[] | EmailRecord[];
 }
 
 export function EmailHistory({ emails }: EmailHistoryProps) {
   const [expandedEmails, setExpandedEmails] = useState<Record<string, boolean>>(
     {}
   );
+  const [emailDetails, setEmailDetails] = useState<
+    Record<string, EmailDetails | null>
+  >({});
+  const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>(
+    {}
+  );
 
-  const toggleEmailExpansion = (resendId: string) => {
+  // Function to fetch email details from Resend API
+  const fetchEmailDetails = async (resendId: string) => {
+    if (emailDetails[resendId] !== undefined || loadingDetails[resendId]) {
+      return; // Already fetched or currently fetching
+    }
+
+    setLoadingDetails((prev) => ({ ...prev, [resendId]: true }));
+
+    try {
+      const response = await fetch(`/api/emails/details/${resendId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const details = await response.json();
+        setEmailDetails((prev) => ({ ...prev, [resendId]: details }));
+      } else {
+        console.error("Failed to fetch email details:", response.statusText);
+        setEmailDetails((prev) => ({ ...prev, [resendId]: null }));
+      }
+    } catch (error) {
+      console.error("Error fetching email details:", error);
+      setEmailDetails((prev) => ({ ...prev, [resendId]: null }));
+    } finally {
+      setLoadingDetails((prev) => ({ ...prev, [resendId]: false }));
+    }
+  };
+
+  const toggleEmailExpansion = async (resendId: string) => {
     setExpandedEmails((prev) => ({
       ...prev,
       [resendId]: !prev[resendId],
     }));
+
+    // Fetch details when expanding if not already fetched
+    if (!expandedEmails[resendId] && emailDetails[resendId] === undefined) {
+      await fetchEmailDetails(resendId);
+    }
   };
 
   if (emails.length === 0) {
@@ -57,8 +110,12 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
       <CardContent>
         <div className="space-y-4">
           {emails.map((email) => {
-            const details = email.details;
+            // Use dynamically fetched details if available, otherwise fall back to email.details if it exists
+            const details =
+              emailDetails[email.resend_id] ||
+              ("details" in email ? email.details : undefined);
             const isExpanded = expandedEmails[email.resend_id];
+            const isLoadingDetails = loadingDetails[email.resend_id];
 
             return (
               <Collapsible
@@ -96,6 +153,9 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
                         <Badge variant="secondary" className="text-xs">
                           ID: {email.resend_id.slice(0, 8)}...
                         </Badge>
+                        {isLoadingDetails && (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
                         {isExpanded ? (
                           <ChevronUp className="h-4 w-4" />
                         ) : (
@@ -107,7 +167,16 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
 
                   <CollapsibleContent>
                     <div className="border-t p-3 bg-gray-50">
-                      {details ? (
+                      {isLoadingDetails ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm">
+                              Loading email details...
+                            </span>
+                          </div>
+                        </div>
+                      ) : details ? (
                         <div className="space-y-3">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                             <div>
@@ -168,9 +237,17 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
                           )}
                         </div>
                       ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Email details could not be loaded from Resend.
-                        </p>
+                        <div className="text-center py-4">
+                          <p className="text-sm text-muted-foreground">
+                            Email details could not be loaded from Resend.
+                          </p>
+                          <button
+                            onClick={() => fetchEmailDetails(email.resend_id)}
+                            className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                          >
+                            Retry loading details
+                          </button>
+                        </div>
                       )}
                     </div>
                   </CollapsibleContent>

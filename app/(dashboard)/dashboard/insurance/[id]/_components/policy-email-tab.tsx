@@ -1,7 +1,7 @@
 "use client";
 
+import { EmailHistory } from "@/components/email-history-new";
 import { EmailPolicy } from "@/components/email-policy";
-import { EmailHistory } from "@/components/email-history";
 import type { Database } from "@/lib/database.types";
 import type { EmailWithDetails } from "@/lib/queries/emails";
 
