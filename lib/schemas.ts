@@ -1628,3 +1628,67 @@ export const updatePolicyDocumentSchema = z.object({
 
 // Type for updating policy document
 export type UpdatePolicyDocumentInput = z.infer<typeof updatePolicyDocumentSchema>;
+
+// WhoYou Deceased Status Response Types
+export interface DeceasedStatusInformation {
+  id: string;
+  idNumber: string;
+  isDeceased: boolean;
+  firstName?: string;
+  surname?: string;
+  dateOfDeath?: string;
+  placeOfDeath?: string;
+  executorName?: string;
+  executorAddress?: string;
+  estateNumber?: string;
+  recordDate?: string;
+  source: string;
+  reference: string;
+  survivingSpouseIdNumber?: string;
+  survivingSpouseFirstName?: string;
+  status?: string;
+  usingDhaRealtime: boolean;
+}
+
+export interface WhoYouDeceasedStatusResponseDetail {
+  isWhoYouCache: boolean;
+  cacheDate?: string;
+  deceasedStatusInformation: DeceasedStatusInformation[];
+}
+
+export interface WhoYouDeceasedStatusResponse {
+  code: number;
+  detail: WhoYouDeceasedStatusResponseDetail;
+}
+
+// Zod schemas for WhoYou Deceased Status Response validation
+export const deceasedStatusInformationSchema = z.object({
+  id: z.string(),
+  idNumber: z.string(),
+  isDeceased: z.boolean(),
+  firstName: z.string().optional(),
+  surname: z.string().optional(),
+  dateOfDeath: z.string().optional(),
+  placeOfDeath: z.string().optional(),
+  executorName: z.string().optional(),
+  executorAddress: z.string().optional(),
+  estateNumber: z.string().optional(),
+  recordDate: z.string().optional(),
+  source: z.string(),
+  reference: z.string(),
+  survivingSpouseIdNumber: z.string().optional(),
+  survivingSpouseFirstName: z.string().optional(),
+  status: z.string().optional(),
+  usingDhaRealtime: z.boolean(),
+});
+
+export const whoYouDeceasedStatusResponseDetailSchema = z.object({
+  isWhoYouCache: z.boolean(),
+  cacheDate: z.string().optional(),
+  deceasedStatusInformation: z.array(deceasedStatusInformationSchema),
+});
+
+export const whoYouDeceasedStatusResponseSchema = z.object({
+  code: z.number(),
+  detail: whoYouDeceasedStatusResponseDetailSchema,
+});

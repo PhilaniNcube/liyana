@@ -134,7 +134,15 @@ export async function getPolicyBeneficiaries(policyId: number) {
                 id_number = null;
             }
 
-            return { ...b, party, id_number } as any;
+            // Include both encrypted (in party.id_number) and decrypted (in id_number) versions
+            return { 
+                ...b, 
+                party: {
+                    ...party,
+                    // Keep the encrypted id_number in the party object for API calls
+                }, 
+                id_number 
+            } as any;
         })
     );
 

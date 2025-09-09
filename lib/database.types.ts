@@ -1032,6 +1032,7 @@ export type Database = {
         | "address_verification"
         | "cellphone_verification"
         | "id_verification"
+        | "deceased_status"
       api_vendor: "Experian" | "WhoYou" | "ThisIsMe"
       application_status:
         | "pre_qualifier"
@@ -1243,6 +1244,7 @@ export const Constants = {
         "address_verification",
         "cellphone_verification",
         "id_verification",
+        "deceased_status",
       ],
       api_vendor: ["Experian", "WhoYou", "ThisIsMe"],
       application_status: [

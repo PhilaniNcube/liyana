@@ -9,9 +9,21 @@ import { formatCurrency } from "@/lib/utils/format-currency";
 import { formatDate } from "date-fns";
 import { useDeceasedStatusCheck } from "@/hooks/use-deceased-status-check";
 import { DeceasedStatusInformation } from "@/lib/schemas";
-import type { PolicyWithAllData } from "@/lib/queries/policy-details";
 
-type Beneficiary = PolicyWithAllData["beneficiaries"][0];
+type Beneficiary = {
+  id: number;
+  relation_type: string | null;
+  allocation_percentage: number | null;
+  beneficiary_party_id: string;
+  party?: {
+    id?: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    contact_details?: any;
+    id_number?: string; // encrypted version from the party table
+  } | null;
+  id_number?: string | null; // decrypted version from the query
+};
 
 type BeneficiaryWithDeceasedStatus = Beneficiary & {
   deceasedStatus?: DeceasedStatusInformation[] | null;
@@ -232,6 +244,18 @@ export default function PolicyBeneficiariesTab({
     );
   };
 
+  if (beneficiariesWithStatus.length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center text-muted-foreground">
+            No beneficiaries found for this policy.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const totalAllocation = beneficiariesWithStatus.reduce(
     (sum, b) =>
       sum +
@@ -277,24 +301,20 @@ export default function PolicyBeneficiariesTab({
                         ID: {beneficiary.id_number}
                       </div>
                     )}
-                    {beneficiary.party?.contact_details &&
-                      typeof beneficiary.party.contact_details === "object" &&
-                      beneficiary.party.contact_details !== null && (
-                        <div className="text-xs text-muted-foreground">
-                          {(beneficiary.party.contact_details as any).phone && (
-                            <div>
-                              Phone:{" "}
-                              {(beneficiary.party.contact_details as any).phone}
-                            </div>
-                          )}
-                          {(beneficiary.party.contact_details as any).email && (
-                            <div>
-                              Email:{" "}
-                              {(beneficiary.party.contact_details as any).email}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                    {beneficiary.party?.contact_details && (
+                      <div className="text-xs text-muted-foreground">
+                        {beneficiary.party.contact_details.phone && (
+                          <div>
+                            Phone: {beneficiary.party.contact_details.phone}
+                          </div>
+                        )}
+                        {beneficiary.party.contact_details.email && (
+                          <div>
+                            Email: {beneficiary.party.contact_details.email}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-end gap-2">
