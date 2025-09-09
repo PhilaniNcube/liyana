@@ -33,6 +33,8 @@ import { formatDistanceToNow } from "date-fns";
 import { ProfileDocumentUpload } from "@/components/profile-document-upload";
 import { ProfileDocumentsDisplay } from "@/components/profile-documents-display";
 import { CreateApplicationDialog } from "@/components/create-application-dialog";
+import { EmailApplicationComponent } from "@/components/email-application-component";
+import SmsApplication from "@/components/sms-application";
 import { toast } from "sonner";
 import type { Database } from "@/lib/types";
 
@@ -236,8 +238,8 @@ export function ProfilePageClient({
         </Card>
       </div>
 
-      <Tabs defaultValue="profile" className="mt-4">
-        <TabsList>
+      <Tabs defaultValue="profile" className="mt-4 w-full">
+        <TabsList className="w-full">
           <TabsTrigger value="profile">Profile Info</TabsTrigger>
           <TabsTrigger value="applications">
             Loan Applications ({totalApplications})
@@ -246,6 +248,8 @@ export function ProfilePageClient({
             API Checks ({totalApiChecks})
           </TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="email">Email Client</TabsTrigger>
+          <TabsTrigger value="sms">SMS Client</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -467,6 +471,78 @@ export function ProfilePageClient({
               />
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="email">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5" />
+                Email Client
+              </CardTitle>
+              <CardDescription>
+                Send emails to {profile.full_name} (
+                {profile.email || "No email provided"})
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {profile.email ? (
+                <EmailApplicationComponent
+                  id={profile.id}
+                  creditReports={[]}
+                  type="application"
+                  defaultSubject={`Message for ${profile.full_name}`}
+                  recipientName={profile.full_name}
+                  recipientEmail={profile.email}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <Mail className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold text-muted-foreground">
+                    No Email Address
+                  </h3>
+                  <p className="text-muted-foreground">
+                    This user hasn't provided an email address yet.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sms">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Phone className="h-5 w-5" />
+                SMS Client
+              </CardTitle>
+              <CardDescription>
+                Send SMS messages to {profile.full_name} (
+                {profile.phone_number || "No phone number provided"})
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {profile.phone_number ? (
+                <SmsApplication
+                  applicationId={0} // Using 0 as default since this is for general user communication
+                  profileId={profile.id}
+                  phoneNumber={profile.phone_number}
+                  applicantName={profile.full_name}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <Phone className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold text-muted-foreground">
+                    No Phone Number
+                  </h3>
+                  <p className="text-muted-foreground">
+                    This user hasn't provided a phone number yet.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
