@@ -15,6 +15,7 @@ import {
 import { formatDate } from "date-fns";
 import { formatCurrency } from "@/lib/utils/format-currency";
 import type { Database } from "@/lib/database.types";
+import { SendClaimToLinarDialog } from "./send-claim-to-linar-dialog";
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];
@@ -249,7 +250,16 @@ export default function ClaimDetailsCard({
               )}
             </div>
           </CardTitle>
-          {/* Future action buttons could go here */}
+          {/* Action buttons */}
+          <div className="flex gap-2 mt-2">
+            <SendClaimToLinarDialog
+              claimId={claim.id}
+              claimNumber={claim.claim_number}
+              claimantName={formatName(claim.claimant)}
+              policyId={policyId}
+              documents={allDocs || []}
+            />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">

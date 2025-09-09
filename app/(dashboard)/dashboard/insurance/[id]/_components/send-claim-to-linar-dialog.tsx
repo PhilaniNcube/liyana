@@ -14,7 +14,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Send,
@@ -24,28 +23,39 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { sendFuneralPolicyDetailsEmail } from "@/lib/actions/funeral-policy";
+import { sendClaimDetailsEmail } from "@/lib/actions/claims";
 import type { Database } from "@/lib/database.types";
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];
 
-interface SendToLinarDialogProps {
+interface SendClaimToLinarDialogProps {
+  claimId: number;
+  claimNumber: string;
+  claimantName: string;
   policyId: number;
-  policyHolderName: string;
   documents: PolicyDocumentRow[];
+  children?: React.ReactNode;
 }
 
-export function SendToLinarDialog({
+export function SendClaimToLinarDialog({
+  claimId,
+  claimNumber,
+  claimantName,
   policyId,
-  policyHolderName,
   documents,
-}: SendToLinarDialogProps) {
+  children,
+}: SendClaimToLinarDialogProps) {
   const [open, setOpen] = useState(false);
   const [selectedDocuments, setSelectedDocuments] = useState<number[]>([]);
   const [customMessage, setCustomMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Filter documents related to this claim or policy
+  const relevantDocuments = documents.filter(
+    (doc) => doc.claim_id === claimId || doc.policy_id === policyId
+  );
 
   const handleDocumentToggle = (documentId: number, checked: boolean) => {
     if (checked) {
@@ -80,37 +90,11 @@ export function SendToLinarDialog({
 
           if (response.ok) {
             const { attachments: documentAttachments } = await response.json();
-            console.log(
-              "Received attachments from API:",
-              documentAttachments?.length || 0
+            // Only add attachments that have valid content
+            const validAttachments = documentAttachments.filter(
+              (att: any) => att.content && att.content.length > 0 // Changed from 'data' to 'content'
             );
-
-            if (documentAttachments && documentAttachments.length > 0) {
-              // Validate that attachments have valid content
-              const validAttachments = documentAttachments.filter(
-                (att: any) => att.content && att.content.length > 0 // Changed from 'data' to 'content'
-              );
-              console.log(
-                "Valid attachments after filtering:",
-                validAttachments.length
-              );
-
-              if (validAttachments.length > 0) {
-                attachments.push(...validAttachments);
-              } else {
-                console.warn(
-                  "No valid attachments found - all had empty content"
-                );
-                toast.error(
-                  "Documents could not be processed for attachment. Sending email without attachments."
-                );
-              }
-            } else {
-              console.warn("No attachments returned from API");
-              toast.error(
-                "No valid documents found for attachment. Sending email without attachments."
-              );
-            }
+            attachments.push(...validAttachments);
           } else {
             throw new Error("Failed to fetch document attachments");
           }
@@ -122,15 +106,15 @@ export function SendToLinarDialog({
         }
       }
 
-      const result = await sendFuneralPolicyDetailsEmail(
-        policyId,
+      const result = await sendClaimDetailsEmail(
+        claimId,
         attachments.length > 0 ? attachments : undefined
       );
 
       if (result.error) {
         toast.error(result.message || "Failed to send email");
       } else {
-        toast.success("Policy details sent to Linar successfully!");
+        toast.success("Claim details sent to Linar successfully!");
         setSuccess(true);
 
         // Close dialog after short delay
@@ -152,17 +136,19 @@ export function SendToLinarDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Send className="h-4 w-4 mr-2" />
-          Send To Linar
-        </Button>
+        {children || (
+          <Button variant="outline" size="sm">
+            <Send className="h-4 w-4 mr-2" />
+            Send To Linar
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Send Policy to Linar</DialogTitle>
+          <DialogTitle>Send Claim to Linar</DialogTitle>
           <DialogDescription>
-            Send policy details for {policyHolderName} (Policy #{policyId}) to
-            the Linar email address. You can optionally attach policy documents.
+            Send claim details for {claimantName} (Claim #{claimNumber}) to the
+            Linar email address. You can optionally attach related documents.
           </DialogDescription>
         </DialogHeader>
 
@@ -173,11 +159,12 @@ export function SendToLinarDialog({
             <div className="border rounded-lg p-3 bg-gray-50 text-sm">
               <p className="font-medium">The email will include:</p>
               <ul className="mt-2 space-y-1 text-muted-foreground">
-                <li>• Complete policy details and coverage information</li>
-                <li>• Policy holder personal and contact information</li>
-                <li>• Employment and banking details</li>
-                <li>• Beneficiaries information</li>
-                <li>• Policy dates and status</li>
+                <li>• Complete claim details and status information</li>
+                <li>• Claimant personal and contact information</li>
+                <li>• Related policy information and coverage details</li>
+                <li>• Claim dates (incident, filed, submitted)</li>
+                <li>• Payout information (if any payouts exist)</li>
+                <li>• Policy holder contact information</li>
               </ul>
             </div>
           </div>
@@ -187,7 +174,7 @@ export function SendToLinarDialog({
             <Label htmlFor="message">Additional Message (Optional)</Label>
             <Textarea
               id="message"
-              placeholder="Add any additional notes or context for Linar..."
+              placeholder="Add any additional notes or context for Linar about this claim..."
               value={customMessage}
               onChange={(e) => setCustomMessage(e.target.value)}
               rows={3}
@@ -195,11 +182,11 @@ export function SendToLinarDialog({
           </div>
 
           {/* Document Selection */}
-          {documents.length > 0 && (
+          {relevantDocuments.length > 0 && (
             <div className="space-y-3">
               <Label>Attach Documents (Optional)</Label>
               <div className="border rounded-lg p-4 max-h-[200px] overflow-y-auto">
-                {documents.map((doc) => (
+                {relevantDocuments.map((doc) => (
                   <div
                     key={doc.id}
                     className="flex items-center space-x-3 py-2"
@@ -221,6 +208,9 @@ export function SendToLinarDialog({
                           .replace(/_/g, " ")
                           .replace(/\b\w/g, (l) => l.toUpperCase())}
                       </Label>
+                      <span className="text-xs text-muted-foreground">
+                        {doc.claim_id === claimId ? "(Claim)" : "(Policy)"}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -244,12 +234,12 @@ export function SendToLinarDialog({
           )}
 
           {/* No Documents Available */}
-          {documents.length === 0 && (
+          {relevantDocuments.length === 0 && (
             <Alert>
               <FileText className="h-4 w-4" />
               <AlertDescription>
-                No documents are available for this policy. Only policy details
-                will be sent.
+                No documents are available for this claim or its related policy.
+                Only claim details will be sent.
               </AlertDescription>
             </Alert>
           )}

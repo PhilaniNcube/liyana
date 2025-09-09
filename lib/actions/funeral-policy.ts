@@ -322,7 +322,7 @@ export async function sendFuneralPolicyDetailsEmail(
   policyId: number,
   attachments?: Array<{
     filename: string;
-    data: string; // Base64 encoded content
+    content: string; // Changed from 'data' to 'content' for Resend compatibility
     content_type?: string;
   }>
 ) {
@@ -462,16 +462,16 @@ export async function sendFuneralPolicyDetailsEmail(
         </div>
 
         <!-- Policy Summary -->
-        <div style="background: #f9fafb; padding: 30px; border-left: 4px solid #10b981;">
-          <h2 style="margin: 0 0 20px 0; color: #10b981; font-size: 20px;">Policy Summary</h2>
+        <div style="background: #f9fafb; padding: 30px;">
+          <h2 style="margin: 0 0 20px 0;  font-size: 20px;">Policy Summary</h2>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div>
               <p style="margin: 0; font-weight: bold; color: #374151;">Coverage Amount:</p>
-              <p style="margin: 5px 0 15px 0; font-size: 18px; color: #10b981; font-weight: bold;">${coverageAmount}</p>
+              <p style="margin: 5px 0 15px 0; font-size: 18px;  font-weight: bold;">${coverageAmount}</p>
             </div>
             <div>
               <p style="margin: 0; font-weight: bold; color: #374151;">Monthly Premium:</p>
-              <p style="margin: 5px 0 15px 0; font-size: 18px; color: #10b981; font-weight: bold;">${premiumAmount}</p>
+              <p style="margin: 5px 0 15px 0; font-size: 18px;  font-weight: bold;">${premiumAmount}</p>
             </div>
             <div>
               <p style="margin: 0; font-weight: bold; color: #374151;">Policy Status:</p>
@@ -620,7 +620,7 @@ export async function sendFuneralPolicyDetailsEmail(
         try {
           emailAttachments.push({
             filename: attachment.filename,
-            content: attachment.data, // Base64 encoded content
+            content: attachment.content, // Base64 encoded content
             content_type: attachment.content_type || 
                          attachment.filename.endsWith('.pdf') ? 'application/pdf' : 
                          attachment.filename.endsWith('.zip') ? 'application/zip' : 

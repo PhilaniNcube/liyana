@@ -15,6 +15,7 @@ export async function getDocumentForEmail(documentPath: string): Promise<{
   filename: string;
 } | null> {
   try {
+    console.log('Attempting to download document from path:', documentPath);
     const supabase = await createClient();
     
     // Download the file from Supabase Storage
@@ -22,14 +23,26 @@ export async function getDocumentForEmail(documentPath: string): Promise<{
       .from('documents') // Adjust bucket name as needed
       .download(documentPath);
 
-    if (error || !data) {
-      console.error('Error downloading document:', error);
+    if (error) {
+      console.error('Supabase storage download error:', error);
+      console.error('Error details:', {
+        message: error.message
+      });
       return null;
     }
+
+    if (!data) {
+      console.error('No data returned from Supabase storage download');
+      return null;
+    }
+
+    console.log('Document downloaded successfully, size:', data.size, 'bytes', 'type:', data.type);
 
     // Convert to base64
     const buffer = await data.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');
+
+    console.log('Base64 conversion completed, length:', base64.length);
 
     // Determine content type from file extension
     const extension = documentPath.split('.').pop()?.toLowerCase();
@@ -38,6 +51,14 @@ export async function getDocumentForEmail(documentPath: string): Promise<{
     // Extract filename from path
     const filename = documentPath.split('/').pop() || 'document';
 
+    console.log('Processed document:', {
+      filename,
+      content_type,
+      extension,
+      base64Length: base64.length,
+      originalSize: data.size
+    });
+
     return {
       data: base64,
       content_type,
@@ -45,6 +66,9 @@ export async function getDocumentForEmail(documentPath: string): Promise<{
     };
   } catch (error) {
     console.error('Error processing document:', error);
+    if (error instanceof Error) {
+      console.error('Error stack:', error.stack);
+    }
     return null;
   }
 }
@@ -75,9 +99,10 @@ function getContentTypeFromExtension(extension: string): string {
  */
 export async function getDocumentsForEmail(documentIds: number[]): Promise<Array<{
   filename: string;
-  data: string;
+  content: string; // Changed from 'data' to 'content' for Resend compatibility
   content_type: string;
 }>> {
+  console.log('Getting documents for email, IDs:', documentIds);
   const supabase = await createClient();
   
   // Get document records from database
@@ -91,18 +116,32 @@ export async function getDocumentsForEmail(documentIds: number[]): Promise<Array
     return [];
   }
 
+  console.log('Found documents in database:', documents.length);
+  documents.forEach(doc => {
+    console.log('Document:', {
+      id: doc.id,
+      type: doc.document_type,
+      path: doc.path
+    });
+  });
+
   // Process each document
   const attachments = [];
   for (const doc of documents) {
+    console.log(`Processing document ${doc.id} with path: ${doc.path}`);
     const documentData = await getDocumentForEmail(doc.path);
     if (documentData) {
       attachments.push({
         filename: `${doc.document_type}_${doc.id}.${documentData.filename.split('.').pop()}`,
-        data: documentData.data,
+        content: documentData.data, // Using 'content' field for Resend
         content_type: documentData.content_type,
       });
+      console.log(`Successfully processed document ${doc.id}`);
+    } else {
+      console.log(`Failed to process document ${doc.id}`);
     }
   }
 
+  console.log(`Returning ${attachments.length} attachments`);
   return attachments;
 }
