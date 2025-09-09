@@ -7,6 +7,7 @@ import { getCurrentUser } from "../queries";
 import { funeralPolicyLeadSchemaWithRefines as funeralPolicyLeadSchema, policyUpdateSchema } from "../schemas";
 import { encryptValue } from "../encryption";
 import { sendSms } from "./sms";
+import { Resend } from "resend";
 
 export async function createFuneralPolicy(prevState: any, formData: FormData) {
   // Parse FormData entries
@@ -312,6 +313,377 @@ export async function updatePolicy(prevState: any, formData: FormData) {
     return {
       error: true,
       message: "An unexpected error occurred while updating the policy.",
+      details: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function sendFuneralPolicyDetailsEmail(
+  policyId: number,
+  attachments?: Array<{
+    filename: string;
+    data: string; // Base64 encoded content
+    content_type?: string;
+  }>
+) {
+  try {
+    const supabase = await createClient();
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return {
+        error: true,
+        message: "You must be logged in to send policy details.",
+      };
+    }
+
+    // Check if user has admin or editor role for document attachments
+    const { data: userProfile, error: userProfileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (userProfileError || !userProfile) {
+      return {
+        error: true,
+        message: "User profile not found.",
+        details: userProfileError?.message,
+      };
+    }
+
+    if (attachments && attachments.length > 0 && userProfile.role !== "admin" && userProfile.role !== "editor") {
+      return {
+        error: true,
+        message: "Only admin or editor users can send emails with attachments.",
+      };
+    }
+
+    // Fetch the policy with policy holder details
+    const { data: policy, error: policyError } = await supabase
+      .from("policies")
+      .select(`
+        *,
+        policy_holder:policy_holder_id(*)
+      `)
+      .eq("id", policyId)
+      .eq("product_type", "funeral_policy")
+      .single();
+
+    if (policyError || !policy) {
+      return {
+        error: true,
+        message: "Funeral policy not found.",
+        details: policyError?.message,
+      };
+    }
+
+    // Fetch policy beneficiaries
+    const { data: beneficiaries, error: beneficiariesError } = await supabase
+      .from("policy_beneficiaries")
+      .select(`
+        *,
+        beneficiary:beneficiary_party_id(*)
+      `)
+      .eq("policy_id", policyId);
+
+    if (beneficiariesError) {
+      console.error("Error fetching beneficiaries:", beneficiariesError);
+    }
+
+    // Get LINAR email address from environment
+    const linarEmailAddress = process.env.LINAR_EMAIL_ADDRESS;
+    if (!linarEmailAddress) {
+      return {
+        error: true,
+        message: "LINAR email address not configured.",
+      };
+    }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    // Format policy holder name
+    const policyHolderName = `${policy.policy_holder?.first_name || ''} ${policy.policy_holder?.last_name || ''}`.trim();
+    
+    // Format coverage amount
+    const coverageAmount = new Intl.NumberFormat('en-ZA', {
+      style: 'currency',
+      currency: 'ZAR',
+    }).format(policy.coverage_amount || 0);
+
+    // Format premium amount if available
+    const premiumAmount = policy.premium_amount 
+      ? new Intl.NumberFormat('en-ZA', {
+          style: 'currency',
+          currency: 'ZAR',
+        }).format(policy.premium_amount)
+      : 'Not calculated yet';
+
+    // Safely extract contact details
+    const contactDetails = policy.policy_holder?.contact_details as { phone?: string; email?: string } | null;
+    const phoneNumber = contactDetails?.phone || 'N/A';
+    const email = contactDetails?.email || 'N/A';
+
+    // Safely extract employment details
+    const employmentDetails = policy.employment_details as {
+      employment_type?: string;
+      employer_name?: string;
+      job_title?: string;
+      monthly_income?: number;
+    } | null;
+
+    // Safely extract banking details
+    const bankingDetails = policy.policy_holder?.banking_details as {
+      account_name?: string;
+      bank_name?: string;
+      account_type?: string;
+      payment_method?: string;
+    } | null;
+
+    // Format beneficiaries list
+    const beneficiariesList = beneficiaries && beneficiaries.length > 0
+      ? beneficiaries.map((ben, index) => `
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${index + 1}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${ben.beneficiary?.first_name || ''} ${ben.beneficiary?.last_name || ''}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${ben.relation_type || 'N/A'}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${ben.allocation_percentage || 0}%</td>
+          </tr>
+        `).join('')
+      : '<tr><td colspan="4" style="padding: 8px; text-align: center; color: #6b7280;">No beneficiaries added yet</td></tr>';
+
+    // Create email HTML content
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; line-height: 1.6; color: #374151;">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #1f2937 0%, #374151 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Funeral Cover Policy Details</h1>
+          <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Policy ID: #${policyId}</p>
+        </div>
+
+        <!-- Policy Summary -->
+        <div style="background: #f9fafb; padding: 30px; border-left: 4px solid #10b981;">
+          <h2 style="margin: 0 0 20px 0; color: #10b981; font-size: 20px;">Policy Summary</h2>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #374151;">Coverage Amount:</p>
+              <p style="margin: 5px 0 15px 0; font-size: 18px; color: #10b981; font-weight: bold;">${coverageAmount}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #374151;">Monthly Premium:</p>
+              <p style="margin: 5px 0 15px 0; font-size: 18px; color: #10b981; font-weight: bold;">${premiumAmount}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #374151;">Policy Status:</p>
+              <p style="margin: 5px 0 15px 0; text-transform: capitalize; font-weight: 500;">${policy.policy_status || 'Pending'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #374151;">Payment Frequency:</p>
+              <p style="margin: 5px 0 15px 0; text-transform: capitalize; font-weight: 500;">${policy.frequency || 'Monthly'}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Policy Holder Information -->
+        <div style="padding: 30px; background: white;">
+          <h2 style="margin: 0 0 20px 0; color: #374151; font-size: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Policy Holder Information</h2>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Full Name:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${policyHolderName || 'N/A'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Date of Birth:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${policy.policy_holder?.date_of_birth || 'N/A'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Phone Number:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${phoneNumber}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Email:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${email}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Employment Information -->
+        ${employmentDetails ? `
+        <div style="padding: 30px; background: #f9fafb;">
+          <h2 style="margin: 0 0 20px 0; color: #374151; font-size: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Employment Information</h2>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Employment Type:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151; text-transform: capitalize;">${employmentDetails.employment_type || 'N/A'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Employer:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${employmentDetails.employer_name || 'N/A'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Job Title:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${employmentDetails.job_title || 'N/A'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Monthly Income:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${employmentDetails.monthly_income ? new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(employmentDetails.monthly_income) : 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- Banking Information -->
+        ${bankingDetails ? `
+        <div style="padding: 30px; background: white;">
+          <h2 style="margin: 0 0 20px 0; color: #374151; font-size: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Banking Information</h2>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Account Name:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${bankingDetails.account_name || 'N/A'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Bank:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${bankingDetails.bank_name || 'N/A'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Account Type:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151; text-transform: capitalize;">${bankingDetails.account_type || 'N/A'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Payment Method:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151; text-transform: capitalize;">${bankingDetails.payment_method || 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- Beneficiaries -->
+        <div style="padding: 30px; background: #f9fafb;">
+          <h2 style="margin: 0 0 20px 0; color: #374151; font-size: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Beneficiaries</h2>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <thead>
+                <tr style="background: #374151; color: white;">
+                  <th style="padding: 12px 8px; text-align: left; font-weight: 600;">#</th>
+                  <th style="padding: 12px 8px; text-align: left; font-weight: 600;">Full Name</th>
+                  <th style="padding: 12px 8px; text-align: left; font-weight: 600;">Relationship</th>
+                  <th style="padding: 12px 8px; text-align: left; font-weight: 600;">Allocation %</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${beneficiariesList}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Policy Dates -->
+        <div style="padding: 30px; background: white;">
+          <h2 style="margin: 0 0 20px 0; color: #374151; font-size: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Policy Dates</h2>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Created Date:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${policy.created_at ? new Date(policy.created_at).toLocaleDateString('en-ZA') : 'N/A'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Start Date:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${policy.start_date ? new Date(policy.start_date).toLocaleDateString('en-ZA') : 'Not set'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">End Date:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${policy.end_date ? new Date(policy.end_date).toLocaleDateString('en-ZA') : 'No end date'}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #374151; color: white; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;">
+          <p style="margin: 0; font-size: 14px; opacity: 0.9;">
+            This is an automated notification from Liyana Finance
+          </p>
+          <p style="margin: 5px 0 0 0; font-size: 12px; opacity: 0.7;">
+            Generated on ${new Date().toLocaleDateString('en-ZA')} at ${new Date().toLocaleTimeString('en-ZA')}
+          </p>
+        </div>
+      </div>
+    `;
+
+    // Handle attachments
+    const emailAttachments: Array<{
+      filename: string;
+      content: Buffer | string;
+      content_type?: string;
+    }> = [];
+
+    if (attachments && attachments.length > 0) {
+      attachments.forEach((attachment) => {
+        try {
+          emailAttachments.push({
+            filename: attachment.filename,
+            content: attachment.data, // Base64 encoded content
+            content_type: attachment.content_type || 
+                         attachment.filename.endsWith('.pdf') ? 'application/pdf' : 
+                         attachment.filename.endsWith('.zip') ? 'application/zip' : 
+                         attachment.filename.endsWith('.doc') ? 'application/msword' :
+                         attachment.filename.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' :
+                         attachment.filename.endsWith('.xls') ? 'application/vnd.ms-excel' :
+                         attachment.filename.endsWith('.xlsx') ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
+                         attachment.filename.endsWith('.jpg') || attachment.filename.endsWith('.jpeg') ? 'image/jpeg' :
+                         attachment.filename.endsWith('.png') ? 'image/png' :
+                         'application/octet-stream',
+          });
+        } catch (attachmentError) {
+          console.error("Failed to process attachment:", attachmentError);
+        }
+      });
+    }
+
+    // Send the email
+    const { data: emailData, error: emailError } = await resend.emails.send({
+      from: "Liyana Finance <noreply@liyanafinance.co.za>",
+      to: [linarEmailAddress],
+      subject: `Funeral Policy Details - ${policyHolderName} (Policy #${policyId})`,
+      html: emailHtml,
+      attachments: emailAttachments.length > 0 ? emailAttachments : undefined,
+    });
+
+    if (emailError) {
+      console.error("Failed to send funeral policy email:", emailError);
+      return {
+        error: true,
+        message: "Failed to send policy details email.",
+        details: emailError.message,
+      };
+    }
+
+    // Save email record - only if emailData.id exists
+    if (emailData?.id) {
+      const { error: saveError } = await supabase
+        .from("resend_emails")
+        .insert({
+          resend_id: emailData.id,
+          profile_id: policy.user_id, // Use the customer's profile ID, not the admin's
+          policy_id: policyId,
+        });
+
+      if (saveError) {
+        console.error("Failed to save email record:", saveError);
+        // Don't fail the request if we can't save the record
+      }
+    }
+
+    return {
+      error: false,
+      message: "Funeral policy details sent successfully to LINAR email.",
+      emailId: emailData?.id,
+      recipient: linarEmailAddress,
+    };
+
+  } catch (error) {
+    console.error("Error sending funeral policy details email:", error);
+    return {
+      error: true,
+      message: "An unexpected error occurred while sending the email.",
       details: error instanceof Error ? error.message : "Unknown error",
     };
   }

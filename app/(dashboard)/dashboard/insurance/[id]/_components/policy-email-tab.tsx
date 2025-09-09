@@ -1,19 +1,16 @@
 "use client";
 
 import { EmailPolicy } from "@/components/email-policy";
+import type { Database } from "@/lib/database.types";
 
-interface PolicyDocument {
-  id: number;
-  file_name: string;
-  file_url: string;
-  uploaded_at: string;
-}
+type PolicyDocumentRow =
+  Database["public"]["Tables"]["policy_documents"]["Row"];
 
 interface PolicyEmailTabProps {
   policyId: number;
   policyHolderEmail: string;
   policyHolderName: string;
-  documents: PolicyDocument[];
+  documents: PolicyDocumentRow[];
 }
 
 const PolicyEmailTab = ({

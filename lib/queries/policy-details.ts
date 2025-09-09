@@ -8,6 +8,7 @@ type PartyRow = Database["public"]["Tables"]["parties"]["Row"];
 type ClaimRow = Database["public"]["Tables"]["claims"]["Row"];
 type ClaimPayoutRow = Database["public"]["Tables"]["claim_payouts"]["Row"];
 type PolicyBeneficiaryRow = Database["public"]["Tables"]["policy_beneficiaries"]["Row"];
+type PolicyDocumentRow = Database["public"]["Tables"]["policy_documents"]["Row"];
 
 export type PolicyWithAllData = PolicyRow & {
   policy_holder: Partial<PartyRow> | null;
@@ -32,6 +33,7 @@ export type PolicyWithAllData = PolicyRow & {
     status: string;
     payment_method?: string;
   }>;
+  documents: Array<PolicyDocumentRow>;
 };
 
 export async function getCompletePolicyData(id: number): Promise<PolicyWithAllData | null> {
@@ -159,11 +161,21 @@ export async function getCompletePolicyData(id: number): Promise<PolicyWithAllDa
     // }
   ];
 
+  // Get policy documents
+  const { data: documents, error: documentsError } = await supabase
+    .from("policy_documents")
+    .select("*")
+    .eq("policy_id", id)
+    .order("created_at", { ascending: false });
+
+  const policyDocuments = documentsError || !documents ? [] : documents;
+
   return {
     ...policy,
     beneficiaries,
     claims,
     premium_payments,
+    documents: policyDocuments,
   } as PolicyWithAllData;
 }
 
