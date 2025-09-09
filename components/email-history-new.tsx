@@ -81,6 +81,15 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
                               addSuffix: true,
                             })}
                           </p>
+                          {details?.to && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <User className="h-3 w-3" />
+                              To:{" "}
+                              {Array.isArray(details.to)
+                                ? details.to.join(", ")
+                                : details.to}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

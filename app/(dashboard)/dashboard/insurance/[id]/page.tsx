@@ -1,4 +1,5 @@
 import { getCompletePolicyData } from "@/lib/queries/policy-details";
+import { getEmailsForPolicyWithDetails } from "@/lib/queries/emails";
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PersonalInfoTab from "./_components/personal-info-tab";
@@ -23,7 +24,10 @@ type PolicyPageProps = {
 const PolicyPage = async ({ params }: PolicyPageProps) => {
   const { id } = await params;
 
-  const policyData = await getCompletePolicyData(id);
+  const [policyData, emailHistory] = await Promise.all([
+    getCompletePolicyData(id),
+    getEmailsForPolicyWithDetails(id),
+  ]);
 
   if (!policyData) {
     return <div className="text-red-500">Policy not found</div>;
@@ -124,6 +128,7 @@ const PolicyPage = async ({ params }: PolicyPageProps) => {
                 .join(" ") || ""
             }
             documents={policyData.documents}
+            emailHistory={emailHistory}
           />
         </TabsContent>
         <TabsContent value="sms" className="mt-6">

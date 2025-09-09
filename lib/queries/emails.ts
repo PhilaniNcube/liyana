@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/server";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export interface EmailRecord {
   id: number;
@@ -8,6 +11,21 @@ export interface EmailRecord {
   loan_id: number | null;
   policy_id: number | null;
   created_at: string;
+}
+
+export interface EmailDetails {
+  id: string;
+  to: string[];
+  from: string;
+  subject: string;
+  html: string;
+  text: string;
+  created_at: string;
+  last_event: string;
+}
+
+export interface EmailWithDetails extends EmailRecord {
+  details?: EmailDetails;
 }
 
 export async function getEmailsForApplication(applicationId: number): Promise<EmailRecord[]> {
@@ -59,6 +77,77 @@ export async function getEmailsForPolicy(policyId: number): Promise<EmailRecord[
   }
 
   return data || [];
+}
+
+async function fetchEmailDetailsFromResend(resendId: string): Promise<EmailDetails | null> {
+  try {
+    const email = await resend.emails.get(resendId);
+    
+    return {
+      id: email.data?.id || resendId,
+      to: Array.isArray(email.data?.to) ? email.data.to : email.data?.to ? [email.data.to] : [],
+      from: email.data?.from || "",
+      subject: email.data?.subject || "",
+      html: email.data?.html || "",
+      text: email.data?.text || "",
+      created_at: email.data?.created_at || "",
+      last_event: email.data?.last_event || "sent",
+    };
+  } catch (error) {
+    console.error(`Failed to fetch email details for ${resendId}:`, error);
+    return null;
+  }
+}
+
+export async function getEmailsForApplicationWithDetails(applicationId: number): Promise<EmailWithDetails[]> {
+  const emails = await getEmailsForApplication(applicationId);
+  
+  // Fetch details for each email
+  const emailsWithDetails = await Promise.all(
+    emails.map(async (email) => {
+      const details = await fetchEmailDetailsFromResend(email.resend_id);
+      return {
+        ...email,
+        details: details || undefined,
+      };
+    })
+  );
+
+  return emailsWithDetails;
+}
+
+export async function getEmailsForLoanWithDetails(loanId: number): Promise<EmailWithDetails[]> {
+  const emails = await getEmailsForLoan(loanId);
+  
+  // Fetch details for each email
+  const emailsWithDetails = await Promise.all(
+    emails.map(async (email) => {
+      const details = await fetchEmailDetailsFromResend(email.resend_id);
+      return {
+        ...email,
+        details: details || undefined,
+      };
+    })
+  );
+
+  return emailsWithDetails;
+}
+
+export async function getEmailsForPolicyWithDetails(policyId: number): Promise<EmailWithDetails[]> {
+  const emails = await getEmailsForPolicy(policyId);
+  
+  // Fetch details for each email
+  const emailsWithDetails = await Promise.all(
+    emails.map(async (email) => {
+      const details = await fetchEmailDetailsFromResend(email.resend_id);
+      return {
+        ...email,
+        details: details || undefined,
+      };
+    })
+  );
+
+  return emailsWithDetails;
 }
 
 export async function getAllEmailsForProfile(profileId: string): Promise<EmailRecord[]> {

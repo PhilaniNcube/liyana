@@ -76,17 +76,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { EmailHistory } from "@/components/email-history";
+import type { EmailWithDetails } from "@/lib/queries/emails";
 
 interface ApplicationDetailClientProps {
   application: DecryptedApplication;
   apiChecks: Database["public"]["Tables"]["api_checks"]["Row"][];
   documents: Database["public"]["Tables"]["documents"]["Row"][];
+  emailHistory: EmailWithDetails[];
 }
 
 export function ApplicationDetailClient({
   application,
   apiChecks,
   documents,
+  emailHistory,
 }: ApplicationDetailClientProps) {
   const [isRunningFraudCheck, setIsRunningFraudCheck] = useState(false);
   const [fraudCheckResults, setFraudCheckResults] = useState<any>(null);
@@ -556,20 +560,24 @@ export function ApplicationDetailClient({
         </TabsContent>
         <TabsContent className="w-full" value="emails">
           {/* Emails Section */}
-          <Card className="w-full">
-            <CardHeader>
-              <CardTitle>Emails</CardTitle>
-              <CardDescription>
-                All emails sent to the applicant regarding this application
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="w-full">
-              <EmailApplication
-                id={application.id}
-                creditReports={creditReports}
-              />
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle>Send Email</CardTitle>
+                <CardDescription>
+                  Send emails to the applicant regarding this application
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="w-full">
+                <EmailApplication
+                  id={application.id}
+                  creditReports={creditReports}
+                />
+              </CardContent>
+            </Card>
+
+            <EmailHistory emails={emailHistory} />
+          </div>
         </TabsContent>
         <TabsContent className="w-full" value="sms">
           {/* SMS Section */}

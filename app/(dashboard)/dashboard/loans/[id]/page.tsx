@@ -26,6 +26,7 @@ import {
 } from "@/components/application-detail";
 import LoanEmailTab from "./_components/loan-email-tab";
 import { createClient } from "@/lib/server";
+import { getEmailsForLoanWithDetails } from "@/lib/queries/emails";
 
 interface PageProps {
   params: Promise<{ id: number }>;
@@ -34,6 +35,9 @@ interface PageProps {
 const LoanPage = async ({ params }: PageProps) => {
   const { id } = await params;
   const loan = await getLoan(id);
+
+  // Fetch email history for this loan
+  const emailHistory = await getEmailsForLoanWithDetails(id);
 
   // Get borrower profile for email
   const supabase = await createClient();
@@ -163,6 +167,7 @@ const LoanPage = async ({ params }: PageProps) => {
                   loanId={loan.id}
                   borrowerEmail={borrowerEmail || undefined}
                   borrowerName={borrowerName || undefined}
+                  emailHistory={emailHistory}
                 />
               </TabsContent>
             </Tabs>

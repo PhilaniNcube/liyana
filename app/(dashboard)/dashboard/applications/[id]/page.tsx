@@ -1,6 +1,7 @@
 import { getApplicationByIdWithProfile } from "@/lib/queries/applications";
 import { getApiChecksByIdNumber } from "@/lib/queries/api-checks";
 import { getDocumentsByApplication } from "@/lib/queries/documents";
+import { getEmailsForApplicationWithDetails } from "@/lib/queries/emails";
 import { notFound } from "next/navigation";
 import { decryptValue } from "@/lib/encryption";
 import { ApplicationDetailClient } from "./client";
@@ -43,6 +44,10 @@ export default async function ApplicationDetailPage({
     // Fetch documents for this application
     const documents = await getDocumentsByApplication(applicationId);
 
+    // Fetch email history for this application
+    const emailHistory =
+      await getEmailsForApplicationWithDetails(applicationId);
+
     const decryptedApplication = {
       ...application,
       id_number_decrypted: decryptedIdNumber,
@@ -65,6 +70,7 @@ export default async function ApplicationDetailPage({
         application={decryptedApplication}
         apiChecks={decryptedApiChecks}
         documents={documents}
+        emailHistory={emailHistory}
       />
     );
   } catch (error) {

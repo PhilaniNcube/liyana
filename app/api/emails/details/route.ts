@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
 import { createClient } from "@/lib/server";
-import { 
-  getEmailsForApplicationWithDetails, 
-  getEmailsForLoanWithDetails, 
-  getEmailsForPolicyWithDetails 
-} from "@/lib/queries/emails";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const applicationId = searchParams.get("applicationId");
-    const loanId = searchParams.get("loanId");
-    const policyId = searchParams.get("policyId");
+    const resendId = searchParams.get("resendId");
+
+    if (!resendId) {
+      return NextResponse.json(
+        { error: "Missing required parameter: resendId" },
+        { status: 400 }
+      );
+    }
 
     // Check authentication
     const supabase = await createClient();
@@ -48,24 +51,32 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let emails;
-
-    if (applicationId) {
-      emails = await getEmailsForApplicationWithDetails(parseInt(applicationId));
-    } else if (loanId) {
-      emails = await getEmailsForLoanWithDetails(parseInt(loanId));
-    } else if (policyId) {
-      emails = await getEmailsForPolicyWithDetails(parseInt(policyId));
-    } else {
+    // Fetch email details from Resend
+    try {
+      const email = await resend.emails.get(resendId);
+      
+      return NextResponse.json({
+        id: email.data?.id,
+        to: email.data?.to,
+        from: email.data?.from,
+        subject: email.data?.subject,
+        html: email.data?.html,
+        text: email.data?.text,
+        created_at: email.data?.created_at,
+        last_event: email.data?.last_event,
+      });
+    } catch (resendError) {
+      console.error("Resend API error:", resendError);
       return NextResponse.json(
-        { error: "Missing required parameter: applicationId, loanId, or policyId" },
-        { status: 400 }
+        { 
+          error: "Failed to fetch email details from Resend",
+          details: resendError instanceof Error ? resendError.message : "Unknown error"
+        },
+        { status: 500 }
       );
     }
-
-    return NextResponse.json(emails);
   } catch (error) {
-    console.error("Email history API error:", error);
+    console.error("Email details API error:", error);
     return NextResponse.json(
       {
         error: "Internal server error",

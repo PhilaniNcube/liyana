@@ -31,7 +31,6 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { EmailHistory } from "./email-history";
 
 // Schema for email form
 const emailSchema = z.object({
@@ -247,7 +246,7 @@ export function EmailApplicationComponent({
   };
 
   return (
-    <div className="w-full grid grid-cols-1 md:grid-cols-2 space-x-6">
+    <div className="w-full">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -406,9 +405,6 @@ export function EmailApplicationComponent({
           </Form>
         </CardContent>
       </Card>
-
-      {/* Email History */}
-      <EmailHistory itemId={parseInt(itemId)} itemType={type} />
     </div>
   );
 }
