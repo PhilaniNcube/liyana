@@ -176,7 +176,7 @@ export function SendToLinarDialog({
                 <li>• Complete policy details and coverage information</li>
                 <li>• Policy holder personal and contact information</li>
                 <li>• Employment and banking details</li>
-                <li>• Beneficiaries information</li>
+                <li>• Covered persons information</li>
                 <li>• Policy dates and status</li>
               </ul>
             </div>

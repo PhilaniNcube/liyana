@@ -249,12 +249,7 @@ export default function PolicyBeneficiariesTab({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Beneficiaries ({beneficiariesWithStatus.length})</span>
-            {hasPayoutAllocations && (
-              <Badge variant={allocationWarning ? "destructive" : "secondary"}>
-                Total Allocation: {totalAllocation}%
-              </Badge>
-            )}
+            <span>Covered Persons ({beneficiariesWithStatus.length})</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

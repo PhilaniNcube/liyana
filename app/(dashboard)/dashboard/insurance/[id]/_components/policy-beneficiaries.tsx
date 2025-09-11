@@ -73,26 +73,6 @@ export default async function PolicyBeneficiaries({
       </div>
 
       <div className="rounded-lg border">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
-          <div className="text-sm">
-            {hasPayoutAllocations ? (
-              <span>
-                Total payout allocation:{" "}
-                <span className="font-medium">{totalAllocation}%</span>
-              </span>
-            ) : (
-              <span>
-                This policy lists covered people (no payout allocations).
-              </span>
-            )}
-          </div>
-          {allocationWarning && (
-            <div className="text-xs text-amber-600">
-              Warning: allocations should total 100%.
-            </div>
-          )}
-        </div>
-
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-muted/50 text-muted-foreground">
