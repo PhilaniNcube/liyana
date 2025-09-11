@@ -87,6 +87,16 @@ export function LoanBankingInfoCard({ application }: LoanBankingInfoCardProps) {
     }).format(amount);
   };
 
+  const formatLoanPurpose = (purpose: string | null) => {
+    if (!purpose) return "N/A";
+    // Convert underscores to spaces, then remove all non-alphabetic characters and extra spaces
+    return purpose
+      .replace(/_/g, " ")
+      .replace(/[^a-zA-Z\s]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
   const handleAccountVerification = async () => {
     if (!application.id) {
       setVerificationError("Application ID is required for verification");
@@ -199,14 +209,18 @@ export function LoanBankingInfoCard({ application }: LoanBankingInfoCardProps) {
           <p className="text-sm font-medium text-muted-foreground">
             Loan Purpose
           </p>
-          <p className="text-sm">{application.loan_purpose || "N/A"}</p>
+          <p className="text-sm capitalize">
+            {formatLoanPurpose(application.loan_purpose)}
+          </p>
         </div>
         {application.loan_purpose_reason && (
           <div>
             <p className="text-sm font-medium text-muted-foreground">
               Loan Purpose Reason
             </p>
-            <p className="text-sm">{application.loan_purpose_reason}</p>
+            <p className="text-sm capitalize">
+              {application.loan_purpose_reason}
+            </p>
           </div>
         )}
         <Separator />
