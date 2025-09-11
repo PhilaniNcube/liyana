@@ -25,6 +25,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { handleFraudCheck } from "@/lib/utils/fraud-check";
 import { handleBraveLenderSubmit } from "@/lib/utils";
+import { calculateAffordability } from "@/lib/utils/affordability-calculator";
 
 import {
   PersonalInfoCard,
@@ -223,6 +224,12 @@ export function ApplicationDetailClient({
         }
       };
 
+      // Calculate net salary based on affordability data
+      const affordabilityCalculation = calculateAffordability(
+        application.monthly_income || 0,
+        application.affordability
+      );
+
       // Map application data to Max Money client schema format
       const clientData = {
         // Personal details
@@ -247,8 +254,8 @@ export function ApplicationDetailClient({
         employer_code: "", // Not available in application schema
         employee_no: "", // Not available in application schema
         gross_salary: application.monthly_income || 0,
-        // calculate net salary based on deductions if available in the affordability column
-        net_salary: application.monthly_income || 0,
+        // Net salary calculated from affordability data (monthly_income + additional_income - deductions)
+        net_salary: affordabilityCalculation.netIncome,
 
         // Banking details
         bank_account_no: application.bank_account_number || "",
