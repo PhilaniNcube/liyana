@@ -1,31 +1,111 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Calendar, User, ChevronDown, ChevronUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Mail,
+  Calendar,
+  User,
+  ChevronDown,
+  ChevronUp,
+  RefreshCw,
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import type { EmailWithDetails } from "@/lib/queries/emails";
+import type { EmailWithDetails, EmailDetails } from "@/lib/queries/emails";
 
 interface EmailHistoryProps {
   emails: EmailWithDetails[];
+}
+
+// Function to fetch email details from Resend API
+async function fetchEmailByResendId(
+  resendId: string
+): Promise<EmailDetails | null> {
+  try {
+    const response = await fetch(`/api/emails/${resendId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching email:", error);
+    return null;
+  }
 }
 
 export function EmailHistory({ emails }: EmailHistoryProps) {
   const [expandedEmails, setExpandedEmails] = useState<Record<string, boolean>>(
     {}
   );
+  const [emailDetails, setEmailDetails] = useState<
+    Record<string, EmailDetails | null>
+  >({});
+  const [loadingEmails, setLoadingEmails] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [refreshingAll, setRefreshingAll] = useState(false);
 
-  const toggleEmailExpansion = (resendId: string) => {
+  const toggleEmailExpansion = async (resendId: string) => {
+    const isCurrentlyExpanded = expandedEmails[resendId];
+
     setExpandedEmails((prev) => ({
       ...prev,
       [resendId]: !prev[resendId],
     }));
+
+    // If expanding and we don't have details yet, fetch them
+    if (!isCurrentlyExpanded && !emailDetails[resendId]) {
+      await fetchEmailDetails(resendId);
+    }
+  };
+
+  const fetchEmailDetails = async (resendId: string) => {
+    setLoadingEmails((prev) => ({ ...prev, [resendId]: true }));
+
+    try {
+      const details = await fetchEmailByResendId(resendId);
+      setEmailDetails((prev) => ({ ...prev, [resendId]: details }));
+    } catch (error) {
+      console.error(`Failed to fetch email details for ${resendId}:`, error);
+      setEmailDetails((prev) => ({ ...prev, [resendId]: null }));
+    } finally {
+      setLoadingEmails((prev) => ({ ...prev, [resendId]: false }));
+    }
+  };
+
+  const refreshAllEmails = async () => {
+    setRefreshingAll(true);
+
+    try {
+      const promises = emails.map((email) =>
+        fetchEmailDetails(email.resend_id)
+      );
+      await Promise.all(promises);
+    } catch (error) {
+      console.error("Failed to refresh all emails:", error);
+    } finally {
+      setRefreshingAll(false);
+    }
   };
 
   if (emails.length === 0) {
@@ -49,16 +129,31 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Mail className="h-5 w-5" />
-          Email History ({emails.length})
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Email History ({emails.length})
+          </CardTitle>
+          <Button
+            onClick={refreshAllEmails}
+            disabled={refreshingAll}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${refreshingAll ? "animate-spin" : ""}`}
+            />
+            {refreshingAll ? "Refreshing..." : "Refresh All"}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {emails.map((email) => {
-            const details = email.details;
+            // Use fetched details if available, otherwise fall back to existing details
+            const details = emailDetails[email.resend_id] || email.details;
             const isExpanded = expandedEmails[email.resend_id];
+            const isLoading = loadingEmails[email.resend_id];
 
             return (
               <Collapsible
@@ -98,7 +193,14 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
 
                   <CollapsibleContent>
                     <div className="border-t p-3 bg-gray-50">
-                      {details ? (
+                      {isLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                          <span className="ml-2 text-sm text-muted-foreground">
+                            Loading email details...
+                          </span>
+                        </div>
+                      ) : details ? (
                         <div className="space-y-3">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                             <div>
@@ -157,11 +259,38 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
                               </div>
                             </div>
                           )}
+
+                          <div className="flex justify-end">
+                            <Button
+                              onClick={() => fetchEmailDetails(email.resend_id)}
+                              variant="ghost"
+                              size="sm"
+                              disabled={isLoading}
+                            >
+                              <RefreshCw
+                                className={`h-3 w-3 mr-1 ${isLoading ? "animate-spin" : ""}`}
+                              />
+                              Refresh
+                            </Button>
+                          </div>
                         </div>
                       ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Email details could not be loaded from Resend.
-                        </p>
+                        <div className="text-center py-8">
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Email details could not be loaded from Resend.
+                          </p>
+                          <Button
+                            onClick={() => fetchEmailDetails(email.resend_id)}
+                            variant="outline"
+                            size="sm"
+                            disabled={isLoading}
+                          >
+                            <RefreshCw
+                              className={`h-3 w-3 mr-1 ${isLoading ? "animate-spin" : ""}`}
+                            />
+                            Try Again
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </CollapsibleContent>

@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Mail,
   Calendar,
   User,
   ChevronDown,
   ChevronUp,
-  Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -17,14 +18,39 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import type {
-  EmailWithDetails,
-  EmailDetails,
-  EmailRecord,
-} from "@/lib/queries/emails";
+import type { EmailWithDetails, EmailDetails } from "@/lib/queries/emails";
 
 interface EmailHistoryProps {
-  emails: EmailWithDetails[] | EmailRecord[];
+  emails: EmailWithDetails[];
+}
+
+// Function to fetch email details from Resend API
+async function fetchEmailByResendId(
+  resendId: string
+): Promise<EmailDetails | null> {
+  try {
+    const response = await fetch(`/api/emails/${resendId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching email:", error);
+    return null;
+  }
 }
 
 export function EmailHistory({ emails }: EmailHistoryProps) {
@@ -34,50 +60,51 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
   const [emailDetails, setEmailDetails] = useState<
     Record<string, EmailDetails | null>
   >({});
-  const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>(
+  const [loadingEmails, setLoadingEmails] = useState<Record<string, boolean>>(
     {}
   );
-
-  // Function to fetch email details from Resend API
-  const fetchEmailDetails = async (resendId: string) => {
-    if (emailDetails[resendId] !== undefined || loadingDetails[resendId]) {
-      return; // Already fetched or currently fetching
-    }
-
-    setLoadingDetails((prev) => ({ ...prev, [resendId]: true }));
-
-    try {
-      const response = await fetch(`/api/emails/details/${resendId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.ok) {
-        const details = await response.json();
-        setEmailDetails((prev) => ({ ...prev, [resendId]: details }));
-      } else {
-        console.error("Failed to fetch email details:", response.statusText);
-        setEmailDetails((prev) => ({ ...prev, [resendId]: null }));
-      }
-    } catch (error) {
-      console.error("Error fetching email details:", error);
-      setEmailDetails((prev) => ({ ...prev, [resendId]: null }));
-    } finally {
-      setLoadingDetails((prev) => ({ ...prev, [resendId]: false }));
-    }
-  };
+  const [refreshingAll, setRefreshingAll] = useState(false);
 
   const toggleEmailExpansion = async (resendId: string) => {
+    const isCurrentlyExpanded = expandedEmails[resendId];
+
     setExpandedEmails((prev) => ({
       ...prev,
       [resendId]: !prev[resendId],
     }));
 
-    // Fetch details when expanding if not already fetched
-    if (!expandedEmails[resendId] && emailDetails[resendId] === undefined) {
+    // If expanding and we don't have details yet, fetch them
+    if (!isCurrentlyExpanded && !emailDetails[resendId]) {
       await fetchEmailDetails(resendId);
+    }
+  };
+
+  const fetchEmailDetails = async (resendId: string) => {
+    setLoadingEmails((prev) => ({ ...prev, [resendId]: true }));
+
+    try {
+      const details = await fetchEmailByResendId(resendId);
+      setEmailDetails((prev) => ({ ...prev, [resendId]: details }));
+    } catch (error) {
+      console.error(`Failed to fetch email details for ${resendId}:`, error);
+      setEmailDetails((prev) => ({ ...prev, [resendId]: null }));
+    } finally {
+      setLoadingEmails((prev) => ({ ...prev, [resendId]: false }));
+    }
+  };
+
+  const refreshAllEmails = async () => {
+    setRefreshingAll(true);
+
+    try {
+      const promises = emails.map((email) =>
+        fetchEmailDetails(email.resend_id)
+      );
+      await Promise.all(promises);
+    } catch (error) {
+      console.error("Failed to refresh all emails:", error);
+    } finally {
+      setRefreshingAll(false);
     }
   };
 
@@ -102,20 +129,31 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Mail className="h-5 w-5" />
-          Email History ({emails.length})
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Email History ({emails.length})
+          </CardTitle>
+          <Button
+            onClick={refreshAllEmails}
+            disabled={refreshingAll}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${refreshingAll ? "animate-spin" : ""}`}
+            />
+            {refreshingAll ? "Refreshing..." : "Refresh All"}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {emails.map((email) => {
-            // Use dynamically fetched details if available, otherwise fall back to email.details if it exists
-            const details =
-              emailDetails[email.resend_id] ||
-              ("details" in email ? email.details : undefined);
+            // Use fetched details if available, otherwise fall back to existing details
+            const details = emailDetails[email.resend_id] || email.details;
             const isExpanded = expandedEmails[email.resend_id];
-            const isLoadingDetails = loadingDetails[email.resend_id];
+            const isLoading = loadingEmails[email.resend_id];
 
             return (
               <Collapsible
@@ -138,24 +176,12 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
                               addSuffix: true,
                             })}
                           </p>
-                          {details?.to && (
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              <User className="h-3 w-3" />
-                              To:{" "}
-                              {Array.isArray(details.to)
-                                ? details.to.join(", ")
-                                : details.to}
-                            </p>
-                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="text-xs">
                           ID: {email.resend_id.slice(0, 8)}...
                         </Badge>
-                        {isLoadingDetails && (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        )}
                         {isExpanded ? (
                           <ChevronUp className="h-4 w-4" />
                         ) : (
@@ -167,14 +193,12 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
 
                   <CollapsibleContent>
                     <div className="border-t p-3 bg-gray-50">
-                      {isLoadingDetails ? (
+                      {isLoading ? (
                         <div className="flex items-center justify-center py-8">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="text-sm">
-                              Loading email details...
-                            </span>
-                          </div>
+                          <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                          <span className="ml-2 text-sm text-muted-foreground">
+                            Loading email details...
+                          </span>
                         </div>
                       ) : details ? (
                         <div className="space-y-3">
@@ -235,18 +259,37 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
                               </div>
                             </div>
                           )}
+
+                          <div className="flex justify-end">
+                            <Button
+                              onClick={() => fetchEmailDetails(email.resend_id)}
+                              variant="ghost"
+                              size="sm"
+                              disabled={isLoading}
+                            >
+                              <RefreshCw
+                                className={`h-3 w-3 mr-1 ${isLoading ? "animate-spin" : ""}`}
+                              />
+                              Refresh
+                            </Button>
+                          </div>
                         </div>
                       ) : (
-                        <div className="text-center py-4">
-                          <p className="text-sm text-muted-foreground">
+                        <div className="text-center py-8">
+                          <p className="text-sm text-muted-foreground mb-4">
                             Email details could not be loaded from Resend.
                           </p>
-                          <button
+                          <Button
                             onClick={() => fetchEmailDetails(email.resend_id)}
-                            className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                            variant="outline"
+                            size="sm"
+                            disabled={isLoading}
                           >
-                            Retry loading details
-                          </button>
+                            <RefreshCw
+                              className={`h-3 w-3 mr-1 ${isLoading ? "animate-spin" : ""}`}
+                            />
+                            Try Again
+                          </Button>
                         </div>
                       )}
                     </div>
