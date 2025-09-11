@@ -102,6 +102,7 @@ export function ApplicationDetailClient({
     Database["public"]["Tables"]["profile_documents"]["Row"][]
   >([]);
   const [isSendingOtv, setIsSendingOtv] = useState(false);
+  const [isSendingToLms, setIsSendingToLms] = useState(false);
 
   // Filter for credit reports from Credit Check API checks
   const creditReports = apiChecks
@@ -202,6 +203,100 @@ export function ApplicationDetailClient({
       toast.error(error.message || "An unexpected error occurred.");
     } finally {
       setIsSendingOtv(false);
+    }
+  };
+
+  const handleSendToLms = async () => {
+    setIsSendingToLms(true);
+    try {
+      // Helper function to format date from YYYY-MM-DD to DD/MM/YYYY
+      const formatDateForMaxMoney = (dateString: string | null) => {
+        if (!dateString) return "";
+        try {
+          const date = new Date(dateString);
+          const day = date.getDate().toString().padStart(2, "0");
+          const month = (date.getMonth() + 1).toString().padStart(2, "0");
+          const year = date.getFullYear();
+          return `${day}/${month}/${year}`;
+        } catch {
+          return "";
+        }
+      };
+
+      // Map application data to Max Money client schema format
+      const clientData = {
+        // Personal details
+        first_name: application.first_name || "",
+        surname: application.last_name || "",
+        id_number: application.id_number_decrypted || "",
+        date_of_birth: formatDateForMaxMoney(application.date_of_birth),
+        gender: application.gender || "Male", // This will be mapped to number in the API
+        id_type: "RSA Id", // Default to RSA ID, this will be mapped to number in the API
+
+        // Contact details
+        cellphone_no: application.phone_number || "",
+        physical_address_line_1: application.home_address || "",
+        physical_address_line_2: application.city || "",
+        physical_address_line_3: "", // Not available in application schema
+        physical_address_code: application.postal_code || "",
+        physical_address_country: "ZA", // Default South Africa
+        physical_address_province: "10", // Default province code
+
+        // Employment details
+        occupation: application.job_title || "",
+        employer_code: "", // Not available in application schema
+        employee_no: "", // Not available in application schema
+        gross_salary: application.monthly_income || 0,
+        net_salary: application.monthly_income || 0, // Assuming net = gross for now
+
+        // Banking details
+        bank_account_no: application.bank_account_number || "",
+        bank_branch_code: application.branch_code || "",
+        bank_account_type: 2, // Default to Savings (value 2 from enums)
+
+        // Payment details
+        payback_type_id: 1, // Default payback type
+        payment_frequency: 4, // Default to Monthly (value 4 from enums)
+        payment_move_direction: 2, // Default to Forward (required field)
+        day_of_month: application.salary_date || 25,
+
+        // References - using next of kin as reference
+        reference_first_name: application.next_of_kin_name?.split(" ")[0] || "",
+        reference_surname:
+          application.next_of_kin_name?.split(" ").slice(1).join(" ") || "",
+        reference_contact_no: application.next_of_kin_phone_number || "",
+        reference_relationship: 1, // Default relationship type
+
+        // Consents
+        client_credit_enquiry_consent: true,
+        avr_enquiry: true,
+        sign_mandate: true,
+        marketing_consent: false,
+      };
+
+      const response = await fetch("/api/max_money/create_client", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(clientData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to send to LMS");
+      }
+
+      const result = await response.json();
+      toast.success("Successfully sent to Max Money LMS!");
+
+      // Optionally refresh the page or update application status
+      window.location.reload();
+    } catch (error: any) {
+      console.error("LMS submission error:", error);
+      toast.error(error.message || "Failed to send to LMS");
+    } finally {
+      setIsSendingToLms(false);
     }
   };
 
@@ -398,9 +493,30 @@ export function ApplicationDetailClient({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <Button>
-            <SendHorizonal />
-            Send To LMS
+          <Button
+            onClick={handleSendToLms}
+            disabled={
+              isSubmittingToBraveLender ||
+              isRunningFraudCheck ||
+              isDeclining ||
+              isSendingOtv ||
+              isSendingToLms ||
+              application.status === "declined" ||
+              application.status === "approved" ||
+              application.status === "submitted_to_lender"
+            }
+          >
+            {isSendingToLms ? (
+              <span className="flex items-center">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending to LMS...
+              </span>
+            ) : (
+              <>
+                <SendHorizonal className="h-4 w-4 mr-2" />
+                Send To LMS
+              </>
+            )}
           </Button>
 
           <Badge className={getStatusColor(application.status)}>

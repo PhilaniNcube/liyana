@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { extractDateOfBirthFromSAID } from "@/lib/utils/sa-id";
+import {
+  genderSchema,
+  bankAccountTypeSchema,
+} from "./enums";
 
 // API Check interface for reuse across components
 export interface ApiCheck {
@@ -1683,12 +1687,96 @@ export const deceasedStatusInformationSchema = z.object({
 });
 
 export const whoYouDeceasedStatusResponseDetailSchema = z.object({
-  isWhoYouCache: z.boolean(),
-  cacheDate: z.string().optional(),
-  deceasedStatusInformation: z.array(deceasedStatusInformationSchema),
+  code: z.number(),
+  detail: z.object({
+    isWhoYouCache: z.boolean(),
+    cacheDate: z.string().optional(),
+    deceasedStatusInformation: z.array(deceasedStatusInformationSchema),
+  }),
 });
 
 export const whoYouDeceasedStatusResponseSchema = z.object({
   code: z.number(),
   detail: whoYouDeceasedStatusResponseDetailSchema,
 });
+
+// Max Money Schemas
+
+export const createMaxMoneyClientSchema = z.object({
+  // Mandatory login and identification fields
+  mle_id: z.coerce.number(),
+  mbr_id: z.coerce.number(),
+  user_id: z.number(),
+  login_token: z.string().min(1, "Login token is required"),
+
+  // Client personal details
+  first_name: z.string().max(30, "First name cannot exceed 30 characters"),
+  surname: z.string().max(30, "Surname cannot exceed 30 characters"),
+  id_number: z.string().max(20, "ID number cannot exceed 20 characters"),
+  date_of_birth: z.string().min(1, "Date of birth is required"), // DD/MM/CCYY format
+  gender: z.number(),
+  id_type: z.number(),
+  title: z.number().optional(),
+  country_of_origin: z.string().max(2, "Country code must be 2 characters").optional(),
+  passport_expiry_date: z.string().optional(), // Conditional if id_type is passport
+
+  // Contact and Address
+  cellphone_no: z.string().max(10, "Cellphone number cannot exceed 10 digits"),
+  physical_address_line_1: z.string().optional(),
+  physical_address_line_2: z.string().optional(),
+  physical_address_line_3: z.string().optional(),
+  physical_address_code: z.string().optional(),
+  physical_address_country: z.string().max(2, "Country code must be 2 characters").optional(),
+  physical_address_province: z.string().optional(),
+
+  // Employment and Financials
+  employer_code: z.string().optional(),
+  employee_no: z.string().optional(),
+  appointment_type: z.number().optional(),
+  occupation: z.string().max(30, "Occupation cannot exceed 30 characters").optional(),
+  department: z.string().max(30, "Department cannot exceed 30 characters").optional(),
+  gross_salary: z.number().min(1, "Gross salary is required"),
+  net_salary: z.number().min(1, "Net salary is required"),
+
+  // Banking and Payment
+  bank_account_type: z.number().optional(),
+  bank_account_no: z.string().optional(),
+  bank_branch_code: z.string().optional(),
+  payback_type_id: z.number(),
+  payment_frequency: z.number().optional(),
+  payment_move_direction: z.number().optional(),
+  payment_move_rule: z.number().optional(),
+  day_of_month: z.number().optional(),
+  day_of_week: z.number().min(1).max(7).optional(),
+  month_of_year: z.number().optional(),
+  day_of_month_rule: z.string().optional(),
+
+  // References
+  reference_first_name: z.string().max(30, "Reference first name cannot exceed 30 characters").optional(),
+  reference_surname: z.string().max(30, "Reference surname cannot exceed 30 characters").optional(),
+  reference_contact_no: z.string().max(15, "Reference contact number cannot exceed 15 characters").optional(),
+  reference_relationship: z.number().optional(),
+
+  // Consents and Enquiries
+  client_credit_enquiry_consent: z.boolean().optional(),
+  avr_enquiry: z.boolean().optional(),
+  sign_mandate: z.boolean().optional(),
+  marketing_consent: z.boolean().default(false).optional(),
+});
+
+
+
+// Max Money Login Response
+export const maxMoneyLoginResponseSchema = z.object({
+  return_reason: z.string(),
+  return_code: z.number(),
+  login_token: z.string(),
+  user_id: z.number(),
+  user_name: z.string(),
+  count_branches: z.number(),
+  branch_id: z.number(),
+  mle_id: z.number(),
+  country_code: z.string(),
+});
+
+export type MaxMoneyLoginResponse = z.infer<typeof maxMoneyLoginResponseSchema>;
