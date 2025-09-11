@@ -240,14 +240,15 @@ export function ApplicationDetailClient({
         physical_address_line_3: "", // Not available in application schema
         physical_address_code: application.postal_code || "",
         physical_address_country: "ZA", // Default South Africa
-        physical_address_province: "10", // Default province code
+        // physical_address_province:  "", // Default province code
 
         // Employment details
         occupation: application.job_title || "",
         employer_code: "", // Not available in application schema
         employee_no: "", // Not available in application schema
         gross_salary: application.monthly_income || 0,
-        net_salary: application.monthly_income || 0, // Assuming net = gross for now
+        // calculate net salary based on deductions if available in the affordability column
+        net_salary: application.monthly_income || 0,
 
         // Banking details
         bank_account_no: application.bank_account_number || "",
