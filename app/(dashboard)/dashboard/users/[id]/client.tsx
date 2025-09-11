@@ -33,10 +33,12 @@ import { formatDistanceToNow } from "date-fns";
 import { ProfileDocumentUpload } from "@/components/profile-document-upload";
 import { ProfileDocumentsDisplay } from "@/components/profile-documents-display";
 import { CreateApplicationDialog } from "@/components/create-application-dialog";
-import { EmailApplicationComponent } from "@/components/email-application-component";
+import { EmailUserComponent } from "@/components/email-user-component";
 import SmsApplication from "@/components/sms-application";
 import { toast } from "sonner";
 import type { Database } from "@/lib/types";
+import { EmailHistory } from "@/components/email-history-new";
+import { EmailRecord } from "@/lib/queries/emails";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
   decrypted_id_number: string | null;
@@ -49,12 +51,14 @@ interface ProfilePageClientProps {
   profile: Profile;
   applications: Application[];
   apiChecks: any[];
+  emails: EmailRecord[];
 }
 
 export function ProfilePageClient({
   profile,
   applications,
   apiChecks,
+  emails,
 }: ProfilePageClientProps) {
   const [profileDocuments, setProfileDocuments] = useState<ProfileDocument[]>(
     []
@@ -474,40 +478,41 @@ export function ProfilePageClient({
         </TabsContent>
 
         <TabsContent value="email">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                Email Client
-              </CardTitle>
-              <CardDescription>
-                Send emails to {profile.full_name} (
-                {profile.email || "No email provided"})
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {profile.email ? (
-                <EmailApplicationComponent
-                  id={profile.id}
-                  creditReports={[]}
-                  type="application"
-                  defaultSubject={`Message for ${profile.full_name}`}
-                  recipientName={profile.full_name}
-                  recipientEmail={profile.email}
-                />
-              ) : (
-                <div className="text-center py-8">
-                  <Mail className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold text-muted-foreground">
-                    No Email Address
-                  </h3>
-                  <p className="text-muted-foreground">
-                    This user hasn't provided an email address yet.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5" />
+                  Email Client
+                </CardTitle>
+                <CardDescription>
+                  Send emails to {profile.full_name} (
+                  {profile.email || "No email provided"})
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {profile.email ? (
+                  <EmailUserComponent
+                    profileId={profile.id}
+                    defaultSubject={`Message for ${profile.full_name}`}
+                    recipientName={profile.full_name}
+                    recipientEmail={profile.email}
+                  />
+                ) : (
+                  <div className="text-center py-8">
+                    <Mail className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold text-muted-foreground">
+                      No Email Address
+                    </h3>
+                    <p className="text-muted-foreground">
+                      This user hasn't provided an email address yet.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <EmailHistory emails={emails} />
+          </div>
         </TabsContent>
 
         <TabsContent value="sms">

@@ -4,6 +4,7 @@ import { getApiChecksByIdNumber } from "@/lib/queries/api-checks";
 import { notFound } from "next/navigation";
 import { decryptValue } from "@/lib/encryption";
 import { ProfilePageClient } from "./client";
+import { getAllEmailsForProfile } from "@/lib/queries/emails";
 
 interface ProfilePageProps {
   params: Promise<{ id: string }>;
@@ -22,6 +23,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
     // Fetch user applications
     const applications = await getApplicationsByUser(id);
+    const emails = await getAllEmailsForProfile(id);
 
     // Decrypt ID number and fetch API checks if available
     let apiChecks: any[] = [];
@@ -51,6 +53,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         profile={profileWithDecryptedId}
         applications={applications}
         apiChecks={apiChecks}
+        emails={emails}
       />
     );
   } catch (error) {
