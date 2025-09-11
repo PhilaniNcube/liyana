@@ -513,16 +513,17 @@ export function ApplicationDetailClient({
               application.status === "approved" ||
               application.status === "submitted_to_lender"
             }
+            className="w-[220px]"
           >
             {isSendingToLms ? (
               <span className="flex items-center">
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending to LMS...
+                Sending to MaxMoney...
               </span>
             ) : (
               <>
                 <SendHorizonal className="h-4 w-4 mr-2" />
-                Send To LMS
+                Send To MaxMoney
               </>
             )}
           </Button>
