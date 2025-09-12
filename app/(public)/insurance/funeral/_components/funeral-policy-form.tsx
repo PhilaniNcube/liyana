@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryState, parseAsInteger } from "nuqs";
 import { funeralPolicyLeadSchemaWithRefines } from "@/lib/schemas";
 import { createFuneralPolicy } from "@/lib/actions/funeral-policy";
 import { useActionState, useTransition } from "react";
@@ -55,6 +56,18 @@ const southAfricanBanks = [
   { name: "VBS Mutual Bank", code: "588000" },
 ] as const;
 
+// Available coverage amounts
+const coverageAmounts = [
+  5000, 10000, 15000, 20000, 25000, 30000, 40000, 50000, 75000, 100000,
+];
+
+// Helper function to find the closest coverage amount
+const findClosestCoverageAmount = (targetAmount: number): number => {
+  return coverageAmounts.reduce((prev, curr) =>
+    Math.abs(curr - targetAmount) < Math.abs(prev - targetAmount) ? curr : prev
+  );
+};
+
 type FuneralForm = z.infer<typeof funeralPolicyLeadSchemaWithRefines>;
 
 type ActionState = {
@@ -71,6 +84,17 @@ export default function FuneralPolicyForm() {
   );
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+
+  // URL state management for coverage amount
+  const [coverageAmountFromUrl, setCoverageAmountInUrl] = useQueryState(
+    "coverAmount",
+    parseAsInteger.withDefault(10000)
+  );
+
+  // Find the closest available coverage amount to the URL value
+  const closestCoverageAmount = findClosestCoverageAmount(
+    coverageAmountFromUrl
+  );
 
   // Handle successful submission
   useEffect(() => {
@@ -92,10 +116,12 @@ export default function FuneralPolicyForm() {
 
   const form = useForm<FuneralForm>({
     resolver: zodResolver(funeralPolicyLeadSchemaWithRefines),
+    mode: "onSubmit",
+    reValidateMode: "onSubmit",
     defaultValues: {
       // Step 0: product + personal
       product_type: "funeral_policy" as const,
-      coverage_amount: 10000,
+      coverage_amount: closestCoverageAmount,
       first_name: "",
       last_name: "",
       id_number: "",
@@ -141,6 +167,19 @@ export default function FuneralPolicyForm() {
     control: form.control,
     name: "beneficiaries",
   });
+
+  // Watch coverage amount for URL updates
+  const watchedCoverageAmount = form.watch("coverage_amount");
+
+  // Update URL when coverage amount changes
+  useEffect(() => {
+    if (
+      watchedCoverageAmount &&
+      watchedCoverageAmount !== coverageAmountFromUrl
+    ) {
+      setCoverageAmountInUrl(watchedCoverageAmount);
+    }
+  }, [watchedCoverageAmount, coverageAmountFromUrl, setCoverageAmountInUrl]);
 
   // Define steps with the fields they are responsible for (for per-step validation)
   const steps: {
@@ -273,6 +312,16 @@ export default function FuneralPolicyForm() {
         </div>
       </div>
 
+      <div>
+        <div className="space-y-4">
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Get comprehensive funeral cover for you and your family. Calculate
+            your premium first to see what your monthly costs would be.
+          </p>
+          <FuneralPremiumCalculatorDialog />
+        </div>
+      </div>
+
       {state?.error && (
         <Alert variant="destructive">
           <AlertDescription>
@@ -322,16 +371,14 @@ export default function FuneralPolicyForm() {
                               <SelectValue placeholder="Select coverage amount" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="5000">R5,000</SelectItem>
-                              <SelectItem value="10000">R10,000</SelectItem>
-                              <SelectItem value="15000">R15,000</SelectItem>
-                              <SelectItem value="20000">R20,000</SelectItem>
-                              <SelectItem value="25000">R25,000</SelectItem>
-                              <SelectItem value="30000">R30,000</SelectItem>
-                              <SelectItem value="40000">R40,000</SelectItem>
-                              <SelectItem value="50000">R50,000</SelectItem>
-                              <SelectItem value="75000">R75,000</SelectItem>
-                              <SelectItem value="100000">R100,000</SelectItem>
+                              {coverageAmounts.map((amount) => (
+                                <SelectItem
+                                  key={amount}
+                                  value={amount.toString()}
+                                >
+                                  R{amount.toLocaleString()}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </FormControl>
@@ -340,16 +387,6 @@ export default function FuneralPolicyForm() {
                     )}
                   />
                 </CardContent>
-                <CardFooter>
-                  <div className="space-y-4">
-                    <p className="text-muted-foreground max-w-2xl mx-auto">
-                      Get comprehensive funeral cover for you and your family.
-                      Calculate your premium first to see what your monthly
-                      costs would be.
-                    </p>
-                    <FuneralPremiumCalculatorDialog />
-                  </div>
-                </CardFooter>
               </Card>
               <Card className="p-6">
                 <CardHeader className="px-0 pt-0">
@@ -540,7 +577,9 @@ export default function FuneralPolicyForm() {
                               <SelectValue placeholder="Select employment type" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="employed">Employed</SelectItem>
+                              <SelectItem value="employed">
+                                Permanent
+                              </SelectItem>
                               <SelectItem value="self_employed">
                                 Self Employed
                               </SelectItem>
@@ -793,7 +832,9 @@ export default function FuneralPolicyForm() {
             <div className="space-y-6">
               <Card className="p-6">
                 <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
-                  <CardTitle>Beneficiaries ({fields.length})</CardTitle>
+                  <CardTitle>
+                    {fields.length > 1 ? `Covered Persons ` : "Covered Person"}
+                  </CardTitle>
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -820,7 +861,9 @@ export default function FuneralPolicyForm() {
                   {fields.map((field, index) => (
                     <Card key={field.id} className="p-4">
                       <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-medium">Beneficiary {index + 1}</h4>
+                        <h4 className="font-medium">
+                          Covered Person {index + 1}
+                        </h4>
                         {fields.length > 1 && (
                           <Button
                             type="button"

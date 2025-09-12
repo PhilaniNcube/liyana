@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQueryState, parseAsInteger } from "nuqs";
 import FuneralCoverCalculator, {
   type ICalculationParams,
   type RelationshipType,
@@ -46,6 +47,7 @@ const calculatorSchema = z.object({
     .array(
       z.object({
         relationship: z.enum(["spouse", "child", "extended"] as const),
+        specificRelationship: z.string().optional(), // For extended family specific relationships
         age: z.number().optional(),
       })
     )
@@ -82,11 +84,17 @@ export default function FuneralPremiumCalculator() {
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
+  // URL state management for cover amount
+  const [coverAmountFromUrl, setCoverAmountInUrl] = useQueryState(
+    "coverAmount",
+    parseAsInteger.withDefault(50000)
+  );
+
   const form = useForm<CalculatorFormData>({
     resolver: zodResolver(calculatorSchema),
     defaultValues: {
       mainMemberAge: 35,
-      coverAmount: 50000,
+      coverAmount: coverAmountFromUrl,
       additionalMembers: [],
     },
   });
@@ -95,6 +103,17 @@ export default function FuneralPremiumCalculator() {
     control: form.control,
     name: "additionalMembers",
   });
+
+  // Watch form values for dynamic updates
+  const watchedMembers = form.watch("additionalMembers");
+  const watchedCoverAmount = form.watch("coverAmount");
+
+  // Update URL when cover amount changes
+  useEffect(() => {
+    if (watchedCoverAmount && watchedCoverAmount !== coverAmountFromUrl) {
+      setCoverAmountInUrl(watchedCoverAmount);
+    }
+  }, [watchedCoverAmount, coverAmountFromUrl, setCoverAmountInUrl]);
 
   const calculator = new FuneralCoverCalculator(FUNERAL_RATE_DATA);
 
@@ -141,8 +160,16 @@ export default function FuneralPremiumCalculator() {
     calculatePremium(data);
   };
 
-  const addFamilyMember = (relationship: RelationshipType) => {
-    append({ relationship, age: relationship === "extended" ? 25 : undefined });
+  const addFamilyMember = (type: "immediate" | "extended") => {
+    if (type === "immediate") {
+      append({ relationship: "spouse" }); // Default to spouse, user can change
+    } else {
+      append({
+        relationship: "extended",
+        specificRelationship: "sister",
+        age: 25,
+      }); // Default values
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -214,19 +241,10 @@ export default function FuneralPremiumCalculator() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => addFamilyMember("spouse")}
+                  onClick={() => addFamilyMember("immediate")}
                 >
                   <Plus className="h-3 w-3 mr-1" />
-                  Add Spouse
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addFamilyMember("child")}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Add Child
+                  Add Immediate Family Member
                 </Button>
                 <Button
                   type="button"
@@ -250,94 +268,139 @@ export default function FuneralPremiumCalculator() {
               </div>
             )}
 
-            {fields.map((field, index) => (
-              <Card key={field.id} className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <Badge variant="outline" className="capitalize">
-                    {field.relationship}
-                  </Badge>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => remove(index)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
+            {fields.map((field, index) => {
+              const watchedMember = watchedMembers?.[index];
+              const currentRelationship =
+                watchedMember?.relationship || field.relationship;
+              const currentSpecificRelationship =
+                watchedMember?.specificRelationship ||
+                field.specificRelationship;
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name={`additionalMembers.${index}.relationship`}
-                    render={({ field: formField }) => (
-                      <FormItem>
-                        <FormLabel>Relationship</FormLabel>
-                        <Select
-                          onValueChange={formField.onChange}
-                          defaultValue={formField.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select relationship" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="spouse">Spouse</SelectItem>
-                            <SelectItem value="child">Child</SelectItem>
-                            <SelectItem value="extended">
-                              Extended Family
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              return (
+                <Card key={field.id} className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <Badge variant="outline" className="capitalize">
+                      {currentRelationship === "extended"
+                        ? currentSpecificRelationship || "Extended Family"
+                        : currentRelationship}
+                    </Badge>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => remove(index)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
 
-                  {field.relationship === "extended" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name={`additionalMembers.${index}.age`}
+                      name={`additionalMembers.${index}.relationship`}
                       render={({ field: formField }) => (
                         <FormItem>
-                          <FormLabel>
-                            Age (Required for Extended Family)
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="Enter age"
-                              {...formField}
-                              onChange={(e) =>
-                                formField.onChange(
-                                  parseInt(e.target.value) || 0
-                                )
-                              }
-                            />
-                          </FormControl>
+                          <FormLabel>Relationship Type</FormLabel>
+                          <Select
+                            onValueChange={formField.onChange}
+                            defaultValue={formField.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="capitalize w-full">
+                                <SelectValue placeholder="Select relationship type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="spouse">Spouse</SelectItem>
+                              <SelectItem value="child">Child</SelectItem>
+                              <SelectItem value="extended">
+                                Extended Family
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  )}
 
-                  {(field.relationship === "spouse" ||
-                    field.relationship === "child") && (
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Alert>
-                        <AlertDescription>
-                          Age not required - covered under main policy
-                          regardless of age
-                          {field.relationship === "child" &&
-                            " (up to 6 children allowed)"}
-                        </AlertDescription>
-                      </Alert>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            ))}
+                    {currentRelationship === "extended" && (
+                      <FormField
+                        control={form.control}
+                        name={`additionalMembers.${index}.specificRelationship`}
+                        render={({ field: formField }) => (
+                          <FormItem>
+                            <FormLabel>Specific Relationship</FormLabel>
+                            <Select
+                              onValueChange={formField.onChange}
+                              defaultValue={formField.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="capitalize w-full">
+                                  <SelectValue placeholder="Select specific relationship" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="sister">Sister</SelectItem>
+                                <SelectItem value="brother">Brother</SelectItem>
+                                <SelectItem value="grandparent">
+                                  Grandparent
+                                </SelectItem>
+                                <SelectItem value="cousin">Cousin</SelectItem>
+                                <SelectItem value="in-laws">In-laws</SelectItem>
+                                <SelectItem value="uncle">Uncle</SelectItem>
+                                <SelectItem value="aunt">Aunt</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {currentRelationship === "extended" && (
+                      <FormField
+                        control={form.control}
+                        name={`additionalMembers.${index}.age`}
+                        render={({ field: formField }) => (
+                          <FormItem>
+                            <FormLabel>
+                              Age (Required for Extended Family)
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="Enter age"
+                                {...formField}
+                                onChange={(e) =>
+                                  formField.onChange(
+                                    parseInt(e.target.value) || 0
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {(currentRelationship === "spouse" ||
+                      currentRelationship === "child") && (
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <div>
+                          <span>
+                            Age not required - covered under main policy
+                            regardless of age
+                            {currentRelationship === "child" &&
+                              " (up to 6 children allowed)"}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
 
           <Button type="submit" className="w-full">

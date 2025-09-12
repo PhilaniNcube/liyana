@@ -151,13 +151,13 @@ export function LoginForm({
                             ? "Sending..."
                             : "Reset Password"}
                         </button>
-                        <span className="text-muted-foreground text-sm">|</span>
+                        {/* <span className="text-muted-foreground text-sm">|</span>
                         <Link
                           href="/auth/forgot-password"
                           className="text-sm text-primary hover:underline underline-offset-4"
                         >
                           Forgot Password?
-                        </Link>
+                        </Link> */}
                       </div>
                     </div>
                     <FormControl>
