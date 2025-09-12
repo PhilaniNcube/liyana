@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/client";
+import { createClient } from "@/lib/server";
 
 export async function cancelPreApplication(preApplicationId: number) {
   try {
