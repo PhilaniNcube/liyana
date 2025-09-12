@@ -76,9 +76,9 @@ export function ProfileDocumentUpload({
       // 1) Validate and upload the file directly to Supabase Storage (documents bucket)
       const file: File = values.file[0];
 
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      const maxSize = 20 * 1024 * 1024; // 20MB
       if (file.size > maxSize) {
-        throw new Error("File size exceeds 10MB limit");
+        throw new Error("File size exceeds 20MB limit");
       }
 
       const allowedTypes = [
