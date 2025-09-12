@@ -220,7 +220,7 @@ export async function submitLoanApplication(
     }
 
     await sendSms(
-      "+27729306206",
+      `${process.env.SMS_NUMBER}`,
       `New loan application from ${result.data.first_name} ${result.data.last_name}. Application ID: ${insertedApplication.id}`
     );
 
@@ -409,7 +409,7 @@ export async function submitLoanApplicationForUser(
   }
 
   await sendSms(
-    "+27729306206",
+    `${process.env.SMS_NUMBER}`,
     `Admin created loan application for user ${targetUserId}. Application ID: ${insertedApplication.id}`
   );
 

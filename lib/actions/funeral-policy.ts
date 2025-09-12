@@ -186,10 +186,38 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
       };
     }
 
+    // Handle pending documents if provided
+    if ((entries as any).pending_documents) {
+      try {
+        const pendingDocuments = JSON.parse((entries as any).pending_documents as string);
+        
+        if (Array.isArray(pendingDocuments) && pendingDocuments.length > 0) {
+          const documentInserts = pendingDocuments.map((doc: any) => ({
+            policy_id: newPolicy.id,
+            document_type: doc.document_type,
+            path: doc.file_path,
+            user_id: user.id,
+          }));
+
+          const { error: docError } = await supabase
+            .from("policy_documents")
+            .insert(documentInserts);
+
+          if (docError) {
+            console.error("Error saving policy documents:", docError);
+            // Don't fail the entire process for document errors, just log them
+          }
+        }
+      } catch (parseError) {
+        console.error("Error parsing pending documents:", parseError);
+        // Don't fail the entire process for document parsing errors
+      }
+    }
+
     // Policy creation and linking completed successfully
     revalidatePath("/insurance/funeral");
 
-    sendSms("+27729306206", `New funeral policy lead: Policy ID ${newPolicy.id} for ${validatedData.first_name} ${validatedData.last_name}. Review at https://apply.liyanafinance.co.za/dashboard/insurance/${newPolicy.id}`);
+    sendSms(`${process.env.SMS_NUMBER}`, `New funeral policy lead: Policy ID ${newPolicy.id} for ${validatedData.first_name} ${validatedData.last_name}. Review at https://apply.liyanafinance.co.za/dashboard/insurance/${newPolicy.id}`);
 
     return {
       error: false,

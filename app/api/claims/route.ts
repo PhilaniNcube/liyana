@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    sendSms("+27729306206", `New claim filed: ${claim.claim_number} for policy https://apply.liyanafinance.co.za/dashboard/insurance/${policy.id}`);
+    sendSms(`${process.env.SMS_NUMBER}`, `New claim filed: ${claim.claim_number} for policy https://apply.liyanafinance.co.za/dashboard/insurance/${policy.id}`);
 
     return NextResponse.json({ success: true, claim: claim }, { status: 201 });
 
