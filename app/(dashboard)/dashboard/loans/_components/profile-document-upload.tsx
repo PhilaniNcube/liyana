@@ -42,11 +42,11 @@ const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
 export function ProfileDocumentUpload({
   profileId,
   className,
-  onUploaded,
+  onUploadedAction,
 }: {
   profileId: string;
   className?: string;
-  onUploaded?: () => void;
+  onUploadedAction?: () => void;
 }) {
   const router = useRouter();
   const {
@@ -123,7 +123,7 @@ export function ProfileDocumentUpload({
 
       setSuccess("Document uploaded successfully");
       reset();
-      onUploaded?.();
+      onUploadedAction?.();
       // Revalidate this route to ensure fresh data (documents list)
       router.refresh();
     } catch (e: any) {
