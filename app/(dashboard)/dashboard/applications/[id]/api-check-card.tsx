@@ -90,25 +90,41 @@ const ApiCheckCard = ({ check }: { check: ApiCheck }) => {
     payload: unknown
   ): payload is {
     code: number;
-    detail?: {
-      idNumberProvided?: string;
-      phoneNumberProvided?: string;
-      isMatch?: boolean;
-      score?: number;
-      phoneNumberType?: string;
-    };
+    detail?:
+      | {
+          code?: number;
+          detail?: {
+            idNumberProvided?: string;
+            phoneNumberProvided?: string;
+            isMatch?: boolean;
+            score?: number;
+            phoneNumberType?: string;
+          };
+        }
+      | {
+          idNumberProvided?: string;
+          phoneNumberProvided?: string;
+          isMatch?: boolean;
+          score?: number;
+          phoneNumberType?: string;
+        };
   } => {
     if (!payload || typeof payload !== "object") return false;
     const p = payload as any;
     const d = p?.detail;
+
+    // Handle nested detail structure
+    const actualDetail = d?.detail || d;
+
     return (
       typeof p.code === "number" &&
       d &&
       typeof d === "object" &&
-      typeof d.phoneNumberProvided === "string" &&
-      typeof d.idNumberProvided === "string" &&
-      typeof d.isMatch === "boolean" &&
-      typeof d.phoneNumberType === "string"
+      actualDetail &&
+      typeof actualDetail === "object" &&
+      typeof actualDetail.phoneNumberProvided === "string" &&
+      typeof actualDetail.idNumberProvided === "string" &&
+      typeof actualDetail.isMatch === "boolean"
     );
   };
 
@@ -469,11 +485,14 @@ const ApiCheckCard = ({ check }: { check: ApiCheck }) => {
   }
 
   if (isWhoYouCellphonePayload(check.response_payload)) {
-    return (
-      <WhoYouCellphoneVerificationResults
-        data={check.response_payload as any}
-      />
-    );
+    // Handle nested detail structure
+    const payload = check.response_payload as any;
+    const normalizedPayload = {
+      code: payload.code,
+      detail: payload.detail?.detail || payload.detail,
+    };
+
+    return <WhoYouCellphoneVerificationResults data={normalizedPayload} />;
   }
 
   switch (check.check_type) {

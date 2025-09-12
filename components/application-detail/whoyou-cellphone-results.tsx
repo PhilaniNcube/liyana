@@ -16,7 +16,7 @@ type WhoYouCellphoneVerificationDetail = {
   phoneNumberProvided: string;
   isMatch: boolean;
   score: number | null;
-  phoneNumberType: string;
+  phoneNumberType?: string;
 };
 
 export interface WhoYouCellphoneVerificationResultsProps {
@@ -187,7 +187,7 @@ export default function WhoYouCellphoneVerificationResults({
                 Phone Number Type
               </p>
               <Badge variant="outline" className="">
-                {detail.phoneNumberType}
+                {detail.phoneNumberType || "Not specified"}
               </Badge>
             </div>
 
