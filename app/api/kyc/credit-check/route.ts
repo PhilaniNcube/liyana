@@ -250,6 +250,8 @@ const result = await saveApiCheckResult(idNumber, "passed", {
 
   // Update user profile with encrypted ID number
   await updateUserProfileWithIdNumber(idNumber);
+ 
+  
 
   // Create a pre-application record
   if (result) {

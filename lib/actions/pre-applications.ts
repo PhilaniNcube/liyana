@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/client";
+import { createClient } from "@/lib/server";
 import { PreApplication, PreApplicationUpdate } from "../schemas";
 import { encryptValue } from "../encryption";
 
