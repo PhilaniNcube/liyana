@@ -106,14 +106,6 @@ export default function FuneralPremiumCalculator() {
 
   // Watch form values for dynamic updates
   const watchedMembers = form.watch("additionalMembers");
-  const watchedCoverAmount = form.watch("coverAmount");
-
-  // Update URL when cover amount changes
-  useEffect(() => {
-    if (watchedCoverAmount && watchedCoverAmount !== coverAmountFromUrl) {
-      setCoverAmountInUrl(watchedCoverAmount);
-    }
-  }, [watchedCoverAmount, coverAmountFromUrl, setCoverAmountInUrl]);
 
   const calculator = new FuneralCoverCalculator(FUNERAL_RATE_DATA);
 
@@ -197,9 +189,10 @@ export default function FuneralPremiumCalculator() {
                       type="number"
                       placeholder="Enter your age"
                       {...field}
-                      onChange={(e) =>
-                        field.onChange(parseInt(e.target.value) || 0)
-                      }
+                      onChange={(e) => {
+                        field.onChange(parseInt(e.target.value) || 0);
+                        setCoverAmountInUrl(parseInt(e.target.value) || 0);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -218,9 +211,12 @@ export default function FuneralPremiumCalculator() {
                       type="number"
                       placeholder="e.g., 50000"
                       {...field}
-                      onChange={(e) =>
-                        field.onChange(parseInt(e.target.value) || 0)
-                      }
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 0;
+                        field.onChange(value);
+                        // Update URL state when user changes the value
+                        setCoverAmountInUrl(value);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

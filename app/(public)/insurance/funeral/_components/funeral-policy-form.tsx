@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryState, parseAsInteger } from "nuqs";
@@ -27,6 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { extractDateOfBirthFromSAID } from "@/lib/utils/sa-id";
 import {
   Select,
@@ -36,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Upload, FileText, X } from "lucide-react";
 import { z } from "zod";
 import FuneralPremiumCalculatorDialog from "./funeral-premium-calculator-dialog";
 
@@ -60,6 +61,27 @@ const southAfricanBanks = [
 const coverageAmounts = [
   5000, 10000, 15000, 20000, 25000, 30000, 40000, 50000, 75000, 100000,
 ];
+
+// Policy document types available for upload
+const POLICY_DOCUMENT_TYPES = {
+  birth_certificate: "Birth Certificate",
+  death_certificate: "Death Certificate",
+  marriage_certificate: "Marriage Certificate",
+  identity_document: "Identity Document",
+  passport: "Passport",
+} as const;
+
+type PolicyDocumentType = keyof typeof POLICY_DOCUMENT_TYPES;
+
+// Document upload state interface
+interface PendingDocument {
+  id: string;
+  file: File;
+  documentType: PolicyDocumentType;
+  status: "pending" | "uploading" | "uploaded" | "error";
+  error?: string;
+  uploadedPath?: string;
+}
 
 // Helper function to find the closest coverage amount
 const findClosestCoverageAmount = (targetAmount: number): number => {
@@ -114,6 +136,12 @@ export default function FuneralPolicyForm() {
   // Multistep state
   const [currentStep, setCurrentStep] = useState(0);
 
+  // Document upload state
+  const [pendingDocuments, setPendingDocuments] = useState<PendingDocument[]>(
+    []
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<FuneralForm>({
     resolver: zodResolver(funeralPolicyLeadSchemaWithRefines),
     mode: "onSubmit",
@@ -154,8 +182,6 @@ export default function FuneralPolicyForm() {
           id_number: "",
           relationship: undefined as any,
           percentage: 0,
-          phone_number: "",
-          email: "",
         },
       ],
       terms_and_conditions: false,
@@ -229,6 +255,11 @@ export default function FuneralPolicyForm() {
       ],
     },
     {
+      title: "Documents",
+      description: "Upload supporting documents",
+      fields: [], // No form fields, just document uploads
+    },
+    {
       title: "Beneficiaries",
       description: "Beneficiaries & declarations",
       fields: ["beneficiaries", "terms_and_conditions", "privacy_policy"],
@@ -239,6 +270,11 @@ export default function FuneralPolicyForm() {
 
   const goNext = async () => {
     const stepFields = steps[currentStep].fields;
+    // For document step (step 3), no form validation needed
+    if (currentStep === 3) {
+      if (currentStep < totalSteps - 1) setCurrentStep((s) => s + 1);
+      return;
+    }
     const valid = await form.trigger(stepFields as any, { shouldFocus: true });
     if (!valid) return;
     if (currentStep < totalSteps - 1) setCurrentStep((s) => s + 1);
@@ -246,6 +282,80 @@ export default function FuneralPolicyForm() {
 
   const goBack = () => {
     if (currentStep > 0) setCurrentStep((s) => s - 1);
+  };
+
+  // Document upload functions
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      const newDoc: PendingDocument = {
+        id: Math.random().toString(36).substr(2, 9),
+        file,
+        documentType: "identity_document", // Default type
+        status: "pending",
+      };
+      setPendingDocuments((prev) => [...prev, newDoc]);
+    });
+
+    // Reset the input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const updateDocumentType = (
+    docId: string,
+    documentType: PolicyDocumentType
+  ) => {
+    setPendingDocuments((prev) =>
+      prev.map((doc) => (doc.id === docId ? { ...doc, documentType } : doc))
+    );
+  };
+
+  const removeDocument = (docId: string) => {
+    setPendingDocuments((prev) => prev.filter((doc) => doc.id !== docId));
+  };
+
+  const uploadDocument = async (doc: PendingDocument) => {
+    setPendingDocuments((prev) =>
+      prev.map((d) => (d.id === doc.id ? { ...d, status: "uploading" } : d))
+    );
+
+    try {
+      const formData = new FormData();
+      formData.append("file", doc.file);
+      formData.append("document_type", doc.documentType);
+
+      // TODO: Replace with actual upload endpoint
+      const response = await fetch("/api/upload-document", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const result = await response.json();
+
+      setPendingDocuments((prev) =>
+        prev.map((d) =>
+          d.id === doc.id
+            ? { ...d, status: "uploaded", uploadedPath: result.path }
+            : d
+        )
+      );
+    } catch (error) {
+      setPendingDocuments((prev) =>
+        prev.map((d) =>
+          d.id === doc.id
+            ? { ...d, status: "error", error: "Upload failed" }
+            : d
+        )
+      );
+    }
   };
 
   // Relationship category handling (UI-only; not part of schema submission)
@@ -276,6 +386,10 @@ export default function FuneralPolicyForm() {
   }, [form.watch("bank_name"), form]);
 
   const onSubmit = (values: FuneralForm) => {
+    console.log("onSubmit called with values:", values);
+    console.log("isPending:", isPending);
+    console.log("state:", state);
+
     const fd = new FormData();
 
     // Handle basic fields
@@ -294,7 +408,24 @@ export default function FuneralPolicyForm() {
       }
     });
 
-    startTransition(() => formAction(fd));
+    // Add pending documents information
+    const documentsToProcess = pendingDocuments
+      .filter((doc) => doc.status === "uploaded" && doc.uploadedPath)
+      .map((doc) => ({
+        document_type: doc.documentType,
+        file_path: doc.uploadedPath,
+        file_name: doc.file.name,
+      }));
+
+    fd.append("pending_documents", JSON.stringify(documentsToProcess));
+
+    console.log("FormData entries:", Array.from(fd.entries()));
+    console.log("Starting transition...");
+
+    startTransition(() => {
+      console.log("Inside transition, calling formAction...");
+      formAction(fd);
+    });
   };
 
   return (
@@ -829,6 +960,144 @@ export default function FuneralPolicyForm() {
           )}
 
           {currentStep === 3 && (
+            <Card className="p-6">
+              <CardHeader className="px-0 pt-0">
+                <CardTitle>Supporting Documents</CardTitle>
+                <p className="text-muted-foreground">
+                  Upload required documents to support your application. All
+                  documents will be securely stored and processed.
+                </p>
+              </CardHeader>
+              <CardContent className="px-0 space-y-6">
+                {/* File Upload Area */}
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileSelect}
+                    accept="image/*,application/pdf"
+                    multiple
+                    className="hidden"
+                  />
+                  <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-medium mb-2">Upload Documents</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Drag and drop your files here, or click to browse
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Choose Files
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Supported formats: PDF, JPG, PNG • Max size: 10MB per file
+                  </p>
+                </div>
+
+                {/* Uploaded Documents List */}
+                {pendingDocuments.length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="font-medium">
+                      Selected Documents ({pendingDocuments.length})
+                    </h4>
+                    {pendingDocuments.map((doc) => (
+                      <Card key={doc.id} className="p-4">
+                        <div className="flex items-center gap-4">
+                          <FileText className="h-8 w-8 text-blue-500" />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">
+                              {doc.file.name}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {(doc.file.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                            <div className="mt-2">
+                              <Select
+                                value={doc.documentType}
+                                onValueChange={(value) =>
+                                  updateDocumentType(
+                                    doc.id,
+                                    value as PolicyDocumentType
+                                  )
+                                }
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select document type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(POLICY_DOCUMENT_TYPES).map(
+                                    ([key, label]) => (
+                                      <SelectItem key={key} value={key}>
+                                        {label}
+                                      </SelectItem>
+                                    )
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {doc.status === "pending" && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => uploadDocument(doc)}
+                              >
+                                Upload
+                              </Button>
+                            )}
+                            {doc.status === "uploading" && (
+                              <Button size="sm" disabled>
+                                Uploading...
+                              </Button>
+                            )}
+                            {doc.status === "uploaded" && (
+                              <Badge variant="default" className="bg-green-500">
+                                Uploaded
+                              </Badge>
+                            )}
+                            {doc.status === "error" && (
+                              <Badge variant="destructive">Error</Badge>
+                            )}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeDocument(doc.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        {doc.error && (
+                          <Alert variant="destructive" className="mt-2">
+                            <AlertDescription>{doc.error}</AlertDescription>
+                          </Alert>
+                        )}
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {/* Document Requirements */}
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <h4 className="font-medium mb-2">Required Documents</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Identity Document (required)</li>
+                    <li>• Birth Certificate (if available)</li>
+                    <li>• Marriage Certificate (if applicable)</li>
+                    <li>• Death Certificate (for claims)</li>
+                    <li>• Passport (alternative ID)</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {currentStep === 4 && (
             <div className="space-y-6">
               <Card className="p-6">
                 <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
@@ -847,8 +1116,6 @@ export default function FuneralPolicyForm() {
                           id_number: "",
                           relationship: undefined as any,
                           percentage: 0,
-                          phone_number: "",
-                          email: "",
                         })
                       }
                       disabled={fields.length >= 10}
@@ -1031,43 +1298,6 @@ export default function FuneralPolicyForm() {
                             </FormItem>
                           )}
                         />
-                        <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name={`beneficiaries.${index}.phone_number`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Phone Number</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    value={field.value || ""}
-                                    placeholder="Phone number"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`beneficiaries.${index}.email`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    value={field.value || ""}
-                                    type="email"
-                                    placeholder="Email address"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
                       </div>
                     </Card>
                   ))}
@@ -1127,6 +1357,7 @@ export default function FuneralPolicyForm() {
               )}
             </div>
             <div className="flex-1" />
+
             {currentStep < totalSteps - 1 && (
               <Button type="button" onClick={goNext} disabled={isPending}>
                 Next
@@ -1138,6 +1369,11 @@ export default function FuneralPolicyForm() {
                 size="lg"
                 disabled={isPending || (!state?.error && !!state?.message)}
                 className="min-w-[180px]"
+                onClick={(e) => {
+                  console.log("Submit button clicked!", e);
+                  console.log("Form valid?", form.formState.isValid);
+                  console.log("Form errors:", form.formState.errors);
+                }}
               >
                 {isPending
                   ? "Submitting..."

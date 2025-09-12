@@ -707,8 +707,6 @@ export const funeralPolicyLeadSchema = z
             required_error: "Relationship is required",
           }),
           percentage: z.number(),
-          phone_number: z.string().min(10).optional(),
-          email: z.string().email().optional(),
         })
       )
       .min(0, "Provide at least 5 beneficiaries")
