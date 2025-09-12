@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/client";
+import { createClient } from "@/lib/server";
 import { getPreApplicationStats } from "@/lib/queries/pre-applications";
 
 export async function GET(request: NextRequest) {
