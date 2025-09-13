@@ -6,7 +6,7 @@ import { z } from "zod";
 const requestSchema = z.object({
   profileId: z.string().uuid("Invalid profile ID"),
   phoneNumber: z.string().min(1, "Phone number is required"),
-  message: z.string().min(1, "Message is required").max(160, "Message must be 160 characters or less"),
+  message: z.string().min(1, "Message is required"),
   applicationId: z.number().optional(),
   policyId: z.number().optional(),
 });

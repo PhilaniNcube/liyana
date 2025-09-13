@@ -361,17 +361,19 @@ function getEmailTemplate(itemType: string, itemId: number, userName: string, me
           We hope this message finds you well. We're writing to provide you with an update regarding your ${itemType}.
         </p>
 
+            <!-- Message -->
+        <div style="background-color: #ffffff; border-left: 4px solid ${itemColor}; padding: 20px; margin: 20px 0;">
+          <h3 style="color: #333333; margin: 0 0 15px 0; font-size: 16px;">Message from Liyana Finance:</h3>
+          <div style="color: #333333; white-space: pre-line;">${message}</div>
+        </div>
+
         <!-- Item Details -->
         <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #333333; margin: 0 0 10px 0; font-size: 16px;">${itemName} Details:</h3>
           <p style="margin: 5px 0; color: #666666;"><strong>${itemName} ID:</strong> #${itemId}</p>
         </div>
 
-        <!-- Message -->
-        <div style="background-color: #ffffff; border-left: 4px solid ${itemColor}; padding: 20px; margin: 20px 0;">
-          <h3 style="color: #333333; margin: 0 0 15px 0; font-size: 16px;">Message from Liyana Finance:</h3>
-          <div style="color: #333333; white-space: pre-line;">${message}</div>
-        </div>
+    
 
         <p style="color: #666666; margin-top: 30px;">
           If you have any questions or need further assistance, please don't hesitate to contact us. We're here to help you every step of the way.

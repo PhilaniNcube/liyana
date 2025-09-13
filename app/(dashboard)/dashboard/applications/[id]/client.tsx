@@ -23,6 +23,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useQueryState, parseAsString } from "nuqs";
 import { handleFraudCheck } from "@/lib/utils/fraud-check";
 import { handleBraveLenderSubmit } from "@/lib/utils";
 import { calculateAffordability } from "@/lib/utils/affordability-calculator";
@@ -93,6 +94,12 @@ export function ApplicationDetailClient({
   documents,
   emailHistory,
 }: ApplicationDetailClientProps) {
+  // URL state for active tab
+  const [activeTab, setActiveTab] = useQueryState(
+    "tab",
+    parseAsString.withDefault("personal-info")
+  );
+
   const [isRunningFraudCheck, setIsRunningFraudCheck] = useState(false);
   const [fraudCheckResults, setFraudCheckResults] = useState<any>(null);
   const [isSubmittingToBraveLender, setIsSubmittingToBraveLender] =
@@ -546,7 +553,7 @@ export function ApplicationDetailClient({
         </div>
       </div>
 
-      <Tabs defaultValue="personal-info" className="mt-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
         <TabsList className="w-full ">
           <TabsTrigger value="personal-info">Personal Info</TabsTrigger>
           <TabsTrigger value="contact-info">Contact Info</TabsTrigger>

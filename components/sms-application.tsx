@@ -7,7 +7,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Send, MessageSquare, Clock, Phone, Edit } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Send,
+  MessageSquare,
+  Clock,
+  Phone,
+  Edit,
+  FileText,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { useSmsHistory, useRefreshSmsHistory } from "@/hooks/use-sms-history";
@@ -20,6 +35,22 @@ interface SmsApplicationProps {
   applicantName: string;
 }
 
+// Pre-written SMS templates
+const SMS_TEMPLATES = [
+  {
+    id: "documentation",
+    label: "Missing Documentation",
+    message:
+      "We are unable to proceed with your loan application at this time as we have not received all the necessary documentation. Please ensure all required documents are uploaded for a complete submission. Liyana Finance NCRCP18217",
+  },
+  {
+    id: "declined",
+    label: "Application Declined",
+    message:
+      "After a thorough review of your application and the required vetting process, we regret to inform you that we are unable to approve your loan request at this time. This decision is based on our internal credit and risk assessment policies. Liyana Finance NCRCP18217",
+  },
+];
+
 export default function SmsApplication({
   applicationId,
   profileId,
@@ -30,6 +61,7 @@ export default function SmsApplication({
   const [editablePhoneNumber, setEditablePhoneNumber] = useState(phoneNumber);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
   const refreshSmsHistory = useRefreshSmsHistory();
 
@@ -47,6 +79,38 @@ export default function SmsApplication({
   useEffect(() => {
     setEditablePhoneNumber(phoneNumber);
   }, [phoneNumber]);
+
+  // Handle template selection
+  const handleTemplateSelect = (templateId: string) => {
+    if (templateId === "custom") {
+      setSelectedTemplate("");
+      return;
+    }
+
+    const template = SMS_TEMPLATES.find((t) => t.id === templateId);
+    if (template) {
+      setMessage(template.message);
+      setSelectedTemplate(templateId);
+    }
+  };
+
+  // Handle manual message changes
+  const handleMessageChange = (value: string) => {
+    setMessage(value);
+    // Reset template selection if user manually edits
+    if (
+      selectedTemplate &&
+      value !== SMS_TEMPLATES.find((t) => t.id === selectedTemplate)?.message
+    ) {
+      setSelectedTemplate("");
+    }
+  };
+
+  // Clear message
+  const handleClearMessage = () => {
+    setMessage("");
+    setSelectedTemplate("");
+  };
 
   const handleSendSms = async () => {
     if (!message.trim()) {
@@ -158,19 +222,62 @@ export default function SmsApplication({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="sms-template">Message Templates</Label>
+            <div className="flex gap-2">
+              <Select
+                value={selectedTemplate}
+                onValueChange={handleTemplateSelect}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Choose a template or write custom message" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="custom">
+                    <div className="flex items-center gap-2">
+                      <Edit className="h-4 w-4" />
+                      Custom Message
+                    </div>
+                  </SelectItem>
+                  {SMS_TEMPLATES.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        {template.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {message && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearMessage}
+                  className="px-3"
+                  title="Clear message"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="sms-message">Message</Label>
             <Textarea
               id="sms-message"
               placeholder={`Hi ${applicantName}, regarding your loan application #${applicationId}...`}
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={4}
+              onChange={(e) => handleMessageChange(e.target.value)}
+              rows={6}
               maxLength={160}
               className="resize-none"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Character limit: 160</span>
-              <span>{message.length}/160</span>
+              <span className={message.length > 160 ? "text-red-500" : ""}>
+                {message.length}/160
+              </span>
             </div>
           </div>
 
