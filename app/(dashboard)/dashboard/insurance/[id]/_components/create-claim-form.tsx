@@ -352,29 +352,6 @@ export default function CreateClaimForm({
         <div className="space-y-6 max-w-7xl w-full">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Policy Information Summary */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm text-muted-foreground">
-                    Policy Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Policy ID:</span>
-                      <span className="ml-2">{policyId}</span>
-                    </div>
-                    <div>
-                      <span className="font-medium">Policy Holder:</span>
-                      <span className="ml-2">
-                        {policyHolder?.first_name} {policyHolder?.last_name}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Claim Details Section */}
                 <div className="space-y-6">
@@ -468,6 +445,7 @@ export default function CreateClaimForm({
                                   <SelectItem value="trustee">
                                     Trustee
                                   </SelectItem>
+                                  <SelectItem value="other">Other</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />

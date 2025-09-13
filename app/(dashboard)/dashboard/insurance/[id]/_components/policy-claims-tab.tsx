@@ -1,16 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils/format-currency";
-import { formatDate } from "date-fns";
 import { PolicyWithAllData } from "@/lib/queries/policy-details";
 import CreateClaimForm from "./create-claim-form";
-import { Plus, Send } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { Database } from "@/lib/database.types";
 import ClaimDetailsCard from "./claim-details-card";
+import { usePolicyDocuments } from "@/hooks/use-policy-documents";
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];
@@ -40,32 +38,6 @@ type Claim = {
   }>;
 };
 
-function formatName(
-  person: { first_name?: string | null; last_name?: string | null } | null
-) {
-  if (!person) return "Unknown";
-  const parts = [person.first_name ?? "", person.last_name ?? ""].filter(
-    Boolean
-  );
-  return parts.length ? parts.join(" ") : "Unknown";
-}
-
-function getStatusVariant(status: string) {
-  switch (status.toLowerCase()) {
-    case "approved":
-    case "paid":
-      return "default";
-    case "pending":
-    case "submitted":
-      return "secondary";
-    case "rejected":
-    case "declined":
-      return "destructive";
-    default:
-      return "outline";
-  }
-}
-
 interface PolicyClaimsTabProps {
   claims: Claim[];
   policy: PolicyWithAllData;
@@ -78,36 +50,22 @@ function CreateClaimFormWrapper({
   policy: PolicyWithAllData;
   onClaimCreated?: () => void;
 }) {
-  const [documents, setDocuments] = useState<PolicyDocumentRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        const response = await fetch(
-          `/api/policy-documents?policy_id=${policy.id}`
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch documents");
-        }
-        const docs = await response.json();
-        setDocuments(docs);
-      } catch (error) {
-        console.error("Failed to fetch policy documents:", error);
-        setDocuments([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDocuments();
-  }, [policy.id]);
+  const {
+    data: documents = [],
+    isLoading: loading,
+    error,
+  } = usePolicyDocuments(policy.id);
 
   const handleClaimCreated = () => {
     setOpen(false);
     onClaimCreated?.();
   };
+
+  if (error) {
+    console.error("Failed to fetch policy documents:", error);
+  }
 
   if (loading) {
     return <Button disabled>Loading...</Button>;
