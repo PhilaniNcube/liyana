@@ -52,6 +52,7 @@ const DOCUMENT_TYPE_LABELS: Record<PolicyDocumentType, string> = {
   marriage_certificate: "Marriage Certificate",
   identity_document: "Identity Document",
   passport: "Passport",
+  third_party_document: "Third Party Document",
 };
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB

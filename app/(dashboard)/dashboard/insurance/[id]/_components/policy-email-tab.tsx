@@ -2,6 +2,7 @@
 
 import { EmailHistory } from "@/components/email-history-new";
 import { EmailPolicy } from "@/components/email-policy";
+import { EmailRefetchProvider } from "@/components/email-refetch-context";
 import type { Database } from "@/lib/database.types";
 import type { EmailWithDetails } from "@/lib/queries/emails";
 
@@ -24,16 +25,18 @@ const PolicyEmailTab = ({
   emailHistory,
 }: PolicyEmailTabProps) => {
   return (
-    <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-5 mx-auto space-y-6">
-      <EmailPolicy
-        id={policyId}
-        creditReports={[]}
-        policyHolderName={policyHolderName}
-        policyHolderEmail={policyHolderEmail}
-      />
+    <EmailRefetchProvider>
+      <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-5 mx-auto space-y-6">
+        <EmailPolicy
+          id={policyId}
+          creditReports={[]}
+          policyHolderName={policyHolderName}
+          policyHolderEmail={policyHolderEmail}
+        />
 
-      <EmailHistory emails={emailHistory} />
-    </div>
+        <EmailHistory emails={emailHistory} policyId={policyId} />
+      </div>
+    </EmailRefetchProvider>
   );
 };
 

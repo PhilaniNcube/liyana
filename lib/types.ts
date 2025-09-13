@@ -1079,6 +1079,7 @@ export type Database = {
         | "marriage_certificate"
         | "identity_document"
         | "passport"
+        | "third_party_document"
       policy_status: "pending" | "active" | "lapsed" | "cancelled"
       pre_application_status:
         | "credit_passed"
@@ -1291,6 +1292,7 @@ export const Constants = {
         "marriage_certificate",
         "identity_document",
         "passport",
+        "third_party_document",
       ],
       policy_status: ["pending", "active", "lapsed", "cancelled"],
       pre_application_status: [

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,26 @@ import type { EmailWithDetails, EmailDetails } from "@/lib/queries/emails";
 
 interface EmailHistoryProps {
   emails: EmailWithDetails[];
+  policyId: number;
+}
+
+// Function to fetch emails for a policy from the API
+async function fetchEmailsForPolicy(
+  policyId: number
+): Promise<EmailWithDetails[]> {
+  const response = await fetch(`/api/emails/history?policyId=${policyId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  return result;
 }
 
 // Function to fetch email details from Resend API
@@ -53,7 +74,24 @@ async function fetchEmailByResendId(
   }
 }
 
-export function EmailHistory({ emails }: EmailHistoryProps) {
+export function EmailHistory({
+  emails: initialEmails,
+  policyId,
+}: EmailHistoryProps) {
+  // Use TanStack Query to fetch emails with initial data
+  const {
+    data: emails = [],
+    isLoading: isEmailsLoading,
+    error: emailsError,
+    refetch: refetchEmails,
+  } = useQuery({
+    queryKey: ["emails", "policy", policyId],
+    queryFn: () => fetchEmailsForPolicy(policyId),
+    initialData: initialEmails,
+    staleTime: 30 * 1000, // Consider data stale after 30 seconds
+    refetchOnWindowFocus: false,
+  });
+
   const [expandedEmails, setExpandedEmails] = useState<Record<string, boolean>>(
     {}
   );
@@ -97,6 +135,10 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
     setRefreshingAll(true);
 
     try {
+      // Refetch the emails list first
+      await refetchEmails();
+
+      // Then fetch details for all emails
       const promises = emails.map((email) =>
         fetchEmailDetails(email.resend_id)
       );
@@ -107,6 +149,51 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
       setRefreshingAll(false);
     }
   };
+
+  if (isEmailsLoading && !initialEmails.length) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Email History
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+            <span className="ml-2 text-sm text-muted-foreground">
+              Loading email history...
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (emailsError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Email History
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <p className="text-sm text-red-600 mb-4">
+              Failed to load email history: {emailsError.message}
+            </p>
+            <Button onClick={() => refetchEmails()} variant="outline" size="sm">
+              <RefreshCw className="h-3 w-3 mr-1" />
+              Try Again
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (emails.length === 0) {
     return (
@@ -136,12 +223,12 @@ export function EmailHistory({ emails }: EmailHistoryProps) {
           </CardTitle>
           <Button
             onClick={refreshAllEmails}
-            disabled={refreshingAll}
+            disabled={refreshingAll || isEmailsLoading}
             variant="outline"
             size="sm"
           >
             <RefreshCw
-              className={`h-4 w-4 mr-2 ${refreshingAll ? "animate-spin" : ""}`}
+              className={`h-4 w-4 mr-2 ${refreshingAll || isEmailsLoading ? "animate-spin" : ""}`}
             />
             {refreshingAll ? "Refreshing..." : "Refresh All"}
           </Button>

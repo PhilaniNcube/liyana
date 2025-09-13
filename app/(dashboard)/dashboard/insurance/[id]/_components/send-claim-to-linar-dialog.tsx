@@ -159,22 +159,6 @@ export function SendClaimToLinarDialog({
         </DialogHeader>
 
         <div className="grid gap-6 py-4">
-          {/* Email Content Preview */}
-          <div className="space-y-2">
-            <Label>Email Content</Label>
-            <div className="border rounded-lg p-3 bg-gray-50 text-sm">
-              <p className="font-medium">The email will include:</p>
-              <ul className="mt-2 space-y-1 text-muted-foreground">
-                <li>• Complete claim details and status information</li>
-                <li>• Claimant personal and contact information</li>
-                <li>• Related policy information and coverage details</li>
-                <li>• Claim dates (incident, filed, submitted)</li>
-                <li>• Payout information (if any payouts exist)</li>
-                <li>• Policy holder contact information</li>
-              </ul>
-            </div>
-          </div>
-
           {/* Custom Subject */}
           <div className="space-y-2">
             <Label htmlFor="subject">Email Subject</Label>

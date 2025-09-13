@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,9 @@ import { formatDate } from "date-fns";
 import { formatCurrency } from "@/lib/utils/format-currency";
 import type { Database } from "@/lib/database.types";
 import { SendClaimToLinarDialog } from "./send-claim-to-linar-dialog";
+import { useParams } from "next/navigation";
+import { usePolicyDocuments } from "@/hooks/use-policy-documents";
+import { createClient } from "@/lib/client";
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];
@@ -72,6 +75,14 @@ function formatName(
   return parts.length ? parts.join(" ") : "Unknown";
 }
 
+function getDocumentUrl(documentPath: string) {
+  const supabase = createClient();
+  const { data } = supabase.storage
+    .from("documents")
+    .getPublicUrl(documentPath);
+  return data.publicUrl;
+}
+
 function getStatusVariant(status: string) {
   switch (status.toLowerCase()) {
     case "approved":
@@ -94,11 +105,23 @@ export default function ClaimDetailsCard({
   documents: initialDocs,
   policyId,
 }: ClaimDetailsCardProps) {
-  const [allDocs, setAllDocs] = useState<PolicyDocumentRow[] | null>(
-    initialDocs || null
+  const params = useParams();
+
+  console.log("ClaimDetailsCard params:", params);
+
+  // Use TanStack Query to fetch policy documents
+  const {
+    data: allDocs = [],
+    isLoading: loadingDocs,
+    error: docsError,
+  } = usePolicyDocuments(policyId);
+
+  // If initialDocs provided, use them as initial data, otherwise use query result
+  const documentsToUse = initialDocs || allDocs;
+
+  const [error, setError] = useState<string | null>(
+    docsError ? docsError.message : null
   );
-  const [loadingDocs, setLoadingDocs] = useState(!initialDocs);
-  const [error, setError] = useState<string | null>(null);
   // Death status mock state
   const [deathStatus, setDeathStatus] = useState<null | {
     result: "DECEASED_CONFIRMED" | "NO_RECORD" | "PENDING" | "INVALID_ID";
@@ -158,26 +181,8 @@ export default function ClaimDetailsCard({
     }
   };
 
-  // Fetch policy documents if not provided so we can filter those for this claim
-  useEffect(() => {
-    if (allDocs) return; // already have
-    const fetchDocs = async () => {
-      try {
-        setLoadingDocs(true);
-        const res = await fetch(`/api/policy-documents?policy_id=${policyId}`);
-        if (!res.ok) throw new Error("Failed to load documents");
-        const data = await res.json();
-        setAllDocs(data);
-      } catch (e: any) {
-        setError(e.message || "Failed to load documents");
-      } finally {
-        setLoadingDocs(false);
-      }
-    };
-    fetchDocs();
-  }, [allDocs, policyId]);
-
-  const claimDocuments = (allDocs || []).filter((d) => d.claim_id === claim.id);
+  // Filter claim documents from the fetched documents
+  const claimDocuments = documentsToUse.filter((d) => d.claim_id === claim.id);
 
   return (
     <Card className="max-w-7xl w-full mx-auto relative">
@@ -257,7 +262,7 @@ export default function ClaimDetailsCard({
               claimNumber={claim.claim_number}
               claimantName={formatName(claim.claimant)}
               policyId={policyId}
-              documents={allDocs || []}
+              documents={documentsToUse}
             />
           </div>
         </div>
@@ -355,7 +360,7 @@ export default function ClaimDetailsCard({
                     title="Open"
                   >
                     <a
-                      href={doc.path}
+                      href={getDocumentUrl(doc.path)}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -369,7 +374,7 @@ export default function ClaimDetailsCard({
                     className="h-8 w-8"
                     title="Download"
                   >
-                    <a href={doc.path} download>
+                    <a href={getDocumentUrl(doc.path)} download>
                       <Download className="h-4 w-4" />
                     </a>
                   </Button>
