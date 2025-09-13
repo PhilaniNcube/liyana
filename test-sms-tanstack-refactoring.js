@@ -57,7 +57,9 @@ refreshSmsHistory(profileId);
 // BENEFITS OF THE NEW APPROACH:
 
 console.log("✅ Benefits of TanStack Query refactoring:");
-console.log("1. Automatic caching - Data is cached and reused across components");
+console.log(
+  "1. Automatic caching - Data is cached and reused across components"
+);
 console.log("2. Background refetching - Keeps data fresh automatically");
 console.log("3. Error handling - Centralized error handling with retry logic");
 console.log("4. Loading states - Better loading state management");
@@ -69,9 +71,13 @@ console.log("8. Network efficiency - Deduplicates identical requests");
 // KEY FILES CREATED/MODIFIED:
 console.log("\n📁 Files involved in the refactoring:");
 console.log("- lib/queries/sms.ts (NEW) - Server-side query functions");
-console.log("- app/api/sms/history/route.ts (NEW) - API endpoint for fetching SMS history");
+console.log(
+  "- app/api/sms/history/route.ts (NEW) - API endpoint for fetching SMS history"
+);
 console.log("- hooks/use-sms-history.ts (NEW) - Custom TanStack Query hooks");
-console.log("- components/sms-application.tsx (MODIFIED) - Refactored to use TanStack Query");
+console.log(
+  "- components/sms-application.tsx (MODIFIED) - Refactored to use TanStack Query"
+);
 console.log("- lib/queries/index.ts (MODIFIED) - Added SMS exports");
 
 // USAGE PATTERN:
