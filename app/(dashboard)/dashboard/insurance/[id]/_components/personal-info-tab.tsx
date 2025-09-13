@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatDate } from "date-fns";
 import { PolicyWithAllData } from "@/lib/queries/policy-details";
-import { decryptValue } from "@/lib/encryption";
 
 import VerifyIdDialog from "./verify-id";
 import SendOtvDialog from "./send-otv";
@@ -44,9 +43,7 @@ export default function PersonalInfoTab({ policy }: PersonalInfoTabProps) {
           <div className="flex items-center gap-2">
             {holder.id_number && <VerifyIdDialog idNumber={holder.id_number} />}
             {(() => {
-              const decryptedIdNumber = holder.id_number
-                ? decryptValue(holder.id_number) || ""
-                : "";
+              const decryptedIdNumber = holder.decrypted_id_number || "";
               let cellNumber = "";
               if (
                 holder.contact_details &&
@@ -98,9 +95,7 @@ export default function PersonalInfoTab({ policy }: PersonalInfoTabProps) {
             </div>
             <div>
               <div className="text-xs text-muted-foreground">ID Number</div>
-              <div className="">
-                {holder.id_number ? decryptValue(holder.id_number) || "—" : "—"}
-              </div>
+              <div className="">{holder.decrypted_id_number || "—"}</div>
             </div>
           </div>
 
@@ -124,11 +119,7 @@ export default function PersonalInfoTab({ policy }: PersonalInfoTabProps) {
 
                       <EmailVerificationDialog
                         email={(holder.contact_details as any).email}
-                        idNumber={
-                          holder.id_number
-                            ? decryptValue(holder.id_number) || ""
-                            : ""
-                        }
+                        idNumber={holder.decrypted_id_number || ""}
                       >
                         <Button
                           variant="outline"
@@ -154,11 +145,7 @@ export default function PersonalInfoTab({ policy }: PersonalInfoTabProps) {
                         <CellphoneVerificationDialog
                           policyId={policy.id}
                           phone={(holder.contact_details as any).phone}
-                          idNumber={
-                            holder.id_number
-                              ? decryptValue(holder.id_number) || ""
-                              : undefined
-                          }
+                          idNumber={holder.decrypted_id_number || ""}
                         />
                       </div>
                     </div>

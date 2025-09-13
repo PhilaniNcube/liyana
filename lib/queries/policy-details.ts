@@ -11,7 +11,7 @@ type PolicyBeneficiaryRow = Database["public"]["Tables"]["policy_beneficiaries"]
 type PolicyDocumentRow = Database["public"]["Tables"]["policy_documents"]["Row"];
 
 export type PolicyWithAllData = PolicyRow & {
-  policy_holder: Partial<PartyRow> | null;
+  policy_holder: (Partial<PartyRow> & { decrypted_id_number?: string | null }) | null;
   product_type: Database["public"]["Enums"]["product_type"] | null;
   employment_details: {
     [key: string]: string;
@@ -170,8 +170,22 @@ export async function getCompletePolicyData(id: number): Promise<PolicyWithAllDa
 
   const policyDocuments = documentsError || !documents ? [] : documents;
 
+  // Decrypt policy holder's ID number
+  let decryptedIdNumber: string | null = null;
+  if (policy.policy_holder?.id_number) {
+    try {
+      decryptedIdNumber = decryptValue(policy.policy_holder.id_number);
+    } catch {
+      decryptedIdNumber = null;
+    }
+  }
+
   return {
     ...policy,
+    policy_holder: policy.policy_holder ? {
+      ...policy.policy_holder,
+      decrypted_id_number: decryptedIdNumber
+    } : null,
     beneficiaries,
     claims,
     premium_payments,
