@@ -31,7 +31,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useEmailRefetch } from "@/components/email-refetch-context";
+import { useEmailRefetchSafe } from "@/components/email-refetch-context";
 
 // Schema for email form
 const emailSchema = z.object({
@@ -74,14 +74,9 @@ export function EmailApplicationComponent({
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [readingFiles, setReadingFiles] = useState(false);
 
-  // Try to get the email refetch function if we're in the email context
-  let refetchEmails: ((policyId: number) => void) | null = null;
-  try {
-    const { refetchEmails: contextRefetch } = useEmailRefetch();
-    refetchEmails = contextRefetch;
-  } catch {
-    // Not in email refetch context, that's okay
-  }
+  // Get the email refetch function if we're in the email context
+  const emailRefetchContext = useEmailRefetchSafe();
+  const refetchEmails = emailRefetchContext?.refetchEmails || null;
 
   // Set default subject based on type
   const getDefaultSubject = () => {

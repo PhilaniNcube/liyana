@@ -37,3 +37,8 @@ export function useEmailRefetch() {
   }
   return context;
 }
+
+export function useEmailRefetchSafe() {
+  const context = useContext(EmailRefetchContext);
+  return context; // Returns undefined if not in provider
+}
