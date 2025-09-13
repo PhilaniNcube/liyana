@@ -80,7 +80,8 @@ export async function sendClaimDetailsEmail(
     filename: string;
     content: string; // Changed from 'data' to 'content' for Resend compatibility
     content_type?: string;
-  }>
+  }>,
+  customSubject?: string
 ) {
   try {
     const supabase = await createClient();
@@ -164,6 +165,8 @@ export async function sendClaimDetailsEmail(
 
     const resend = new Resend(process.env.RESEND_API_KEY);
 
+    const policyUserId = claim.policy.user_id;
+
     // Format names
     const policyHolderName = `${claim.policy?.policy_holder?.first_name || ''} ${claim.policy?.policy_holder?.last_name || ''}`.trim();
     const claimantName = `${claim.claimant?.first_name || ''} ${claim.claimant?.last_name || ''}`.trim();
@@ -217,13 +220,13 @@ export async function sendClaimDetailsEmail(
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; line-height: 1.6; color: #374151;">
         <!-- Header -->
-        <div style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+        <div style="background: linear-gradient(135deg, #000000 0%, #000000 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
           <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Insurance Claim Details</h1>
           <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Claim #${claim.claim_number}</p>
         </div>
 
         <!-- Claim Summary -->
-        <div style="background: #fef2f2; padding: 30px; ">
+        <div style="background: #ffffff; padding: 30px; ">
           <h2 style="margin: 0 0 20px 0;  font-size: 20px;">Claim Summary</h2>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div>
@@ -321,7 +324,7 @@ export async function sendClaimDetailsEmail(
             <thead>
               <tr style="background: #f3f4f6;">
                 <th style="padding: 12px 8px; text-align: left; border-bottom: 2px solid #e5e7eb; font-weight: bold; color: #374151;">#</th>
-                <th style="padding: 12px 8px; text-align: left; border-bottom: 2px solid #e5e7eb; font-weight: bold; color: #374151;">Beneficiary</th>
+                <th style="padding: 12px 8px; text-align: left; border-bottom: 2px solid #e5e7eb; font-weight: bold; color: #374151;">Covered Person</th>
                 <th style="padding: 12px 8px; text-align: left; border-bottom: 2px solid #e5e7eb; font-weight: bold; color: #374151;">Amount</th>
                 <th style="padding: 12px 8px; text-align: left; border-bottom: 2px solid #e5e7eb; font-weight: bold; color: #374151;">Payout Date</th>
               </tr>
@@ -363,19 +366,28 @@ export async function sendClaimDetailsEmail(
     const { data, error } = await resend.emails.send({
       from: 'Liyana Finance <noreply@liyanafinance.co.za>',
       to: [linarEmailAddress],
-      subject: `Insurance Claim Details - Claim #${claim.claim_number}`,
+      subject: customSubject || `Insurance Claim Details - Claim #${claim.claim_number}`,
       html: emailHtml,
       attachments,
     });
 
-    if (error) {
+    if (error || !data) {
       console.error('Email sending error:', error);
       return {
         error: true,
         message: 'Failed to send email',
-        details: error.message,
+        details: error?.message || 'No data returned',
       };
     }
+
+    // Email sent successfully save to the resend_emails table
+    const { error: logError } = await supabase.from('resend_emails').insert({
+      resend_id: data.id,
+      profile_id: policyUserId,
+      policy_id: claim.policy_id,
+    });
+
+    console.log("Email sent successfully:", data, logError);
 
     return {
       error: false,

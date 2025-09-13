@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -49,6 +50,9 @@ export function SendClaimToLinarDialog({
   const [open, setOpen] = useState(false);
   const [selectedDocuments, setSelectedDocuments] = useState<number[]>([]);
   const [customMessage, setCustomMessage] = useState("");
+  const [customSubject, setCustomSubject] = useState(
+    `Insurance Claim Details - Claim #${claimNumber}`
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -108,7 +112,8 @@ export function SendClaimToLinarDialog({
 
       const result = await sendClaimDetailsEmail(
         claimId,
-        attachments.length > 0 ? attachments : undefined
+        attachments.length > 0 ? attachments : undefined,
+        customSubject.trim() || undefined
       );
 
       if (result.error) {
@@ -123,6 +128,7 @@ export function SendClaimToLinarDialog({
           setSuccess(false);
           setSelectedDocuments([]);
           setCustomMessage("");
+          setCustomSubject(`Insurance Claim Details - Claim #${claimNumber}`);
         }, 2000);
       }
     } catch (error) {
@@ -167,6 +173,17 @@ export function SendClaimToLinarDialog({
                 <li>• Policy holder contact information</li>
               </ul>
             </div>
+          </div>
+
+          {/* Custom Subject */}
+          <div className="space-y-2">
+            <Label htmlFor="subject">Email Subject</Label>
+            <Input
+              id="subject"
+              value={customSubject}
+              onChange={(e) => setCustomSubject(e.target.value)}
+              placeholder="Enter custom email subject..."
+            />
           </div>
 
           {/* Custom Message */}
