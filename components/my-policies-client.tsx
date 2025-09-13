@@ -9,6 +9,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Shield,
   Plus,
   ArrowRight,
@@ -147,7 +155,7 @@ export function MyPoliciesClient({ policies, userId }: MyPoliciesClientProps) {
             <CardTitle className="text-sm font-medium">
               Total Coverage
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-600" />
+            {/* <DollarSign className="h-4 w-4 text-blue-600" /> */}
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
@@ -168,81 +176,77 @@ export function MyPoliciesClient({ policies, userId }: MyPoliciesClientProps) {
       {hasPolicies ? (
         <div className="space-y-6">
           <h2 className="text-2xl font-semibold">Policy History</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {policies.map((policy) => (
-              <Link href={`/profile/policies/${policy.id}`} key={policy.id}>
-                <Card
-                  key={policy.id}
-                  className="hover:shadow-lg transition-all duration-200"
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        Policy #{policy.id}
-                      </CardTitle>
-                      <Badge
-                        variant="secondary"
-                        className={getPolicyStatusColor(
-                          policy.policy_status || "active"
-                        )}
-                      >
-                        {getPolicyStatusIcon(policy.policy_status || "active")}
-                        {policy.policy_status || "active"}
-                      </Badge>
-                    </div>
-                    {policy.product_type && (
-                      <div className="text-sm text-muted-foreground capitalize">
-                        {policy.product_type.replace("_", " ")}
-                      </div>
-                    )}
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">
-                          Coverage Amount
-                        </span>
-                        <span className="font-semibold text-lg">
-                          R{policy.coverage_amount?.toLocaleString() || "0"}
-                        </span>
-                      </div>
-                      {policy.premium_amount && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">
-                            Premium
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Policy ID</TableHead>
+                    {/* <TableHead>Type</TableHead> */}
+                    <TableHead>Status</TableHead>
+                    <TableHead>Coverage Amount</TableHead>
+                    <TableHead>Premium</TableHead>
+                    <TableHead>Start Date</TableHead>
+                    <TableHead>End Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {policies.map((policy) => (
+                    <TableRow key={policy.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">
+                        #{policy.id}
+                      </TableCell>
+                      {/* <TableCell className="capitalize">
+                        {policy.product_type?.replace("_", " ") || "N/A"}
+                      </TableCell> */}
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className={getPolicyStatusColor(
+                            policy.policy_status || "active"
+                          )}
+                        >
+                          {getPolicyStatusIcon(
+                            policy.policy_status || "active"
+                          )}
+                          <span className="ml-1">
+                            {policy.policy_status || "active"}
                           </span>
-                          <span className="font-medium">
-                            R{policy.premium_amount?.toLocaleString() || "0"}
-                          </span>
-                        </div>
-                      )}
-
-                      {policy.start_date && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">
-                            Start Date
-                          </span>
-                          <span className="font-medium text-sm">
-                            {new Date(policy.start_date).toLocaleDateString()}
-                          </span>
-                        </div>
-                      )}
-                      {policy.end_date && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">
-                            End Date
-                          </span>
-                          <span className="font-medium text-sm">
-                            {new Date(policy.end_date).toLocaleDateString()}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-semibold">
+                        R{policy.coverage_amount?.toLocaleString() || "0"}
+                      </TableCell>
+                      <TableCell>
+                        {policy.premium_amount
+                          ? `R${policy.premium_amount.toLocaleString()}`
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {policy.start_date
+                          ? new Date(policy.start_date).toLocaleDateString()
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {policy.end_date
+                          ? new Date(policy.end_date).toLocaleDateString()
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/profile/policies/${policy.id}`}>
+                            View Details
+                            <ArrowRight className="h-4 w-4 ml-1" />
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
       ) : (
         <Card>

@@ -47,13 +47,29 @@ export function ProfileOverviewClient({
     <div className="space-y-8">
       {/* Welcome Section */}
       <div className="space-y-4">
-        <div>
-          <h1 className="text-3xl font-bold">
-            Welcome back, {userFullName || "User"}!
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Here's an overview of your account and recent activity
-          </p>
+        <div className="flex flex-col md:flex-row items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">
+              Welcome back, {userFullName || "User"}!
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Here's an overview of your account and recent activity
+            </p>
+          </div>
+          <div className="flex space-x-4">
+            <Link href="/insurance/funeral">
+              <Button className="justify-start">
+                <Plus className="h-4 w-4" />
+                <p className="font-medium">New Funeral Policy</p>
+              </Button>
+            </Link>
+            <Link href="/apply">
+              <Button className="justify-start">
+                <Plus className="h-4 w-4" />
+                <p className="font-medium">New Loan Application</p>
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 

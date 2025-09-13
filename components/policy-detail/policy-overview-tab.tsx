@@ -168,10 +168,12 @@ export default function PolicyOverviewTab({
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <p className="text-sm font-medium">Beneficiaries</p>
+              <p className="text-sm font-medium">Covered Persons</p>
               <p className="text-2xl font-bold">{beneficiaries.length}</p>
               <p className="text-xs text-muted-foreground">
-                {beneficiaries.length === 1 ? "beneficiary" : "beneficiaries"}{" "}
+                {beneficiaries.length === 1
+                  ? "Covered person"
+                  : "Covered persons"}{" "}
                 assigned
               </p>
             </div>
@@ -180,19 +182,6 @@ export default function PolicyOverviewTab({
               <p className="text-2xl font-bold">{claims.length}</p>
               <p className="text-xs text-muted-foreground">
                 {claims.length === 1 ? "claim" : "claims"} filed
-              </p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Total Allocation</p>
-              <p className="text-2xl font-bold">
-                {beneficiaries.reduce(
-                  (sum, b) => sum + b.allocation_percentage,
-                  0
-                )}
-                %
-              </p>
-              <p className="text-xs text-muted-foreground">
-                coverage allocated
               </p>
             </div>
           </div>

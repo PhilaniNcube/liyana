@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { User, CreditCard, Shield, Settings, Menu, X } from "lucide-react";
+import {
+  User,
+  CreditCard,
+  Shield,
+  Settings,
+  Menu,
+  X,
+  CoinsIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -29,7 +37,13 @@ const navigationItems = [
     title: "My Policies",
     href: "/profile/my-policies",
     icon: Shield,
-    description: "Manage insurance policies",
+    description: "Manage funeral policies",
+  },
+  {
+    title: "My Claims",
+    href: "/profile/my-claims",
+    icon: CoinsIcon,
+    description: "Manage funeral policy claims",
   },
 ];
 

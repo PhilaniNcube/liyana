@@ -3,7 +3,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { DollarSign, CreditCard } from "lucide-react";
+import { DollarSign, CreditCard, CoinsIcon } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/format-currency";
 import type { PolicyWithProduct } from "@/lib/queries/policies";
 
@@ -31,7 +31,7 @@ export default function PolicyFinancialTab({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+            <CoinsIcon className="h-5 w-5" />
             Premium Details
           </CardTitle>
         </CardHeader>
