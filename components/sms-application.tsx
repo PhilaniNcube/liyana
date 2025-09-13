@@ -9,15 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Send, MessageSquare, Clock, Phone, Edit } from "lucide-react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/client";
 import { formatDistanceToNow } from "date-fns";
-
-interface SmsLog {
-  id: number;
-  message: string;
-  phone_number: string;
-  created_at: string;
-}
+import { useSmsHistory, useRefreshSmsHistory } from "@/hooks/use-sms-history";
+import type { SmsLogRecord } from "@/lib/queries/sms";
 
 interface SmsApplicationProps {
   applicationId: number;
@@ -36,43 +30,23 @@ export default function SmsApplication({
   const [editablePhoneNumber, setEditablePhoneNumber] = useState(phoneNumber);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [smsHistory, setSmsHistory] = useState<SmsLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  const supabase = createClient();
+  const refreshSmsHistory = useRefreshSmsHistory();
+
+  // Use TanStack Query for SMS history
+  const {
+    data: smsHistory = [],
+    isLoading,
+    error,
+  } = useSmsHistory({
+    profileId,
+    enabled: !!profileId,
+  });
 
   // Update editable phone number when prop changes
   useEffect(() => {
     setEditablePhoneNumber(phoneNumber);
   }, [phoneNumber]);
-
-  // Fetch SMS history
-  const fetchSmsHistory = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("sms_logs")
-        .select("*")
-        .eq("profile_id", profileId)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching SMS history:", error);
-        toast.error("Failed to load SMS history");
-        return;
-      }
-
-      setSmsHistory(data || []);
-    } catch (error) {
-      console.error("Error fetching SMS history:", error);
-      toast.error("Failed to load SMS history");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSmsHistory();
-  }, [profileId]);
 
   const handleSendSms = async () => {
     if (!message.trim()) {
@@ -118,8 +92,8 @@ export default function SmsApplication({
       toast.success("SMS sent successfully");
       setMessage("");
 
-      // Refresh SMS history
-      await fetchSmsHistory();
+      // Refresh SMS history using TanStack Query
+      refreshSmsHistory(profileId);
     } catch (error) {
       console.error("Error sending SMS:", error);
       toast.error("Failed to send SMS");
@@ -235,6 +209,14 @@ export default function SmsApplication({
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-8 text-red-500">
+              <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Failed to load SMS history</p>
+              <p className="text-sm">
+                {error instanceof Error ? error.message : "Unknown error"}
+              </p>
             </div>
           ) : smsHistory.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">

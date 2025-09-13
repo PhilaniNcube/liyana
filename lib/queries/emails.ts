@@ -167,6 +167,23 @@ export async function getAllEmailsForProfile(profileId: string): Promise<EmailRe
   return data || [];
 }
 
+export async function getAllEmailsForProfileWithDetails(profileId: string): Promise<EmailWithDetails[]> {
+  const emails = await getAllEmailsForProfile(profileId);
+  
+  // Fetch details for each email
+  const emailsWithDetails = await Promise.all(
+    emails.map(async (email) => {
+      const details = await fetchEmailDetailsFromResend(email.resend_id);
+      return {
+        ...email,
+        details: details || undefined,
+      };
+    })
+  );
+
+  return emailsWithDetails;
+}
+
 
 
 

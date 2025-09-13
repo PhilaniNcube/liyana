@@ -12,21 +12,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQueryState } from "nuqs";
 import {
   User,
   Mail,
   Phone,
-  Calendar,
-  MapPin,
   FileText,
   CreditCard,
   Shield,
   ArrowLeft,
-  Users,
   CheckCircle,
-  XCircle,
   Clock,
-  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -38,6 +34,7 @@ import SmsApplication from "@/components/sms-application";
 import { toast } from "sonner";
 import type { Database } from "@/lib/types";
 import { EmailHistory } from "@/components/email-history-new";
+import { UserEmailHistory } from "../_components/user-email-history";
 import { EmailRecord } from "@/lib/queries/emails";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
@@ -63,6 +60,12 @@ export function ProfilePageClient({
   const [profileDocuments, setProfileDocuments] = useState<ProfileDocument[]>(
     []
   );
+
+  // URL state for tab management
+  const [activeTab, setActiveTab] = useQueryState("tab", {
+    defaultValue: "profile",
+    clearOnDefault: true,
+  });
 
   const handleProfileDocumentUploadSuccess = (newDocument: ProfileDocument) => {
     setProfileDocuments((prev) => [...prev, newDocument]);
@@ -242,7 +245,11 @@ export function ProfilePageClient({
         </Card>
       </div>
 
-      <Tabs defaultValue="profile" className="mt-4 w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="mt-4 w-full"
+      >
         <TabsList className="w-full">
           <TabsTrigger value="profile">Profile Info</TabsTrigger>
           <TabsTrigger value="applications">
@@ -253,6 +260,7 @@ export function ProfilePageClient({
           </TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="email">Email Client</TabsTrigger>
+
           <TabsTrigger value="sms">SMS Client</TabsTrigger>
         </TabsList>
 
@@ -511,7 +519,7 @@ export function ProfilePageClient({
                 )}
               </CardContent>
             </Card>
-            <EmailHistory emails={emails} />
+            <UserEmailHistory userId={profile.id} initialEmails={emails} />
           </div>
         </TabsContent>
 

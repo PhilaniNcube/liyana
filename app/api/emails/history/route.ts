@@ -3,7 +3,8 @@ import { createClient } from "@/lib/server";
 import { 
   getEmailsForApplicationWithDetails, 
   getEmailsForLoanWithDetails, 
-  getEmailsForPolicyWithDetails 
+  getEmailsForPolicyWithDetails,
+  getAllEmailsForProfileWithDetails
 } from "@/lib/queries/emails";
 
 export async function GET(request: NextRequest) {
@@ -12,6 +13,7 @@ export async function GET(request: NextRequest) {
     const applicationId = searchParams.get("applicationId");
     const loanId = searchParams.get("loanId");
     const policyId = searchParams.get("policyId");
+    const userId = searchParams.get("userId");
 
     // Check authentication
     const supabase = await createClient();
@@ -56,9 +58,11 @@ export async function GET(request: NextRequest) {
       emails = await getEmailsForLoanWithDetails(parseInt(loanId));
     } else if (policyId) {
       emails = await getEmailsForPolicyWithDetails(parseInt(policyId));
+    } else if (userId) {
+      emails = await getAllEmailsForProfileWithDetails(userId);
     } else {
       return NextResponse.json(
-        { error: "Missing required parameter: applicationId, loanId, or policyId" },
+        { error: "Missing required parameter: applicationId, loanId, policyId, or userId" },
         { status: 400 }
       );
     }

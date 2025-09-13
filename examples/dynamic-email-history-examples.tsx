@@ -25,7 +25,7 @@ export async function ApplicationEmailHistoryDynamic({
         EmailHistory will fetch details from Resend API when emails are expanded.
         This reduces initial page load time and API calls.
       */}
-      <EmailHistory emails={emails} />
+      <EmailHistory emails={emails} policyId={0} />
     </div>
   );
 }
@@ -49,7 +49,7 @@ export async function ApplicationEmailHistoryPreloaded({
         EmailHistory will use the pre-fetched details immediately.
         This shows content faster but requires more initial API calls.
       */}
-      <EmailHistory emails={emails} />
+      <EmailHistory emails={emails} policyId={0} />
     </div>
   );
 }
@@ -78,7 +78,7 @@ export function ClientSideEmailHistory({
     return <div>Loading email history...</div>;
   }
 
-  return <EmailHistory emails={emails} />;
+  return <EmailHistory emails={emails} policyId={0} />;
 }
 
 /**

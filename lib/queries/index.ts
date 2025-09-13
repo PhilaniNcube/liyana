@@ -5,6 +5,7 @@ export * from "./documents";
 export * from "./api-checks";
 export * from "./analytics";
 export * from "./pre-applications";
+export * from "./sms";
 
 // Export types
 export type { CurrentUser } from "./user";
