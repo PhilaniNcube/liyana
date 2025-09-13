@@ -26,6 +26,22 @@ export function useDeceasedStatusCheck(): UseDeceasedStatusCheckReturn {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Handle specific WhoYou error codes
+        if (response.status === 400 && errorData.details) {
+          try {
+            const details = typeof errorData.details === 'string' 
+              ? JSON.parse(errorData.details) 
+              : errorData.details;
+            
+            if (details.code === 10084) {
+              throw new Error("Deceased status check service is temporarily unavailable. Please contact support for assistance.");
+            }
+          } catch (parseError) {
+            // If parsing fails, use the original error
+          }
+        }
+        
         throw new Error(errorData.error || "Failed to check deceased status");
       }
 

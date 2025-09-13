@@ -550,7 +550,7 @@ export default function CreateClaimForm({
                           >
                             <FormControl>
                               <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select the claimant" />
+                                <SelectValue placeholder="Select the covered person" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -585,7 +585,7 @@ export default function CreateClaimForm({
                                     </span>
                                     <span> - </span>
                                     <span className="text-xs text-muted-foreground">
-                                      Beneficiary ({beneficiary.relation_type})
+                                      ({beneficiary.relation_type})
                                     </span>
                                   </div>
                                 </SelectItem>
@@ -866,7 +866,7 @@ export default function CreateClaimForm({
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <span className="font-medium">Claimant:</span>
+                        <span className="font-medium">Covered Person:</span>
                         <div className="mt-1">{selectedClaimantName}</div>
                       </div>
                       <div>

@@ -58,14 +58,10 @@ export default function PolicyBeneficiariesTab({
                     <User className="h-5 w-5" />
                     {fullName}
                   </div>
-                  <Badge variant="outline">
-                    {beneficiary.allocation_percentage}%
-                  </Badge>
                 </CardTitle>
                 <CardDescription>
                   {beneficiary.relation_type.charAt(0).toUpperCase() +
                     beneficiary.relation_type.slice(1)}{" "}
-                  • {beneficiary.allocation_percentage}% allocation
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -109,25 +105,7 @@ export default function PolicyBeneficiariesTab({
                           beneficiary.relation_type.slice(1)}
                       </p>
                     </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">
-                        Allocation Percentage
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <div className="text-2xl font-bold">
-                          {beneficiary.allocation_percentage}%
-                        </div>
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full"
-                            style={{
-                              width: `${beneficiary.allocation_percentage}%`,
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
+
                     <Separator />
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Added</p>

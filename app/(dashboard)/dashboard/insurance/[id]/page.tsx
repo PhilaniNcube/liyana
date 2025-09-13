@@ -89,7 +89,10 @@ const PolicyPage = async ({ params }: PolicyPageProps) => {
         </TabsContent>
 
         <TabsContent value="beneficiaries" className="mt-6">
-          <PolicyBeneficiariesTab beneficiaries={policyData.beneficiaries} />
+          <PolicyBeneficiariesTab
+            beneficiaries={policyData.beneficiaries}
+            user_id={policyData.user_id}
+          />
         </TabsContent>
 
         <TabsContent value="claims" className="mt-6">

@@ -10,6 +10,7 @@ import { formatDate } from "date-fns";
 import { useDeceasedStatusCheck } from "@/hooks/use-deceased-status-check";
 import { DeceasedStatusInformation } from "@/lib/schemas";
 import type { PolicyWithAllData } from "@/lib/queries/policy-details";
+import { toast } from "sonner";
 
 type Beneficiary = PolicyWithAllData["beneficiaries"][0];
 
@@ -32,30 +33,30 @@ function formatRelationship(rel: string | null | undefined) {
 
 interface PolicyBeneficiariesTabProps {
   beneficiaries: Beneficiary[];
+  user_id: string;
 }
 
 export default function PolicyBeneficiariesTab({
   beneficiaries,
+  user_id,
 }: PolicyBeneficiariesTabProps) {
   const [beneficiariesWithStatus, setBeneficiariesWithStatus] = useState<
     BeneficiaryWithDeceasedStatus[]
   >(beneficiaries.map((b) => ({ ...b })));
   const { checkDeceasedStatus } = useDeceasedStatusCheck();
 
-  const handleCheckDeceasedStatus = async (beneficiaryIndex: number) => {
-    const beneficiary = beneficiariesWithStatus[beneficiaryIndex];
+  const handleCheckDeceasedStatus = async (idNumber: string) => {
+    // Find the beneficiary index to update the correct state
+    const beneficiaryIndex = beneficiariesWithStatus.findIndex(
+      (b) => b.id_number === idNumber
+    );
 
-    // Check if we have the encrypted ID number from the party
-    if (!beneficiary.party?.id_number) {
-      // Fallback: look up the party to get encrypted ID number
-      console.warn(
-        "No encrypted ID number available for beneficiary",
-        beneficiary.id
-      );
+    if (beneficiaryIndex === -1) {
+      toast.error("Beneficiary not found");
       return;
     }
 
-    // Update the loading state
+    // Update loading state
     setBeneficiariesWithStatus((prev) =>
       prev.map((b, index) =>
         index === beneficiaryIndex
@@ -65,9 +66,43 @@ export default function PolicyBeneficiariesTab({
     );
 
     try {
-      const deceasedInfo = await checkDeceasedStatus(
-        beneficiary.party.id_number
-      );
+      toast.loading("Checking deceased status...", { id: "deceased-check" });
+
+      const response = await fetch("/api/kyc/deceased-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id_number: idNumber, user_id: user_id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle specific error codes
+        let errorMessage = data.error || "Failed to check deceased status";
+
+        if (response.status === 400 && data.details) {
+          try {
+            const details =
+              typeof data.details === "string"
+                ? JSON.parse(data.details)
+                : data.details;
+
+            if (details.code === 10084) {
+              errorMessage =
+                "Deceased status check service is temporarily unavailable. Please contact support for assistance.";
+            }
+          } catch (parseError) {
+            // Use the original error if parsing fails
+          }
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      // Success - update state with the results
+      const deceasedInfo = data.data?.detail?.deceasedStatusInformation || null;
 
       setBeneficiariesWithStatus((prev) =>
         prev.map((b, index) =>
@@ -81,11 +116,26 @@ export default function PolicyBeneficiariesTab({
             : b
         )
       );
+
+      // Show success toast
+      const hasDeceasedRecord = deceasedInfo?.some(
+        (record: DeceasedStatusInformation) => record.isDeceased
+      );
+      if (hasDeceasedRecord) {
+        toast.error("Deceased records found for this beneficiary", {
+          id: "deceased-check",
+        });
+      } else {
+        toast.success(
+          "Deceased status check completed - No deceased records found",
+          { id: "deceased-check" }
+        );
+      }
     } catch (error) {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to check deceased status";
+        error instanceof Error ? error.message : "Unknown error occurred";
+
+      // Update error state
       setBeneficiariesWithStatus((prev) =>
         prev.map((b, index) =>
           index === beneficiaryIndex
@@ -97,6 +147,9 @@ export default function PolicyBeneficiariesTab({
             : b
         )
       );
+
+      // Show error toast
+      toast.error(errorMessage, { id: "deceased-check" });
     }
   };
 
@@ -301,7 +354,9 @@ export default function PolicyBeneficiariesTab({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleCheckDeceasedStatus(index)}
+                          onClick={() =>
+                            handleCheckDeceasedStatus(beneficiary.id_number!)
+                          }
                           className="text-xs"
                         >
                           Check Deceased Status
@@ -311,18 +366,43 @@ export default function PolicyBeneficiariesTab({
                 </div>
 
                 {beneficiary.deceasedCheckError && (
-                  <div className="p-2 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-sm text-red-700">
-                      Error: {beneficiary.deceasedCheckError}
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCheckDeceasedStatus(index)}
-                      className="text-xs mt-2"
-                    >
-                      Retry Check
-                    </Button>
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm text-red-700 font-medium">
+                          {beneficiary.deceasedCheckError.includes(
+                            "temporarily unavailable"
+                          ) ||
+                          beneficiary.deceasedCheckError.includes("service")
+                            ? "Service Temporarily Unavailable"
+                            : "Check Failed"}
+                        </p>
+                        <p className="text-sm text-red-600 mt-1">
+                          {beneficiary.deceasedCheckError}
+                        </p>
+                        {beneficiary.deceasedCheckError.includes(
+                          "temporarily unavailable"
+                        ) ||
+                        beneficiary.deceasedCheckError.includes("service") ? (
+                          <p className="text-xs text-red-500 mt-2">
+                            Please try again later or contact support if the
+                            issue persists.
+                          </p>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleCheckDeceasedStatus(beneficiary.id_number!)
+                            }
+                            className="text-xs mt-2"
+                          >
+                            Retry Check
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
 
