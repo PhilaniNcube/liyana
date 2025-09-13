@@ -26,6 +26,7 @@ import {
   BoxIcon,
   VaultIcon,
   ShieldIcon,
+  HandHelping,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -87,6 +88,11 @@ const sidebarItems = [
         title: "Active Policies",
         href: "/dashboard/insurance/funeral/active",
         icon: UserCheck,
+      },
+      {
+        title: "Claims",
+        href: "/dashboard/insurance/funeral/claims",
+        icon: HandHelping,
       },
       {
         title: "All Policies",

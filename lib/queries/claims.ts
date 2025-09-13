@@ -47,3 +47,24 @@ export async function getClaimsByUserId() {
        return null;
     }
 }
+
+export async function getAllClaims() {
+
+    const supabase = await createClient();
+
+    try {
+        const { data: claimsData, error: claimsError } = await supabase
+            .from("claims")
+            .select("*, parties!inner(*), policies!inner(*)");
+
+        if (claimsError) {
+            throw claimsError;
+        }
+
+        return claimsData;
+
+    } catch (error) {
+        console.error("Error fetching claims:", error);
+        return null;
+    }
+}
