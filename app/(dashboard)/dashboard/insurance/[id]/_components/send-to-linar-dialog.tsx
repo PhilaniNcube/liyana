@@ -157,22 +157,22 @@ export function SendToLinarDialog({
           Send To Linar
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[500px] overflow-y-scroll">
         <DialogHeader>
           <DialogTitle>Send Policy to Linar</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs">
             Send policy details for {policyHolderName} (Policy #{policyId}) to
             the Linar email address. You can optionally attach policy documents.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 py-4">
+        <div className="grid gap-6 py-2">
           {/* Email Content Preview */}
           <div className="space-y-2">
             <Label>Email Content</Label>
-            <div className="border rounded-lg p-3 bg-gray-50 text-sm">
+            <div className="border rounded-lg p-2 bg-gray-50 text-sm">
               <p className="font-medium">The email will include:</p>
-              <ul className="mt-2 space-y-1 text-muted-foreground">
+              <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                 <li>• Complete policy details and coverage information</li>
                 <li>• Policy holder personal and contact information</li>
                 <li>• Employment and banking details</li>

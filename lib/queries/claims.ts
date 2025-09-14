@@ -34,7 +34,8 @@ export async function getClaimsByUserId() {
         const { data: claimsData, error: claimsError } = await supabase
             .from("claims")
             .select("*")
-            .in("claimant_party_id", partyIds);
+            .in("claimant_party_id", partyIds)
+            .order("created_at", { ascending: false });
 
         if (claimsError) {
             throw claimsError;
@@ -55,7 +56,8 @@ export async function getAllClaims() {
     try {
         const { data: claimsData, error: claimsError } = await supabase
             .from("claims")
-            .select("*, parties!inner(*), policies!inner(*)");
+            .select("*, parties!inner(*), policies!inner(*)")
+            .order("created_at", { ascending: false });
 
         if (claimsError) {
             throw claimsError;

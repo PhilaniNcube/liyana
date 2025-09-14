@@ -8,6 +8,8 @@ import { funeralPolicyLeadSchemaWithRefines as funeralPolicyLeadSchema, policyUp
 import { encryptValue } from "../encryption";
 import { sendSms } from "./sms";
 import { Resend } from "resend";
+import FuneralCoverCalculator, { type ICalculationParams, type IAdditionalFamilyMember } from "../utils/funeralcover-calculator";
+import { FUNERAL_RATE_DATA } from "../data/funeral-rates";
 
 export async function createFuneralPolicy(prevState: any, formData: FormData) {
   // Parse FormData entries
@@ -84,6 +86,7 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
           branch_code: validatedData.branch_code,
           account_type: validatedData.account_type,
           payment_method: validatedData.payment_method,
+          payment_date: validatedData.payment_date || null,
         },
         party_type: "individual",
         profile_id: user.id,
@@ -99,6 +102,63 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
       };
     }
 
+    // Calculate premium amount using FuneralCoverCalculator
+    let calculatedPremium: number | null = null;
+    try {
+      // Calculate policy holder's age from date of birth
+      const policyHolderAge = validatedData.date_of_birth 
+        ? new Date().getFullYear() - new Date(validatedData.date_of_birth).getFullYear()
+        : null;
+
+      if (policyHolderAge && validatedData.coverage_amount) {
+        // Map beneficiaries to calculator format
+        const additionalMembers: IAdditionalFamilyMember[] = [];
+        
+        if (validatedData.beneficiaries && validatedData.beneficiaries.length > 0) {
+          validatedData.beneficiaries.forEach((ben: any) => {
+            const relationship = ben.relationship;
+            
+            // Map relationship types to calculator format
+            if (relationship === 'spouse') {
+              additionalMembers.push({ relationship: 'spouse' });
+            } else if (relationship === 'child') {
+              additionalMembers.push({ relationship: 'child' });
+            } else if (relationship === 'parent' || relationship === 'sibling' || relationship === 'extended') {
+              // For extended family, we need age - estimate based on relationship
+              let estimatedAge: number;
+              
+              if (relationship === 'parent') {
+                estimatedAge = (policyHolderAge || 30) + 25; // Estimate parent age
+              } else if (relationship === 'sibling') {
+                estimatedAge = policyHolderAge || 30; // Assume similar age for siblings
+              } else { // extended
+                estimatedAge = policyHolderAge || 40; // Default estimate for extended family
+              }
+              
+              additionalMembers.push({ 
+                relationship: 'extended',
+                age: estimatedAge
+              });
+            }
+          });
+        }
+
+        // Initialize calculator and calculate premium
+        const calculator = new FuneralCoverCalculator(FUNERAL_RATE_DATA);
+        const calculationParams: ICalculationParams = {
+          mainMemberAge: policyHolderAge,
+          coverAmount: validatedData.coverage_amount,
+          additionalMembers: additionalMembers
+        };
+
+        const result = calculator.calculateTotalPremium(calculationParams);
+        calculatedPremium = result.totalPremium;
+      }
+    } catch (error) {
+      console.error("Error calculating premium:", error);
+      // Continue with null premium if calculation fails
+    }
+
     // Create a base policy record first
     const { data: newPolicy, error: policyError } = await supabase
       .from("policies")
@@ -106,10 +166,10 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
         policy_holder_id: party.id,
         frequency: "monthly",
         policy_status: "pending",
-        premium_amount: null,
+        premium_amount: calculatedPremium,
         coverage_amount: validatedData.coverage_amount,
         product_type: validatedData.product_type ?? null,
-        start_date: null,
+        start_date: validatedData.start_date || null,
         end_date: null,
         user_id: user.id,
         employment_details: {
@@ -439,13 +499,82 @@ export async function sendFuneralPolicyDetailsEmail(
       currency: 'ZAR',
     }).format(policy.coverage_amount || 0);
 
-    // Format premium amount if available
-    const premiumAmount = policy.premium_amount 
+    // Calculate premium amount if not already saved in database
+    let calculatedPremium: number | null = null;
+    let premiumCalculationError: string | null = null;
+    let policyHolderAge: number | null = null;
+    let additionalMembersCount = 0;
+    
+    if (!policy.premium_amount) {
+      try {
+        // Calculate policy holder's age from date of birth
+        policyHolderAge = policy.policy_holder?.date_of_birth 
+          ? new Date().getFullYear() - new Date(policy.policy_holder.date_of_birth).getFullYear()
+          : null;
+
+        if (policyHolderAge && policy.coverage_amount) {
+          // Map beneficiaries to calculator format
+          const additionalMembers: IAdditionalFamilyMember[] = [];
+          
+          if (beneficiaries && beneficiaries.length > 0) {
+            beneficiaries.forEach((ben) => {
+              const relationship = ben.relation_type;
+              
+              // Map relationship types to calculator format
+              if (relationship === 'spouse') {
+                additionalMembers.push({ relationship: 'spouse' });
+              } else if (relationship === 'child') {
+                additionalMembers.push({ relationship: 'child' });
+              } else if (relationship === 'parent' || relationship === 'sibling') {
+                // For extended family, we need age - estimate based on relationship
+                let estimatedAge: number;
+                
+                if (relationship === 'parent') {
+                  estimatedAge = (policyHolderAge || 30) + 25; // Estimate parent age
+                } else { // sibling
+                  estimatedAge = policyHolderAge || 30; // Assume similar age for siblings
+                }
+                
+                additionalMembers.push({ 
+                  relationship: 'extended',
+                  age: estimatedAge
+                });
+              }
+            });
+          }
+
+          additionalMembersCount = additionalMembers.length;
+
+          // Initialize calculator and calculate premium
+          const calculator = new FuneralCoverCalculator(FUNERAL_RATE_DATA);
+          const calculationParams: ICalculationParams = {
+            mainMemberAge: policyHolderAge,
+            coverAmount: policy.coverage_amount,
+            additionalMembers: additionalMembers
+          };
+
+          const result = calculator.calculateTotalPremium(calculationParams);
+          calculatedPremium = result.totalPremium;
+        }
+      } catch (error) {
+        console.error("Error calculating premium:", error);
+        premiumCalculationError = error instanceof Error ? error.message : "Unknown error";
+      }
+    }
+
+    // Format premium amount - use calculated value if available, otherwise database value
+    const finalPremiumAmount = policy.premium_amount || calculatedPremium;
+    const premiumAmount = finalPremiumAmount
       ? new Intl.NumberFormat('en-ZA', {
           style: 'currency',
           currency: 'ZAR',
-        }).format(policy.premium_amount)
+        }).format(finalPremiumAmount)
       : 'Not calculated yet';
+
+    // Add calculation indicator if premium was calculated
+    const premiumAmountWithIndicator = calculatedPremium
+      ? `${premiumAmount} (calculated)`
+      : premiumAmount;
 
     // Safely extract contact details
     const contactDetails = policy.policy_holder?.contact_details as { phone?: string; email?: string } | null;
@@ -464,21 +593,41 @@ export async function sendFuneralPolicyDetailsEmail(
     const bankingDetails = policy.policy_holder?.banking_details as {
       account_name?: string;
       bank_name?: string;
+      account_number?: string;
       account_type?: string;
       payment_method?: string;
+      payment_date?: string;
     } | null;
 
-    // Format beneficiaries list
-    const beneficiariesList = beneficiaries && beneficiaries.length > 0
-      ? beneficiaries.map((ben, index) => `
-          <tr>
-            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${index + 1}</td>
-            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${ben.beneficiary?.first_name || ''} ${ben.beneficiary?.last_name || ''}</td>
-            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${ben.relation_type || 'N/A'}</td>
-            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${ben.allocation_percentage || 0}%</td>
-          </tr>
-        `).join('')
-      : '<tr><td colspan="4" style="padding: 8px; text-align: center; color: #6b7280;">No beneficiaries added yet</td></tr>';
+    // Format beneficiaries list - include policy holder first, then beneficiaries
+    let beneficiariesList = '';
+    
+    // Add policy holder as first row
+    beneficiariesList += `
+      <tr style="background: #f3f4f6;">
+        <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">1</td>
+        <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">${policyHolderName || 'N/A'}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #059669;">Policy Holder</td>
+        <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Self</td>
+      </tr>
+    `;
+    
+    // Add beneficiaries
+    if (beneficiaries && beneficiaries.length > 0) {
+      beneficiariesList += beneficiaries.map((ben, index) => `
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${index + 2}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${ben.beneficiary?.first_name || ''} ${ben.beneficiary?.last_name || ''}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">Covered Person</td>
+          <td style="text-transform: capitalize; padding: 8px; border-bottom: 1px solid #e5e7eb;">${ben.relation_type || 'N/A'}</td>
+        </tr>
+      `).join('');
+    }
+    
+    // If no beneficiaries exist (only policy holder), add a note
+    if (!beneficiaries || beneficiaries.length === 0) {
+      beneficiariesList += '<tr><td colspan="4" style="padding: 8px; text-align: center; color: #6b7280; font-style: italic;">No additional covered persons added yet</td></tr>';
+    }
 
     // Create email HTML content
     const emailHtml = `
@@ -499,7 +648,9 @@ export async function sendFuneralPolicyDetailsEmail(
             </div>
             <div>
               <p style="margin: 0; font-weight: bold; color: #374151;">Monthly Premium:</p>
-              <p style="margin: 5px 0 15px 0; font-size: 18px;  font-weight: bold;">${premiumAmount}</p>
+              <p style="margin: 5px 0 15px 0; font-size: 18px; font-weight: bold;">${premiumAmountWithIndicator}</p>
+              ${premiumCalculationError ? `<p style="margin: 0; font-size: 12px; color: #dc2626; font-style: italic;">Calculation error: ${premiumCalculationError}</p>` : ''}
+              ${calculatedPremium ? `<p style="margin: 0; font-size: 12px; color: #059669; font-style: italic;">Premium calculated based on policy holder age (${policyHolderAge}) and ${additionalMembersCount} family member(s)</p>` : ''}
             </div>
             <div>
               <p style="margin: 0; font-weight: bold; color: #374151;">Policy Status:</p>
@@ -542,7 +693,7 @@ export async function sendFuneralPolicyDetailsEmail(
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div>
               <p style="margin: 0; font-weight: bold; color: #6b7280;">Employment Type:</p>
-              <p style="margin: 5px 0 15px 0; color: #374151; text-transform: capitalize;">${employmentDetails.employment_type || 'N/A'}</p>
+              <p style="margin: 5px 0 15px 0; color: #374151; text-transform: capitalize;">${employmentDetails.employment_type === 'employed' ? 'Permanent' : employmentDetails.employment_type}</p>
             </div>
             <div>
               <p style="margin: 0; font-weight: bold; color: #6b7280;">Employer:</p>
@@ -574,12 +725,20 @@ export async function sendFuneralPolicyDetailsEmail(
               <p style="margin: 5px 0 15px 0; color: #374151;">${bankingDetails.bank_name || 'N/A'}</p>
             </div>
             <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Account Number:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${bankingDetails.account_number || 'N/A'}</p>
+            </div>
+            <div>
               <p style="margin: 0; font-weight: bold; color: #6b7280;">Account Type:</p>
               <p style="margin: 5px 0 15px 0; color: #374151; text-transform: capitalize;">${bankingDetails.account_type || 'N/A'}</p>
             </div>
             <div>
               <p style="margin: 0; font-weight: bold; color: #6b7280;">Payment Method:</p>
-              <p style="margin: 5px 0 15px 0; color: #374151; text-transform: capitalize;">${bankingDetails.payment_method || 'N/A'}</p>
+              <p style="margin: 5px 0 15px 0; color: #374151; text-transform: capitalize;">${bankingDetails.payment_method ? bankingDetails.payment_method.replace(/_/g, ' ') : 'N/A'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Preferred Payment Date:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${bankingDetails.payment_date || 'N/A'}</p>
             </div>
           </div>
         </div>
@@ -587,15 +746,15 @@ export async function sendFuneralPolicyDetailsEmail(
 
         <!-- Beneficiaries -->
         <div style="padding: 30px; background: #f9fafb;">
-          <h2 style="margin: 0 0 20px 0; color: #374151; font-size: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Beneficiaries</h2>
+          <h2 style="margin: 0 0 20px 0; color: #374151; font-size: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Covered Persons</h2>
           <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
               <thead>
                 <tr style="background: #374151; color: white;">
                   <th style="padding: 12px 8px; text-align: left; font-weight: 600;">#</th>
                   <th style="padding: 12px 8px; text-align: left; font-weight: 600;">Full Name</th>
-                  <th style="padding: 12px 8px; text-align: left; font-weight: 600;">Relationship</th>
-                  <th style="padding: 12px 8px; text-align: left; font-weight: 600;">Allocation %</th>
+                  <th style="padding: 12px 8px; text-align: left; font-weight: 600;">Role</th>
+                  <th style="padding: 12px 8px; text-align: left; font-weight: 600;">Relationship to Policy Holder</th>
                 </tr>
               </thead>
               <tbody>
@@ -626,7 +785,7 @@ export async function sendFuneralPolicyDetailsEmail(
 
         <!-- Footer -->
         <div style="background: #374151; color: white; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;">
-          <p style="margin: 0; font-size: 14px; opacity: 0.9;">
+          <p style="margin: 0; font-size: 14px; opacity: 0.9; color: #d1d5db;">
             This is an automated notification from Liyana Finance
           </p>
           <p style="margin: 5px 0 0 0; font-size: 12px; opacity: 0.7;">

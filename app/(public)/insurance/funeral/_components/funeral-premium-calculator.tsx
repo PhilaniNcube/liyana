@@ -307,11 +307,18 @@ export default function FuneralPremiumCalculator() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="spouse">Spouse</SelectItem>
-                              <SelectItem value="child">Child</SelectItem>
-                              <SelectItem value="extended">
-                                Extended Family
-                              </SelectItem>
+                              {currentRelationship === "extended" ? (
+                                <>
+                                  <SelectItem value="extended">
+                                    Extended Family
+                                  </SelectItem>
+                                </>
+                              ) : (
+                                <>
+                                  <SelectItem value="spouse">Spouse</SelectItem>
+                                  <SelectItem value="child">Child</SelectItem>
+                                </>
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -336,6 +343,7 @@ export default function FuneralPremiumCalculator() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
+                                <SelectItem value="parent">Parent</SelectItem>
                                 <SelectItem value="sister">Sister</SelectItem>
                                 <SelectItem value="brother">Brother</SelectItem>
                                 <SelectItem value="grandparent">

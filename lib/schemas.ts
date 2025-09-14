@@ -4,6 +4,7 @@ import {
   genderSchema,
   bankAccountTypeSchema,
 } from "./enums";
+import { start } from "repl";
 
 // API Check interface for reuse across components
 export interface ApiCheck {
@@ -660,10 +661,14 @@ export const funeralPolicyLeadSchema = z
         invalid_type_error: "Please select a product",
       }),
     coverage_amount: z.coerce.number().min(1000, "Coverage amount must be at least R1,000").max(100000, "Coverage amount cannot exceed R100,000"),
+    start_date: z.string().min(1, "Start date is required").refine((date) => !isNaN(Date.parse(date)), { message: "Start date must be a valid date" }),
+    policy_type: z.enum(["individual", "family", "extended_family"], {
+      required_error: "Policy type is required",
+    }),
     residential_address: z.string().optional().nullable(),
     city: z.string().optional().nullable(),
     postal_code: z.string().optional().nullable(),
-
+     
     // Employment details aligned with loanApplicationSchema
     employment_type: z.enum(
       ["employed", "self_employed", "contract", "unemployed", "retired"],

@@ -157,6 +157,7 @@ export default function FuneralPolicyForm() {
       last_name: "",
       id_number: "",
       date_of_birth: "",
+      start_date: "",
       phone_number: "",
       email: "",
       // Step 1: address + employment
@@ -225,6 +226,7 @@ export default function FuneralPolicyForm() {
         "last_name",
         "id_number",
         "date_of_birth",
+        "start_date",
         "phone_number",
         "email",
       ],
@@ -589,6 +591,24 @@ export default function FuneralPolicyForm() {
                             type="date"
                             readOnly
                             className="bg-muted"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="start_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Policy Start Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="date"
+                            placeholder="Select start date"
+                            min={new Date().toISOString().split("T")[0]}
                           />
                         </FormControl>
                         <FormMessage />

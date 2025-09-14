@@ -52,6 +52,9 @@ const DOCUMENT_TYPE_LABELS: Record<PolicyDocumentType, string> = {
   marriage_certificate: "Marriage Certificate",
   identity_document: "Identity Document",
   passport: "Passport",
+  proof_of_banking: "Proof of Banking",
+  payslip: "Payslip",
+  drivers_license: "Driver's License",
   third_party_document: "Third Party Document",
 };
 

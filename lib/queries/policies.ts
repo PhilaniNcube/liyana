@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/server";
-import type { Database } from "@/lib/database.types";
 import { decryptValue } from "@/lib/encryption";
 
 // Reusable types derived from Supabase table definitions
@@ -12,7 +11,8 @@ export type PolicyWithProduct = PolicyWithHolder & { product_type: Database["pub
 
 export async function getPolicies(): Promise<PolicyWithHolder[]> {
     const supabase = await createClient();
-        const { data, error } = await supabase.from("policies").select("*, policy_holder:policy_holder_id(*)");
+        const { data, error } = await supabase.from("policies").select("*, policy_holder:policy_holder_id(*)")
+        .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
     return (data ?? []) as PolicyWithHolder[];
 }
@@ -34,7 +34,8 @@ export async function getFuneralPolicies(): Promise<PolicyWithHolder[]> {
                 const { data: policies, error } = await supabase
                     .from("policies")
                     .select("*, policy_holder:policy_holder_id(*)")
-            .eq("product_type", "funeral_policy");
+            .eq("product_type", "funeral_policy")
+            .order("created_at", { ascending: false });
         if (error) throw new Error(error.message);
         if (!policies) return [];
         return policies;    
@@ -45,7 +46,8 @@ export async function getFuneralActivePolicies(): Promise<PolicyWithHolder[]> {
                 const { data: policies, error } = await supabase
                     .from("policies")
                     .select("*, policy_holder:policy_holder_id(*)")
-            .eq("policy_status", "active").eq("product_type", "funeral_policy");
+            .eq("policy_status", "active").eq("product_type", "funeral_policy")
+            .order("created_at", { ascending: false });
         if (error) throw new Error(error.message);
         if (!policies) return [];
         return policies;    
@@ -56,7 +58,8 @@ export async function getFuneralPendingPolicies(): Promise<PolicyWithHolder[]> {
                 const { data: policies, error } = await supabase
                     .from("policies")
                     .select("*, policy_holder:policy_holder_id(*)")
-            .eq("policy_status", "pending").eq("product_type", "funeral_policy");
+            .eq("policy_status", "pending").eq("product_type", "funeral_policy")
+            .order("created_at", { ascending: false });
         if (error) throw new Error(error.message);
         if (!policies) return [];
         return policies;    
@@ -67,7 +70,8 @@ export async function getFuneralDeclinedPolicies(): Promise<PolicyWithHolder[]> 
                 const { data: policies, error } = await supabase
                     .from("policies")
                     .select("*, policy_holder:policy_holder_id(*)")
-            .eq("policy_status", "cancelled").eq("product_type", "funeral_policy");
+            .eq("policy_status", "cancelled").eq("product_type", "funeral_policy")
+            .order("created_at", { ascending: false });
         if (error) throw new Error(error.message);
         if (!policies) return [];
         return policies;    
@@ -80,7 +84,8 @@ export async function getLifeInsurancePolicies(): Promise<PolicyWithHolder[]> {
         const { data: policies, error } = await supabase
             .from("policies")
             .select("*, policy_holder:policy_holder_id(*)")
-        .eq("product_type", "life_insurance");
+        .eq("product_type", "life_insurance")
+        .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     if (!policies) return [];
     return policies;    
