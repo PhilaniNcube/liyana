@@ -531,6 +531,23 @@ export default function FuneralPolicyForm() {
                 <CardContent className="px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
+                    name="product_type"
+                    render={({ field }) => (
+                      <FormItem className="hidden">
+                        {/* <FormLabel>First Name</FormLabel> */}
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value="funeral_policy"
+                            placeholder="Enter first name"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="first_name"
                     render={({ field }) => (
                       <FormItem>

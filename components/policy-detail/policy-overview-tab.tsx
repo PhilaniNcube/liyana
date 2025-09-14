@@ -141,9 +141,6 @@ export default function PolicyOverviewTab({
                   ? formatCurrency(policy.premium_amount)
                   : "N/A"}
               </p>
-              <p className="text-xs text-muted-foreground">
-                per {policy.frequency}
-              </p>
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium">Coverage Amount</p>
@@ -169,12 +166,9 @@ export default function PolicyOverviewTab({
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <p className="text-sm font-medium">Covered Persons</p>
-              <p className="text-2xl font-bold">{beneficiaries.length}</p>
+              <p className="text-2xl font-bold">{beneficiaries.length + 1}</p>
               <p className="text-xs text-muted-foreground">
-                {beneficiaries.length === 1
-                  ? "Covered person"
-                  : "Covered persons"}{" "}
-                assigned
+                Covered persons assigned
               </p>
             </div>
             <div className="space-y-2">

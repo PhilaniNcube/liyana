@@ -11,6 +11,7 @@ import {
   Activity,
   CheckCircle2,
   AlertTriangle,
+  EyeIcon,
 } from "lucide-react";
 import { formatDate } from "date-fns";
 import { formatCurrency } from "@/lib/utils/format-currency";
@@ -364,7 +365,7 @@ export default function ClaimDetailsCard({
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <LinkIcon className="h-4 w-4" />
+                      <EyeIcon className="h-4 w-4" />
                     </a>
                   </Button>
                   <Button

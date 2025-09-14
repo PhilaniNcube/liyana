@@ -143,7 +143,7 @@ export function SendClaimToLinarDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {children || (
-          <Button variant="outline" size="sm">
+          <Button size="sm">
             <Send className="h-4 w-4 mr-2" />
             Send To Linar
           </Button>

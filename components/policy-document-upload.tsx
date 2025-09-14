@@ -297,7 +297,7 @@ export default function PolicyDocumentUpload({
               {pendingUploads.map((upload) => (
                 <div
                   key={upload.id}
-                  className="flex items-center gap-3 p-3 border rounded-lg"
+                  className="flex  flex-col gap-3 p-3 border rounded-lg"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -368,7 +368,7 @@ export default function PolicyDocumentUpload({
       </Card>
 
       {/* Existing Documents */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Uploaded Documents</CardTitle>
         </CardHeader>
@@ -427,7 +427,7 @@ export default function PolicyDocumentUpload({
             </div>
           )}
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }

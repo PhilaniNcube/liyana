@@ -228,15 +228,14 @@ export async function sendClaimDetailsEmail(
         <!-- Claim Summary -->
         <div style="background: #ffffff; padding: 30px; ">
           <h2 style="margin: 0 0 20px 0;  font-size: 20px;">Claim Summary</h2>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
             <div>
-              <p style="margin: 0; font-weight: bold; color: #374151;">Claim Amount:</p>
-              <p style="margin: 5px 0 15px 0; font-size: 18px;  font-weight: bold;">${claimAmount}</p>
+              <p style="margin: 0; font-weight: bold; color: #374151;">Covered Amount:</p>
+              <p style="margin: 5px 0 15px 0; font-size: 18px;  font-weight: bold;">${coverageAmount}</p>
             </div>
-            <div>
-              <p style="margin: 0; font-weight: bold; color: #374151;">Approved Amount:</p>
-              <p style="margin: 5px 0 15px 0; font-size: 18px;  font-weight: bold;">${approvedAmount}</p>
-            </div>
+         
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
             <div>
               <p style="margin: 0; font-weight: bold; color: #374151;">Claim Status:</p>
               <p style="margin: 5px 0 15px 0; text-transform: capitalize; font-weight: 500;">${claim.status || 'Pending'}</p>
@@ -353,7 +352,7 @@ export async function sendClaimDetailsEmail(
         <!-- Footer -->
         <div style="background: #374151; color: white; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;">
           <p style="margin: 0; font-size: 14px; opacity: 0.8;">
-            This email was generated automatically by the Liyana Finance system.
+            This email was generated automatically by Liyana Finance.
           </p>
           <p style="margin: 10px 0 0 0; font-size: 12px; opacity: 0.6;">
             Generated on ${new Date().toLocaleString()}

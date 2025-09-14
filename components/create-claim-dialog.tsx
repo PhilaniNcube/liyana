@@ -81,7 +81,7 @@ const createClaimSchemaWithDocs = (availableDocuments: PolicyDocumentRow[]) =>
       }),
       supporting_documents: z
         .array(z.number())
-        .min(2, "Exactly 2 supporting documents are required"),
+        .min(2, "At least 2 supporting documents are required"),
       contact_details: z.object({
         is_policy_holder: z.enum(["yes", "no"], {
           required_error: "Please specify if this is the policy holder",
@@ -110,20 +110,19 @@ const createClaimSchemaWithDocs = (availableDocuments: PolicyDocumentRow[]) =>
     )
     .refine(
       (data) => {
-        // Validate exactly 2 documents are selected
-        if (data.supporting_documents.length !== 2) {
-          return false;
-        }
-        return true;
+        // Validate document count based on policy holder status
+        const minDocuments =
+          data.contact_details.is_policy_holder === "no" ? 3 : 2;
+        return data.supporting_documents.length >= minDocuments;
       },
       {
-        message: "You must select exactly 2 documents",
+        message: "You must select the required number of documents",
         path: ["supporting_documents"],
       }
     )
     .refine(
       (data) => {
-        // Validate document types: one death certificate and one ID document
+        // Validate document types based on policy holder status
         const selectedDocs = availableDocuments.filter((doc) =>
           data.supporting_documents.includes(doc.id)
         );
@@ -131,17 +130,23 @@ const createClaimSchemaWithDocs = (availableDocuments: PolicyDocumentRow[]) =>
         const hasDeathCertificate = selectedDocs.some(
           (doc) => doc.document_type === "death_certificate"
         );
-        const hasIdDocument = selectedDocs.some(
+        const idDocuments = selectedDocs.filter(
           (doc) =>
             doc.document_type === "identity_document" ||
             doc.document_type === "passport"
         );
 
-        return hasDeathCertificate && hasIdDocument;
+        if (data.contact_details.is_policy_holder === "no") {
+          // Not policy holder: need death certificate + at least 2 ID documents
+          return hasDeathCertificate && idDocuments.length >= 2;
+        } else {
+          // Policy holder: need death certificate + at least 1 ID document
+          return hasDeathCertificate && idDocuments.length >= 1;
+        }
       },
       {
         message:
-          "You must select one death certificate and one ID document (identity document or passport)",
+          "You must select the required document types (death certificate and ID documents)",
         path: ["supporting_documents"],
       }
     );
@@ -204,6 +209,9 @@ export default function CreateClaimDialog({
       },
     },
   });
+
+  // track changes to the contact_details.is_policy_holder field to reset relationship if needed
+  const isPolicyHolder = form.watch("contact_details.is_policy_holder");
 
   // Update form validation when documents change
   useEffect(() => {
@@ -308,9 +316,9 @@ export default function CreateClaimDialog({
   const selectedClaimantId = form.watch("claimant_party_id");
   const selectedSupportingDocs = form.watch("supporting_documents");
 
-  // Check if we have exactly 2 documents with the right types
+  // Check if we have the required documents based on whether claimant is policy holder
   const hasValidDocuments = useMemo(() => {
-    if (!selectedSupportingDocs || selectedSupportingDocs.length !== 2) {
+    if (!selectedSupportingDocs || selectedSupportingDocs.length === 0) {
       return false;
     }
 
@@ -321,14 +329,28 @@ export default function CreateClaimDialog({
     const hasDeathCertificate = selectedDocs.some(
       (doc) => doc.document_type === "death_certificate"
     );
-    const hasIdDocument = selectedDocs.some(
+    const idDocuments = selectedDocs.filter(
       (doc) =>
         doc.document_type === "identity_document" ||
         doc.document_type === "passport"
     );
 
-    return hasDeathCertificate && hasIdDocument;
-  }, [selectedSupportingDocs, claimDocuments]);
+    if (isPolicyHolder === "no") {
+      // If not policy holder: need at least 3 documents (2 IDs + 1 death certificate)
+      return (
+        selectedSupportingDocs.length >= 3 &&
+        hasDeathCertificate &&
+        idDocuments.length >= 2
+      );
+    } else {
+      // If policy holder: need at least 2 documents (1 ID + 1 death certificate)
+      return (
+        selectedSupportingDocs.length >= 2 &&
+        hasDeathCertificate &&
+        idDocuments.length >= 1
+      );
+    }
+  }, [selectedSupportingDocs, claimDocuments, isPolicyHolder]);
 
   const selectedClaimant =
     selectedClaimantId === policyHolderId
@@ -569,7 +591,9 @@ export default function CreateClaimDialog({
                     name="claimant_party_id"
                     render={({ field }) => (
                       <FormItem className="mt-6">
-                        <FormLabel>Covered Person</FormLabel>
+                        <FormLabel>
+                          Please select covered person for whom you are claiming
+                        </FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
@@ -581,8 +605,23 @@ export default function CreateClaimDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {/* Policy Holder Option */}
-                            {policyHolder && policyHolderId && (
+                            {isPolicyHolder === "no" && (
+                              <SelectItem value={policyHolderId}>
+                                <div className="flex items-center gap-2">
+                                  <User className="h-4 w-4" />
+                                  <div className="flex items-center gap-2">
+                                    <div className="font-medium">
+                                      {policyHolder?.first_name}{" "}
+                                      {policyHolder?.last_name}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      Policy Holder
+                                    </div>
+                                  </div>
+                                </div>
+                              </SelectItem>
+                            )}
+                            {/* {policyHolder && policyHolderId && (
                               <SelectItem value={policyHolderId}>
                                 <div className="flex items-center gap-2">
                                   <User className="h-4 w-4" />
@@ -597,7 +636,7 @@ export default function CreateClaimDialog({
                                   </div>
                                 </div>
                               </SelectItem>
-                            )}
+                            )} */}
 
                             {/* Beneficiaries Options */}
                             {beneficiaries.map((beneficiary) => (
@@ -733,8 +772,9 @@ export default function CreateClaimDialog({
                       Supporting Documents
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Required: Select exactly 2 documents - one death
-                      certificate and one ID document
+                      {isPolicyHolder === "no"
+                        ? "Required: At least 3 documents - one death certificate and two ID documents (yours and the deceased's)"
+                        : "Required: At least 2 documents - one death certificate and one ID document (deceased's)"}
                     </p>
                   </div>
 
@@ -759,9 +799,9 @@ export default function CreateClaimDialog({
                                 <Alert variant="destructive" className="mb-4">
                                   <AlertCircle className="h-4 w-4" />
                                   <AlertDescription>
-                                    You must select exactly 2 documents: one
-                                    death certificate and one ID document
-                                    (identity document or passport).
+                                    {isPolicyHolder === "no"
+                                      ? "You must select at least 3 documents: one death certificate and at least two ID documents (your ID and the deceased's ID)."
+                                      : "You must select at least 2 documents: one death certificate and one ID document (deceased's identity document or passport)."}
                                   </AlertDescription>
                                 </Alert>
                               )}
@@ -839,10 +879,12 @@ export default function CreateClaimDialog({
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
-                          <strong>Required:</strong> You must upload exactly 2
-                          documents: one death certificate and one ID document
-                          (identity document or passport) before submitting your
-                          claim. Upload documents below.
+                          <strong>Required:</strong> You must upload the
+                          required documents before submitting your claim:
+                          {isPolicyHolder === "no"
+                            ? " At least 3 documents - one death certificate and two ID documents (your ID and the deceased's ID)."
+                            : " At least 2 documents - one death certificate and one ID document (deceased's identity document or passport)."}{" "}
+                          Upload documents below.
                         </AlertDescription>
                       </Alert>
                     </div>

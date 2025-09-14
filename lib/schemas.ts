@@ -232,9 +232,9 @@ export const funeralPolicySchema = z
       .regex(/^\d{4}$/, "Postal code must be 4 digits"),
 
     // Policy Details
-    policy_type: z.enum(["individual", "family", "extended_family"], {
-      required_error: "Policy type is required",
-    }),
+    // policy_type: z.enum(["individual", "family", "extended_family"], {
+    //   required_error: "Policy type is required",
+    // }).optional(),
     coverage_amount: z
       .number()
       .min(5000, "Minimum coverage amount is R5,000")
@@ -440,24 +440,7 @@ export const funeralPolicySchema = z
       path: ["medication_details"],
     }
   )
-  // Relationship 'other' not supported by DB enum; no extra validation needed
-  // Relationship 'other' not supported by DB enum; no extra validation needed
-  .refine(
-    (data) => {
-      // Validate additional members for family policies
-      if (
-        data.policy_type === "family" ||
-        data.policy_type === "extended_family"
-      ) {
-        return !!(data.additional_members && data.additional_members.length > 0);
-      }
-      return true;
-    },
-    {
-      message: "Additional members are required for family policies",
-      path: ["additional_members"],
-    }
-  );
+ 
 
 // Life Insurance Policy Schema
 export const lifeInsurancePolicySchema = z
@@ -662,9 +645,9 @@ export const funeralPolicyLeadSchema = z
       }),
     coverage_amount: z.coerce.number().min(1000, "Coverage amount must be at least R1,000").max(100000, "Coverage amount cannot exceed R100,000"),
     start_date: z.string().min(1, "Start date is required").refine((date) => !isNaN(Date.parse(date)), { message: "Start date must be a valid date" }),
-    policy_type: z.enum(["individual", "family", "extended_family"], {
-      required_error: "Policy type is required",
-    }),
+    // policy_type: z.enum(["individual", "family", "extended_family"], {
+    //   required_error: "Policy type is required",
+    // }),
     residential_address: z.string().optional().nullable(),
     city: z.string().optional().nullable(),
     postal_code: z.string().optional().nullable(),

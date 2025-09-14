@@ -163,12 +163,13 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
     const { data: newPolicy, error: policyError } = await supabase
       .from("policies")
       .insert({
+    
         policy_holder_id: party.id,
         frequency: "monthly",
         policy_status: "pending",
         premium_amount: calculatedPremium,
         coverage_amount: validatedData.coverage_amount,
-        product_type: validatedData.product_type ?? null,
+        product_type: validatedData.product_type || "funeral_policy",
         start_date: validatedData.start_date || null,
         end_date: null,
         user_id: user.id,
