@@ -692,8 +692,7 @@ export const funeralPolicyLeadSchema = z
     payment_method: z.enum(["debit_order", "cash_deposit"], {
       required_error: "Payment method is required",
     }),
-
-    // Require between 5 and 10 beneficiaries
+    payment_date: z.coerce.number().min(1).max(28),
     beneficiaries: z
       .array(
         z.object({

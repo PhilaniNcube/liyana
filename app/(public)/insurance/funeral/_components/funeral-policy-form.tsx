@@ -69,6 +69,9 @@ const POLICY_DOCUMENT_TYPES = {
   marriage_certificate: "Marriage Certificate",
   identity_document: "Identity Document",
   passport: "Passport",
+  proof_of_address: "Proof of Address",
+  payslip: "Payslip",
+  drivers_license: "Driver's License",
 } as const;
 
 type PolicyDocumentType = keyof typeof POLICY_DOCUMENT_TYPES;
@@ -726,6 +729,24 @@ export default function FuneralPolicyForm() {
                       </FormItem>
                     )}
                   />
+                  {(form.watch("employment_type") === "contract" ||
+                    form.watch("employment_type") === "retired") && (
+                    <FormField
+                      control={form.control}
+                      name="employment_end_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Contract End Date/Retirement Date
+                          </FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <FormField
                     control={form.control}
                     name="employer_name"
@@ -799,22 +820,6 @@ export default function FuneralPolicyForm() {
                       </FormItem>
                     )}
                   />
-                  {(form.watch("employment_type") === "contract" ||
-                    form.watch("employment_type") === "retired") && (
-                    <FormField
-                      control={form.control}
-                      name="employment_end_date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Employment End Date</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="date" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
                 </CardContent>
               </Card>
             </div>
@@ -955,6 +960,37 @@ export default function FuneralPolicyForm() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="payment_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Preferred Payment Date</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value?.toString() || ""}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select payment date" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="28">28th</SelectItem>
+                            <SelectItem value="27">27th</SelectItem>
+                            <SelectItem value="26">26th</SelectItem>
+                            <SelectItem value="25">25th</SelectItem>
+                            <SelectItem value="24">24th</SelectItem>
+                            <SelectItem value="23">23rd</SelectItem>
+                            <SelectItem value="22">22nd</SelectItem>
+                            <SelectItem value="21">21st</SelectItem>
+                            <SelectItem value="20">20th</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
           )}
@@ -1005,7 +1041,7 @@ export default function FuneralPolicyForm() {
                     </h4>
                     {pendingDocuments.map((doc) => (
                       <Card key={doc.id} className="p-4">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-start  gap-x-4">
                           <FileText className="h-8 w-8 text-blue-500" />
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">
@@ -1039,7 +1075,7 @@ export default function FuneralPolicyForm() {
                               </Select>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-x-2">
                             {doc.status === "pending" && (
                               <Button
                                 type="button"
@@ -1083,15 +1119,34 @@ export default function FuneralPolicyForm() {
                 )}
 
                 {/* Document Requirements */}
-                <div className="bg-muted/50 rounded-lg p-4">
+                <div className="bg-muted/50 rounded-lg p-4 text-xs">
                   <h4 className="font-medium mb-2">Required Documents</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Identity Document (required)</li>
-                    <li>• Birth Certificate (if available)</li>
-                    <li>• Marriage Certificate (if applicable)</li>
-                    <li>• Death Certificate (for claims)</li>
-                    <li>• Passport (alternative ID)</li>
-                  </ul>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <p>Identity Documents Accepted</p>
+                      <ul className="list-disc list-inside">
+                        <li>South African ID</li>
+                        <li>Passport</li>
+                        <li>Driver's License</li>
+                        <li>Birth Certificate</li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <p>Proof of Banking</p>
+                      <ul className="list-disc list-inside">
+                        <li>Bank Letter</li>
+                        <li>Bank Statement</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p>Proof of Employment</p>
+                      <ul className="list-disc list-inside">
+                        <li>Recent Pay Slip</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

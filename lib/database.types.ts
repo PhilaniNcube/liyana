@@ -1080,6 +1080,9 @@ export type Database = {
         | "identity_document"
         | "passport"
         | "third_party_document"
+        | "proof_of_banking"
+        | "payslip"
+        | "drivers_license"
       policy_status: "pending" | "active" | "lapsed" | "cancelled"
       pre_application_status:
         | "credit_passed"
@@ -1293,6 +1296,9 @@ export const Constants = {
         "identity_document",
         "passport",
         "third_party_document",
+        "proof_of_banking",
+        "payslip",
+        "drivers_license",
       ],
       policy_status: ["pending", "active", "lapsed", "cancelled"],
       pre_application_status: [
