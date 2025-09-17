@@ -107,3 +107,28 @@ export const validateSAIDNumber = (idNumber: string): boolean => {
 
   return checkDigit === lastDigit;
 };
+
+/**
+ * Calculates age from South African ID number
+ * @param idNumber - 13-digit SA ID number
+ * @returns Age in years or null if invalid
+ */
+export const calculateAgeFromSAID = (idNumber: string): number | null => {
+  const dateOfBirth = extractDateOfBirthFromSAID(idNumber);
+  if (!dateOfBirth) {
+    return null;
+  }
+
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+  
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  // If birth month hasn't occurred this year, or if it's the birth month but the day hasn't occurred
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
+};

@@ -5,11 +5,12 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "../server";
 import { getCurrentUser } from "../queries";
 import { funeralPolicyLeadSchemaWithRefines as funeralPolicyLeadSchema, policyUpdateSchema } from "../schemas";
-import { encryptValue } from "../encryption";
+import { encryptValue, decryptValue } from "../encryption";
 import { sendSms } from "./sms";
 import { Resend } from "resend";
 import FuneralCoverCalculator, { type ICalculationParams, type IAdditionalFamilyMember } from "../utils/funeralcover-calculator";
 import { FUNERAL_RATE_DATA } from "../data/funeral-rates";
+import { calculateAgeFromSAID } from "../utils/sa-id";
 
 export async function createFuneralPolicy(prevState: any, formData: FormData) {
   // Parse FormData entries
@@ -124,20 +125,27 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
             } else if (relationship === 'child') {
               additionalMembers.push({ relationship: 'child' });
             } else if (relationship === 'parent' || relationship === 'sibling' || relationship === 'extended') {
-              // For extended family, we need age - estimate based on relationship
-              let estimatedAge: number;
+              // Calculate actual age from ID number instead of estimating
+              let actualAge: number | null = null;
               
-              if (relationship === 'parent') {
-                estimatedAge = (policyHolderAge || 30) + 25; // Estimate parent age
-              } else if (relationship === 'sibling') {
-                estimatedAge = policyHolderAge || 30; // Assume similar age for siblings
-              } else { // extended
-                estimatedAge = policyHolderAge || 40; // Default estimate for extended family
+              if (ben.id_number && ben.id_number.length === 13) {
+                actualAge = calculateAgeFromSAID(ben.id_number);
+              }
+              
+              // If we can't calculate age from ID, fall back to estimation
+              if (actualAge === null) {
+                if (relationship === 'parent') {
+                  actualAge = (policyHolderAge || 30) + 25; // Estimate parent age
+                } else if (relationship === 'sibling') {
+                  actualAge = policyHolderAge || 30; // Assume similar age for siblings
+                } else { // extended
+                  actualAge = policyHolderAge || 40; // Default estimate for extended family
+                }
               }
               
               additionalMembers.push({ 
                 relationship: 'extended',
-                age: estimatedAge
+                age: actualAge
               });
             }
           });
@@ -527,18 +535,32 @@ export async function sendFuneralPolicyDetailsEmail(
               } else if (relationship === 'child') {
                 additionalMembers.push({ relationship: 'child' });
               } else if (relationship === 'parent' || relationship === 'sibling') {
-                // For extended family, we need age - estimate based on relationship
-                let estimatedAge: number;
+                // Calculate actual age from ID number instead of estimating
+                let actualAge: number | null = null;
                 
-                if (relationship === 'parent') {
-                  estimatedAge = (policyHolderAge || 30) + 25; // Estimate parent age
-                } else { // sibling
-                  estimatedAge = policyHolderAge || 30; // Assume similar age for siblings
+                if (ben.beneficiary?.id_number) {
+                  try {
+                    const decryptedIdNumber = decryptValue(ben.beneficiary.id_number);
+                    if (decryptedIdNumber && decryptedIdNumber.length === 13) {
+                      actualAge = calculateAgeFromSAID(decryptedIdNumber);
+                    }
+                  } catch (error) {
+                    console.error("Error decrypting beneficiary ID number:", error);
+                  }
+                }
+                
+                // If we can't calculate age from ID, fall back to estimation
+                if (actualAge === null) {
+                  if (relationship === 'parent') {
+                    actualAge = (policyHolderAge || 30) + 25; // Estimate parent age
+                  } else { // sibling
+                    actualAge = policyHolderAge || 30; // Assume similar age for siblings
+                  }
                 }
                 
                 additionalMembers.push({ 
                   relationship: 'extended',
-                  age: estimatedAge
+                  age: actualAge
                 });
               }
             });
