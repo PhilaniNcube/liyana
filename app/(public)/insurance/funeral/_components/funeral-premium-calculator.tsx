@@ -407,7 +407,7 @@ export default function FuneralPremiumCalculator() {
             })}
           </div>
 
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full  max-w-lg mx-auto">
             <Calculator className="h-4 w-4 mr-2" />
             Calculate Premium
           </Button>
@@ -425,7 +425,7 @@ export default function FuneralPremiumCalculator() {
 
         {/* Premium Results */}
         {premiumResult && (
-          <Card className="bg-green-50 border-green-200">
+          <Card className="bg-green-50 w-full border-green-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-green-800">
                 <p className="text-4xl font-mono">R</p>
