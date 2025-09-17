@@ -24,7 +24,7 @@ export default function FuneralPremiumCalculatorDialog() {
           Calculate Premium
         </Button>
       </DialogTrigger>
-      <DialogContent className="min-w-2xl px-8 lg:px-12 max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="min-w-2xl w-[90%] px-8 lg:px-12 max-w-6xl mx-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
