@@ -1,5 +1,6 @@
 import { getDeclinedApplications } from "@/lib/queries";
 import { DeclinedLoansControls } from "@/components/declined-loans-controls";
+import { DeclinedLoansPagination } from "@/components/declined-loans-pagination";
 import React from "react";
 import Link from "next/link";
 import {
@@ -52,7 +53,6 @@ export default async function DeclinedLoansPage(props: {
     start_date,
     end_date
   );
-  // declinedUsers: [{ profile, application, credit_check, id_number, reason }]
 
   return (
     <div className="space-y-6">
@@ -171,6 +171,18 @@ export default async function DeclinedLoansPage(props: {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination Component */}
+      {declinedUsers.length > 0 && (
+        <DeclinedLoansPagination
+          currentPage={page}
+          totalPages={
+            // Estimate total pages: if we have a full page of results, assume there might be more
+            // This is a limitation of the current getDeclinedApplications function
+            declinedUsers.length === per_page ? page + 1 : page
+          }
+        />
+      )}
     </div>
   );
 }

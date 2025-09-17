@@ -6,10 +6,11 @@ import { useQueryStates, parseAsInteger, parseAsIsoDate } from "nuqs";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Download, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 // Query state configuration (must mirror server parsing keys)
 const queryConfig = {
-  page: parseAsInteger.withDefault(1),
   per_page: parseAsInteger.withDefault(50),
   start_date: parseAsIsoDate, // Date | null
   end_date: parseAsIsoDate, // Date | null
@@ -25,29 +26,43 @@ export function DeclinedLoansControls({
   const [values, setValues] = useQueryStates(queryConfig, {
     shallow: false, // full navigation so server refetch occurs
   });
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  const { page, per_page, start_date, end_date } = values;
+  const { per_page, start_date, end_date } = values;
 
   const handleDateRangeChange = (range: DateRange | undefined) => {
     setValues({
       start_date: range?.from ?? null,
       end_date: range?.to ?? null,
-      page: 1, // reset page when date changes
     });
   };
 
   const handlePerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const nextPerPage = parseInt(e.target.value, 10);
-    setValues({ per_page: nextPerPage, page: 1 });
+    setValues({ per_page: nextPerPage });
   };
 
   const handleClearDates = () => {
-    setValues({ start_date: null, end_date: null, page: 1 });
+    setValues({ start_date: null, end_date: null });
   };
 
-  const handleNextPage = () => setValues({ page: (page || 1) + 1 });
-  const handlePrevPage = () =>
-    setValues({ page: Math.max(1, (page || 1) - 1) });
+  const handleDownloadCSV = async () => {
+    setIsDownloading(true);
+    try {
+      // Build query parameters for the CSV download
+      const params = new URLSearchParams();
+      if (start_date) params.append("start_date", start_date.toISOString());
+      if (end_date) params.append("end_date", end_date.toISOString());
+
+      // Trigger download
+      const url = `/api/declined-loans/csv?${params.toString()}`;
+      window.open(url, "_blank");
+    } catch (error) {
+      console.error("Error downloading CSV:", error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const dateRange: DateRange | undefined =
     start_date || end_date
@@ -101,20 +116,25 @@ export function DeclinedLoansControls({
           </select>
         </div>
 
-        <div className="flex items-end gap-2 pt-5 md:pt-0">
+        <div className="flex items-end">
           <Button
             variant="outline"
             size="sm"
-            disabled={page <= 1}
-            onClick={handlePrevPage}
+            onClick={handleDownloadCSV}
+            disabled={isDownloading}
+            className="ml-2"
           >
-            Prev
-          </Button>
-          <span className="text-sm tabular-nums min-w-[3ch] text-center">
-            {page}
-          </span>
-          <Button variant="outline" size="sm" onClick={handleNextPage}>
-            Next
+            {isDownloading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Downloading...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </>
+            )}
           </Button>
         </div>
       </div>

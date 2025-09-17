@@ -24,13 +24,13 @@ export default function FuneralPremiumCalculatorDialog() {
           Calculate Premium
         </Button>
       </DialogTrigger>
-      <DialogContent className="min-w-sm w-[90vw] px-8 lg:px-12 max-w-6xl mx-auto max-h-[90vh] overflow-y-auto">
+      <DialogContent className="min-w-sm px-2 max-w-6xl mx-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
             Funeral Cover Premium Calculator
           </DialogTitle>
-          <DialogDescription className="w-full md:w-3/4 lg:w-2/3 max-w-xs md:max-w-2xl mx-auto text-muted-foreground">
+          <DialogDescription className="w-full md:max-w-2xl text-muted-foreground">
             Calculate your monthly funeral insurance premium based on your
             family composition and cover amount. This tool helps you estimate
             costs before applying for coverage.
