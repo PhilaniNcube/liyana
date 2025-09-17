@@ -30,14 +30,14 @@ export default function FuneralPremiumCalculatorDialog() {
             <Calculator className="h-5 w-5" />
             Funeral Cover Premium Calculator
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="w-full md:w-3/4 lg:w-2/3 text-muted-foreground">
             Calculate your monthly funeral insurance premium based on your
             family composition and cover amount. This tool helps you estimate
             costs before applying for coverage.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4">
+        <div className="mt-4 w-full px-2">
           <FuneralPremiumCalculator />
         </div>
       </DialogContent>
