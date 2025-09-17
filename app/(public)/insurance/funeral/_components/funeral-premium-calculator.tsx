@@ -231,8 +231,8 @@ export default function FuneralPremiumCalculator() {
               <Users className="h-4 w-4" />
               Family Members
             </h3>
-            <div className="flex items-center justify-between">
-              <div className="flex gap-2">
+            <div className="flex  items-center justify-between">
+              <div className="flex flex-col md:flex-row gap-2">
                 <Button
                   type="button"
                   variant="outline"
