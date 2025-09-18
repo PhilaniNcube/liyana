@@ -20,6 +20,9 @@ async function login() {
   }
 
   console.log("Attempting to login to Max Money:", `${MAX_MONEY_URL}/MaxIntegrate/login`);
+
+  const startTime = Date.now();
+  console.log("Starting Max Money login request at:", new Date(startTime).toISOString());
   
   const response = await fetch(`${MAX_MONEY_URL}/MaxIntegrate/login`, {
     method: "POST",
@@ -32,7 +35,7 @@ async function login() {
     }),
   });
 
-  console.log("Login response status:", response.status);
+  console.log("Login response status:", response);
 
 
   if (!response.ok) {
