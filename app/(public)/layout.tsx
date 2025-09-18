@@ -11,9 +11,6 @@ export const metadata: Metadata = {
   },
 };
 
-// Force dynamic rendering to ensure fresh auth state
-export const dynamic = "force-dynamic";
-
 export default function PublicLayout({
   children,
 }: Readonly<{

@@ -1,16 +1,12 @@
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 
 import MobileNavigation from "./mobile-navigation";
-import { getCurrentUser } from "@/lib/queries";
-import { LogOutIcon } from "lucide-react";
-import { LogoutButton } from "./logout-button";
+
+import AuthLinks from "./auth-links";
+import { Suspense } from "react";
 
 export async function Navigation() {
-  // get the current user
-  const currentUser = await getCurrentUser();
-
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="hidden mx-auto max-w-7xl md:flex h-16 items-center justify-between px-4 md:px-0">
@@ -36,43 +32,27 @@ export async function Navigation() {
           >
             Contact
           </Link>
-          {currentUser ? (
-            <>
-              <Link
-                href="/apply"
-                className="text-sm font-medium hover:text-blue-600 transition-colors"
-              >
-                Apply
-              </Link>
-              <Link
-                href="/profile"
-                className="text-sm font-medium hover:text-blue-600 transition-colors"
-              >
-                Profile
-              </Link>
-              {currentUser.role === "admin" && (
-                <Link
-                  href="/dashboard"
-                  className="text-sm font-medium bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Dashboard
-                </Link>
-              )}
-              <LogoutButton />
-            </>
-          ) : (
-            <Link
-              href="/auth/login"
-              className="text-sm font-medium hover:text-blue-600 transition-colors"
-            >
-              Login
-            </Link>
-          )}
+          <Link
+            href="/apply"
+            className="text-sm font-medium hover:text-blue-600 transition-colors"
+          >
+            Apply
+          </Link>
+          <Suspense
+            fallback={
+              <div className="text-sm font-medium flex gap-x-3">
+                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            }
+          >
+            <AuthLinks />
+          </Suspense>
         </nav>{" "}
       </div>
 
       <div className="md:hidden flex items-center">
-        <MobileNavigation currentUser={currentUser} />
+        <MobileNavigation />
       </div>
     </header>
   );

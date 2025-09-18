@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils/format-currency";
 import { formatDate } from "date-fns";
 import { PolicyWithAllData } from "@/lib/queries/policy-details";
+import UpdatePolicyStatus from "./update-policy-status";
 
 interface PolicyInfoTabProps {
   policy: PolicyWithAllData;
@@ -13,15 +14,29 @@ export default function PolicyInfoTab({ policy }: PolicyInfoTabProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          Policy #{policy.id}
-          <Badge variant="secondary" className="uppercase">
-            {policy.policy_status}
-          </Badge>
-        </CardTitle>
-        <p className="text-sm text-muted-foreground capitalize">
-          {policy.product_type?.replaceAll("_", " ") ?? "—"}
-        </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              Policy #{policy.id}
+              <Badge variant="secondary" className="uppercase">
+                {policy.policy_status}
+              </Badge>
+            </CardTitle>
+            <p className="text-sm text-muted-foreground capitalize">
+              {policy.product_type?.replaceAll("_", " ") ?? "—"}
+            </p>
+          </div>
+          <UpdatePolicyStatus
+            currentStatus={
+              policy.policy_status as
+                | "pending"
+                | "active"
+                | "lapsed"
+                | "cancelled"
+            }
+            policyId={policy.id}
+          />
+        </div>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

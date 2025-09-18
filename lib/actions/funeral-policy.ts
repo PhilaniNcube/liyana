@@ -4,13 +4,15 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "../server";
 import { getCurrentUser } from "../queries";
-import { funeralPolicyLeadSchemaWithRefines as funeralPolicyLeadSchema, policyUpdateSchema } from "../schemas";
+import { funeralPolicyLeadSchemaWithRefines as funeralPolicyLeadSchema, policyUpdateSchema, updatePolicyStatusSchema } from "../schemas";
 import { encryptValue, decryptValue } from "../encryption";
 import { sendSms } from "./sms";
 import { Resend } from "resend";
 import FuneralCoverCalculator, { type ICalculationParams, type IAdditionalFamilyMember } from "../utils/funeralcover-calculator";
 import { FUNERAL_RATE_DATA } from "../data/funeral-rates";
 import { calculateAgeFromSAID } from "../utils/sa-id";
+import { requireAdminAuth } from "../utils/admin-auth";
+import type { Database } from "@/lib/types";
 
 export async function createFuneralPolicy(prevState: any, formData: FormData) {
   // Parse FormData entries
@@ -435,25 +437,15 @@ export async function sendFuneralPolicyDetailsEmail(
     }
 
     // Check if user has admin or editor role for document attachments
-    const { data: userProfile, error: userProfileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (userProfileError || !userProfile) {
-      return {
-        error: true,
-        message: "User profile not found.",
-        details: userProfileError?.message,
-      };
-    }
-
-    if (attachments && attachments.length > 0 && userProfile.role !== "admin" && userProfile.role !== "editor") {
-      return {
-        error: true,
-        message: "Only admin or editor users can send emails with attachments.",
-      };
+    if (attachments && attachments.length > 0) {
+      const authResult = await requireAdminAuth(true); // Allow editor for attachments
+      if (!authResult.success) {
+        return {
+          error: true,
+          message: "Only admin or editor users can send emails with attachments.",
+          details: authResult.details,
+        };
+      }
     }
 
     // Fetch the policy with policy holder details
@@ -900,3 +892,68 @@ export async function sendFuneralPolicyDetailsEmail(
 }
 
 
+export async function updatePolicyStatus(prevState:unknown, formData: FormData) {
+  // Check admin authentication first
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return {
+      error: true,
+      message: authResult.error!,
+      details: authResult.details,
+    };
+  }
+
+  const supabase = await createClient();
+
+  // Basic validation
+  const validatedFields = updatePolicyStatusSchema.safeParse({
+    policy_id: formData.get("policy_id"),
+    policy_status: formData.get("policy_status"),
+  })
+
+  if (!validatedFields.success) {
+    console.error("Validation failed:", validatedFields.error);
+    return {
+      error: true,
+      message: "Invalid input.",
+      details: validatedFields.error.format(),
+    };
+  }
+
+  const policyId = validatedFields.data.policy_id as number;
+  const newStatus = validatedFields.data.policy_status;
+
+  
+
+  // Verify that the policy exists
+  const { data: existingPolicy, error: fetchError } = await supabase.from("policies").select("id, policy_status").eq("id", policyId).single();
+
+  if (fetchError || !existingPolicy) {
+    return {
+      error: true,
+      message: "Policy not found.",
+      details: fetchError?.message,
+    };
+  }
+
+  const { data: updatedPolicy, error: updateError } = await supabase.from("policies").update({
+    policy_status: newStatus,
+  }).eq("id", policyId).select("id, policy_status").single();
+
+  if (updateError || !updatedPolicy) {
+    return {
+      error: true,
+      message: "Failed to update policy status.",
+      details: updateError?.message,
+    };
+  }
+
+  revalidatePath("/dashboard/insurance");
+  revalidatePath(`/dashboard/insurance/${policyId}`);
+
+  return {
+    error: false,
+    message: "Policy status updated successfully.",
+    policy: updatedPolicy,
+  };
+}

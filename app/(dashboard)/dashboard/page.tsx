@@ -5,7 +5,6 @@ import { getDashboardStats } from "@/lib/queries";
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: user, error: userError } = await supabase.auth.getUser();
-  console.log("[dashboard] user", user, userError);
 
   // Fetch dashboard statistics
   let stats: Awaited<ReturnType<typeof getDashboardStats>> | null = null;

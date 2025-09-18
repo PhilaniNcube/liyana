@@ -13,6 +13,7 @@ import PolicyDocumentsTab from "./policy-documents-tab";
 import { SendToLinarDialog } from "./send-to-linar-dialog";
 import SmsPolicy from "@/components/sms-policy";
 import { useTabState } from "@/hooks/use-tab-state";
+import UpdatePolicyStatus from "./update-policy-status";
 
 type PolicyTabsProps = {
   policyData: any; // Replace with proper type
@@ -32,18 +33,30 @@ const PolicyTabs = ({ policyData, emailHistory }: PolicyTabsProps) => {
               "Insurance Policy"}
           </p>
         </div>
-        <SendToLinarDialog
-          policyId={policyData.id}
-          policyHolderName={
-            [
-              policyData.policy_holder?.first_name,
-              policyData.policy_holder?.last_name,
-            ]
-              .filter(Boolean)
-              .join(" ") || "Policy Holder"
-          }
-          documents={policyData.documents}
-        />
+        <div className="flex items-center gap-2">
+          <UpdatePolicyStatus
+            currentStatus={
+              policyData.policy_status as
+                | "pending"
+                | "active"
+                | "lapsed"
+                | "cancelled"
+            }
+            policyId={policyData.id}
+          />
+          <SendToLinarDialog
+            policyId={policyData.id}
+            policyHolderName={
+              [
+                policyData.policy_holder?.first_name,
+                policyData.policy_holder?.last_name,
+              ]
+                .filter(Boolean)
+                .join(" ") || "Policy Holder"
+            }
+            documents={policyData.documents}
+          />
+        </div>
       </div>
 
       <Tabs

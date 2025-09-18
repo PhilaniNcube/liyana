@@ -727,6 +727,15 @@ export const funeralPolicyLeadSchema = z
 
 export const funeralPolicyLeadSchemaWithRefines = funeralPolicyLeadSchema;
 
+export const updatePolicyStatusSchema = z.object({
+  policy_id: z.coerce.number().min(1, "Policy ID is required"),
+  policy_status: z.enum(["pending", "active", "cancelled", "lapsed"], {
+    required_error: "Policy status is required",
+  }),
+});
+
+export type UpdatePolicyStatusType = z.infer<typeof updatePolicyStatusSchema>;
+
 // Policy Update Schema
 export const policyUpdateSchema = z.object({
   policy_id: z.number().min(1, "Policy ID is required"),
