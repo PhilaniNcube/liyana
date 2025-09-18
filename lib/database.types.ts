@@ -112,6 +112,7 @@ export type Database = {
           loan_purpose: string | null
           loan_purpose_reason: string | null
           marital_status: Database["public"]["Enums"]["marital_status"] | null
+          max_money_id: string | null
           monthly_income: number | null
           nationality: string | null
           next_of_kin_email: string | null
@@ -159,6 +160,7 @@ export type Database = {
           loan_purpose?: string | null
           loan_purpose_reason?: string | null
           marital_status?: Database["public"]["Enums"]["marital_status"] | null
+          max_money_id?: string | null
           monthly_income?: number | null
           nationality?: string | null
           next_of_kin_email?: string | null
@@ -206,6 +208,7 @@ export type Database = {
           loan_purpose?: string | null
           loan_purpose_reason?: string | null
           marital_status?: Database["public"]["Enums"]["marital_status"] | null
+          max_money_id?: string | null
           monthly_income?: number | null
           nationality?: string | null
           next_of_kin_email?: string | null

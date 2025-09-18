@@ -243,8 +243,6 @@ export function PersonalInfoCard({
   // get the response payload
   const idVerificationResponse = idVerificationCheck?.response_payload;
 
-  console.log("id-verification-check", idVerificationResponse);
-
   // if this is a passed id_verification then the response_payload would have had a details object and the type for that details object is WhoYouIdVerificationDetail
   const idVerificationDetails: WhoYouIdVerificationDetail | undefined =
     idVerificationResponse &&

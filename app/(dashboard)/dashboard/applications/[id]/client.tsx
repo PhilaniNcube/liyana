@@ -40,6 +40,7 @@ import ApiCheckCard from "./api-check-card";
 import { DocumentsDisplayCard } from "./documents-display-card";
 import { AdminDocumentUploadForm } from "@/components/admin-document-upload-form";
 import type { Database } from "@/lib/types";
+import type { MaxMoneyClientInput } from "@/lib/schemas";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmailApplication from "./email-application";
@@ -238,7 +239,8 @@ export function ApplicationDetailClient({
       );
 
       // Map application data to Max Money client schema format
-      const clientData = {
+      const clientData: MaxMoneyClientInput = {
+        application_id: application.id,
         // Personal details
         first_name: application.first_name || "",
         surname: application.last_name || "",
@@ -355,13 +357,27 @@ export function ApplicationDetailClient({
                 Back to Applications
               </Link>
             </Button>
-
-            <h1 className="text-3xl font-bold">
+            <Badge className={getStatusColor(application.status)}>
+              {(() => {
+                // Use a switch case to format status text
+                switch (application.status) {
+                  case "submitted_to_lender":
+                    return "Submitted to Bravelender";
+                  case "approved":
+                    return "Approved";
+                  case "declined":
+                    return "Declined";
+                  default:
+                    return application.status.replace("_", " ").toUpperCase();
+                }
+              })()}
+            </Badge>
+            <h1 className="text-2xl font-bold">
               {application.profile?.full_name && (
                 <span className="">{application.profile.full_name}</span>
               )}
             </h1>
-            <p className="text-muted-foreground ">
+            <p className="text-muted-foreground text-xs">
               Application #{application.id} • Created on{" "}
               {formatDate(application.created_at)}
             </p>
@@ -385,7 +401,6 @@ export function ApplicationDetailClient({
                 application.status === "submitted_to_lender"
               }
               variant="default"
-              size="sm"
             >
               <CheckCircle className="h-4 w-4 mr-2" />
               Approve Loan
@@ -534,22 +549,6 @@ export function ApplicationDetailClient({
               </>
             )}
           </Button>
-
-          <Badge className={getStatusColor(application.status)}>
-            {(() => {
-              // Use a switch case to format status text
-              switch (application.status) {
-                case "submitted_to_lender":
-                  return "Submitted to Bravelender";
-                case "approved":
-                  return "Approved";
-                case "declined":
-                  return "Declined";
-                default:
-                  return application.status.replace("_", " ").toUpperCase();
-              }
-            })()}
-          </Badge>
         </div>
       </div>
 

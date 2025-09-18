@@ -1774,3 +1774,56 @@ export const maxMoneyLoginResponseSchema = z.object({
 });
 
 export type MaxMoneyLoginResponse = z.infer<typeof maxMoneyLoginResponseSchema>;
+
+// Max Money Client Input Data Schema (for API endpoint)
+export const maxMoneyClientInputSchema = z.object({
+  application_id: z.coerce.number(),
+  // Personal details
+  first_name: z.string().min(1, "First name is required"),
+  surname: z.string().min(1, "Surname is required"),
+  id_number: z.string().min(1, "ID number is required"),
+  date_of_birth: z.string().min(1, "Date of birth is required"), // DD/MM/YYYY format
+  gender: z.string().default("Male"), // String value that gets mapped to number
+  id_type: z.string().default("RSA Id"), // String value that gets mapped to number
+
+  // Contact details
+  cellphone_no: z.string().min(1, "Cellphone number is required"),
+  physical_address_line_1: z.string().optional(),
+  physical_address_line_2: z.string().optional(),
+  physical_address_line_3: z.string().optional(),
+  physical_address_code: z.string().optional(),
+  physical_address_country: z.string().default("ZA"),
+
+  // Employment details
+  occupation: z.string().optional(),
+  employer_code: z.string().optional(),
+  employee_no: z.string().optional(),
+  gross_salary: z.number().min(0, "Gross salary must be positive"),
+  net_salary: z.number().min(0, "Net salary must be positive"),
+
+  // Banking details
+  bank_account_no: z.string().optional(),
+  bank_branch_code: z.string().optional(),
+  bank_account_type: z.number().default(2), // Default to Savings
+
+  // Payment details
+  payback_type_id: z.number().default(1),
+  payment_frequency: z.number().default(4), // Default to Monthly
+  payment_move_direction: z.number().default(2), // Default to Forward
+  day_of_month: z.number().min(1).max(31).default(25),
+
+  // References
+  reference_first_name: z.string().optional(),
+  reference_surname: z.string().optional(),
+  reference_contact_no: z.string().optional(),
+  reference_relationship: z.number().default(1),
+
+  // Consents
+  client_credit_enquiry_consent: z.boolean().default(true),
+  avr_enquiry: z.boolean().default(true),
+  sign_mandate: z.boolean().default(true),
+  marketing_consent: z.boolean().default(false),
+});
+
+export type MaxMoneyClientInput = z.infer<typeof maxMoneyClientInputSchema>;
+export type CreateMaxMoneyClient = z.infer<typeof createMaxMoneyClientSchema>;

@@ -3,6 +3,8 @@ import { z } from "zod";
 import {
   createMaxMoneyClientSchema,
   maxMoneyLoginResponseSchema,
+  maxMoneyClientInputSchema,
+  type MaxMoneyClientInput,
 } from "@/lib/schemas";
 import { GENDERS, ID_TYPES } from "@/lib/enums";
 
@@ -33,7 +35,7 @@ async function login() {
   console.log("Login response status:", response.status);
 
 
-  if (response.status !== 200) {
+  if (!response.ok) {
     const errorText = await response.text();
     console.error("Login failed with status:", response.status, "Response:", errorText);
     throw new Error(`Login failed: ${response.status} ${response.statusText}`);
@@ -60,6 +62,8 @@ async function login() {
     );
   }
 
+  console.log("Max Money login successful for user_id:", validatedLogin.data.user_id);
+
   return validatedLogin.data;
 }
 
@@ -73,21 +77,38 @@ export async function POST(request: Request) {
     });
 
     const loginData = await login();
+
     const body = await request.json();
 
     console.log("Received request body:", Object.keys(body));
 
+    // Validate input data first
+    const validatedInput = maxMoneyClientInputSchema.safeParse(body);
+    
+    if (!validatedInput.success) {
+      console.error("Input validation error:", validatedInput.error);
+      return NextResponse.json(
+        {
+          message: "Invalid input data.",
+          errors: validatedInput.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    console.log("Input data validated successfully:", validatedInput.data);
+
     // Map gender and id_type descriptions to their corresponding numeric values
     const genderValue = GENDERS.find(
-      (g) => g.description.toLowerCase() === (body.gender || "male").toLowerCase()
+      (g) => g.description.toLowerCase() === (validatedInput.data.gender || "male").toLowerCase()
     )?.value || 1; // Default to Male if not found
     
     const idTypeValue = ID_TYPES.find(
-      (i) => i.description.toLowerCase() === (body.id_type || "rsa id").toLowerCase()
+      (i) => i.description.toLowerCase() === (validatedInput.data.id_type || "rsa id").toLowerCase()
     )?.value || 1; // Default to RSA Id if not found
 
     const clientPayload = {
-      ...body,
+      ...validatedInput.data,
       mle_id: loginData.mle_id,
       mbr_id: loginData.branch_id,
       user_id: loginData.user_id,
