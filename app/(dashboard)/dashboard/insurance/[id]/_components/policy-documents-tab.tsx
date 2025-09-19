@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import PolicyDocumentUpload from "@/components/policy-document-upload";
+import PolicyDocumentsList from "@/components/policy-documents-list";
+import { useOptimisticPolicyDocumentUpdate } from "@/hooks/use-policy-documents";
 import type { Database } from "@/lib/database.types";
 
 type PolicyDocumentRow =
@@ -16,24 +18,32 @@ const PolicyDocumentsTab = ({
   policyId,
   initialDocuments,
 }: PolicyDocumentsTabProps) => {
-  const [documents, setDocuments] =
-    useState<PolicyDocumentRow[]>(initialDocuments);
+  const { addDocument, removeDocument } = useOptimisticPolicyDocumentUpdate();
 
   const handleDocumentUploaded = (newDocument: PolicyDocumentRow) => {
-    setDocuments((prev) => [newDocument, ...prev]);
+    // Optimistically update the cache
+    addDocument(policyId, newDocument);
   };
 
   const handleDocumentDeleted = (documentId: number) => {
-    setDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
+    // Optimistically update the cache
+    removeDocument(policyId, documentId);
   };
 
   return (
-    <PolicyDocumentUpload
-      policyId={policyId}
-      existingDocuments={documents}
-      onDocumentUploaded={handleDocumentUploaded}
-      onDocumentDeleted={handleDocumentDeleted}
-    />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div>
+        <PolicyDocumentUpload
+          policyId={policyId}
+          existingDocuments={initialDocuments}
+          onDocumentUploaded={handleDocumentUploaded}
+          onDocumentDeleted={handleDocumentDeleted}
+        />
+      </div>
+      <div>
+        <PolicyDocumentsList policyId={policyId} />
+      </div>
+    </div>
   );
 };
 

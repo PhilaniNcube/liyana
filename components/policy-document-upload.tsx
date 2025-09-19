@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { policyDocumentSchema, type PolicyDocumentInput } from "@/lib/schemas";
 import type { Database } from "@/lib/database.types";
 import { createClient } from "@/lib/client";
+import { useInvalidatePolicyDocuments } from "@/hooks/use-policy-documents";
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];
@@ -75,6 +76,7 @@ export default function PolicyDocumentUpload({
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { invalidateByPolicy } = useInvalidatePolicyDocuments();
 
   // Function to get public URL for viewing documents
   const getDocumentViewUrl = (documentPath: string) => {
@@ -198,6 +200,9 @@ export default function PolicyDocumentUpload({
         updatePendingUpload(upload.id, { status: "success" });
         onDocumentUploaded?.(savedDocument);
 
+        // Invalidate the policy documents query to refetch
+        invalidateByPolicy(policyId);
+
         // Remove from pending after a short delay
         setTimeout(() => removePendingUpload(upload.id), 2000);
       } catch (error) {
@@ -224,6 +229,9 @@ export default function PolicyDocumentUpload({
       }
 
       onDocumentDeleted?.(documentId);
+
+      // Invalidate the policy documents query to refetch
+      invalidateByPolicy(policyId);
     } catch (error) {
       alert("Failed to delete document. Please try again.");
     }
