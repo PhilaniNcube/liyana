@@ -147,7 +147,7 @@ export default async function DeclinedLoansPage(props: {
                   </TableCell>
                   <TableCell>
                     {app?.created_at
-                      ? new Date(app.created_at).toLocaleDateString()
+                      ? format(new Date(app.created_at), "d MMM yyyy")
                       : "—"}
                   </TableCell>
                   <TableCell>
@@ -157,7 +157,7 @@ export default async function DeclinedLoansPage(props: {
                           {check.status}
                         </span>
                         <span className="text-muted-foreground">
-                          {new Date(check.checked_at).toLocaleDateString()}
+                          {format(new Date(check.checked_at), "d MMM yyyy")}
                         </span>
                       </div>
                     ) : (
@@ -165,7 +165,9 @@ export default async function DeclinedLoansPage(props: {
                     )}
                   </TableCell>
                   <TableCell>
-                    {lastEvent ? new Date(lastEvent).toLocaleDateString() : "—"}
+                    {lastEvent
+                      ? format(new Date(lastEvent), "d MMM yyyy")
+                      : "—"}
                   </TableCell>
                 </TableRow>
               );
