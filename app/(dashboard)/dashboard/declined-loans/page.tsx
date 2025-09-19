@@ -17,11 +17,12 @@ import {
   parseAsInteger,
   parseAsIsoDate,
 } from "nuqs/server";
+import { format } from "date-fns";
 
 // Define server-side search param parsing with nuqs
 const searchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
-  per_page: parseAsInteger.withDefault(50),
+  per_page: parseAsInteger.withDefault(25),
   // Dates optional; we'll fallback to current month if missing.
   start_date: parseAsIsoDate, // returns Date | null
   end_date: parseAsIsoDate,
@@ -38,10 +39,10 @@ export default async function DeclinedLoansPage(props: {
     end_date: parsedEnd,
   } = searchParamsCache.parse(raw);
 
-  // Fallbacks for dates (last month)
+  // Fallbacks for dates (starting from June 1st, 2025)
   const now = new Date();
-  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const startDateObj = parsedStart ?? startOfLastMonth;
+  const startOfJune2025 = new Date(2025, 5, 1); // Month is 0-indexed, so 5 = June
+  const startDateObj = parsedStart ?? startOfJune2025;
   const endDateObj = parsedEnd ?? now;
 
   const start_date = startDateObj.toISOString();
@@ -59,8 +60,9 @@ export default async function DeclinedLoansPage(props: {
       <div className="space-y-2">
         <h1 className="text-xl font-semibold">Declined Loans</h1>
         <p className="text-sm text-muted-foreground">
-          Showing declined applications from {startDateObj.toLocaleDateString()}{" "}
-          to {endDateObj.toLocaleDateString()} (page {page})
+          Showing declined applications from{" "}
+          {format(startDateObj, "d MMMM  yyyy")} to{" "}
+          {format(endDateObj, "d MMMM  yyyy")} (page {page})
         </p>
         <DeclinedLoansControls />
       </div>

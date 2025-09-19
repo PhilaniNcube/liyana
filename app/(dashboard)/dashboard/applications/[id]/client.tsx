@@ -81,6 +81,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { EmailHistory } from "@/components/email-history";
 import type { EmailWithDetails } from "@/lib/queries/emails";
+import { useRouter } from "next/navigation";
+import { useInvalidateProfileDocuments } from "@/hooks/use-profile-documents";
 
 interface ApplicationDetailClientProps {
   application: DecryptedApplication;
@@ -101,10 +103,10 @@ export function ApplicationDetailClient({
     parseAsString.withDefault("personal-info")
   );
 
+  const router = useRouter();
+
   const [isRunningFraudCheck, setIsRunningFraudCheck] = useState(false);
   const [fraudCheckResults, setFraudCheckResults] = useState<any>(null);
-  const [isSubmittingToBraveLender, setIsSubmittingToBraveLender] =
-    useState(false);
   const [currentDocuments, setCurrentDocuments] = useState(documents);
   const [isDeclining, setIsDeclining] = useState(false);
   const [profileDocuments, setProfileDocuments] = useState<
@@ -112,6 +114,8 @@ export function ApplicationDetailClient({
   >([]);
   const [isSendingOtv, setIsSendingOtv] = useState(false);
   const [isSendingToLms, setIsSendingToLms] = useState(false);
+
+  const invalidateProfileDocuments = useInvalidateProfileDocuments();
 
   // Filter for credit reports from Credit Check API checks
   const creditReports = apiChecks
@@ -156,6 +160,7 @@ export function ApplicationDetailClient({
     newDocument: Database["public"]["Tables"]["documents"]["Row"]
   ) => {
     setCurrentDocuments((prev) => [...prev, newDocument]);
+    invalidateProfileDocuments(application.user_id);
     toast.success("Document uploaded successfully");
   };
 
@@ -163,6 +168,8 @@ export function ApplicationDetailClient({
     newDocument: Database["public"]["Tables"]["profile_documents"]["Row"]
   ) => {
     setProfileDocuments((prev) => [...prev, newDocument]);
+    invalidateProfileDocuments(application.user_id);
+    router.refresh();
     toast.success("Profile document uploaded successfully");
   };
 
@@ -393,7 +400,6 @@ export function ApplicationDetailClient({
           >
             <Button
               disabled={
-                isSubmittingToBraveLender ||
                 isDeclining ||
                 isSendingOtv ||
                 application.status === "approved" ||
@@ -436,7 +442,6 @@ export function ApplicationDetailClient({
                 variant="destructive"
                 className="cursor-pointer"
                 disabled={
-                  isSubmittingToBraveLender ||
                   isRunningFraudCheck ||
                   isDeclining ||
                   application.status === "declined" ||
@@ -526,7 +531,6 @@ export function ApplicationDetailClient({
           <Button
             onClick={handleSendToLms}
             disabled={
-              isSubmittingToBraveLender ||
               isRunningFraudCheck ||
               isDeclining ||
               isSendingOtv ||

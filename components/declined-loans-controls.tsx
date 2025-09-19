@@ -11,7 +11,7 @@ import { useState } from "react";
 
 // Query state configuration (must mirror server parsing keys)
 const queryConfig = {
-  per_page: parseAsInteger.withDefault(50),
+  per_page: parseAsInteger.withDefault(25),
   start_date: parseAsIsoDate, // Date | null
   end_date: parseAsIsoDate, // Date | null
 };

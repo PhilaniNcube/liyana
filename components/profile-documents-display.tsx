@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -23,11 +23,14 @@ import {
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import type { Database } from "@/lib/types";
-import { createClient } from "@/lib/client";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
+import {
+  useProfileDocuments,
+  useInvalidateProfileDocuments,
+  type NormalizedDocument,
+} from "@/hooks/use-profile-documents";
 
 type ProfileDocument = Database["public"]["Tables"]["profile_documents"]["Row"];
-type AppDocument = Database["public"]["Tables"]["documents"]["Row"];
 type DocumentType = Database["public"]["Enums"]["document_type"];
 
 interface ProfileDocumentsDisplayProps {
@@ -59,96 +62,60 @@ const DOCUMENT_TYPE_COLORS: Record<DocumentType, string> = {
   other: "bg-gray-100 text-gray-800",
 };
 
-type NormalizedDocument = {
-  id: number;
-  document_type: DocumentType;
-  created_at: string; // display date
-  path: string; // storage path in 'documents' bucket
-  source: "profile" | "application";
-};
-
 export function ProfileDocumentsDisplay({
   profileId,
   documents: initialDocuments,
   onRefresh,
   className,
 }: ProfileDocumentsDisplayProps) {
-  const [documents, setDocuments] = useState<NormalizedDocument[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
+  const invalidateProfileDocuments = useInvalidateProfileDocuments();
 
-  // Public storage base URL (e.g., http://127.0.0.1:54321/storage/v1/object/public/documents)
+  const {
+    data: documents = [],
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useProfileDocuments(profileId, initialDocuments);
+
+  // Show loading if we're fetching and have no documents
+  const shouldShowLoading = (isLoading || isFetching) && documents.length === 0;
+
   const PUBLIC_BASE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/documents`;
 
   const buildPublicUrl = (path: string) => `${PUBLIC_BASE_URL}/${path}`;
 
-  const normalizeProfile = (docs: ProfileDocument[]): NormalizedDocument[] =>
-    docs.map((d) => ({
-      id: d.id,
-      document_type: d.document_type,
-      created_at: d.created_at,
-      path: d.path,
-      source: "profile" as const,
-    }));
-
-  const normalizeApp = (docs: AppDocument[]): NormalizedDocument[] =>
-    docs
-      .map((d) => ({
-        id: d.id,
-        document_type: d.document_type as DocumentType,
-        created_at: d.uploaded_at,
-        path: d.storage_path, // field name in documents table
-        source: "application" as const,
-      }))
-      .filter((d) => !!d.path);
-
-  const fetchDocuments = async () => {
-    setIsLoading(true);
+  const handleRefresh = async () => {
     try {
-      // Profile documents from API (auth + permission enforced)
-      const resp = await fetch(`/api/profile-documents?profileId=${profileId}`);
-      if (!resp.ok) throw new Error("Failed to fetch profile documents");
-      const json = await resp.json();
-      const profileDocs = normalizeProfile(
-        (json.documents || []) as ProfileDocument[]
-      );
-
-      // Application documents for this user via Supabase client
-      const supabase = createClient();
-      const { data: appDocs, error: appErr } = await supabase
-        .from("documents")
-        .select("id, document_type, uploaded_at, storage_path, user_id")
-        .eq("user_id", profileId)
-        .order("uploaded_at", { ascending: false });
-      if (appErr) throw new Error(appErr.message);
-      const appNormalized = normalizeApp((appDocs || []) as AppDocument[]);
-
-      setDocuments([...profileDocs, ...appNormalized]);
+      await refetch();
       onRefresh?.();
+      invalidateProfileDocuments(profileId);
+      toast.success("Documents refreshed successfully");
     } catch (error) {
-      console.error("Error fetching documents:", error);
-      toast.error("Failed to fetch documents");
-    } finally {
-      setIsLoading(false);
+      console.error("Error refreshing documents:", error);
+      toast.error("Failed to refresh documents");
     }
   };
 
-  useEffect(() => {
-    if (initialDocuments?.length) {
-      setDocuments(normalizeProfile(initialDocuments));
-    }
-    fetchDocuments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileId]);
-
   const grouped = useMemo(() => {
-    return documents.reduce(
+    const grouped = documents.reduce(
       (acc, doc) => {
         (acc[doc.document_type] ||= []).push(doc);
         return acc;
       },
       {} as Record<DocumentType, NormalizedDocument[]>
     );
+
+    // Sort documents within each group by creation date (latest first)
+    Object.keys(grouped).forEach((docType) => {
+      grouped[docType as DocumentType].sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    });
+
+    return grouped;
   }, [documents]);
 
   const getDocumentIcon = (documentType: DocumentType) => {
@@ -214,10 +181,10 @@ export function ProfileDocumentsDisplay({
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchDocuments}
-            disabled={isLoading}
+            onClick={handleRefresh}
+            disabled={isLoading || isFetching}
           >
-            {isLoading ? (
+            {isLoading || isFetching ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <RefreshCw className="h-4 w-4" />
@@ -226,7 +193,32 @@ export function ProfileDocumentsDisplay({
         </div>
       </CardHeader>
       <CardContent>
-        {documents.length === 0 ? (
+        {shouldShowLoading ? (
+          <div className="text-center py-8">
+            <Loader2 className="mx-auto h-12 w-12 animate-spin text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold text-muted-foreground">
+              Loading Documents
+            </h3>
+            <p className="text-muted-foreground">
+              Please wait while we fetch the documents...
+            </p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8">
+            <FileText className="mx-auto h-12 w-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-semibold text-red-600">
+              Error Loading Documents
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              {error instanceof Error
+                ? error.message
+                : "An error occurred while loading documents"}
+            </p>
+            <Button onClick={handleRefresh} variant="outline">
+              Try Again
+            </Button>
+          </div>
+        ) : documents.length === 0 ? (
           <div className="text-center py-8">
             <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold text-muted-foreground">
@@ -304,7 +296,11 @@ export function ProfileDocumentsDisplay({
                   </div>
                 </div>
               ))}
-              <ScrollBar />
+              <ScrollBar
+                forceMount={true}
+                className="rounded"
+                orientation="vertical"
+              />
             </ScrollArea>
           </div>
         )}
