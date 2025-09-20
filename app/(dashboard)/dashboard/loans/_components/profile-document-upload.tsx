@@ -36,6 +36,7 @@ const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   contract: "Contract",
   photo: "Photo",
   credit_report: "Credit Report",
+  third_party_verification: "Third Party Verification",
   other: "Other",
 };
 
