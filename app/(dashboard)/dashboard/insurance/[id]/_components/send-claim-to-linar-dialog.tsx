@@ -22,6 +22,8 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
+  Upload,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { sendClaimDetailsEmail } from "@/lib/actions/claims";
@@ -55,11 +57,71 @@ export function SendClaimToLinarDialog({
   );
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   // Filter documents related to this claim or policy
   const relevantDocuments = documents.filter(
     (doc) => doc.claim_id === claimId || doc.policy_id === policyId
   );
+
+  // File validation constants
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const ALLOWED_FILE_TYPES = [
+    "application/pdf",
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const validFiles: File[] = [];
+    const invalidFiles: string[] = [];
+
+    Array.from(files).forEach((file) => {
+      if (file.size > MAX_FILE_SIZE) {
+        invalidFiles.push(`${file.name} - File too large (max 10MB)`);
+      } else if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        invalidFiles.push(`${file.name} - Unsupported file type`);
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    if (invalidFiles.length > 0) {
+      toast.error(`Invalid files: ${invalidFiles.join(", ")}`);
+    }
+
+    if (validFiles.length > 0) {
+      setUploadedFiles((prev) => [...prev, ...validFiles]);
+      toast.success(`${validFiles.length} file(s) added successfully`);
+    }
+
+    // Reset the input
+    event.target.value = "";
+  };
+
+  const removeUploadedFile = (index: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
+        const base64 = result.split(",")[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+    });
+  };
 
   const handleDocumentToggle = (documentId: number, checked: boolean) => {
     if (checked) {
@@ -105,7 +167,26 @@ export function SendClaimToLinarDialog({
         } catch (error) {
           console.error("Error preparing document attachments:", error);
           toast.error(
-            "Failed to prepare document attachments. Sending email without attachments."
+            "Failed to prepare document attachments. Sending email without database attachments."
+          );
+        }
+      }
+
+      // Process uploaded files and add to attachments
+      if (uploadedFiles.length > 0) {
+        try {
+          for (const file of uploadedFiles) {
+            const base64Content = await convertFileToBase64(file);
+            attachments.push({
+              filename: file.name,
+              content: base64Content,
+              content_type: file.type,
+            });
+          }
+        } catch (error) {
+          console.error("Error processing uploaded files:", error);
+          toast.error(
+            "Failed to process uploaded files. Sending email without uploaded attachments."
           );
         }
       }
@@ -127,6 +208,7 @@ export function SendClaimToLinarDialog({
           setOpen(false);
           setSuccess(false);
           setSelectedDocuments([]);
+          setUploadedFiles([]);
           setCustomMessage("");
           setCustomSubject(`Insurance Claim Details - Claim #${claimNumber}`);
         }, 2000);
@@ -149,7 +231,7 @@ export function SendClaimToLinarDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Send Claim to Linar</DialogTitle>
           <DialogDescription>
@@ -234,13 +316,81 @@ export function SendClaimToLinarDialog({
             </div>
           )}
 
+          {/* File Upload Section */}
+          <div className="space-y-3">
+            <Label>Upload Additional Files (Optional)</Label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+              <p className="text-sm text-gray-600 mb-2">
+                Click to upload files or drag and drop
+              </p>
+              <p className="text-xs text-gray-500 mb-4">
+                PDF, Word, JPG, PNG up to 10MB each
+              </p>
+              <Input
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                className="hidden"
+                id="file-upload"
+              />
+              <Label
+                htmlFor="file-upload"
+                className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 cursor-pointer"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Choose Files
+              </Label>
+            </div>
+
+            {/* Display uploaded files */}
+            {uploadedFiles.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Uploaded Files:</p>
+                <div className="border rounded-lg p-3 space-y-2 max-h-[150px] overflow-y-auto">
+                  {uploadedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between bg-gray-50 p-2 rounded"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm font-medium">{file.name}</span>
+                        <span className="text-xs text-gray-500">
+                          ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeUploadedFile(index)}
+                        className="h-6 w-6 p-0 hover:bg-red-100"
+                      >
+                        <X className="h-3 w-3 text-red-500" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    {uploadedFiles.length} uploaded file(s) will be attached to
+                    the email.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            )}
+          </div>
+
           {/* No Documents Available */}
           {relevantDocuments.length === 0 && (
             <Alert>
               <FileText className="h-4 w-4" />
               <AlertDescription>
                 No documents are available for this claim or its related policy.
-                Only claim details will be sent.
+                You can still upload additional files or send only claim
+                details.
               </AlertDescription>
             </Alert>
           )}
