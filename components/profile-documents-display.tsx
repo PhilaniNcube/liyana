@@ -49,6 +49,7 @@ const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   photo: "Photo",
   credit_report: "Credit Report",
   other: "Other",
+  third_party_verification: "Third Party Verification",
 };
 
 const DOCUMENT_TYPE_COLORS: Record<DocumentType, string> = {
@@ -60,6 +61,7 @@ const DOCUMENT_TYPE_COLORS: Record<DocumentType, string> = {
   photo: "bg-pink-100 text-pink-800",
   credit_report: "bg-red-100 text-red-800",
   other: "bg-gray-100 text-gray-800",
+  third_party_verification: "bg-teal-100 text-teal-800",
 };
 
 export function ProfileDocumentsDisplay({

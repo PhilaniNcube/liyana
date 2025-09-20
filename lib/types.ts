@@ -1061,6 +1061,7 @@ export type Database = {
         | "photo"
         | "credit_report"
         | "other"
+        | "third_party_verification"
       employment_type:
         | "employed"
         | "self_employed"
@@ -1274,6 +1275,7 @@ export const Constants = {
         "photo",
         "credit_report",
         "other",
+        "third_party_verification",
       ],
       employment_type: [
         "employed",

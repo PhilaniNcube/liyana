@@ -93,6 +93,11 @@ const DOCUMENT_TYPE_OPTIONS: {
     description: "Credit bureau report",
   },
   { value: "other", label: "Other", description: "Other supporting documents" },
+  {
+    value: "third_party_verification",
+    label: "Third Party Verification",
+    description: "Documents required for third party verification",
+  },
 ];
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
