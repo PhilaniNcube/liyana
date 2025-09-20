@@ -333,7 +333,7 @@ export default function PolicyDocumentUpload({
                       }
                       disabled={upload.status === "uploading"}
                     >
-                      <SelectTrigger className="w-48">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select document type" />
                       </SelectTrigger>
                       <SelectContent>

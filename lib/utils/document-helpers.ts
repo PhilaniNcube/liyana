@@ -93,6 +93,86 @@ function getContentTypeFromExtension(extension: string): string {
 }
 
 /**
+ * Retrieves multiple documents for email attachment from both policy_documents and documents tables
+ * @param policyDocumentIds Array of document IDs from the policy_documents table
+ * @param applicationDocumentIds Array of document IDs from the documents table
+ * @returns Array of base64 encoded documents ready for email attachment
+ */
+export async function getDocumentsForEmailV2(
+  policyDocumentIds: number[] = [], 
+  applicationDocumentIds: number[] = []
+): Promise<Array<{
+  filename: string;
+  content: string;
+  content_type: string;
+}>> {
+  console.log('Getting documents for email, Policy IDs:', policyDocumentIds, 'Application IDs:', applicationDocumentIds);
+  const supabase = await createClient();
+  const attachments = [];
+
+  // Process policy documents
+  if (policyDocumentIds.length > 0) {
+    const { data: policyDocuments, error: policyError } = await supabase
+      .from('policy_documents')
+      .select('*')
+      .in('id', policyDocumentIds);
+
+    if (policyError) {
+      console.error('Error fetching policy documents:', policyError);
+    } else if (policyDocuments) {
+      console.log('Found policy documents in database:', policyDocuments.length);
+      
+      for (const doc of policyDocuments) {
+        console.log(`Processing policy document ${doc.id} with path: ${doc.path}`);
+        const documentData = await getDocumentForEmail(doc.path);
+        if (documentData) {
+          attachments.push({
+            filename: `policy_${doc.document_type}_${doc.id}.${documentData.filename.split('.').pop()}`,
+            content: documentData.data,
+            content_type: documentData.content_type,
+          });
+          console.log(`Successfully processed policy document ${doc.id}`);
+        } else {
+          console.log(`Failed to process policy document ${doc.id}`);
+        }
+      }
+    }
+  }
+
+  // Process application documents
+  if (applicationDocumentIds.length > 0) {
+    const { data: applicationDocuments, error: applicationError } = await supabase
+      .from('documents')
+      .select('*')
+      .in('id', applicationDocumentIds);
+
+    if (applicationError) {
+      console.error('Error fetching application documents:', applicationError);
+    } else if (applicationDocuments) {
+      console.log('Found application documents in database:', applicationDocuments.length);
+      
+      for (const doc of applicationDocuments) {
+        console.log(`Processing application document ${doc.id} with path: ${doc.storage_path}`);
+        const documentData = await getDocumentForEmail(doc.storage_path);
+        if (documentData) {
+          attachments.push({
+            filename: `app_${doc.document_type}_${doc.id}.${documentData.filename.split('.').pop()}`,
+            content: documentData.data,
+            content_type: documentData.content_type,
+          });
+          console.log(`Successfully processed application document ${doc.id}`);
+        } else {
+          console.log(`Failed to process application document ${doc.id}`);
+        }
+      }
+    }
+  }
+
+  console.log(`Returning ${attachments.length} total attachments`);
+  return attachments;
+}
+
+/**
  * Retrieves multiple documents for email attachment
  * @param documentIds Array of document IDs from the policy_documents table
  * @returns Array of base64 encoded documents ready for email attachment

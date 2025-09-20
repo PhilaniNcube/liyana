@@ -1,20 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDocumentsForEmail } from "@/lib/utils/document-helpers";
+import { getDocumentsForEmail, getDocumentsForEmailV2 } from "@/lib/utils/document-helpers";
 
 export async function POST(request: NextRequest) {
   try {
-    const { documentIds } = await request.json();
+    const body = await request.json();
+    
+    // Support both old format (documentIds) and new format (policyDocumentIds, applicationDocumentIds)
+    const { 
+      documentIds, 
+      policyDocumentIds = [], 
+      applicationDocumentIds = [] 
+    } = body;
 
-    console.log("Document attachment request for IDs:", documentIds);
+    console.log("Document attachment request:", {
+      documentIds,
+      policyDocumentIds,
+      applicationDocumentIds
+    });
 
-    if (!documentIds || !Array.isArray(documentIds)) {
+    let attachments;
+
+    // Use new V2 function if we have separate ID arrays
+    if (policyDocumentIds.length > 0 || applicationDocumentIds.length > 0) {
+      if (!Array.isArray(policyDocumentIds) || !Array.isArray(applicationDocumentIds)) {
+        return NextResponse.json(
+          { error: "Invalid document IDs provided" },
+          { status: 400 }
+        );
+      }
+      attachments = await getDocumentsForEmailV2(policyDocumentIds, applicationDocumentIds);
+    } 
+    // Fall back to old function for backward compatibility
+    else if (documentIds && Array.isArray(documentIds)) {
+      attachments = await getDocumentsForEmail(documentIds);
+    } 
+    else {
       return NextResponse.json(
         { error: "Invalid document IDs provided" },
         { status: 400 }
       );
     }
-
-    const attachments = await getDocumentsForEmail(documentIds);
 
     console.log("Generated attachments:", attachments.length, "attachments");
     attachments.forEach((att, index) => {

@@ -1555,7 +1555,11 @@ export const policyDocumentSchema = z.object({
       "death_certificate", 
       "marriage_certificate",
       "identity_document",
-      "passport"
+      "passport",
+      "proof_of_banking",
+      "payslip",
+      "drivers_license",
+      "third_party_document"
     ],
     {
       required_error: "Document type is required",

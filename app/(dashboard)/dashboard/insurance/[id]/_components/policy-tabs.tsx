@@ -14,6 +14,7 @@ import { SendToLinarDialog } from "./send-to-linar-dialog";
 import SmsPolicy from "@/components/sms-policy";
 import { useTabState } from "@/hooks/use-tab-state";
 import UpdatePolicyStatus from "./update-policy-status";
+import { useApplicationDocuments } from "@/hooks/use-application-documents";
 
 type PolicyTabsProps = {
   policyData: any; // Replace with proper type
@@ -22,6 +23,11 @@ type PolicyTabsProps = {
 
 const PolicyTabs = ({ policyData, emailHistory }: PolicyTabsProps) => {
   const [selectedTab, setSelectedTab] = useTabState("personal");
+
+  // Fetch application documents for the user
+  const { data: applicationDocuments = [] } = useApplicationDocuments(
+    policyData.user_id
+  );
 
   return (
     <div className="space-y-6">
@@ -54,7 +60,8 @@ const PolicyTabs = ({ policyData, emailHistory }: PolicyTabsProps) => {
                 .filter(Boolean)
                 .join(" ") || "Policy Holder"
             }
-            documents={policyData.documents}
+            policyDocuments={policyData.documents}
+            applicationDocuments={applicationDocuments}
           />
         </div>
       </div>

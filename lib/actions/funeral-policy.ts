@@ -708,7 +708,7 @@ export async function sendFuneralPolicyDetailsEmail(
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div>
               <p style="margin: 0; font-weight: bold; color: #6b7280;">Employment Type:</p>
-              <p style="margin: 5px 0 15px 0; color: #374151; text-transform: capitalize;">${employmentDetails.employment_type === 'employed' ? 'Permanent' : employmentDetails.employment_type}</p>
+              <p style="margin: 5px 0 15px 0; color: #374151; text-transform: capitalize;">${employmentDetails.employment_type === 'employed' ? 'Permanent' : employmentDetails.employment_type?.replace(/_/g, ' ')}</p>
             </div>
             <div>
               <p style="margin: 0; font-weight: bold; color: #6b7280;">Employer:</p>
