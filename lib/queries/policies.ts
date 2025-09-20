@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/server";
 import { decryptValue } from "@/lib/encryption";
+import type { Database } from "@/lib/database.types";
 
 // Reusable types derived from Supabase table definitions
 type PolicyRow = Database["public"]["Tables"]["policies"]["Row"];
@@ -169,6 +170,20 @@ export async function getPoliciesByUser(): Promise<PolicyWithHolder[]> {
         .from("policies")
         .select("*, policy_holder:policy_holder_id(*)")
         .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+        
+    if (error) throw new Error(error.message);
+    return (data ?? []) as PolicyWithHolder[];
+}
+
+// Fetch policies by specific user ID (for admin use)
+export async function getPoliciesByUserId(userId: string): Promise<PolicyWithHolder[]> {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from("policies")
+        .select("*, policy_holder:policy_holder_id(*)")
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
         
     if (error) throw new Error(error.message);

@@ -36,6 +36,8 @@ import type { Database } from "@/lib/types";
 import { EmailHistory } from "@/components/email-history-new";
 import { UserEmailHistory } from "../_components/user-email-history";
 import { EmailRecord } from "@/lib/queries/emails";
+import { PolicyWithHolder } from "@/lib/queries/policies";
+import { useInvalidateProfileDocuments } from "@/hooks/use-profile-documents";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
   decrypted_id_number: string | null;
@@ -49,6 +51,7 @@ interface ProfilePageClientProps {
   applications: Application[];
   apiChecks: any[];
   emails: EmailRecord[];
+  policies: PolicyWithHolder[];
 }
 
 export function ProfilePageClient({
@@ -56,10 +59,14 @@ export function ProfilePageClient({
   applications,
   apiChecks,
   emails,
+  policies,
 }: ProfilePageClientProps) {
   const [profileDocuments, setProfileDocuments] = useState<ProfileDocument[]>(
     []
   );
+
+  // Hook to invalidate profile documents cache
+  const invalidateProfileDocuments = useInvalidateProfileDocuments();
 
   // URL state for tab management
   const [activeTab, setActiveTab] = useQueryState("tab", {
@@ -69,6 +76,8 @@ export function ProfilePageClient({
 
   const handleProfileDocumentUploadSuccess = (newDocument: ProfileDocument) => {
     setProfileDocuments((prev) => [...prev, newDocument]);
+    // Automatically invalidate and refetch the documents
+    invalidateProfileDocuments(profile.id);
     toast.success("Document uploaded successfully");
   };
 
@@ -95,6 +104,15 @@ export function ProfilePageClient({
         return "bg-purple-100 text-purple-800";
       case "submission_failed":
         return "bg-orange-100 text-orange-800";
+      // Policy statuses
+      case "active":
+        return "bg-green-100 text-green-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "lapsed":
+        return "bg-red-100 text-red-800";
+      case "cancelled":
+        return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -158,6 +176,15 @@ export function ProfilePageClient({
     (check) => check.status === "failed"
   ).length;
 
+  // Calculate policy statistics
+  const totalPolicies = policies.length;
+  const activePolicies = policies.filter(
+    (policy) => policy.policy_status === "active"
+  ).length;
+  const pendingPolicies = policies.filter(
+    (policy) => policy.policy_status === "pending"
+  ).length;
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
@@ -185,7 +212,7 @@ export function ProfilePageClient({
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -243,6 +270,23 @@ export function ProfilePageClient({
             </p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Policy Applications
+            </CardTitle>
+            <FileText className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">
+              {totalPolicies}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {activePolicies} active, {pendingPolicies} pending
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs
@@ -255,12 +299,14 @@ export function ProfilePageClient({
           <TabsTrigger value="applications">
             Loan Applications ({totalApplications})
           </TabsTrigger>
+          <TabsTrigger value="policies">
+            Policy Applications ({totalPolicies})
+          </TabsTrigger>
           <TabsTrigger value="api-checks">
             API Checks ({totalApiChecks})
           </TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="email">Email Client</TabsTrigger>
-
           <TabsTrigger value="sms">SMS Client</TabsTrigger>
         </TabsList>
 
@@ -409,6 +455,80 @@ export function ProfilePageClient({
           </Card>
         </TabsContent>
 
+        <TabsContent value="policies">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Policy Applications History
+              </CardTitle>
+              <CardDescription>
+                All policy applications submitted by this user
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {policies.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold text-muted-foreground">
+                    No Policy Applications
+                  </h3>
+                  <p className="text-muted-foreground">
+                    This user hasn't submitted any policy applications yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {policies.map((policy) => (
+                    <div
+                      key={policy.id}
+                      className="border rounded-lg p-4 space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Link
+                            href={`/dashboard/policies/${policy.id}`}
+                            className="text-sm font-medium text-blue-600 hover:underline"
+                          >
+                            Policy #{policy.id}
+                          </Link>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(policy.created_at), {
+                              addSuffix: true,
+                            })}
+                          </p>
+                        </div>
+                        <Badge className={getStatusColor(policy.policy_status)}>
+                          {policy.policy_status.toUpperCase()}
+                        </Badge>
+                      </div>
+                      {policy.coverage_amount && (
+                        <p className="text-sm">
+                          <span className="font-medium">Coverage:</span> R
+                          {policy.coverage_amount.toLocaleString()}
+                        </p>
+                      )}
+                      {policy.premium_amount && (
+                        <p className="text-sm">
+                          <span className="font-medium">Premium:</span> R
+                          {policy.premium_amount.toLocaleString()} (
+                          {policy.frequency})
+                        </p>
+                      )}
+                      {policy.product_type && (
+                        <p className="text-sm capitalize">
+                          <span className="font-medium">Product Type:</span>{" "}
+                          {policy.product_type.replace("_", " ")}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="api-checks">
           <Card>
             <CardHeader>
@@ -477,9 +597,6 @@ export function ProfilePageClient({
               <ProfileDocumentsDisplay
                 profileId={profile.id}
                 documents={profileDocuments}
-                onRefresh={() => {
-                  setProfileDocuments([]);
-                }}
               />
             </div>
           </div>
