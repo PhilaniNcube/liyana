@@ -7,6 +7,10 @@ import { Shield, FileText, User } from "lucide-react";
 import type { PolicyWithProduct } from "@/lib/queries/policies";
 import type { Database } from "@/lib/database.types";
 import {
+  usePolicyDocuments,
+  useOptimisticPolicyDocumentUpdate,
+} from "@/hooks/use-policy-documents";
+import {
   PolicyOverviewTab,
   PolicyHolderTab,
   PolicyFinancialTab,
@@ -15,6 +19,7 @@ import {
   PolicyBeneficiariesTab,
   PolicyDocumentsTab,
 } from "./policy-detail/";
+import PolicyDocumentsList from "./policy-documents-list";
 
 // Types
 type ClaimRow = Database["public"]["Tables"]["claims"]["Row"];
@@ -50,31 +55,23 @@ export default function PolicyDetail({
   claims: initialClaims,
   beneficiaries,
 }: PolicyDetailProps) {
-  const [documents, setDocuments] = useState<PolicyDocumentRow[]>([]);
-  const [documentsLoading, setDocumentsLoading] = useState(true);
   const [claims, setClaims] = useState<ClaimWithDetails[]>(initialClaims);
   const [claimsLoading, setClaimsLoading] = useState(false);
 
-  // Fetch policy documents
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        const response = await fetch(
-          `/api/policy-documents?policy_id=${policy.id}`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setDocuments(data);
-        }
-      } catch (error) {
-        console.error("Error fetching documents:", error);
-      } finally {
-        setDocumentsLoading(false);
-      }
-    };
+  // Fetch policy documents using tanstack/react-query
+  const {
+    data: documents = [],
+    isLoading: documentsLoading,
+    error: documentsError,
+  } = usePolicyDocuments(policy.id);
 
-    fetchDocuments();
-  }, [policy.id]);
+  // Optimistic updates for documents
+  const { addDocument, removeDocument } = useOptimisticPolicyDocumentUpdate();
+
+  // Log any errors for debugging
+  if (documentsError) {
+    console.error("Error fetching policy documents:", documentsError);
+  }
 
   // Function to refresh claims
   const refreshClaims = async () => {
@@ -89,11 +86,11 @@ export default function PolicyDetail({
   };
 
   const handleDocumentUploaded = (document: PolicyDocumentRow) => {
-    setDocuments((prev) => [document, ...prev]);
+    addDocument(policy.id, document);
   };
 
   const handleDocumentDeleted = (documentId: number) => {
-    setDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
+    removeDocument(policy.id, documentId);
   };
 
   const getStatusBadgeVariant = (status: string) => {
@@ -189,12 +186,15 @@ export default function PolicyDetail({
 
         {/* Documents Tab */}
         <TabsContent value="documents">
-          <PolicyDocumentsTab
-            policyId={policy.id}
-            documents={documents}
-            onDocumentUploaded={handleDocumentUploaded}
-            onDocumentDeleted={handleDocumentDeleted}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PolicyDocumentsTab
+              policyId={policy.id}
+              documents={documents}
+              onDocumentUploaded={handleDocumentUploaded}
+              onDocumentDeleted={handleDocumentDeleted}
+            />
+            <PolicyDocumentsList policyId={policy.id} />
+          </div>
         </TabsContent>
 
         {/* Claims Tab */}

@@ -4,7 +4,13 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle, Skull, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle,
+  Skull,
+  Loader2,
+  Crown,
+} from "lucide-react";
 import { formatCurrency } from "@/lib/utils/format-currency";
 import { formatDate } from "date-fns";
 import { useDeceasedStatusCheck } from "@/hooks/use-deceased-status-check";
@@ -18,6 +24,7 @@ type BeneficiaryWithDeceasedStatus = Beneficiary & {
   deceasedStatus?: DeceasedStatusInformation[] | null;
   isCheckingDeceased?: boolean;
   deceasedCheckError?: string | null;
+  isPolicyHolder?: boolean; // Flag to identify the policy holder
 };
 
 function formatName(party: Beneficiary["party"]) {
@@ -26,7 +33,11 @@ function formatName(party: Beneficiary["party"]) {
   return parts.length ? parts.join(" ") : "Unknown";
 }
 
-function formatRelationship(rel: string | null | undefined) {
+function formatRelationship(
+  rel: string | null | undefined,
+  isPolicyHolder?: boolean
+) {
+  if (isPolicyHolder) return "Policy Holder";
   if (!rel) return "—";
   return rel.charAt(0).toUpperCase() + rel.slice(1).replace(/_/g, " ");
 }
@@ -34,15 +45,53 @@ function formatRelationship(rel: string | null | undefined) {
 interface PolicyBeneficiariesTabProps {
   beneficiaries: Beneficiary[];
   user_id: string;
+  policyHolder?: {
+    id?: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    id_number?: string | null;
+    contact_details?: any;
+    decrypted_id_number?: string | null;
+  } | null;
 }
 
 export default function PolicyBeneficiariesTab({
   beneficiaries,
   user_id,
+  policyHolder,
 }: PolicyBeneficiariesTabProps) {
-  const [beneficiariesWithStatus, setBeneficiariesWithStatus] = useState<
-    BeneficiaryWithDeceasedStatus[]
-  >(beneficiaries.map((b) => ({ ...b })));
+  // Create a mock beneficiary object for the policy holder
+  const policyHolderAsBeneficiary: BeneficiaryWithDeceasedStatus | null =
+    policyHolder
+      ? {
+          id: -1, // Use negative ID to distinguish from real beneficiaries
+          relation_type: "spouse" as const, // Use a valid relation type, we'll override the display
+          allocation_percentage: 0,
+          beneficiary_party_id: policyHolder.id || "",
+          policy_id: 0,
+          created_at: new Date().toISOString(),
+          party: {
+            id: policyHolder.id,
+            first_name: policyHolder.first_name,
+            last_name: policyHolder.last_name,
+            contact_details: policyHolder.contact_details,
+            id_number:
+              policyHolder.decrypted_id_number || policyHolder.id_number,
+          },
+          id_number:
+            policyHolder.decrypted_id_number || policyHolder.id_number || null,
+          // Override to indicate this is the policy holder
+          isPolicyHolder: true,
+        }
+      : null;
+
+  // Combine policy holder with beneficiaries, policy holder first
+  const allCoveredPersons = policyHolderAsBeneficiary
+    ? [policyHolderAsBeneficiary, ...beneficiaries.map((b) => ({ ...b }))]
+    : beneficiaries.map((b) => ({ ...b }));
+
+  const [beneficiariesWithStatus, setBeneficiariesWithStatus] =
+    useState<BeneficiaryWithDeceasedStatus[]>(allCoveredPersons);
   const { checkDeceasedStatus } = useDeceasedStatusCheck();
 
   const handleCheckDeceasedStatus = async (idNumber: string) => {
@@ -314,11 +363,20 @@ export default function PolicyBeneficiariesTab({
               >
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <div className="font-medium">
+                    <div className="font-medium flex items-center gap-2">
                       {formatName(beneficiary.party)}
+                      {beneficiary.isPolicyHolder && (
+                        <Badge variant="default" className="text-xs">
+                          <Crown className="h-3 w-3 mr-1" />
+                          Primary
+                        </Badge>
+                      )}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {formatRelationship(beneficiary.relation_type)}
+                      {formatRelationship(
+                        beneficiary.relation_type,
+                        beneficiary.isPolicyHolder
+                      )}
                     </div>
                     {beneficiary.id_number && (
                       <div className="text-xs text-muted-foreground">
@@ -348,20 +406,18 @@ export default function PolicyBeneficiariesTab({
                   <div className="flex flex-col items-end gap-2">
                     {renderDeceasedStatusBadge(beneficiary)}
 
-                    {beneficiary.party?.id_number &&
-                      !beneficiary.deceasedStatus &&
-                      !beneficiary.isCheckingDeceased && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            handleCheckDeceasedStatus(beneficiary.id_number!)
-                          }
-                          className="text-xs"
-                        >
-                          Check Deceased Status
-                        </Button>
-                      )}
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        handleCheckDeceasedStatus(beneficiary.id_number!)
+                      }
+                      className="text-xs"
+                      disabled={beneficiary.isCheckingDeceased}
+                    >
+                      {beneficiary.isCheckingDeceased
+                        ? "Checking..."
+                        : "Check Deceased Status"}
+                    </Button>
                   </div>
                 </div>
 

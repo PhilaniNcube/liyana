@@ -23,9 +23,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { Download } from "lucide-react";
+import { Download, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { exportDataToCSV } from "@/lib/actions/csv-export";
+import UpdatePolicyStatus from "@/app/(dashboard)/dashboard/insurance/[id]/_components/update-policy-status";
 
 type PoliciesDataTableProps = {
   data: PolicyWithHolder[];
@@ -141,6 +142,29 @@ const columns: ColumnDef<PolicyWithHolder>[] = [
       <span>{formatDate(getValue<string | null>())}</span>
     ),
     enableSorting: true,
+  },
+  {
+    id: "actions",
+    header: () => <span>Actions</span>,
+    cell: ({ row }) => {
+      const policy = row.original;
+      return (
+        <div onClick={(e) => e.stopPropagation()}>
+          <UpdatePolicyStatus
+            currentStatus={
+              policy.policy_status as
+                | "pending"
+                | "active"
+                | "lapsed"
+                | "cancelled"
+            }
+            policyId={policy.id}
+          />
+        </div>
+      );
+    },
+    enableSorting: false,
+    size: 100,
   },
 ];
 

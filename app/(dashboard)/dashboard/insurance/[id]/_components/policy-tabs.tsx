@@ -76,7 +76,7 @@ const PolicyTabs = ({ policyData, emailHistory }: PolicyTabsProps) => {
           <TabsTrigger value="policy">Policy Info</TabsTrigger>
           <TabsTrigger value="employment">Employment</TabsTrigger>
           <TabsTrigger value="beneficiaries">
-            Covered Persons ({policyData.beneficiaries.length})
+            Covered Persons ({policyData.beneficiaries.length + 1})
           </TabsTrigger>
           <TabsTrigger value="claims">
             Claims ({policyData.claims.length})
@@ -105,6 +105,7 @@ const PolicyTabs = ({ policyData, emailHistory }: PolicyTabsProps) => {
           <PolicyBeneficiariesTab
             beneficiaries={policyData.beneficiaries}
             user_id={policyData.user_id}
+            policyHolder={policyData.policy_holder}
           />
         </TabsContent>
 
