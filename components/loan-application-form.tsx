@@ -546,6 +546,16 @@ export function LoanApplicationForm({
       }
     }
 
+    // Prevent navigation from employment step if unemployed is selected
+    if (currentStepDef?.key === "employment") {
+      const employmentType = form.getValues("employment_type");
+      if (employmentType === "unemployed") {
+        // Trigger validation to show the error message
+        await form.trigger("employment_type");
+        return;
+      }
+    }
+
     if (currentStep === loanStepId) {
       await handleSubmitApplication();
     } else if (currentStep < documentsStepId) {
@@ -770,7 +780,9 @@ export function LoanApplicationForm({
                 (creditStepPresent &&
                   currentStepDef?.key === "credit" &&
                   (creditCheckStatus !== "success" ||
-                    creditCheckResults?.creditScoreFailed))
+                    creditCheckResults?.creditScoreFailed)) ||
+                (currentStepDef?.key === "employment" &&
+                  form.watch("employment_type") === "unemployed")
               }
             >
               {currentStep === loanStepId && isPending ? (

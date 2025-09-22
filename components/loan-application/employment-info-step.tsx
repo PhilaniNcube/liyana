@@ -16,6 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import { loanApplicationSchema } from "@/lib/schemas";
 
 interface EmploymentInfoStepProps {
@@ -29,6 +31,20 @@ export function EmploymentInfoStep({ form }: EmploymentInfoStepProps) {
 
   return (
     <div className="space-y-4">
+      {/* Warning for unemployed users */}
+      {employmentType === "unemployed" && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Application Not Available</AlertTitle>
+          <AlertDescription>
+            Unfortunately, we are unable to process loan applications from
+            unemployed individuals at this time. To be eligible for a loan, you
+            must have a steady source of income from employment,
+            self-employment, contract work, or retirement benefits.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={form.control}

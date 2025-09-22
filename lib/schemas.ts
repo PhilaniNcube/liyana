@@ -180,6 +180,20 @@ export const loanApplicationSchema = z
   )
   .refine(
     (data) => {
+      // Prevent loan applications from unemployed individuals
+      if (data.employment_type === "unemployed") {
+        return false;
+      }
+      return true;
+    },
+    {
+      message:
+        "Loan applications cannot be processed for unemployed individuals. You must have a steady source of income to be eligible.",
+      path: ["employment_type"],
+    }
+  )
+  .refine(
+    (data) => {
       // Validate conditional loan_purpose_reason field
       if (
         data.loan_purpose === "other" &&
@@ -721,6 +735,20 @@ export const funeralPolicyLeadSchema = z
       message:
         "Employment end date is required for contract and retired employment types",
       path: ["employment_end_date"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Prevent applications from unemployed individuals
+      if (data.employment_type === "unemployed") {
+        return false;
+      }
+      return true;
+    },
+    {
+      message:
+        "Applications cannot be processed for unemployed individuals. You must have a steady source of income to be eligible.",
+      path: ["employment_type"],
     }
   );
 
