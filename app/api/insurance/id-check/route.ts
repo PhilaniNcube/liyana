@@ -4,8 +4,8 @@ import { decryptValue } from "@/lib/encryption";
 import { WhoYouIdVerificationResponse } from "@/lib/schemas";
 
 export async function POST(request: NextRequest) {
-    // receive the encrypted ID Number from the request body
-  const { id_number } = await request.json();
+    // receive the encrypted ID Number and profile_id from the request body
+  const { id_number, profile_id } = await request.json();
 
   
   const decryptedIdNumber = decryptValue(id_number);
@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
 
     await supabase.from("api_checks").insert({
       id_number: id_number,
+      profile_id: profile_id,
       check_type: "id_verification",
       status: "failed",
       vendor: "WhoYou",
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
     // save the stringified response to the api-checks table
     await supabase.from("api_checks").insert({
       id_number: id_number,
+      profile_id: profile_id,
       check_type: "id_verification",
       status: "failed",
       vendor: "WhoYou",
@@ -119,6 +121,7 @@ export async function POST(request: NextRequest) {
   try {
     const { error } = await supabase.from("api_checks").insert({
       id_number: id_number,
+      profile_id: profile_id,
       check_type: "id_verification",
       vendor: "WhoYou",
       status: "passed",
@@ -136,6 +139,7 @@ export async function POST(request: NextRequest) {
 
     await supabase.from("api_checks").insert({
       id_number: id_number,
+      profile_id: profile_id,
       check_type: "id_verification",
       status: "failed",
       vendor: "WhoYou",

@@ -13,7 +13,13 @@ import React, { useState, useTransition } from "react";
 import { WhoYouIdVerificationDetail } from "@/lib/schemas";
 import { IdVerificationDisplay } from "@/components/id-verification-display";
 
-const VerifyIdDialog = ({ idNumber }: { idNumber: string }) => {
+const VerifyIdDialog = ({
+  idNumber,
+  profileId,
+}: {
+  idNumber: string;
+  profileId: string;
+}) => {
   const [isPending, startTransition] = useTransition();
   const [verificationResult, setVerificationResult] =
     useState<WhoYouIdVerificationDetail | null>(null);
@@ -30,7 +36,10 @@ const VerifyIdDialog = ({ idNumber }: { idNumber: string }) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id_number: idNumber }),
+        body: JSON.stringify({
+          id_number: idNumber,
+          profile_id: profileId,
+        }),
       });
 
       const response = await request.json();

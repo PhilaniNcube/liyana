@@ -41,7 +41,12 @@ export default function PersonalInfoTab({ policy }: PersonalInfoTabProps) {
         <div className="flex items-center justify-between bg-yellow-200 p-4 rounded-md">
           <CardTitle className="text-2xl">Personal Information</CardTitle>
           <div className="flex items-center gap-2">
-            {holder.id_number && <VerifyIdDialog idNumber={holder.id_number} />}
+            {holder.id_number && holder.id && (
+              <VerifyIdDialog
+                idNumber={holder.id_number}
+                profileId={holder.id}
+              />
+            )}
             {(() => {
               const decryptedIdNumber = holder.decrypted_id_number || "";
               let cellNumber = "";
