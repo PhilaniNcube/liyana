@@ -23,6 +23,8 @@ import {
 import { Eye, Edit, Download, Search, Filter } from "lucide-react";
 import Link from "next/link";
 import { getAllClaims } from "@/lib/queries/claims";
+import { toast } from "sonner";
+import { exportDataToCSV } from "@/lib/actions/csv-export";
 
 interface ClaimsPageClientProps {
   initialClaims: Awaited<ReturnType<typeof getAllClaims>>;
@@ -31,8 +33,110 @@ interface ClaimsPageClientProps {
 export const ClaimsPageClient = ({ initialClaims }: ClaimsPageClientProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isExporting, setIsExporting] = useState(false);
 
   const claims = initialClaims || [];
+
+  const exportClaimsToCSV = async () => {
+    setIsExporting(true);
+    try {
+      // Generate filename
+      const timestamp = new Date().toISOString().split("T")[0];
+      const filterSuffix = statusFilter !== "all" ? `_${statusFilter}` : "";
+      const filename = `funeral_claims${filterSuffix}_${timestamp}.csv`;
+
+      // Helper function to format dates
+      const formatDate = (dateString: string | null | undefined) => {
+        if (!dateString) return "";
+        try {
+          return new Date(dateString).toLocaleDateString("en-ZA", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+        } catch {
+          return "";
+        }
+      };
+
+      // Use filtered claims data and process it to match table display
+      const dataToExport =
+        statusFilter !== "all"
+          ? claims.filter((claim) => claim.status === statusFilter)
+          : claims;
+
+      // Process claims data to match what's displayed in the table
+      const processedData = dataToExport.map((claim) => {
+        const claimant = claim.parties
+          ? `${claim.parties.first_name || ""} ${claim.parties.last_name || ""}`.trim() ||
+            claim.parties.organization_name ||
+            ""
+          : "";
+
+        return {
+          "Claim Number": claim.claim_number,
+          Claimant: claimant,
+          "Policy ID": claim.policy_id,
+          "Date Filed": formatDate(claim.date_filed),
+          "Date of Incident": formatDate(claim.date_of_incident),
+          Status: claim.status.charAt(0).toUpperCase() + claim.status.slice(1),
+          "Created Date": formatDate(claim.created_at),
+          // Claimant details (available fields)
+          "Claimant First Name": claim.parties?.first_name || "",
+          "Claimant Last Name": claim.parties?.last_name || "",
+          "Claimant Organization": claim.parties?.organization_name || "",
+          "Claimant ID Number": claim.parties?.id_number || "",
+        };
+      });
+
+      const result = await exportDataToCSV({
+        data: processedData,
+        filename: filename,
+      });
+
+      if (!result.success) {
+        toast.error("Failed to export claims CSV", {
+          description:
+            result.error ||
+            "An error occurred while exporting the claims data.",
+        });
+        return;
+      }
+
+      if (!result.data || !result.filename) {
+        toast.error("Export failed", {
+          description: "No data was returned from the export.",
+        });
+        return;
+      }
+
+      // Create blob and download
+      const blob = new Blob([result.data], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", result.filename);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast.success("Claims CSV exported successfully", {
+          description: `Downloaded ${result.filename}`,
+        });
+      }
+    } catch (error) {
+      toast.error("Export failed", {
+        description:
+          "An unexpected error occurred while exporting claims. Please try again.",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const filteredClaims = useMemo(() => {
     return claims.filter((claim) => {
@@ -185,6 +289,16 @@ export const ClaimsPageClient = ({ initialClaims }: ClaimsPageClientProps) => {
                   ))}
                 </SelectContent>
               </Select>
+              <Button
+                onClick={exportClaimsToCSV}
+                disabled={isExporting}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {isExporting ? "Exporting..." : "Export CSV"}
+              </Button>
             </div>
           </div>
         </CardContent>

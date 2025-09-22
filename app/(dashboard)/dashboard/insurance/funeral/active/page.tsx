@@ -13,7 +13,10 @@ const ActiveFuneralPolicyPage = async () => {
       <h1 className="text-xl font-semibold">
         Active Funeral Insurance Policies
       </h1>
-      <PoliciesDataTable data={funeralPolicies} />
+      <PoliciesDataTable
+        data={funeralPolicies}
+        exportFilters={{ productType: "funeral_policy", status: "active" }}
+      />
     </div>
   );
 };

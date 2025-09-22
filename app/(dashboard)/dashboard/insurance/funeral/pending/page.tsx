@@ -13,7 +13,10 @@ const PendingFuneralPolicyPage = async () => {
       <h1 className="text-xl font-semibold">
         Pending Funeral Insurance Policies
       </h1>
-      <PoliciesDataTable data={funeralPolicies} />
+      <PoliciesDataTable
+        data={funeralPolicies}
+        exportFilters={{ productType: "funeral_policy", status: "pending" }}
+      />
     </div>
   );
 };

@@ -11,7 +11,10 @@ const FuneralPolicyPage = async () => {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Funeral Insurance Policies</h1>
-      <PoliciesDataTable data={funeralPolicies} />
+      <PoliciesDataTable
+        data={funeralPolicies}
+        exportFilters={{ productType: "funeral_policy" }}
+      />
     </div>
   );
 };

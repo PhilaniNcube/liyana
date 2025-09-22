@@ -20,12 +20,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { Download } from "lucide-react";
+import { toast } from "sonner";
+import { exportDataToCSV } from "@/lib/actions/csv-export";
 
 type PoliciesDataTableProps = {
   data: PolicyWithHolder[];
   className?: string;
+  exportFilters?: {
+    productType?: "funeral_policy" | "life_insurance" | "payday_loan";
+    status?: "pending" | "active" | "lapsed" | "cancelled";
+  };
 };
 
 function formatCurrency(value: number | null | undefined, currency = "ZAR") {
@@ -43,7 +51,7 @@ function formatCurrency(value: number | null | undefined, currency = "ZAR") {
 }
 
 function formatDate(value: string | null | undefined) {
-  if (!value) return "—";
+  if (!value) return "";
   try {
     return new Intl.DateTimeFormat(undefined, {
       year: "numeric",
@@ -136,11 +144,105 @@ const columns: ColumnDef<PolicyWithHolder>[] = [
   },
 ];
 
-export function PoliciesDataTable({ data, className }: PoliciesDataTableProps) {
+export function PoliciesDataTable({
+  data,
+  className,
+  exportFilters,
+}: PoliciesDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [isExporting, setIsExporting] = React.useState(false);
 
   const router = useRouter();
+
+  const exportToCSV = async () => {
+    setIsExporting(true);
+    try {
+      // Generate filename
+      const timestamp = new Date().toISOString().split("T")[0];
+      const filterSuffix = exportFilters?.status
+        ? `_${exportFilters.status}`
+        : "";
+      const productSuffix = exportFilters?.productType
+        ? `_${exportFilters.productType}`
+        : "";
+      const filename = `policies${productSuffix}${filterSuffix}_${timestamp}.csv`;
+
+      // Process data to match what's displayed in the table
+      const processedData = data.map((policy) => {
+        const holder = policy.policy_holder;
+        const holderName =
+          holder?.organization_name ||
+          [holder?.first_name, holder?.last_name].filter(Boolean).join(" ") ||
+          "";
+
+        return {
+          ID: policy.id,
+          "Policy Holder": holderName,
+          Status: policy.policy_status?.toUpperCase() || "",
+          Frequency: policy.frequency
+            ? policy.frequency.charAt(0).toUpperCase() +
+              policy.frequency.slice(1)
+            : "",
+          Premium: policy.premium_amount || 0,
+          "Start Date": formatDate(policy.start_date),
+          "End Date": formatDate(policy.end_date),
+          "Product Type": policy.product_type || "",
+          "Created Date": formatDate(policy.created_at),
+          // Policy holder details (available fields only)
+          "Holder First Name": holder?.first_name || "",
+          "Holder Last Name": holder?.last_name || "",
+          "Holder Organization": holder?.organization_name || "",
+          "Holder ID Number": holder?.id_number || "",
+        };
+      });
+
+      const result = await exportDataToCSV({
+        data: processedData,
+        filename: filename,
+      });
+
+      if (!result.success) {
+        toast.error("Failed to export CSV", {
+          description:
+            result.error || "An error occurred while exporting the data.",
+        });
+        return;
+      }
+
+      if (!result.data || !result.filename) {
+        toast.error("Export failed", {
+          description: "No data was returned from the export.",
+        });
+        return;
+      }
+
+      // Create blob and download
+      const blob = new Blob([result.data], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", result.filename);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast.success("CSV exported successfully", {
+          description: `Downloaded ${result.filename}`,
+        });
+      }
+    } catch (error) {
+      toast.error("Export failed", {
+        description: "An unexpected error occurred. Please try again.",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const table = useReactTable({
     data,
@@ -178,6 +280,16 @@ export function PoliciesDataTable({ data, className }: PoliciesDataTableProps) {
           onChange={(e) => setGlobalFilter(e.target.value)}
           className="w-60"
         />
+        <Button
+          onClick={exportToCSV}
+          disabled={isExporting}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
+          <Download className="h-4 w-4" />
+          {isExporting ? "Exporting..." : "Export CSV"}
+        </Button>
       </div>
 
       <div className="rounded-md border">
