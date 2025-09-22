@@ -1859,3 +1859,169 @@ export const maxMoneyClientInputSchema = z.object({
 
 export type MaxMoneyClientInput = z.infer<typeof maxMoneyClientInputSchema>;
 export type CreateMaxMoneyClient = z.infer<typeof createMaxMoneyClientSchema>;
+
+// OTV Webhook Payload Types
+export interface OtvWebhookDocumentPhotos {
+  Front: string;
+  Back?: string;
+}
+
+export interface OtvWebhookAllDocumentCaptureInformation {
+  DocumentType: string;
+  DocumentNumber: string;
+  IDNumber: string;
+  CardNo: string;
+  CountryOfBirth: string;
+  DateOfBirth: string;
+  DateOfExpire: string;
+  DateOfIssue: string;
+  FirstNames: string;
+  Nationality: string;
+  PassportNo: string;
+  Gender: string;
+  Surname: string;
+  IssuingCountryCode: string;
+  MrzStatus: "NO_MRZ" | "MRZ_EXTRACT_FAILED" | "MRZ_EXTRACT_SUCCESS";
+  IsExtracted: boolean;
+}
+
+export interface OtvWebhookDocumentResult {
+  FaceVerificationScore: string;
+  FaceVerificationResult: string;
+  InformationScore: string;
+  InformationResult: string;
+  CountryCode: string;
+  AllDocumentCaptureInformation: OtvWebhookAllDocumentCaptureInformation;
+}
+
+export interface OtvWebhookOtvStatus {
+  Name: string;
+  Description: string;
+  Code: "VERIFIED_SYS_APRVD" | "EXP_SYS_RJCTD" | "EXP_TO_REVIEW" | "EXP_APRVD_UNVRFD";
+}
+
+export interface OtvWebhookVerificationImages {
+  EnrolledImage: string;
+  CapturedImage: string;
+}
+
+export interface OtvWebhookMetadata {
+  RequestPurpose: string;
+  RequestSource: string;
+  ClientReference: string;
+}
+
+export interface OtvWebhookPayload {
+  Id: string;
+  PinCode: string;
+  HanisID: string;
+  HanisResult: string;
+  HanisError: number;
+  HanisReference: string;
+  IdNumber: string;
+  IdvCountryCode: string;
+  FirstNames: string;
+  Surname: string;
+  DateOfBirth: string;
+  Gender: string;
+  Status: string;
+  DocumentType: string;
+  DocumentPhotos: OtvWebhookDocumentPhotos;
+  DocumentResult: OtvWebhookDocumentResult;
+  HanisType: string;
+  IsVerified: boolean;
+  Photo: string;
+  Report: string;
+  DataSource: "DHA Direct" | "DHA SAFPS" | "WhoYou" | "Document Upload" | "Approved Selfie";
+  DemographicDatasource: "Document Upload" | "Approved Document" | "DHA SAFPS" | "DHA Direct";
+  IsCache: boolean;
+  DateStamp: string;
+  OtvStatus: OtvWebhookOtvStatus;
+  Billing: string[];
+  VerificationImages: OtvWebhookVerificationImages;
+  Metadata: OtvWebhookMetadata;
+}
+
+// Zod schemas for OTV webhook validation
+export const otvWebhookDocumentPhotosSchema = z.object({
+  Front: z.string(),
+  Back: z.string().optional(),
+});
+
+export const otvWebhookAllDocumentCaptureInformationSchema = z.object({
+  DocumentType: z.string(),
+  DocumentNumber: z.string(),
+  IDNumber: z.string(),
+  CardNo: z.string(),
+  CountryOfBirth: z.string(),
+  DateOfBirth: z.string(),
+  DateOfExpire: z.string(),
+  DateOfIssue: z.string(),
+  FirstNames: z.string(),
+  Nationality: z.string(),
+  PassportNo: z.string(),
+  Gender: z.string(),
+  Surname: z.string(),
+  IssuingCountryCode: z.string(),
+  MrzStatus: z.enum(["NO_MRZ", "MRZ_EXTRACT_FAILED", "MRZ_EXTRACT_SUCCESS"]),
+  IsExtracted: z.boolean(),
+});
+
+export const otvWebhookDocumentResultSchema = z.object({
+  FaceVerificationScore: z.string(),
+  FaceVerificationResult: z.string(),
+  InformationScore: z.string(),
+  InformationResult: z.string(),
+  CountryCode: z.string(),
+  AllDocumentCaptureInformation: otvWebhookAllDocumentCaptureInformationSchema,
+});
+
+export const otvWebhookOtvStatusSchema = z.object({
+  Name: z.string(),
+  Description: z.string(),
+  Code: z.enum(["VERIFIED_SYS_APRVD", "EXP_SYS_RJCTD", "EXP_TO_REVIEW", "EXP_APRVD_UNVRFD"]),
+});
+
+export const otvWebhookVerificationImagesSchema = z.object({
+  EnrolledImage: z.string(),
+  CapturedImage: z.string(),
+});
+
+export const otvWebhookMetadataSchema = z.object({
+  RequestPurpose: z.string(),
+  RequestSource: z.string(),
+  ClientReference: z.string(),
+});
+
+export const otvWebhookPayloadSchema = z.object({
+  Id: z.string().uuid(),
+  PinCode: z.string(),
+  HanisID: z.string().uuid(),
+  HanisResult: z.string(),
+  HanisError: z.number(),
+  HanisReference: z.string(),
+  IdNumber: z.string(),
+  IdvCountryCode: z.string(),
+  FirstNames: z.string(),
+  Surname: z.string(),
+  DateOfBirth: z.string(),
+  Gender: z.string(),
+  Status: z.string(),
+  DocumentType: z.string(),
+  DocumentPhotos: otvWebhookDocumentPhotosSchema,
+  DocumentResult: otvWebhookDocumentResultSchema,
+  HanisType: z.string(),
+  IsVerified: z.boolean(),
+  Photo: z.string(),
+  Report: z.string(),
+  DataSource: z.enum(["DHA Direct", "DHA SAFPS", "WhoYou", "Document Upload", "Approved Selfie"]),
+  DemographicDatasource: z.enum(["Document Upload", "Approved Document", "DHA SAFPS", "DHA Direct"]),
+  IsCache: z.boolean(),
+  DateStamp: z.string(),
+  OtvStatus: otvWebhookOtvStatusSchema,
+  Billing: z.array(z.string()),
+  VerificationImages: otvWebhookVerificationImagesSchema,
+  Metadata: otvWebhookMetadataSchema,
+});
+
+export type OtvWebhookPayloadType = z.infer<typeof otvWebhookPayloadSchema>;

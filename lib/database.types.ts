@@ -462,25 +462,28 @@ export type Database = {
       }
       otv_checks: {
         Row: {
-          application_id: number
+          application_id: number | null
           created_at: string
           id: number
           id_number: string
           pin_code: string
+          policy_id: number | null
         }
         Insert: {
-          application_id: number
+          application_id?: number | null
           created_at?: string
           id?: number
           id_number: string
           pin_code: string
+          policy_id?: number | null
         }
         Update: {
-          application_id?: number
+          application_id?: number | null
           created_at?: string
           id?: number
           id_number?: string
           pin_code?: string
+          policy_id?: number | null
         }
         Relationships: [
           {
@@ -488,6 +491,13 @@ export type Database = {
             columns: ["application_id"]
             isOneToOne: false
             referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "otv_checks_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "policies"
             referencedColumns: ["id"]
           },
         ]

@@ -60,9 +60,9 @@ export async function POST(request: NextRequest) {
       IdNumber: decrypted_id_number,
       BypassCache: "false",
       CountryCode: "ZAF",
-      RequestPurpose: "ID SELFIE VERIFICATION",
-      RequestSource: "",
-      ClientReference: policy_id, // use the policy ID as a reference
+      RequestPurpose: "POLICY ID SELFIE VERIFICATION",
+      RequestSource: "POLICY_APPLICATION",
+      ClientReference: `POLICY_${policy_id}`, // Prefix to clearly identify this as policy-related
       CanAccessDhaLive: "false",
     }),
   });
@@ -104,8 +104,27 @@ export async function POST(request: NextRequest) {
   }
 
 
-  // Optionally: Save to DB if you have a policy_otv_checks table
-  // Skipped here as table does not exist in schema
+  // Save OTV check record to database
+  try {
+    const { error: otvCheckError } = await supabase
+      .from("otv_checks")
+      .insert({
+        pin_code: requestPinData.detail.pinCode,
+        id_number: decrypted_id_number,
+        policy_id: policy_id, // Save the policy ID for policy-related OTV checks
+        application_id: null, // This is null for policy checks
+      });
+
+    if (otvCheckError) {
+      console.error("Failed to save OTV check record:", otvCheckError);
+      // Continue with the process even if saving fails, but log the error
+    } else {
+      console.log(`OTV check record saved for policy ${policy_id}`);
+    }
+  } catch (error) {
+    console.error("Error saving OTV check record:", error);
+    // Continue with the process even if saving fails
+  }
 
   // Construct the verification link from the Who You URL and the PIN code
   console.log("Verification link will be sent via SMS");

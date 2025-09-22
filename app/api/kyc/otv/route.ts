@@ -100,9 +100,9 @@ export async function POST(request: NextRequest) {
       IdNumber: decryptedIdNumber,
       BypassCache: "false",
       CountryCode: "ZAF",
-      RequestPurpose: "ID SELFIE VERIFICATION",
+      RequestPurpose: "LOAN APPLICATION ID SELFIE VERIFICATION",
       RequestSource: "",
-      ClientReference: application_id, // use the application ID as a reference
+      ClientReference: `APPLICATION_${application_id}`, // prefix with APPLICATION_ to distinguish from policy checks
       CanAccessDhaLive: "false",
     }),
   });
@@ -152,6 +152,7 @@ export async function POST(request: NextRequest) {
   // If the PIN was successfully requested, save it to the database in the otv_checks table
   const { error: insertError } = await supabase.from("otv_checks").insert({
     application_id,
+    policy_id: null, // This is null for application checks  
     pin_code: requestPinData.detail.pinCode,
     id_number: id_number,
   });
