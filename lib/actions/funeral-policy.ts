@@ -687,8 +687,8 @@ export async function sendFuneralPolicyDetailsEmail(
               <p style="margin: 5px 0 15px 0; color: #374151;">${policyHolderName || 'N/A'}</p>
             </div>
             <div>
-              <p style="margin: 0; font-weight: bold; color: #6b7280;">Date of Birth:</p>
-              <p style="margin: 5px 0 15px 0; color: #374151;">${policy.policy_holder?.date_of_birth || 'N/A'}</p>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">ID Number:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${policy.policy_holder ? decryptValue(policy.policy_holder.id_number!) : 'N/A'}</p>
             </div>
             <div>
               <p style="margin: 0; font-weight: bold; color: #6b7280;">Phone Number:</p>
