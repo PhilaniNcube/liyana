@@ -27,6 +27,7 @@ import {
   VaultIcon,
   ShieldIcon,
   HandHelping,
+  PenBox,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -110,6 +111,11 @@ const sidebarItems = [
     title: "Credit Check",
     href: "/dashboard/fraud-check",
     icon: Shield,
+  },
+  {
+    title: "Get Credit Score",
+    href: "/dashboard/credit-score",
+    icon: PenBox,
   },
   {
     title: "All Users",
