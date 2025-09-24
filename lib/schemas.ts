@@ -2025,3 +2025,51 @@ export const otvWebhookPayloadSchema = z.object({
 });
 
 export type OtvWebhookPayloadType = z.infer<typeof otvWebhookPayloadSchema>;
+
+// Max Money Loan Application Schema
+export const createMaxMoneyLoanApplicationSchema = z.object({
+  // Mandatory login and identification fields
+  mle_id: z.coerce.number(),
+  mbr_id: z.coerce.number(),
+  user_id: z.number(),
+  login_token: z.string().min(1, "Login token is required"),
+
+  // Client and loan details
+  client_number: z.string().min(1, "Client number is required"),
+  loan_product_id: z.number().min(1, "Loan product ID is required"),
+  cashbox_id: z.number().min(1, "Cashbox ID is required"),
+  loan_purpose_id: z.number().min(1, "Loan purpose ID is required"),
+  no_of_instalment: z.number().min(1, "Number of installments is required"),
+  loan_amount: z.number().min(1, "Loan amount is required"),
+});
+
+// Max Money Loan Application Input Schema (for API endpoint)
+export const maxMoneyLoanApplicationInputSchema = z.object({
+  application_id: z.coerce.number(),
+  client_number: z.string().min(1, "Client number is required"),
+  loan_product_id: z.number().min(1, "Loan product ID is required"),
+  cashbox_id: z.number().min(1, "Cashbox ID is required"), 
+  loan_purpose_id: z.number().min(1, "Loan purpose ID is required"),
+  no_of_instalment: z.number().min(1, "Number of installments must be at least 1"),
+  loan_amount: z.number().min(1, "Loan amount must be greater than 0"),
+});
+
+// Max Money Loan Application Response Schema
+export const maxMoneyLoanApplicationResponseSchema = z.object({
+  return_code: z.number(),
+  return_reason: z.string(),
+  loan_id: z.number().optional(),
+  loan_no: z.string().optional(),
+  summary_data: z.object({
+    loan_amount: z.number(),
+    interest: z.number(),
+    total_repayable: z.number(),
+    fees: z.number(),
+    instalment_amount: z.number(),
+    no_of_instalments: z.number(),
+  }).optional(),
+});
+
+export type CreateMaxMoneyLoanApplication = z.infer<typeof createMaxMoneyLoanApplicationSchema>;
+export type MaxMoneyLoanApplicationInput = z.infer<typeof maxMoneyLoanApplicationInputSchema>;
+export type MaxMoneyLoanApplicationResponse = z.infer<typeof maxMoneyLoanApplicationResponseSchema>;
