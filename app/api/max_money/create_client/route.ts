@@ -7,6 +7,7 @@ import {
   type MaxMoneyClientInput,
 } from "@/lib/schemas";
 import { GENDERS, ID_TYPES } from "@/lib/enums";
+import { extractGenderFromSAID } from "@/lib/utils/sa-id";
 
 
 
@@ -161,10 +162,30 @@ export async function POST(request: Request) {
 
     console.log("Input data validated successfully:", validatedInput.data);
 
-    // Map gender and id_type descriptions to their corresponding numeric values
-    const genderValue = GENDERS.find(
-      (g) => g.description.toLowerCase() === (validatedInput.data.gender || "male").toLowerCase()
-    )?.value || 1; // Default to Male if not found
+    // Extract gender from SA ID number instead of using input gender
+    const extractedGender = extractGenderFromSAID(validatedInput.data.id_number);
+    console.log("Gender extracted from SA ID:", extractedGender, "from ID:", validatedInput.data.id_number);
+    
+    // Map extracted gender to Max Money gender values
+    let genderValue: number;
+    if (extractedGender === "M") {
+      genderValue = GENDERS.find(g => g.description.toLowerCase() === "male")?.value || 1;
+      console.log("Using Male gender from SA ID extraction");
+    } else if (extractedGender === "F") {
+      genderValue = GENDERS.find(g => g.description.toLowerCase() === "female")?.value || 2;
+      console.log("Using Female gender from SA ID extraction");
+    } else {
+      // Fallback to input gender if SA ID extraction fails
+      console.warn("Failed to extract gender from SA ID, falling back to input gender");
+      console.log("Input gender provided:", validatedInput.data.gender);
+      genderValue = GENDERS.find(
+        (g) => g.description.toLowerCase() === (validatedInput.data.gender || "male").toLowerCase()
+      )?.value || 1;
+      console.log("Using fallback gender value:", genderValue);
+    }
+    
+    console.log("Final gender value for Max Money API:", genderValue);
+    console.log("Available GENDERS enum:", GENDERS);
     
     const idTypeValue = ID_TYPES.find(
       (i) => i.description.toLowerCase() === (validatedInput.data.id_type || "rsa id").toLowerCase()
