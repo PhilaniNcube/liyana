@@ -134,13 +134,13 @@ export function ProfilePageClient({
   const getRoleColor = (role: string) => {
     switch (role) {
       case "admin":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 text-red-800 capitalize";
       case "editor":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-800 capitalize";
       case "customer":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-800 capitalize";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 capitalize";
     }
   };
 
@@ -325,7 +325,9 @@ export function ProfilePageClient({
                     <p className="text-sm font-medium text-muted-foreground">
                       Full Name
                     </p>
-                    <p className="text-sm font-semibold">{profile.full_name}</p>
+                    <p className="text-sm font-semibold capitalize">
+                      {profile.full_name}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">

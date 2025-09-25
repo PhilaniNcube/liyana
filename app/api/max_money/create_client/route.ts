@@ -8,6 +8,7 @@ import {
 } from "@/lib/schemas";
 import { GENDERS, ID_TYPES } from "@/lib/enums";
 import { extractGenderFromSAID } from "@/lib/utils/sa-id";
+import { createClient } from "@/lib/server";
 
 
 
@@ -191,6 +192,16 @@ export async function POST(request: Request) {
       (i) => i.description.toLowerCase() === (validatedInput.data.id_type || "rsa id").toLowerCase()
     )?.value || 1; // Default to RSA Id if not found
 
+    // Truncate address lines to 35 characters to comply with MaxMoney requirements
+    const truncateAddressLine = (line: string | undefined): string | undefined => {
+      if (!line) return line;
+      if (line.length > 35) {
+        console.log(`Truncating address line from ${line.length} to 35 characters: "${line}" -> "${line.substring(0, 35)}"`);
+        return line.substring(0, 35);
+      }
+      return line;
+    };
+
     const clientPayload = {
       ...validatedInput.data,
       mle_id: loginData.mle_id,
@@ -199,6 +210,10 @@ export async function POST(request: Request) {
       login_token: loginData.login_token,
       gender: genderValue,
       id_type: idTypeValue,
+      // Truncate address lines to MaxMoney's 35-character limit
+      physical_address_line_1: truncateAddressLine(validatedInput.data.physical_address_line_1),
+      physical_address_line_2: truncateAddressLine(validatedInput.data.physical_address_line_2),
+      physical_address_line_3: truncateAddressLine(validatedInput.data.physical_address_line_3),
     };
 
     const validatedClientPayload =
@@ -275,6 +290,41 @@ export async function POST(request: Request) {
         },
         { status: 500 }
       );
+    }
+
+    // Client created successfully in MaxMoney, now update the applications table
+    console.log("MaxMoney client created successfully, updating applications table...");
+    
+    try {
+      const supabase = await createClient();
+      
+      // Extract client_number from MaxMoney response
+      const clientNumber = createClientData.client_number;
+      const applicationId = validatedInput.data.application_id;
+      
+      if (clientNumber && applicationId) {
+        const { data: updateData, error: updateError } = await supabase
+          .from("applications")
+          .update({ max_money_id: clientNumber })
+          .eq("id", applicationId)
+          .select();
+
+        if (updateError) {
+          console.error("Failed to update application with max_money_id:", updateError);
+          // Don't fail the entire request, just log the error
+          // The MaxMoney client was created successfully
+        } else {
+          console.log("Successfully updated application with max_money_id:", clientNumber);
+        }
+      } else {
+        console.warn("Missing client_number or application_id for database update:", {
+          clientNumber,
+          applicationId,
+        });
+      }
+    } catch (dbError) {
+      console.error("Database update error:", dbError);
+      // Don't fail the entire request, the MaxMoney client was created successfully
     }
 
     return NextResponse.json(createClientData);
