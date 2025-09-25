@@ -19,6 +19,7 @@ import {
   Mail,
   MoreHorizontal,
   SendHorizonal,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -114,6 +115,8 @@ export function ApplicationDetailClient({
   >([]);
   const [isSendingOtv, setIsSendingOtv] = useState(false);
   const [isSendingToLms, setIsSendingToLms] = useState(false);
+  const [isSearchingMaxMoney, setIsSearchingMaxMoney] = useState(false);
+  const [maxMoneySearchResult, setMaxMoneySearchResult] = useState<any>(null);
 
   const invalidateProfileDocuments = useInvalidateProfileDocuments();
 
@@ -192,6 +195,52 @@ export function ApplicationDetailClient({
       toast.error(error.message || "Failed to decline application");
     } finally {
       setIsDeclining(false);
+    }
+  };
+
+  const handleMaxMoneySearch = async () => {
+    if (!application.id_number_decrypted) {
+      toast.error("No ID number found for this application");
+      return;
+    }
+
+    setIsSearchingMaxMoney(true);
+    console.log(
+      "Initiating MaxMoney client search for ID number:",
+      application.id_number_decrypted
+    );
+    try {
+      const response = await fetch("/api/max_money/search_client", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id_number: application.id_number_decrypted,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to search MaxMoney client");
+      }
+
+      setMaxMoneySearchResult(result);
+
+      if (result.return_code === 0 && result.client_no) {
+        toast.success(
+          `Client found in MaxMoney! Client #${result.client_no} - ${result.client_name} ${result.client_surname}`
+        );
+      } else {
+        toast.info("Client not found in MaxMoney system");
+      }
+    } catch (error: any) {
+      console.error("MaxMoney search error:", error);
+      toast.error(error.message || "Failed to search MaxMoney client");
+      setMaxMoneySearchResult(null);
+    } finally {
+      setIsSearchingMaxMoney(false);
     }
   };
 
@@ -436,6 +485,25 @@ export function ApplicationDetailClient({
               : "Run Credit Check"}
           </Button>
 
+          {/* MaxMoney Search Button */}
+          <Button
+            onClick={handleMaxMoneySearch}
+            disabled={
+              isSearchingMaxMoney ||
+              isDeclining ||
+              isRunningFraudCheck ||
+              !application.id_number_decrypted
+            }
+            variant="outline"
+          >
+            {isSearchingMaxMoney ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Search className="h-4 w-4 mr-2" />
+            )}
+            {isSearchingMaxMoney ? "Searching..." : "Check MaxMoney"}
+          </Button>
+
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -555,6 +623,113 @@ export function ApplicationDetailClient({
           </Button>
         </div>
       </div>
+
+      {/* MaxMoney Search Results */}
+      {maxMoneySearchResult && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-900">
+              <Search className="h-5 w-5" />
+              MaxMoney Search Results
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {maxMoneySearchResult.return_code === 0 &&
+            maxMoneySearchResult.client_no ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-green-100 text-green-800">
+                    Client Found
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-muted-foreground">
+                      Client Number:
+                    </span>
+                    <p className="font-semibold">
+                      {maxMoneySearchResult.client_no}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">
+                      Name:
+                    </span>
+                    <p className="font-semibold">
+                      {maxMoneySearchResult.client_name}{" "}
+                      {maxMoneySearchResult.client_surname}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">
+                      ID Number:
+                    </span>
+                    <p className="font-semibold">
+                      {maxMoneySearchResult.client_id}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">
+                      Status:
+                    </span>
+                    <p className="font-semibold">
+                      {maxMoneySearchResult.cli_status}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">
+                      Employer:
+                    </span>
+                    <p className="font-semibold">
+                      {maxMoneySearchResult.employer_name || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">
+                      Employment Type:
+                    </span>
+                    <p className="font-semibold">
+                      {maxMoneySearchResult.employment_type || "N/A"}
+                    </p>
+                  </div>
+                  {maxMoneySearchResult.budget_available_amount && (
+                    <div>
+                      <span className="font-medium text-muted-foreground">
+                        Available Budget:
+                      </span>
+                      <p className="font-semibold text-green-600">
+                        R
+                        {parseFloat(
+                          maxMoneySearchResult.budget_available_amount
+                        ).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                  {maxMoneySearchResult.budget_date && (
+                    <div>
+                      <span className="font-medium text-muted-foreground">
+                        Budget Date:
+                      </span>
+                      <p className="font-semibold">
+                        {maxMoneySearchResult.budget_date}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Badge className="bg-orange-100 text-orange-800">
+                  Client Not Found
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  This client does not exist in the MaxMoney system.
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
         <TabsList className="w-full ">

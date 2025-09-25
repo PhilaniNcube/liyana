@@ -1558,6 +1558,10 @@ export interface DecryptedApplication {
   updated_at: string;
   user_id: string;
   work_experience: string | null;
+  // Additional decrypted fields
+  id_number_decrypted: string;
+  first_name: string | null;
+  last_name: string | null;
   // Profile information
   profile: {
     created_at: string;
@@ -1568,10 +1572,6 @@ export interface DecryptedApplication {
     phone_number: string | null;
     role: string;
   } | null;
-  // Additional decrypted/computed fields
-  id_number_decrypted: string;
-  first_name: string | null;
-  last_name: string | null;
 }
 
 // Policy Document Schema for creating entries in policy_documents table
@@ -1806,6 +1806,46 @@ export const maxMoneyLoginResponseSchema = z.object({
 });
 
 export type MaxMoneyLoginResponse = z.infer<typeof maxMoneyLoginResponseSchema>;
+
+// Max Money Client Search Request Schema
+export const maxMoneyClientSearchSchema = z.object({
+  mle_id: z.number(),
+  mbr_id: z.number(), 
+  user_id: z.number(),
+  client_number: z.string().optional(),
+  id_number: z.string().optional(),
+  login_token: z.string(),
+}).refine(
+  (data) => data.client_number || data.id_number,
+  {
+    message: "Either client_number or id_number must be provided",
+    path: ["client_number", "id_number"],
+  }
+);
+
+// Max Money Client Search Response Schema
+export const maxMoneyClientSearchResponseSchema = z.object({
+  return_reason: z.string(),
+  return_code: z.number(),
+  client_no: z.string().optional(),
+  client_name: z.string().optional(),
+  client_surname: z.string().optional(),
+  client_budget_id: z.string().optional(),
+  client_id: z.string().optional(),
+  cli_status: z.string().optional(),
+  employer_name: z.string().optional(),
+  employment_type: z.string().optional(),
+  home_branch: z.string().optional(),
+  payment_frequency: z.string().optional(),
+  use_client_budget: z.boolean().optional(),
+  budget_available_amount: z.string().optional(),
+  budget_date: z.string().optional(),
+  valid_budget_period: z.boolean().optional(),
+  status_warnings: z.array(z.string()).optional(),
+});
+
+export type MaxMoneyClientSearch = z.infer<typeof maxMoneyClientSearchSchema>;
+export type MaxMoneyClientSearchResponse = z.infer<typeof maxMoneyClientSearchResponseSchema>;
 
 // Max Money Client Input Data Schema (for API endpoint)
 export const maxMoneyClientInputSchema = z.object({

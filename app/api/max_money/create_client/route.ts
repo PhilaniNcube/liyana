@@ -132,6 +132,8 @@ async function login() {
   }
 }
 
+
+
 export async function POST(request: Request) {
   try {
     console.log("Starting Max Money client creation process...");
