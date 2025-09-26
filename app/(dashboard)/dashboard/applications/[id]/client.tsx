@@ -117,6 +117,7 @@ export function ApplicationDetailClient({
   const [isSendingToLms, setIsSendingToLms] = useState(false);
   const [isSearchingMaxMoney, setIsSearchingMaxMoney] = useState(false);
   const [maxMoneySearchResult, setMaxMoneySearchResult] = useState<any>(null);
+  const [isUpdatingMaxMoneyId, setIsUpdatingMaxMoneyId] = useState(false);
 
   const invalidateProfileDocuments = useInvalidateProfileDocuments();
 
@@ -241,6 +242,39 @@ export function ApplicationDetailClient({
       setMaxMoneySearchResult(null);
     } finally {
       setIsSearchingMaxMoney(false);
+    }
+  };
+
+  const handleUpdateMaxMoneyId = async (clientNumber: string) => {
+    setIsUpdatingMaxMoneyId(true);
+    try {
+      const response = await fetch(
+        `/api/applications/${application.id}/update-max-money-id`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            max_money_id: clientNumber,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to update Max Money ID");
+      }
+
+      toast.success("Max Money ID updated successfully");
+      // Refresh the page to show the updated max_money_id
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Update Max Money ID error:", error);
+      toast.error(error.message || "Failed to update Max Money ID");
+    } finally {
+      setIsUpdatingMaxMoneyId(false);
     }
   };
 
@@ -433,10 +467,22 @@ export function ApplicationDetailClient({
                 <span className="">{application.profile.full_name}</span>
               )}
             </h1>
-            <p className="text-muted-foreground text-xs">
-              Application #{application.id} • Created on{" "}
-              {formatDate(application.created_at)}
-            </p>
+            <div className="flex items-center gap-4">
+              <p className="text-muted-foreground text-xs">
+                Application #{application.id} • Created on{" "}
+                {formatDate(application.created_at)}
+              </p>
+              {application.max_money_id && (
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground text-xs">
+                    Max Money ID:
+                  </span>
+                  <Badge variant="outline" className="text-xs">
+                    {application.max_money_id}
+                  </Badge>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -632,15 +678,65 @@ export function ApplicationDetailClient({
               <Search className="h-5 w-5" />
               MaxMoney Search Results
             </CardTitle>
+            <CardDescription>
+              {application.max_money_id ? (
+                <div className="flex items-center gap-2">
+                  <span>Current Max Money ID: </span>
+                  <Badge variant="secondary">{application.max_money_id}</Badge>
+                </div>
+              ) : (
+                <span className="text-orange-600">
+                  No Max Money ID assigned
+                </span>
+              )}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {maxMoneySearchResult.return_code === 0 &&
             maxMoneySearchResult.client_no ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-green-100 text-green-800">
-                    Client Found
-                  </Badge>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-green-100 text-green-800">
+                      Client Found
+                    </Badge>
+                    {!application.max_money_id && (
+                      <Badge className="bg-orange-100 text-orange-800">
+                        Not Linked
+                      </Badge>
+                    )}
+                    {application.max_money_id &&
+                      application.max_money_id !==
+                        maxMoneySearchResult.client_no && (
+                        <Badge className="bg-yellow-100 text-yellow-800">
+                          ID Mismatch
+                        </Badge>
+                      )}
+                  </div>
+                  {(!application.max_money_id ||
+                    application.max_money_id !==
+                      maxMoneySearchResult.client_no) && (
+                    <Button
+                      onClick={() =>
+                        handleUpdateMaxMoneyId(maxMoneySearchResult.client_no)
+                      }
+                      disabled={isUpdatingMaxMoneyId}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {isUpdatingMaxMoneyId ? (
+                        <span className="flex items-center">
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Updating...
+                        </span>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Link to Application
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div>

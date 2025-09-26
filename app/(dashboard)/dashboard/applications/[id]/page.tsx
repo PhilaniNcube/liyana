@@ -53,6 +53,7 @@ export default async function ApplicationDetailPage({
       id_number_decrypted: decryptedIdNumber,
       first_name: application.profile?.full_name.split(" ")[0] || null,
       last_name: application.profile?.full_name.split(" ")[1] || null,
+      max_money_id: application.max_money_id,
     };
 
     const decryptedApiChecks = apiChecks.map((check) => {

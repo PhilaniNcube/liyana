@@ -218,6 +218,10 @@ export async function searchMaxMoneyClient(params: {
     }
 
     return validatedSearchResponse.data;
+
+ 
+
+  
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
     console.error("Max Money client search error:", errorMessage);

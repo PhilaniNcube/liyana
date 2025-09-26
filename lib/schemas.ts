@@ -1546,6 +1546,7 @@ export interface DecryptedApplication {
   loan_purpose: string | null;
   loan_purpose_reason: string | null;
   marital_status: string | null;
+  max_money_id: string | null;
   monthly_income: number | null;
   nationality: string | null;
   next_of_kin_email: string | null;
@@ -1839,9 +1840,16 @@ export const maxMoneyClientSearchResponseSchema = z.object({
   payment_frequency: z.string().optional(),
   use_client_budget: z.boolean().optional(),
   budget_available_amount: z.string().optional(),
-  budget_date: z.string().optional(),
+  budget_date: z.string().optional().nullable(),
   valid_budget_period: z.boolean().optional(),
   status_warnings: z.array(z.string()).optional(),
+  preferred_choice: z.number().optional(),
+  maxconsumer_active: z.boolean().optional(),
+  add_budget_from_enquiry: z.boolean().optional(),
+  sassa_client: z.boolean().optional(),
+  sassa_client_type: z.number().optional(),
+  fic_enquiry_enabled: z.boolean().optional(),
+  force_budget_enquiry: z.boolean().optional(),  
 });
 
 export type MaxMoneyClientSearch = z.infer<typeof maxMoneyClientSearchSchema>;
