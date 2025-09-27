@@ -6,15 +6,11 @@ import { getCurrentUser } from "@/lib/queries/user";
 const AuthLinks = async () => {
   const currentUser = await getCurrentUser();
 
+  console.log("Current user:", currentUser);
+
   return (
     <>
       {" "}
-      <Link
-        href="/profile"
-        className="text-sm font-medium hover:text-blue-600 transition-colors"
-      >
-        Profile
-      </Link>
       {currentUser && currentUser.role === "admin" && (
         <Link
           href="/dashboard"
@@ -24,7 +20,16 @@ const AuthLinks = async () => {
         </Link>
       )}
       {currentUser ? (
-        <LogoutButton />
+        <>
+          <Link
+            href="/profile"
+            className="text-sm font-medium hover:text-blue-600 transition-colors"
+          >
+            Profile
+          </Link>
+          <LogoutButton />
+        
+        </>
       ) : (
         <>
           <Link

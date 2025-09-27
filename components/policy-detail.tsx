@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Shield, FileText, User } from "lucide-react";
 import type { PolicyWithProduct } from "@/lib/queries/policies";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 import {
   usePolicyDocuments,
   useOptimisticPolicyDocumentUpdate,

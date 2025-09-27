@@ -15,11 +15,11 @@ import {
 } from "lucide-react";
 import { formatDate } from "date-fns";
 import { formatCurrency } from "@/lib/utils/format-currency";
-import type { Database } from "@/lib/database.types";
 import { SendClaimToLinarDialog } from "./send-claim-to-linar-dialog";
 import { useParams } from "next/navigation";
 import { usePolicyDocuments } from "@/hooks/use-policy-documents";
 import { createClient } from "@/lib/client";
+import { type Database } from "@/lib/types";
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];

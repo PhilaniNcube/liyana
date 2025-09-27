@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { policyDocumentSchema, type PolicyDocumentInput } from "@/lib/schemas";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 import { createClient } from "@/lib/client";
 import { useInvalidatePolicyDocuments } from "@/hooks/use-policy-documents";
 

@@ -8,7 +8,7 @@ import { Calendar, User, DollarSign, Shield } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/format-currency";
 import { formatDate } from "date-fns";
 import type { PolicyWithProduct } from "@/lib/queries/policies";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 
 type ClaimRow = Database["public"]["Tables"]["claims"]["Row"];
 type PartyRow = Database["public"]["Tables"]["parties"]["Row"];

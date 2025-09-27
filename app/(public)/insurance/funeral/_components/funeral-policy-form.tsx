@@ -146,7 +146,7 @@ export default function FuneralPolicyForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FuneralForm>({
-    resolver: zodResolver(funeralPolicyLeadSchemaWithRefines),
+    resolver: zodResolver(funeralPolicyLeadSchemaWithRefines) as any,
     mode: "onSubmit",
     reValidateMode: "onSubmit",
     defaultValues: {

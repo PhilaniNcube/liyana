@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { sendClaimDetailsEmail } from "@/lib/actions/claims";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];

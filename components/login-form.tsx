@@ -67,10 +67,10 @@ export function LoginForm({
 
   const onSubmit = (data: LoginFormData) => {
     const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      formData.append(key, value);
-    });
+    formData.append("email", data.email);
+    formData.append("password", data.password);
     startTransition(() => {
+      console.log("Submitting login form with data:", formData);
       formAction(formData);
     });
   };

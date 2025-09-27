@@ -18,6 +18,7 @@ export async function Navigation() {
             <Image
               src="/logo.webp"
               alt="Liyana Finance"
+              loading="eager"
               width={256}
               height={52.4}
               className="w-56 object-cover hidden md:block"

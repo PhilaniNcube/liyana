@@ -4,7 +4,8 @@
 import React from "react";
 import PolicyDocumentsList from "@/components/policy-documents-list";
 import PolicyDocumentsTab from "@/app/(dashboard)/dashboard/insurance/[id]/_components/policy-documents-tab";
-import type { Database } from "@/lib/database.types";
+import { type Database } from "./lib/types";
+
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PolicyWithAllData } from "@/lib/queries/policy-details";
 import CreateClaimForm from "./create-claim-form";
 import { Plus } from "lucide-react";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 import ClaimDetailsCard from "./claim-details-card";
 import { usePolicyDocuments } from "@/hooks/use-policy-documents";
 

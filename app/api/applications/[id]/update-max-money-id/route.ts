@@ -9,10 +9,10 @@ const updateMaxMoneyIdSchema = z.object({
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const applicationId = parseInt(params.id);
+    const applicationId = parseInt((await params).id);
     if (isNaN(applicationId)) {
       return NextResponse.json(
         { message: "Invalid application ID" },

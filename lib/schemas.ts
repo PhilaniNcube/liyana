@@ -1,10 +1,7 @@
 import { z } from "zod";
 import { extractDateOfBirthFromSAID } from "@/lib/utils/sa-id";
-import {
-  genderSchema,
-  bankAccountTypeSchema,
-} from "./enums";
-import { start } from "repl";
+import { Database } from "./types";
+
 
 // API Check interface for reuse across components
 export interface ApiCheck {
@@ -35,7 +32,7 @@ export const loanApplicationSchema = z
     phone_number: z.string().min(10, "Phone number must be at least 10 digits"),
     email: z.string().email("Please enter a valid email address"),
     gender: z.enum(["male", "female", "rather not say", "other"], {
-      required_error: "Gender is required",
+      message: "Gender is required",
     }),
     gender_other: z.string().optional(),
     language: z.string().min(1, "Language is required"),
@@ -47,7 +44,7 @@ export const loanApplicationSchema = z
     marital_status: z.enum(
       ["single", "married", "divorced", "widowed", "life_partner"],
       {
-        required_error: "Marital status is required",
+        message: "Marital status is required",
       }
     ),
     residential_address: z.string().min(1, "Address is required"),
@@ -69,7 +66,7 @@ export const loanApplicationSchema = z
     employment_type: z.enum(
       ["employed", "self_employed", "contract", "unemployed", "retired"],
       {
-        required_error: "Employment status is required",
+        message: "Employment status is required",
       }
     ),
     employer_name: z.string().min(1, "Employer is required"),
@@ -117,7 +114,7 @@ export const loanApplicationSchema = z
     bank_account_type: z.enum(
       ["savings", "transaction", "current", "business"],
       {
-        required_error: "Account type is required",
+        message: "Account type is required",
       }
     ),
     bank_account_number: z
@@ -224,13 +221,13 @@ export const funeralPolicySchema = z
     phone_number: z.string().min(10, "Phone number must be at least 10 digits"),
     email: z.string().email("Please enter a valid email address"),
     gender: z.enum(["male", "female", "rather not say", "other"], {
-      required_error: "Gender is required",
+      message: "Gender is required",
     }),
     gender_other: z.string().optional(),
     marital_status: z.enum(
       ["single", "married", "divorced", "widowed", "life_partner"],
       {
-        required_error: "Marital status is required",
+        message: "Marital status is required",
       }
     ),
     occupation: z.string().min(1, "Occupation is required"),
@@ -247,7 +244,7 @@ export const funeralPolicySchema = z
 
     // Policy Details
     // policy_type: z.enum(["individual", "family", "extended_family"], {
-    //   required_error: "Policy type is required",
+    //   message: "Policy type is required",
     // }).optional(),
     coverage_amount: z
       .number()
@@ -255,15 +252,15 @@ export const funeralPolicySchema = z
       .max(100000, "Maximum coverage amount is R100,000"),
     monthly_premium: z.number().min(1, "Monthly premium is required"),
     policy_term: z.enum(["lifetime", "20_years", "30_years"], {
-      required_error: "Policy term is required",
+      message: "Policy term is required",
     }),
     waiting_period: z.enum(["6_months", "12_months", "24_months"], {
-      required_error: "Waiting period is required",
+      message: "Waiting period is required",
     }),
 
     // Payment Information
     payment_method: z.enum(["debit_order", "cash", "eft"], {
-      required_error: "Payment method is required",
+      message: "Payment method is required",
     }),
     debit_order_date: z.number().min(1).max(31).optional(),
     bank_name: z.string().optional(),
@@ -271,7 +268,7 @@ export const funeralPolicySchema = z
     bank_account_number: z.string().optional(),
     bank_account_type: z
       .enum(["savings", "transaction", "current", "business"], {
-        required_error: "Account type is required",
+        message: "Account type is required",
       })
       .optional(),
     branch_code: z.string().optional(),
@@ -311,7 +308,7 @@ export const funeralPolicySchema = z
     medication_details: z.string().optional(),
     smoker: z.boolean(),
     alcohol_consumption: z.enum(["none", "occasional", "moderate", "regular"], {
-      required_error: "Alcohol consumption status is required",
+      message: "Alcohol consumption status is required",
     }),
 
     // Additional Members (for family policies)
@@ -470,13 +467,13 @@ export const lifeInsurancePolicySchema = z
     phone_number: z.string().min(10, "Phone number must be at least 10 digits"),
     email: z.string().email("Please enter a valid email address"),
     gender: z.enum(["male", "female", "rather not say", "other"], {
-      required_error: "Gender is required",
+      message: "Gender is required",
     }),
     gender_other: z.string().optional(),
     marital_status: z.enum(
       ["single", "married", "divorced", "widowed", "life_partner"],
       {
-        required_error: "Marital status is required",
+        message: "Marital status is required",
       }
     ),
 
@@ -485,11 +482,11 @@ export const lifeInsurancePolicySchema = z
       .number()
       .min(10000, "Minimum coverage amount is R10,000"),
     payout_structure: z.enum(["lump_sum", "annuity"], {
-      required_error: "Payout structure is required",
+      message: "Payout structure is required",
     }),
     premium_amount: z.number().min(1, "Monthly premium is required"),
     frequency: z.enum(["monthly", "quarterly", "annually"], {
-      required_error: "Payment frequency is required",
+      message: "Payment frequency is required",
     }),
     start_date: z.string().min(1, "Start date is required"),
     end_date: z.string().optional().nullable(),
@@ -582,8 +579,8 @@ export const lifeInsuranceLeadSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   product_type: z
     .enum(["funeral_policy", "life_insurance", "payday_loan"], {
-      required_error: "Please select a product",
-      invalid_type_error: "Please select a product",
+      message: "Please select a product",
+    
     }),
   residential_address: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
@@ -600,7 +597,7 @@ export const lifeInsuranceLeadSchema = z.object({
     .min(6, "Branch code must be at least 6 digits")
     .max(6, "Branch code must be exactly 6 digits"),
   account_type: z.enum(["savings", "transaction", "current", "business"], {
-    required_error: "Account type is required",
+    message: "Account type is required",
   }),
 
   // Beneficiaries 5 to 10
@@ -654,13 +651,13 @@ export const funeralPolicyLeadSchema = z
     email: z.string().email("Please enter a valid email address"),
     product_type: z
       .enum(["funeral_policy", "life_insurance", "payday_loan"], {
-        required_error: "Please select a product",
-        invalid_type_error: "Please select a product",
+        message: "Please select a product",
+      
       }),
     coverage_amount: z.coerce.number().min(1000, "Coverage amount must be at least R1,000").max(100000, "Coverage amount cannot exceed R100,000"),
     start_date: z.string().min(1, "Start date is required").refine((date) => !isNaN(Date.parse(date)), { message: "Start date must be a valid date" }),
     // policy_type: z.enum(["individual", "family", "extended_family"], {
-    //   required_error: "Policy type is required",
+    //   message: "Policy type is required",
     // }),
     residential_address: z.string().optional().nullable(),
     city: z.string().optional().nullable(),
@@ -669,7 +666,7 @@ export const funeralPolicyLeadSchema = z
     // Employment details aligned with loanApplicationSchema
     employment_type: z.enum(
       ["employed", "self_employed", "contract", "unemployed", "retired"],
-      { required_error: "Employment status is required" }
+      { message: "Employment status is required" }
     ),
     employer_name: z.string().min(1, "Employer is required"),
     job_title: z.string().min(1, "Job title is required"),
@@ -689,10 +686,10 @@ export const funeralPolicyLeadSchema = z
       .min(6, "Branch code must be at least 6 digits")
       .max(6, "Branch code must be exactly 6 digits"),
     account_type: z.enum(["savings", "transaction", "current", "business"], {
-      required_error: "Account type is required",
+      message: "Account type is required",
     }),
     payment_method: z.enum(["debit_order", "cash_deposit"], {
-      required_error: "Payment method is required",
+      message: "Payment method is required",
     }),
     payment_date: z.coerce.number().min(1).max(28),
     beneficiaries: z
@@ -705,7 +702,7 @@ export const funeralPolicyLeadSchema = z
             .min(13, "SA ID Number must be 13 digits")
             .max(13, "SA ID Number must be 13 digits"),
           relationship: z.enum(["spouse", "child", "parent", "sibling", "grandparent", "cousin", "in-law"], {
-            required_error: "Relationship is required",
+            message: "Relationship is required",
           }),
           percentage: z.number(),
         })
@@ -758,7 +755,7 @@ export const funeralPolicyLeadSchemaWithRefines = funeralPolicyLeadSchema;
 export const updatePolicyStatusSchema = z.object({
   policy_id: z.coerce.number().min(1, "Policy ID is required"),
   policy_status: z.enum(["pending", "active", "cancelled", "lapsed"], {
-    required_error: "Policy status is required",
+    message: "Policy status is required",
   }),
 });
 
@@ -773,12 +770,12 @@ export const policyUpdateSchema = z.object({
     .max(1000000, "Maximum coverage amount is R1,000,000"),
   premium_amount: z.number().min(1, "Premium amount is required").optional(),
   policy_status: z.enum(["pending", "active", "suspended", "cancelled"], {
-    required_error: "Policy status is required",
+    message: "Policy status is required",
   }).optional(),
   start_date: z.string().optional(),
   end_date: z.string().optional(),
   frequency: z.enum(["monthly", "quarterly", "annually"], {
-    required_error: "Payment frequency is required",
+    message: "Payment frequency is required",
   }).optional(),
 });
 
@@ -792,7 +789,7 @@ export const createClaimSchema = z.object({
   date_of_incident: z.date().min(new Date("2000-01-01"), "Invalid incident date"),
   date_filed: z.date().min(new Date("2000-01-01"), "Invalid date filed"),
   status: z.enum(["submitted", "under_review", "approved", "denied", "paid"], {
-    required_error: "Claim status is required",
+    message: "Claim status is required",
   })
 });
 
@@ -806,7 +803,7 @@ export const updateClaimSchema = z.object({
   date_of_incident: z.date().min(new Date("2000-01-01"), "Invalid incident date"),
   date_filed: z.date().min(new Date("2000-01-01"), "Invalid date filed"),
   status: z.enum(["submitted", "under_review", "approved", "denied", "paid"], {
-    required_error: "Claim status is required",
+    message: "Claim status is required",
   })
 });
 
@@ -1591,8 +1588,8 @@ export const policyDocumentSchema = z.object({
       "third_party_document"
     ],
     {
-      required_error: "Document type is required",
-      invalid_type_error: "Please select a valid document type"
+      message: "Document type is required",
+  
     }
   ),
   path: z.string().min(1, "Document path is required"),
@@ -1617,8 +1614,8 @@ export const multiplePolicyDocumentsSchema = z.object({
             "passport"
           ],
           {
-            required_error: "Document type is required",
-            invalid_type_error: "Please select a valid document type"
+            message: "Document type is required",
+       
           }
         ),
         path: z.string().min(1, "Document path is required"),
@@ -1643,8 +1640,8 @@ export const updatePolicyDocumentSchema = z.object({
       "passport"
     ],
     {
-      required_error: "Document type is required",
-      invalid_type_error: "Please select a valid document type"
+      message: "Document type is required",
+
     }
   ).optional(),
   path: z.string().min(1, "Document path is required").optional(),

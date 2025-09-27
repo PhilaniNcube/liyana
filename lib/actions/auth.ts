@@ -131,7 +131,10 @@ export async function loginAction(
     password: formData.get("password"),
   });
 
+
+
   if (!result.success) {
+
     return {
       errors: result.error.flatten().fieldErrors,
     };
@@ -140,35 +143,28 @@ export async function loginAction(
   const { email, password } = result.data;
   const supabase = await createClient();
 
-  try {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  const { error, data } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-    if (error) {
-      return {
-        errors: {
-          _form: [error.message],
-        },
-      };
-    }
-  } catch (error) {
+  console.log("Supabase login response data:", data);
+
+  if (error) {
+    console.error("Supabase login error:", error);
     return {
       errors: {
-        _form: [
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred",
-        ],
+        _form: [error.message],
       },
     };
   }
 
   // Check if user is a staff member and redirect accordingly
   if (email.endsWith("@liyanafinance.co.za")) {
+    revalidatePath("/dashboard", "layout");
     redirect("/dashboard");
   } else {
+    revalidatePath("/", "layout");
     redirect("/profile");
   }
 }

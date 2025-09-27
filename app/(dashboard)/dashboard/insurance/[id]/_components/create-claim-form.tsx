@@ -44,8 +44,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { z } from "zod";
-import type { Database } from "@/lib/database.types";
 import PolicyDocumentUpload from "@/components/policy-document-upload";
+import { type Database } from "@/lib/types";
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];
@@ -66,17 +66,17 @@ const createClaimSchemaWithDocs = (availableDocuments: PolicyDocumentRow[]) =>
       policy_id: z.number(),
       claimant_party_id: z.string().min(1, "Please select a claimant"),
       date_of_incident: z.date({
-        required_error: "Date of incident is required",
+        message: "Date of incident is required",
       }),
       date_filed: z.date({
-        required_error: "Date filed is required",
+        message: "Date filed is required",
       }),
       supporting_documents: z
         .array(z.number())
         .min(2, "Exactly 2 supporting documents are required"),
       contact_details: z.object({
         is_policy_holder: z.enum(["yes", "no"], {
-          required_error: "Please specify if this is the policy holder",
+          message: "Please specify if this is the policy holder",
         }),
         relationship: z.string().optional(),
         name: z.string().min(1, "Name is required"),

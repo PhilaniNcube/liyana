@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/server";
 import { decryptValue } from "@/lib/encryption";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 
 // Reusable types derived from Supabase table definitions
 type PolicyRow = Database["public"]["Tables"]["policies"]["Row"];

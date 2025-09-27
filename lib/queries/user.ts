@@ -2,6 +2,7 @@ import { createClient } from "@/lib/server";
 import { z } from "zod";
 import type { Database } from "@/lib/types";
 import { decryptValue } from "@/lib/encryption";
+import { cache } from "react";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -30,17 +31,17 @@ export interface CurrentUser {
 
 // User query schemas
 export const getUserByIdSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string(),
 });
 
 export const updateUserProfileSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string(),
   full_name: z.string().min(1).optional(),
   role: z.enum(["customer", "admin", "editor"]).optional(),
 });
 
 // Query functions
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   try {
     const supabase = await createClient();
 
@@ -77,9 +78,9 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     console.error("Error fetching current user:", error);
     return null;
   }
-}
+});
 
-export async function getUserProfile(id: string) {
+export const getUserProfile = cache(async (id: string) =>  {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -93,7 +94,7 @@ export async function getUserProfile(id: string) {
   }
 
   return data;
-}
+});
 
 export async function getAllUserProfiles() {
   const supabase = await createClient();

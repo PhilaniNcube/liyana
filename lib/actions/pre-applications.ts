@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/server";
 import { PreApplication, PreApplicationUpdate } from "../schemas";
 import { encryptValue } from "../encryption";
+import { Database } from "../types";
 
 export async function createPreApplication(
 

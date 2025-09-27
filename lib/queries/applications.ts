@@ -53,7 +53,9 @@ export async function getApplicationById(id: number) {
     .select("*")
     .eq("id", id)
     .single();
+    
   if (error) throw new Error(`Failed to fetch application: ${error.message}`);
+  
   return data;
 }
 

@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/utils/format-currency";
 import { PaydayLoanCalculator } from "@/lib/utils/loancalculator";
 import { formatDate } from "date-fns";
 import { InfoRow } from "./info-row";
+import { Database } from "@/lib/types";
 
 type LoanWithApplication =
   Database["public"]["Tables"]["approved_loans"]["Row"] & {

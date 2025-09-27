@@ -3,7 +3,7 @@
 import { EmailHistory } from "@/components/email-history-new";
 import { EmailPolicy } from "@/components/email-policy";
 import { EmailRefetchProvider } from "@/components/email-refetch-context";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 import type { EmailWithDetails } from "@/lib/queries/emails";
 
 type PolicyDocumentRow =
