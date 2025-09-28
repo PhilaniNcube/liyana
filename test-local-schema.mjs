@@ -2,7 +2,7 @@
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = 'http://127.0.0.1:55431'
-const supabaseServiceKey = 'sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz'
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
