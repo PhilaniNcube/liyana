@@ -3,16 +3,10 @@ import {
   ProfileSidebar,
   ProfileMobileMenu,
 } from "@/components/profile-sidebar";
-import { getCurrentUser } from "@/lib/queries";
-import { redirect } from "next/navigation";
+
 
 const ProfileLayout = async ({ children }: { children: React.ReactNode }) => {
 
-  const user = await getCurrentUser();
-  if (!user) {
-    // If no user, redirect to login (this is a server component, so we can use redirect)
-    redirect("/auth/login");
-  }
 
   return (
     <div className="min-h-screen bg-background">

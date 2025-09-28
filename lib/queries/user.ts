@@ -45,33 +45,31 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   try {
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
+    const { data, error } = await supabase.auth.getClaims();
 
-    // If there's an auth error or no user, return null instead of throwing
-    if (error || !user) {
+    if (error || !data) {
+      console.error("Error fetching user:", error);
       return null;
     }
 
-    const { data, error: profileError } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+    // getClaims returns JWT claims, we need to extract user info from the claims
+    const claims = data.claims;
+    const userId = claims.sub; // 'sub' is the standard JWT claim for user ID
+    const userMetadata = claims.user_metadata || {};
+    const email = claims.email;
+    const createdAt = claims.iat ? new Date(claims.iat * 1000).toISOString() : new Date().toISOString();
 
-    // If profile doesn't exist or there's an error, return null
-    if (profileError || !data) {
+    if (!userId) {
+      console.error("No user ID found in claims");
       return null;
     }
 
     return {
-      id: data.id,
-      full_name: data.full_name,
-      email: user.email,
-      role: data.role,
-      created_at: data.created_at,
+      id: userId,
+      full_name: userMetadata?.full_name || "No Name",
+      email: email,
+      role: "customer", // Default role; adjust as needed
+      created_at: createdAt,
     };
   } catch (error) {
     // Log the error for debugging but don't throw it

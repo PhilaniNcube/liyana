@@ -8,8 +8,8 @@ import { LoanApplicationForm } from "@/components/loan-application-form";
 export default async function ApplyPage() {
   const supabase = await createClient();
 
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data?.user) {
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || !data) {
     redirect("/auth/login");
   }
 
@@ -18,7 +18,7 @@ export default async function ApplyPage() {
   let currentStep: ApplicationStep = "personal-info";
 
   try {
-    applications = await getApplicationsByUser(data.user.id, { limit: 1 }); // Get latest application
+    applications = await getApplicationsByUser(data.claims.sub, { limit: 1 }); // Get latest application
 
     if (applications && applications.length > 0) {
       const latestApplication = applications[0];

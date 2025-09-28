@@ -85,6 +85,9 @@ export async function getApplicationsByUser(
   userId: string,
   options: { limit?: number; offset?: number } = {}
 ) {
+
+ 
+
   const supabase = await createClient();
   let query = supabase
     .from("applications")
@@ -98,6 +101,7 @@ export async function getApplicationsByUser(
       options.offset + (options.limit || 10) - 1
     );
   const { data, error } = await query;
+  console.log("Applications error:", error);
   if (error) throw new Error(`Failed to fetch applications: ${error.message}`);
   return data;
 }

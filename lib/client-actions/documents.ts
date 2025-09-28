@@ -2,15 +2,7 @@
 
 import { createClient } from "@/lib/client";
 import { v4 as uuidv4 } from "uuid";
-import { DocumentUploadState, type DocumentType } from "../queries";
-
-// Document types - matching the component
-export const DOCUMENT_TYPES = {
-  ID: "id",
-  BANK_STATEMENT: "bank_statement",
-  PAYSLIP: "payslip",
-  PROOF_OF_RESIDENCE: "proof_of_residence",
-} as const;
+import { DocumentUploadState, type DocumentType, DOCUMENT_TYPES } from "../shared-types";
 
 // Helper function to generate random file names
 function generateRandomFileName(originalName: string): string {
@@ -105,10 +97,7 @@ export async function uploadDocument(
 
   try {
     // Get the current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
       return {
@@ -203,10 +192,7 @@ export async function deleteDocument(
   const supabase = createClient();
 
   try {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
       return { success: false, error: "User not authenticated" };

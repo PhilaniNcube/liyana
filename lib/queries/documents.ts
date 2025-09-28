@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/server";
 import { z } from "zod";
 import type { Database } from "@/lib/types";
+import { getCurrentUser } from "./user";
 
 // Document types enum
 export const DOCUMENT_TYPES = {
@@ -300,12 +301,9 @@ export async function getApplicationDocuments(applicationId: string) {
   const supabase = await createClient();
 
   try {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+const user = await getCurrentUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new Error("User not authenticated");
     }
 

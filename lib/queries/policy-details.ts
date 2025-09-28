@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/server";
 import type { Database } from "@/lib/types";
 import { decryptValue } from "@/lib/encryption";
+import { getCurrentUser } from "./user";
 
 // Reusable types derived from Supabase table definitions
 type PolicyRow = Database["public"]["Tables"]["policies"]["Row"];
@@ -197,8 +198,8 @@ export async function getPolicyClaims(policyId: number) {
   const supabase = await createClient();
   
   // Check if user is logged in
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError) throw new Error(userError.message);
+const user = await getCurrentUser();
+ 
   if (!user) throw new Error("User not found");
 
   // First verify that the policy belongs to this user

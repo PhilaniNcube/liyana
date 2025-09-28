@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/server";
 import { decryptValue } from "@/lib/encryption";
 import type { Database } from "@/lib/types";
+import { getCurrentUser } from "./user";
 
 // Reusable types derived from Supabase table definitions
 type PolicyRow = Database["public"]["Tables"]["policies"]["Row"];
@@ -95,10 +96,9 @@ export async function getLifeInsurancePolicies(): Promise<PolicyWithHolder[]> {
 // Fetch policy beneficiaries and enrich with party details and decrypted id_number
 export async function getPolicyBeneficiaries(policyId: number) {
     const supabase = await createClient();
+   
+    const user = await getCurrentUser();
 
-    // Check if user is logged in
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError) throw new Error(userError.message);
     if (!user) throw new Error("User not found");
 
     // First verify that the policy belongs to this user
@@ -159,9 +159,8 @@ export async function getPolicyBeneficiaries(policyId: number) {
 export async function getPoliciesByUser(): Promise<PolicyWithHolder[]> {
     const supabase = await createClient();
 
-    const {data:{user}, error:userError} = await supabase.auth.getUser();
+   const user = await getCurrentUser();
 
-    if (userError) throw new Error(userError.message);
     if (!user) throw new Error("User not found");
 
 
@@ -194,10 +193,8 @@ export async function getPoliciesByUserId(userId: string): Promise<PolicyWithHol
 export async function getPolicyByPolicyId(policyId: number): Promise<PolicyWithHolder | null> {
     const supabase = await createClient();
 
-    // check if user is logged in
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
-    if (userError) throw new Error(userError.message);
     if (!user) throw new Error("User not found");
 
     const { data: policy, error } = await supabase

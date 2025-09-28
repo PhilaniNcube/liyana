@@ -361,9 +361,7 @@ export async function getApiCheckStats() {
 export async function getApiChecks() {
   const supabase = await createServiceClient();
 
-  const user = await supabase.auth.getUser();
-
-  console.log("Fetched user:", user);
+  
 
   const { data, error } = await supabase
     .from("api_checks")

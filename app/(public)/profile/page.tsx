@@ -4,24 +4,18 @@ import { getApplicationsByUser } from "@/lib/queries/applications";
 import { getApprovedLoansByUser } from "@/lib/queries/approved_loans";
 import { getPoliciesByUser } from "@/lib/queries/policies";
 import { ProfileOverviewClient } from "@/components/profile-overview-client";
-import { getCurrentUser } from "@/lib/queries/user";
+import { getCurrentUser } from "@/lib/queries";
+
 
 export default async function ProfilePage() {
+  
 
-  const user = await getCurrentUser();
+ 
+const user = await getCurrentUser();
+
   if (!user) {
-    redirect("/auth/login");
+    redirect("/auth/login?next=/profile");
   }
-
-  const supabase = await createClient();
-
-
-  // Get user profile information
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, email")
-    .eq("id", user.id)
-    .single();
 
   // Get existing applications
   let applications;
@@ -53,7 +47,7 @@ export default async function ProfilePage() {
       loans={loans || null}
       policies={policies || null}
       userEmail={user.email}
-      userFullName={profile?.full_name}
+      userFullName={user.full_name}
     />
   );
 }

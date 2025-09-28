@@ -1,17 +1,28 @@
-import React from "react";
+
 import { LogoutButton } from "./logout-button";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/queries/user";
+import { createClient } from "@/lib/server";
+import { getCurrentUser } from "@/lib/queries";
 
 const AuthLinks = async () => {
-  const currentUser = await getCurrentUser();
 
-  console.log("Current user:", currentUser);
+  const supabase = await createClient();
+
+
+  const user = await getCurrentUser();
+
+  const {data: isAdmin} = await supabase.rpc('is_admin')
+
+
+
+
+
+
 
   return (
     <>
       {" "}
-      {currentUser && currentUser.role === "admin" && (
+      {isAdmin && (
         <Link
           href="/dashboard"
           className="text-sm font-medium bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 transition-colors"
@@ -19,7 +30,7 @@ const AuthLinks = async () => {
           Dashboard
         </Link>
       )}
-      {currentUser ? (
+      {user ? (
         <>
           <Link
             href="/profile"

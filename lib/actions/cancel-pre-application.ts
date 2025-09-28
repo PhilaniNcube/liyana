@@ -2,39 +2,25 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/server";
+import { getCurrentUser } from "../queries";
 
 export async function cancelPreApplication(preApplicationId: number) {
   try {
     const supabase = await createClient();
 
     // Check if user is authenticated and has admin/editor role
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+   const user = await getCurrentUser();
 
-    if (userError || !user) {
+    if (!user) {
       return {
         success: false,
         error: "Authentication required",
       };
     }
 
-    // Check if user has admin or editor role
-    const { data: userProfile, error: userProfileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
 
-    if (userProfileError || !userProfile) {
-      return {
-        success: false,
-        error: "User profile not found",
-      };
-    }
 
-    if (userProfile.role !== "admin" && userProfile.role !== "editor") {
+    if (user.role !== "admin" && user.role !== "editor") {
       return {
         success: false,
         error: "Access denied. Admin or editor privileges required.",

@@ -28,7 +28,7 @@ port = 55432
 shadow_port = 55430
 # The database major version to use. This has to be the same as your remote database's. Run `SHOW
 # server_version;` on the remote database to check.
-major_version = 17
+major_version = 15
 
 [db.pooler]
 enabled = false
@@ -98,8 +98,9 @@ port = 55434
 # sender_name = "Admin"
 
 [storage]
-enabled = true
-# The maximum file size allowed (e.g. "5MB", "500KB").
+enabled = false
+# Storage temporarily disabled due to fix-object-level migration bug in v1.27.4
+# Use remote storage or re-enable when bug is fixed
 file_size_limit = "50MiB"
 
 # Image transformation API is available to Supabase Pro plan.

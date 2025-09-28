@@ -5,6 +5,7 @@ import { encryptValue } from "@/lib/encryption";
 import { z } from "zod";
 import { loanApplicationSchema } from "@/lib/schemas";
 import { sendSms } from "./sms";
+import { getCurrentUser } from "../queries";
 
 export type LoanApplicationFormData = z.infer<typeof loanApplicationSchema>;
 
@@ -119,11 +120,8 @@ export async function submitLoanApplication(
 
   try {
     // Get the current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-    if (userError || !user) {
+ const user = await getCurrentUser();
+    if ( !user) {
       return {
         errors: {
           _form: ["You must be logged in to submit a loan application"],
@@ -319,12 +317,8 @@ export async function submitLoanApplicationForUser(
 
   const supabase = await createClient();
 
-  // Authorize current user
-  const {
-    data: { user: currentUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !currentUser) {
+  const user = await getCurrentUser();
+  if (!user) {
     return { errors: { _form: ["Not authenticated"] } };
   }
 
@@ -332,7 +326,7 @@ export async function submitLoanApplicationForUser(
   const { data: currentProfile } = await supabase
     .from("profiles")
     .select("id, role")
-    .eq("id", currentUser.id)
+    .eq("id", user.id)
     .single();
   if (!currentProfile || (currentProfile.role !== "admin" && currentProfile.role !== "editor")) {
     return { errors: { _form: ["Insufficient permissions"] } };
