@@ -2,7 +2,7 @@
 
 import React from "react";
 import PolicyDocumentUpload from "@/components/policy-document-upload";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/server";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 import { decryptValue } from "@/lib/encryption";
 
 // Reusable types derived from Supabase table definitions

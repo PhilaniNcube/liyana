@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/server";
+import { Tables } from "@/lib/types";
 import { z } from "zod";
 
 // Analytics query schemas
@@ -20,45 +21,45 @@ export async function getDashboardStats() {
   // Get applications count by status
   const { data: applications, error: appError } = await supabase
     .from("applications")
-    .select("status, application_amount, created_at");
+    .select("*")
+    .returns<Pick<Tables<"applications">, "status" | "application_amount" | "created_at">[]>();
 
   if (appError) {
-    throw new Error(
-      `Failed to fetch applications for dashboard: ${appError.message}`
-    );
+    console.error("Error fetching applications for dashboard:", appError);
+return [];
   }
 
   // Get API checks count by status
   const { data: apiChecks, error: apiError } = await supabase
     .from("api_checks")
-    .select("status, check_type");
+    .select("status, check_type")
+    .returns<Pick<Tables<"api_checks">, "status" | "check_type">[]>();
 
   if (apiError) {
-    throw new Error(
-      `Failed to fetch API checks for dashboard: ${apiError.message}`
-    );
+    console.error("Error fetching API checks for dashboard:", apiError);
+    return [];
   }
 
   // Get documents count
   const { data: documents, error: docError } = await supabase
     .from("documents")
-    .select("document_type");
+    .select("document_type")
+    .returns<Pick<Tables<"documents">, "document_type">[]>();
 
   if (docError) {
-    throw new Error(
-      `Failed to fetch documents for dashboard: ${docError.message}`
-    );
+    console.error("Error fetching documents for dashboard:", docError);
+    return [];
   }
 
   // Get user profiles count
   const { data: profiles, error: profileError } = await supabase
     .from("profiles")
-    .select("role");
+    .select("role")
+    .returns<Pick<Tables<"profiles">, "role">[]>();
 
   if (profileError) {
-    throw new Error(
-      `Failed to fetch profiles for dashboard: ${profileError.message}`
-    );
+    console.error("Error fetching profiles for dashboard:", profileError);
+    return [];
   }
 
   // Calculate application stats
@@ -224,24 +225,13 @@ export async function getApplicationsOverTime(
 ) {
   const supabase = await createClient();
 
-  let dateFormat: string;
-  switch (groupBy) {
-    case "month":
-      dateFormat = "YYYY-MM";
-      break;
-    case "week":
-      dateFormat = "YYYY-WW";
-      break;
-    default:
-      dateFormat = "YYYY-MM-DD";
-  }
-
   const { data, error } = await supabase
     .from("applications")
     .select("created_at, status")
     .gte("created_at", startDate)
     .lte("created_at", endDate)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .returns<Pick<Tables<"applications">, "created_at" | "status">[]>();
 
   if (error) {
     throw new Error(`Failed to fetch applications over time: ${error.message}`);
@@ -296,7 +286,14 @@ export async function getApplicationsOverTime(
     }
 
     return acc;
-  }, {} as Record<string, any>);
+  }, {} as Record<string, {
+    date: string;
+    total: number;
+    approved: number;
+    declined: number;
+    pending: number;
+    inReview: number;
+  }>);
 
   return Object.values(grouped);
 }
@@ -314,7 +311,8 @@ export async function getApplicationTrends() {
   const { data: last30Days, error: error30 } = await supabase
     .from("applications")
     .select("status, application_amount")
-    .gte("created_at", thirtyDaysAgo.toISOString());
+    .gte("created_at", thirtyDaysAgo.toISOString())
+    .returns<Pick<Tables<"applications">, "status" | "application_amount">[]>();
 
   if (error30) {
     throw new Error(
@@ -327,7 +325,8 @@ export async function getApplicationTrends() {
     .from("applications")
     .select("status, application_amount")
     .gte("created_at", sixtyDaysAgo.toISOString())
-    .lt("created_at", thirtyDaysAgo.toISOString());
+    .lt("created_at", thirtyDaysAgo.toISOString())
+    .returns<Pick<Tables<"applications">, "status" | "application_amount">[]>();
 
   if (error60) {
     throw new Error(
@@ -335,7 +334,9 @@ export async function getApplicationTrends() {
     );
   }
 
-  const calculateStats = (applications: any[]) => {
+  const calculateStats = (
+    applications: Pick<Tables<"applications">, "status" | "application_amount">[]
+  ) => {
     return applications.reduce(
       (acc, app) => {
         acc.total += 1;

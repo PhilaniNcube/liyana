@@ -53,7 +53,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     return (
       <ProfilePageClient
         profile={profileWithDecryptedId}
-        applications={applications}
+        applications={applications || []}
         apiChecks={apiChecks}
         emails={emails}
         policies={policies}

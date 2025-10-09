@@ -44,7 +44,7 @@ const fraudCheckSchema = z.object({
     .max(13, "ID number must not exceed 13 digits"),
   forename: z.string().min(1, "First name is required"),
   surname: z.string().min(1, "Surname is required"),
-  gender: z.enum(["M", "F"], { required_error: "Gender is required" }),
+  gender: z.enum(["M", "F"]),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   address1: z.string().min(1, "Address line 1 is required"),
   address2: z.string().optional(),

@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { User } from "lucide-react";
 import { formatDate } from "date-fns";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 
 type PartyRow = Database["public"]["Tables"]["parties"]["Row"];
 type PolicyBeneficiaryRow =

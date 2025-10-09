@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import PolicyDocumentUpload from "@/components/policy-document-upload";
 import PolicyDocumentsList from "@/components/policy-documents-list";
 import { useOptimisticPolicyDocumentUpdate } from "@/hooks/use-policy-documents";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 
 type PolicyDocumentRow =
   Database["public"]["Tables"]["policy_documents"]["Row"];

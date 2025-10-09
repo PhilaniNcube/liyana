@@ -20,7 +20,7 @@ import {
 import { formatCurrency } from "@/lib/utils/format-currency";
 import { formatDate } from "date-fns";
 import type { PolicyWithProduct } from "@/lib/queries/policies";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 import CreateClaimDialog from "@/components/create-claim-dialog";
 
 // Types

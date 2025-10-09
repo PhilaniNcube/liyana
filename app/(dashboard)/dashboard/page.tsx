@@ -24,7 +24,7 @@ export default async function DashboardPage() {
       maximumFractionDigits: 0,
     }).format(n || 0);
 
-  const statCards = stats
+  const statCards = stats && typeof stats === 'object' && 'applications' in stats
     ? [
         {
           title: "Applications",

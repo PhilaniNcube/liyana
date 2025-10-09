@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { 
             error: "Invalid payload format", 
-            details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+            details: error.message
           },
           { status: 400 }
         );

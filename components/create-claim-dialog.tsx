@@ -49,7 +49,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { z } from "zod";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 import PolicyDocumentUpload from "@/components/policy-document-upload";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -73,19 +73,13 @@ const createClaimSchemaWithDocs = (availableDocuments: PolicyDocumentRow[]) =>
     .object({
       policy_id: z.number(),
       claimant_party_id: z.string().min(1, "Please select a claimant"),
-      date_of_incident: z.date({
-        required_error: "Date of incident is required",
-      }),
-      date_filed: z.date({
-        required_error: "Date filed is required",
-      }),
+      date_of_incident: z.date(),
+      date_filed: z.date(),
       supporting_documents: z
         .array(z.number())
         .min(2, "At least 2 supporting documents are required"),
       contact_details: z.object({
-        is_policy_holder: z.enum(["yes", "no"], {
-          required_error: "Please specify if this is the policy holder",
-        }),
+        is_policy_holder: z.enum(["yes", "no"]),
         relationship: z.string().optional(),
         name: z.string().min(1, "Name is required"),
         email: z.string().email("Please enter a valid email address"),

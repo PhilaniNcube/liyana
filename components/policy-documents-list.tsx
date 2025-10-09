@@ -16,7 +16,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { usePolicyDocuments } from "@/hooks/use-policy-documents";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 import { createClient } from "@/lib/client";
 import { format } from "date-fns";
 

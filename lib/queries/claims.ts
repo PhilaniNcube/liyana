@@ -8,7 +8,7 @@ export async function getClaimsByUserId() {
     const user = await getCurrentUser();
 
     if (!user) {
-        throw new Error("User not authenticated");
+        return null;
     }
 
     try {
@@ -17,7 +17,7 @@ export async function getClaimsByUserId() {
         const { data: partyData, error: partyError } = await supabase
             .from("parties")
             .select("id")
-            .eq("profile_id", user.id)
+            .eq("profile_id", user.id) 
             
         // this will return an array of parties, we want to use this array to fetch all claims associated with these parties
         if (partyError) {

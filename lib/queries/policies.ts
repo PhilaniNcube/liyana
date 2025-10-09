@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/server";
 import { decryptValue } from "@/lib/encryption";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/types";
 
 // Reusable types derived from Supabase table definitions
 type PolicyRow = Database["public"]["Tables"]["policies"]["Row"];
 type PartyRow = Database["public"]["Tables"]["parties"]["Row"];
+type PolicyBeneficiaryRow = Database["public"]["Tables"]["policy_beneficiaries"]["Row"];
 
 export type PolicyBase = PolicyRow;
 export type PolicyWithHolder = PolicyRow & { policy_holder: Partial<PartyRow> | null };
@@ -112,11 +113,11 @@ export async function getPolicyBeneficiaries(policyId: number) {
     if (policyError || !policy) {
         throw new Error("Policy not found or access denied");
     }
-
     const { data: beneficiaries, error } = await supabase
         .from("policy_beneficiaries")
         .select("*")
-        .eq("policy_id", policyId);
+        .eq("policy_id", policyId) as { data: PolicyBeneficiaryRow[] | null, error: any };
+      
 
     if (error) throw new Error(error.message);
     if (!beneficiaries || beneficiaries.length === 0) return [];
@@ -135,7 +136,8 @@ export async function getPolicyBeneficiaries(policyId: number) {
 
             let id_number: string | null = null;
             try {
-                id_number = party.id_number ? decryptValue(party.id_number) : null;
+                const encryptedId = (party as PartyRow).id_number;
+                id_number = encryptedId ? decryptValue(encryptedId) : null;
             } catch {
                 id_number = null;
             }
@@ -144,7 +146,7 @@ export async function getPolicyBeneficiaries(policyId: number) {
             return { 
                 ...b, 
                 party: {
-                    ...party,
+                    ...(party as PartyRow),
                     // Keep the encrypted id_number in the party object for API calls
                 }, 
                 id_number 
@@ -161,8 +163,8 @@ export async function getPoliciesByUser(): Promise<PolicyWithHolder[]> {
 
     const {data:{user}, error:userError} = await supabase.auth.getUser();
 
-    if (userError) throw new Error(userError.message);
-    if (!user) throw new Error("User not found");
+    if (userError) return [];
+    if (!user) return [];
 
 
 
@@ -207,15 +209,18 @@ export async function getPolicyByPolicyId(policyId: number): Promise<PolicyWithH
         .single();
 
     if (error) throw new Error(error.message);
+    if (!policy) return null;
+
+    const typedPolicy = policy as PolicyWithHolder;
 
     // decrypt id number before sending back the data
-    if (policy) {
+    if (typedPolicy && typedPolicy.policy_holder) {
         try {
-            policy.policy_holder.id_number = policy.policy_holder.id_number ? decryptValue(policy.policy_holder.id_number) : null;
+            typedPolicy.policy_holder.id_number = typedPolicy.policy_holder.id_number ? decryptValue(typedPolicy.policy_holder.id_number) : null;
         } catch {
-            policy.policy_holder.id_number = null;
+            typedPolicy.policy_holder.id_number = null;
         }
     }
 
-    return policy ?? null;
+    return typedPolicy ?? null;
 }
