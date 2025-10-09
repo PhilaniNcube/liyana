@@ -493,14 +493,35 @@ export function OtvResultsDialog({
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Eye className="h-5 w-5" />
-                          Photo Available
+                          Verification Photo
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                          Profile photo and document photos have been captured
-                          and are available for verification.
+                          Profile photo captured during the verification process:
                         </p>
+                        <div className="flex justify-center">
+                          <div className="max-w-sm">
+                            <img
+                              src={`data:image/jpeg;base64,${otvData.otvResults.detail.photo}`}
+                              alt="Verification Photo"
+                              className="w-full h-auto rounded-lg border shadow-sm"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const fallback = target.nextElementSibling as HTMLElement;
+                                if (fallback) fallback.style.display = 'block';
+                              }}
+                            />
+                            <div 
+                              className="hidden text-center p-4 border rounded-lg bg-gray-50"
+                            >
+                              <p className="text-sm text-muted-foreground">
+                                Unable to display photo
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </CardContent>
                     </Card>
                   )}
