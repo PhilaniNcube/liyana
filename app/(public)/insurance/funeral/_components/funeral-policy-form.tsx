@@ -145,8 +145,8 @@ export default function FuneralPolicyForm() {
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const form = useForm({
-    resolver: zodResolver(funeralPolicyLeadSchemaWithRefines),
+  const form = useForm<FuneralForm>({
+    resolver: zodResolver(funeralPolicyLeadSchemaWithRefines) as any,
     mode: "onSubmit",
     reValidateMode: "onSubmit",
     defaultValues: {
@@ -205,7 +205,6 @@ export default function FuneralPolicyForm() {
   useEffect(() => {
     if (
       watchedCoverageAmount &&
-      typeof watchedCoverageAmount === 'number' &&
       watchedCoverageAmount !== coverageAmountFromUrl
     ) {
       setCoverageAmountInUrl(watchedCoverageAmount);
@@ -821,7 +820,7 @@ export default function FuneralPolicyForm() {
                           <Input
                             type="number"
                             placeholder="0"
-                            value={typeof field.value === 'number' ? field.value.toString() : ""}
+                            value={field.value || ""}
                             onChange={(e) => {
                               const value = e.target.value;
                               field.onChange(value === "" ? 0 : Number(value));

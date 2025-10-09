@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/server";
 import { z } from "zod";
+import { getCurrentUser } from "@/lib/queries";
 
 const updateStatusSchema = z.object({
   status: z.enum([
@@ -49,33 +50,20 @@ export async function PATCH(
     const supabase = await createClient();
 
     // Check if user is authenticated and is admin/editor
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+const user = await getCurrentUser();
 
-    if (userError || !user) {
+    if (!user) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       );
     }
 
-    // Check if user has admin or editor role
-    const { data: userProfile, error: userProfileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
 
-    if (userProfileError || !userProfile) {
-      return NextResponse.json(
-        { error: "User profile not found" },
-        { status: 404 }
-      );
-    }
 
-    if (userProfile.role !== "admin" && userProfile.role !== "editor") {
+
+
+    if (user.role !== "admin" && user.role !== "editor") {
       return NextResponse.json(
         { error: "Access denied. Admin or editor privileges required." },
         { status: 403 }

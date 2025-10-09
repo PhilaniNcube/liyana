@@ -19,7 +19,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json(
         { 
           error: "Invalid request data",
-          details: validationResult.error.message 
+          details: validationResult.error.errors 
         },
         { status: 400 }
       );

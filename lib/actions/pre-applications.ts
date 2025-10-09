@@ -4,6 +4,7 @@ import { createClient } from "@/lib/server";
 import { PreApplication, PreApplicationUpdate } from "../schemas";
 import { encryptValue } from "../encryption";
 import { Database } from "../types";
+import { getCurrentUser } from "../queries";
 
 export async function createPreApplication(
 
@@ -13,8 +14,8 @@ export async function createPreApplication(
 ): Promise<PreApplication> {
   const supabase = await createClient();
 
-  const user = await supabase.auth.getUser();
-  if (user.error || !user.data.user) {
+  const user = await getCurrentUser();
+  if (!user) {
     throw new Error("User not authenticated");
   }
 
@@ -23,8 +24,8 @@ export async function createPreApplication(
   const { data, error } = await supabase
     .from("pre_applications")
     .insert({
-      user_id: user.data.user.id,
-      profile_id: user.data.user.id,
+      user_id: user.id,
+      profile_id: user.id,
       id_number: encryptedIdNumber,
       credit_check_id: creditCheckId,
       credit_score: creditScore,

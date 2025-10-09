@@ -39,6 +39,27 @@ async function saveApiCheckResult(
     const supabase = await createServiceClient();
     const currentUser = await getCurrentUser();
 
+    console.log("Saving API check result with profileId:", currentUser ? currentUser.id : null);
+
+    if(!currentUser) {
+      console.warn("No current user found. Saving API check without profile association.");
+      return null;
+    }
+
+    // Validate profile_id exists
+    let validatedProfileId = null;
+    const { data: profileExists, error: profileError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", currentUser.id)
+      .single();
+    
+    if (profileError || !profileExists) {
+      console.warn(`Profile ID ${currentUser.id} does not exist. Saving API check without profile association.`);
+    } else {
+      validatedProfileId = currentUser.id;
+    }
+
     const { data, error } = await supabase.from("api_checks").insert({
       id_number: encryptValue(idNumber),
       check_type: "credit_bureau",
@@ -46,10 +67,8 @@ async function saveApiCheckResult(
       status: status,
       response_payload: responsePayload,
       checked_at: new Date().toISOString(),
-      profile_id: currentUser ? currentUser.id : null,
+      profile_id: validatedProfileId,
     }).select('*').single();
-
-    
 
     if (error) {
       console.error("Error saving API check result:", error);

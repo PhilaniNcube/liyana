@@ -1,11 +1,11 @@
 import { createClient } from "@/lib/server";
 import { decryptValue } from "@/lib/encryption";
 import type { Database } from "@/lib/types";
+import { getCurrentUser } from "./user";
 
 // Reusable types derived from Supabase table definitions
 type PolicyRow = Database["public"]["Tables"]["policies"]["Row"];
 type PartyRow = Database["public"]["Tables"]["parties"]["Row"];
-type PolicyBeneficiaryRow = Database["public"]["Tables"]["policy_beneficiaries"]["Row"];
 
 export type PolicyBase = PolicyRow;
 export type PolicyWithHolder = PolicyRow & { policy_holder: Partial<PartyRow> | null };
@@ -96,10 +96,9 @@ export async function getLifeInsurancePolicies(): Promise<PolicyWithHolder[]> {
 // Fetch policy beneficiaries and enrich with party details and decrypted id_number
 export async function getPolicyBeneficiaries(policyId: number) {
     const supabase = await createClient();
+   
+    const user = await getCurrentUser();
 
-    // Check if user is logged in
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError) throw new Error(userError.message);
     if (!user) throw new Error("User not found");
 
     // First verify that the policy belongs to this user
@@ -113,11 +112,11 @@ export async function getPolicyBeneficiaries(policyId: number) {
     if (policyError || !policy) {
         throw new Error("Policy not found or access denied");
     }
+
     const { data: beneficiaries, error } = await supabase
         .from("policy_beneficiaries")
         .select("*")
-        .eq("policy_id", policyId) as { data: PolicyBeneficiaryRow[] | null, error: any };
-      
+        .eq("policy_id", policyId);
 
     if (error) throw new Error(error.message);
     if (!beneficiaries || beneficiaries.length === 0) return [];
@@ -136,8 +135,7 @@ export async function getPolicyBeneficiaries(policyId: number) {
 
             let id_number: string | null = null;
             try {
-                const encryptedId = (party as PartyRow).id_number;
-                id_number = encryptedId ? decryptValue(encryptedId) : null;
+                id_number = party.id_number ? decryptValue(party.id_number) : null;
             } catch {
                 id_number = null;
             }
@@ -146,7 +144,7 @@ export async function getPolicyBeneficiaries(policyId: number) {
             return { 
                 ...b, 
                 party: {
-                    ...(party as PartyRow),
+                    ...party,
                     // Keep the encrypted id_number in the party object for API calls
                 }, 
                 id_number 
@@ -161,10 +159,9 @@ export async function getPolicyBeneficiaries(policyId: number) {
 export async function getPoliciesByUser(): Promise<PolicyWithHolder[]> {
     const supabase = await createClient();
 
-    const {data:{user}, error:userError} = await supabase.auth.getUser();
+   const user = await getCurrentUser();
 
-    if (userError) return [];
-    if (!user) return [];
+    if (!user) throw new Error("User not found");
 
 
 
@@ -196,10 +193,8 @@ export async function getPoliciesByUserId(userId: string): Promise<PolicyWithHol
 export async function getPolicyByPolicyId(policyId: number): Promise<PolicyWithHolder | null> {
     const supabase = await createClient();
 
-    // check if user is logged in
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
-    if (userError) throw new Error(userError.message);
     if (!user) throw new Error("User not found");
 
     const { data: policy, error } = await supabase
@@ -209,18 +204,15 @@ export async function getPolicyByPolicyId(policyId: number): Promise<PolicyWithH
         .single();
 
     if (error) throw new Error(error.message);
-    if (!policy) return null;
-
-    const typedPolicy = policy as PolicyWithHolder;
 
     // decrypt id number before sending back the data
-    if (typedPolicy && typedPolicy.policy_holder) {
+    if (policy) {
         try {
-            typedPolicy.policy_holder.id_number = typedPolicy.policy_holder.id_number ? decryptValue(typedPolicy.policy_holder.id_number) : null;
+            policy.policy_holder.id_number = policy.policy_holder.id_number ? decryptValue(policy.policy_holder.id_number) : null;
         } catch {
-            typedPolicy.policy_holder.id_number = null;
+            policy.policy_holder.id_number = null;
         }
     }
 
-    return typedPolicy ?? null;
+    return policy ?? null;
 }

@@ -42,6 +42,23 @@ async function saveApiCheckResult(
   try {
     const supabase = await createServiceClient();
 
+    console.log("Saving API check result with status:", profileId);
+
+    // Validate profile_id exists if provided
+    let validatedProfileId = null;
+    if (profileId) {
+      const { data: profileExists, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", profileId)
+        .single();
+      
+      if (profileError || !profileExists) {
+        console.warn(`Profile ID ${profileId} does not exist. Saving API check without profile association.`);
+      } else {
+        validatedProfileId = profileId;
+      }
+    }
 
     const { data, error } = await supabase.from("api_checks").insert({
       id_number: encryptValue(idNumber),
@@ -50,7 +67,7 @@ async function saveApiCheckResult(
       status: status,
       response_payload: responsePayload,
       checked_at: new Date().toISOString(),
-      profile_id: profileId || null,
+      profile_id: validatedProfileId,
     }).select('*').single();
 
     if (error) {
@@ -75,6 +92,8 @@ export async function POST(request: NextRequest) {
       profileId
     }: AdhocCreditScoreRequest = await request.json();
 
+    console.log("Adhoc Credit Score Request:", { idNumber, profileId });
+
     // Validate required fields
     if (!idNumber) {
       return NextResponse.json(
@@ -91,6 +110,7 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+    
 
     // For this demo, we'll use the existing ID-based API
     // In a real implementation, you might use a different Experian endpoint

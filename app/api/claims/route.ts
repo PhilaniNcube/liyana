@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/server";
 import { z } from "zod";
 import { sendSms } from "@/lib/actions/sms";
+import { getCurrentUser } from "@/lib/queries";
 
 // Schema for API that accepts date strings
 const createClaimApiSchema = z.object({
@@ -28,10 +29,9 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // Check if user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
+    const user = await getCurrentUser();
+
+    if (!user) {
       return NextResponse.json(
         { error: "User not authenticated" },
         { status: 401 }

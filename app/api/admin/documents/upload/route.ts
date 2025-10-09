@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/server";
 import { v4 as uuidv4 } from "uuid";
+import { getCurrentUser } from "@/lib/queries";
 
 // Document types
 const DOCUMENT_TYPES = {
@@ -50,34 +51,20 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // Check if user is authenticated
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
-    if (userError || !user) {
+    if (!user) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       );
     }
 
-    // Check if user is admin or editor
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
 
-    if (profileError || !profile) {
-      return NextResponse.json(
-        { error: "User profile not found" },
-        { status: 404 }
-      );
-    }
 
+    
     // Only admin and editor roles can upload documents
-    if (profile.role !== "admin" && profile.role !== "editor") {
+    if (user.role !== "admin" && user.role !== "editor") {
       return NextResponse.json(
         { error: "Access denied. Admin privileges required." },
         { status: 403 }

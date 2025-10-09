@@ -26,7 +26,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useQueryState, parseAsString } from "nuqs";
 import { handleFraudCheck } from "@/lib/utils/fraud-check";
-import { handleBraveLenderSubmit } from "@/lib/utils";
+
 import { calculateAffordability } from "@/lib/utils/affordability-calculator";
 
 import {
@@ -63,15 +63,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { declineApplicationAction } from "@/lib/actions/applications";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Textarea } from "@/components/ui/textarea";
+
 import {
   Select,
   SelectContent,

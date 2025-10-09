@@ -2,13 +2,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/server";
 import { getPoliciesByUser } from "@/lib/queries/policies";
 import { MyPoliciesClient } from "@/components/my-policies-client";
+import { getCurrentUser } from "@/lib/queries";
 
 export default async function MyPoliciesPage() {
-  const supabase = await createClient();
+const user = await getCurrentUser();
 
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data?.user) {
-    redirect("/auth/login");
+  if (!user) {
+    redirect("/auth/login?next=/profile/my-policies");
   }
 
   // Get user's policies
@@ -24,5 +24,5 @@ export default async function MyPoliciesPage() {
     return <p>No policies found.</p>;
   }
 
-  return <MyPoliciesClient policies={policies || []} userId={data.user.id} />;
+  return <MyPoliciesClient policies={policies || []} userId={user.id} />;
 }

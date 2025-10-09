@@ -6,8 +6,6 @@ import { decryptValue } from "@/lib/encryption";
 type ApplicationUpdate = Database["public"]["Tables"]["applications"]["Update"];
 type Application = Database["public"]["Tables"]["applications"]["Row"];
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
-type ApiCheck = Database["public"]["Tables"]["api_checks"]["Row"];
-type PostgrestError = { message: string; details: string; hint: string; code: string };
 
 // Enhanced application type with profile data
 export type ApplicationWithProfile = Application & {
@@ -33,7 +31,6 @@ export const getApplicationsByStatusSchema = z.object({
   ]),
   limit: z.number().min(1).max(100).optional(),
 });
-
 export const createApplicationSchema = z.object({
   user_id: z.string().uuid(),
   id_number: z.string().min(1),
@@ -50,17 +47,15 @@ export const createApplicationSchema = z.object({
 });
 
 export async function getApplicationById(id: number) {
-
   const supabase = await createClient();
-
   const { data, error } = await supabase
     .from("applications")
     .select("*")
     .eq("id", id)
-    .single() 
-
+    .single();
+    
   if (error) throw new Error(`Failed to fetch application: ${error.message}`);
-
+  
   return data;
 }
 
@@ -68,30 +63,31 @@ export async function getApplicationByIdWithProfile(
   id: number
 ): Promise<ApplicationWithProfile> {
   const supabase = await createClient();
-
   const { data: application, error } = await supabase
     .from("applications")
     .select("*")
     .eq("id", id)
-    .single() as { data: Application | null; error: PostgrestError | null };
-
-  if (error || !application) throw new Error(`Failed to fetch application: ${error?.message || 'Application not found'}`);
-
+    .single();
+  if (error) throw new Error(`Failed to fetch application: ${error.message}`);
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", application.user_id)
-    .single() as { data: Profile | null; error: PostgrestError | null };
-    
+    .single();
   if (profileError) {
     console.warn("Failed to fetch profile details:", profileError.message);
     return { ...application, profile: null };
   }
   return { ...application, profile };
-}export async function getApplicationsByUser(
+}
+
+export async function getApplicationsByUser(
   userId: string,
   options: { limit?: number; offset?: number } = {}
 ) {
+
+ 
+
   const supabase = await createClient();
   let query = supabase
     .from("applications")
@@ -104,7 +100,8 @@ export async function getApplicationByIdWithProfile(
       options.offset,
       options.offset + (options.limit || 10) - 1
     );
-  const { data, error } = await query as { data: Application[] | null; error: PostgrestError | null };
+  const { data, error } = await query;
+  console.log("Applications error:", error);
   if (error) throw new Error(`Failed to fetch applications: ${error.message}`);
   return data;
 }
@@ -120,7 +117,7 @@ export async function getApplicationsByStatus(
     .eq("status", status)
     .order("created_at", { ascending: false });
   if (options.limit) query = query.limit(options.limit);
-  const { data, error } = await query as { data: Application[] | null; error: PostgrestError | null };
+  const { data, error } = await query;
   if (error)
     throw new Error(
       `Failed to fetch applications by status: ${error.message}`
@@ -150,7 +147,7 @@ export async function getAllApplications(
     );
   }
 
-  const { data: applications, error } = await query as { data: Application[] | null; error: PostgrestError | null };
+  const { data: applications, error } = await query;
 
   if (error) {
     throw new Error(`Failed to fetch applications: ${error.message}`);
@@ -164,7 +161,7 @@ export async function getAllApplications(
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
       .select("*")
-      .in("id", userIds) as { data: Profile[] | null; error: PostgrestError | null };
+      .in("id", userIds);
 
     if (profilesError) {
       console.warn("Failed to fetch profile details:", profilesError.message);
@@ -249,7 +246,7 @@ export async function getApplicationsWithApiChecks(applicationId: number) {
 export async function updateApplicationStatus(
   applicationId: number,
   status: Database["public"]["Enums"]["application_status"],
-  declineReason?: Database["public"]["Tables"]["applications"]["Row"]["decline_reason"]
+  declineReason?: any
 ) {
   const supabase = await createClient();
 
@@ -267,7 +264,7 @@ export async function updateApplicationStatus(
     .update(updates)
     .eq("id", applicationId)
     .select()
-    .single() as { data: Application | null; error: PostgrestError | null };
+    .single();
 
   if (error) {
     throw new Error(`Failed to update application status: ${error.message}`);
@@ -281,14 +278,14 @@ export async function getApplicationStats() {
 
   const { data, error } = await supabase
     .from("applications")
-    .select("status, application_amount") as { data: Pick<Application, "status" | "application_amount">[] | null; error: PostgrestError | null };
+    .select("status, application_amount");
 
   if (error) {
     throw new Error(`Failed to fetch application stats: ${error.message}`);
   }
 
   // Calculate statistics
-  const stats = (data || []).reduce(
+  const stats = data.reduce(
     (acc, application) => {
       acc.total += 1;
       acc.totalAmount += application.application_amount || 0;
@@ -344,12 +341,12 @@ export async function getDeclinedApplications(
     .select("*")
     .eq("status", "declined")
     .gte("created_at", start_date)
-    .lte("created_at", end_date) as { data: Application[] | null; error: PostgrestError | null };
+    .lte("created_at", end_date);
   if (declinedError) {
     throw new Error(`Failed to fetch declined applications: ${declinedError.message}`);
   }
 
-  const declinedUserIds = Array.from(new Set((declinedApps || []).map(a => a.user_id)));
+  const declinedUserIds = Array.from(new Set(declinedApps.map(a => a.user_id)));
 
   // Fetch profiles for those declined applications
   let profileMap: Map<string, Profile> = new Map();
@@ -357,14 +354,14 @@ export async function getDeclinedApplications(
     const { data: declinedProfiles, error: declinedProfilesError } = await supabase
       .from("profiles")
       .select("*")
-      .in("id", declinedUserIds) as { data: Profile[] | null; error: PostgrestError | null };
+      .in("id", declinedUserIds);
     if (!declinedProfilesError && declinedProfiles) {
       profileMap = new Map(declinedProfiles.map(p => [p.id, p]));
     }
   }
 
   // Decrypt id_numbers for applications
-  const declinedAppRecords = (declinedApps || []).map(app => {
+  const declinedAppRecords = declinedApps.map(app => {
     let decrypted: string | null = null;
     try { decrypted = decryptValue(app.id_number); } catch { decrypted = app.id_number; }
     return { ...app, id_number: decrypted };
@@ -377,13 +374,13 @@ export async function getDeclinedApplications(
     .eq("check_type", "credit_bureau")
     .eq("status", "failed")
     .gte("checked_at", start_date)
-    .lte("checked_at", end_date) as { data: ApiCheck[] | null; error: PostgrestError | null };
+    .lte("checked_at", end_date);
   if (failedChecksError) {
     throw new Error(`Failed to fetch failed credit checks: ${failedChecksError.message}`);
   }
 
   // Decrypt credit check id_numbers
-  const decryptedFailedChecks = (failedChecks || []).map(check => {
+  const decryptedFailedChecks = failedChecks.map(check => {
     let decrypted: string | null = null;
     try { decrypted = decryptValue(check.id_number); } catch { decrypted = check.id_number; }
     return { ...check, id_number: decrypted };
@@ -395,7 +392,7 @@ export async function getDeclinedApplications(
     .select("*")
     .not("id_number", "is", null)
     .gte("created_at", start_date)
-    .lte("created_at", end_date) as { data: Profile[] | null; error: PostgrestError | null };
+    .lte("created_at", end_date);
   if (candidateProfilesError) {
     console.warn("Failed to fetch candidate profiles for failed checks:", candidateProfilesError.message);
   }
@@ -413,7 +410,7 @@ export async function getDeclinedApplications(
   });
 
   // Match failed checks to profiles
-  const failedCheckMatches: { profile: Profile; credit_check: ApiCheck; id_number: string | null }[] = [];
+  const failedCheckMatches: { profile: Profile; credit_check: any; id_number: string | null }[] = [];
   decryptedFailedChecks.forEach(ch => {
     const prof = profileByDecryptedId.get(ch.id_number);
     if (prof) {
@@ -426,8 +423,8 @@ export async function getDeclinedApplications(
   // Combine into user-centric list
   interface UnifiedUser {
     profile: Profile | null;
-    application?: Application | null;
-    credit_check?: ApiCheck | null;
+    application?: any | null;
+    credit_check?: any | null;
     id_number: string | null;
     reason: 'declined_application' | 'failed_credit_check' | 'both';
   }
@@ -501,7 +498,7 @@ export async function getIncompleteApplicationUsers(
     .eq("check_type", "credit_bureau")
     .eq("status", "passed")
     .gte("checked_at", start_date)
-    .lte("checked_at", end_date) as { data: ApiCheck[] | null; error: PostgrestError | null };
+    .lte("checked_at", end_date);
   if (passedChecksError) {
     throw new Error(`Failed to fetch passed credit checks: ${passedChecksError.message}`);
   }
@@ -521,7 +518,7 @@ export async function getIncompleteApplicationUsers(
     .select("*")
     .not("id_number", "is", null)
     .gte("created_at", start_date)
-    .lte("created_at", end_date) as { data: Profile[] | null; error: PostgrestError | null };
+    .lte("created_at", end_date);
   if (candidateProfilesError) {
     console.warn("Failed to fetch candidate profiles for incomplete applications:", candidateProfilesError.message);
   }
@@ -539,7 +536,7 @@ export async function getIncompleteApplicationUsers(
   });
 
   // Match passed checks to profiles
-  const matches: { profile: Profile; credit_check: ApiCheck; id_number: string | null }[] = [];
+  const matches: { profile: Profile; credit_check: any; id_number: string | null }[] = [];
   decryptedPassedChecks.forEach(ch => {
     const prof = profileByDecryptedId.get(ch.id_number);
     if (prof) {
@@ -555,12 +552,12 @@ export async function getIncompleteApplicationUsers(
   const { data: relatedApplications, error: relatedAppsError } = await supabase
     .from("applications")
     .select("*")
-    .in("user_id", uniqueProfileIds) as { data: Application[] | null; error: PostgrestError | null };
+    .in("user_id", uniqueProfileIds);
   if (relatedAppsError) {
     console.warn("Failed to fetch related applications for incomplete users:", relatedAppsError.message);
   }
 
-  const appsByUser = new Map<string, Application[]>();
+  const appsByUser = new Map<string, any[]>();
   (relatedApplications || []).forEach(app => {
     const arr = appsByUser.get(app.user_id) || [];
     arr.push(app);
@@ -573,8 +570,8 @@ export async function getIncompleteApplicationUsers(
 
   interface IncompleteUserRow {
     profile: Profile;
-    application?: Application | null; // latest in-progress application if any
-    credit_check: ApiCheck;
+    application?: any | null; // latest in-progress application if any
+    credit_check: any;
     id_number: string | null;
     reason: 'no_application' | 'in_progress';
   }
@@ -594,9 +591,6 @@ export async function getIncompleteApplicationUsers(
     // Find credit check (first matched in matches list)
     const credit_check = matches.find(m => m.profile.id === pid)?.credit_check;
     const id_number = matches.find(m => m.profile.id === pid)?.id_number || null;
-    
-    if (!credit_check) return; // Skip if no credit check found
-    
     rows.push({
       profile,
       application: inProgress,

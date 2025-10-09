@@ -4,7 +4,10 @@ import {
   ProfileMobileMenu,
 } from "@/components/profile-sidebar";
 
-const ProfileLayout = ({ children }: { children: React.ReactNode }) => {
+
+const ProfileLayout = async ({ children }: { children: React.ReactNode }) => {
+
+
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">

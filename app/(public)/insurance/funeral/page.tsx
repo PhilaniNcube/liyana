@@ -3,12 +3,12 @@ import FuneralPolicyForm from "./_components/funeral-policy-form";
 import FuneralPremiumCalculatorDialog from "./_components/funeral-premium-calculator-dialog";
 import { createClient } from "@/lib/server";
 import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/queries";
 
 export default async function Page() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+
+  const user = await getCurrentUser();
+  console.log("Current user in funeral insurance page:", user);
 
   if (!user) {
     redirect("/auth/login?next=/insurance/funeral");
