@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/server";
 import { decryptValue } from "@/lib/encryption";
 import { WhoYouOtvResultsResponse } from "@/lib/schemas";
+import { Json } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
   const { application_id } = await request.json();
@@ -146,6 +147,17 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
+
+  // before returning the results, save them to the api_checks table in the database
+const { error: insertError } = await supabase.from("api_checks").insert({
+  profile_id: application.user_id,
+  check_type: "dha_otv_facial" as const,
+  status: "passed" as const,
+  vendor: "WhoYou" as const,
+  response_payload: JSON.parse(JSON.stringify(otvResults)) as Json,
+  id_number: id_number,
+  checked_at: new Date().toISOString(),
+}).select("*");
 
   return NextResponse.json(
     { application, otvResults },
