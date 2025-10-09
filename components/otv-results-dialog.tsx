@@ -513,6 +513,34 @@ export function OtvResultsDialog({
                                 if (fallback) fallback.style.display = 'block';
                               }}
                             />
+                            <div className='grid grid-cols-2 gap-2'>
+                              {otvData.otvResults.detail.documentPhotos.front && (
+                                <img
+                                  src={`data:image/jpeg;base64,${otvData.otvResults.detail.documentPhotos.front}`}
+                                  alt="Document Front"
+                                  className="w-full h-auto rounded-lg border shadow-sm"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const fallback = target.nextElementSibling as HTMLElement;
+                                    if (fallback) fallback.style.display = 'block';
+                                  }}
+                                />
+                              )}
+                              {otvData.otvResults.detail.documentPhotos.back && (
+                                <img
+                                  src={`data:image/jpeg;base64,${otvData.otvResults.detail.documentPhotos.back}`}
+                                  alt="Document Back"
+                                  className="w-full h-auto rounded-lg border shadow-sm"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const fallback = target.nextElementSibling as HTMLElement;
+                                    if (fallback) fallback.style.display = 'block';
+                                  }}
+                                />
+                              )}
+                            </div>
                             <div 
                               className="hidden text-center p-4 border rounded-lg bg-gray-50"
                             >
