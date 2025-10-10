@@ -268,7 +268,7 @@ export function ApproveLoanModal({
             {/* Loan Calculation Summary */}
             <div className="bg-muted/50 p-4 rounded-lg space-y-3">
               <div className="flex items-center">
-                <DollarSign className="h-4 w-4 mr-2" />
+                <p className="h-4 w-4 mr-2 font-mono font-semibold" >R</p>
                 <h4 className="font-medium">Loan Summary</h4>
               </div>
               <Separator />
