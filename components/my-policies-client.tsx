@@ -155,7 +155,7 @@ export function MyPoliciesClient({ policies, userId }: MyPoliciesClientProps) {
             <CardTitle className="text-sm font-medium">
               Total Coverage
             </CardTitle>
-            {/* <DollarSign className="h-4 w-4 text-blue-600" /> */}
+      
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">

@@ -90,7 +90,7 @@ export function LoansPageClient({ initialLoans }: LoansPageClientProps) {
             <CardTitle className="text-sm font-medium">
               Total Portfolio Value
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <div className="h-4 w-4 text-muted-foreground">R</div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
