@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { extractDateOfBirthFromSAID } from "@/lib/utils/sa-id";
 import {
-  submitLoanApplicationForUser,
+  submitLoanApplication,
   type LoanApplicationState,
 } from "@/lib/actions/loans";
 import { ALL_STEPS } from "./loan-application-form";
@@ -83,7 +83,7 @@ export function LoanApplicationFormForUser({
   >("idle");
   const [creditCheckResults, setCreditCheckResults] = useState<any>(null);
   const [state, formAction] = useActionState<LoanApplicationState, FormData>(
-    submitLoanApplicationForUser,
+    submitLoanApplication,
     {}
   );
   const [isPending, startTransition] = useTransition();

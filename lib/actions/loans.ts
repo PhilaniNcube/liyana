@@ -1,11 +1,13 @@
 "use server";
 
+import { PaydayLoanCalculator } from "@/lib/utils/loancalculator";
 import { createClient } from "@/lib/server";
 import { encryptValue } from "@/lib/encryption";
 import { z } from "zod";
 import { loanApplicationSchema } from "@/lib/schemas";
 import { sendSms } from "./sms";
 import { getCurrentUser } from "../queries";
+import { revalidatePath } from "next/cache";
 
 export type LoanApplicationFormData = z.infer<typeof loanApplicationSchema>;
 
@@ -120,8 +122,8 @@ export async function submitLoanApplication(
 
   try {
     // Get the current user
- const user = await getCurrentUser();
-    if ( !user) {
+    const user = await getCurrentUser();
+    if (!user) {
       return {
         errors: {
           _form: ["You must be logged in to submit a loan application"],
@@ -185,7 +187,7 @@ export async function submitLoanApplication(
       employer_name: result.data.employer_name,
       job_title: result.data.job_title,
       monthly_income: result.data.monthly_income,
-  salary_date: result.data.salary_date,
+      salary_date: result.data.salary_date,
       employer_address: result.data.employer_address,
       employer_contact_number: result.data.employer_contact_number,
       employment_end_date: formatDateForDB(result.data.employment_end_date),
@@ -328,7 +330,10 @@ export async function submitLoanApplicationForUser(
     .select("id, role")
     .eq("id", user.id)
     .single();
-  if (!currentProfile || (currentProfile.role !== "admin" && currentProfile.role !== "editor")) {
+  if (
+    !currentProfile ||
+    (currentProfile.role !== "admin" && currentProfile.role !== "editor")
+  ) {
     return { errors: { _form: ["Insufficient permissions"] } };
   }
 
@@ -408,4 +413,86 @@ export async function submitLoanApplicationForUser(
   );
 
   return { success: true, applicationId: insertedApplication.id.toString() };
+}
+
+export async function updateLoanAmount(loanId: number, newAmount: number) {
+  const supabase = await createClient();
+  const { data: loan, error: fetchError } = await supabase
+    .from("approved_loans")
+    .select("*, application:applications(*)")
+    .eq("id", loanId)
+    .single();
+
+  if (fetchError || !loan || !loan.application) {
+    return { error: "Loan not found" };
+  }
+
+  const calculator = new PaydayLoanCalculator({
+    principal: newAmount,
+    termInDays: loan.loan_term_days,
+    loanStartDate: new Date(loan.approved_date),
+    interestRate: loan.interest_rate / 100,
+    salaryDay: loan.application.salary_date || undefined,
+  });
+
+  const updatedLoan = {
+    approved_loan_amount: newAmount,
+    monthly_payment: calculator.getMonthlyRepayment(),
+    total_repayment_amount: calculator.getTotalRepayment(),
+    initiation_fee: calculator.getInitiationFee(),
+    service_fee: calculator.getServiceFeeForTerm(),
+  };
+
+  const { data, error } = await supabase
+    .from("approved_loans")
+    .update(updatedLoan)
+    .eq("id", loanId)
+    .select("*, application:applications(*)")
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+  revalidatePath(`/dashboard/loans/${loanId}`);
+  return { data };
+}
+
+export async function updateLoanTerm(loanId: number, newTerm: number) {
+  const supabase = await createClient();
+  const { data: loan, error: fetchError } = await supabase
+    .from("approved_loans")
+    .select("*, application:applications(*)")
+    .eq("id", loanId)
+    .single();
+
+  if (fetchError || !loan || !loan.application) {
+    return { error: "Loan not found" };
+  }
+
+  const calculator = new PaydayLoanCalculator({
+    principal: loan.approved_loan_amount || 0,
+    termInDays: newTerm,
+    loanStartDate: new Date(loan.approved_date),
+    interestRate: loan.interest_rate / 100,
+    salaryDay: loan.application.salary_date || undefined,
+  });
+
+  const updatedLoan = {
+    loan_term_days: newTerm,
+    monthly_payment: calculator.getMonthlyRepayment(),
+    total_repayment_amount: calculator.getTotalRepayment(),
+  };
+
+  const { data, error } = await supabase
+    .from("approved_loans")
+    .update(updatedLoan)
+    .eq("id", loanId)
+    .select("*, application:applications(*)")
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+  revalidatePath(`/dashboard/loans/${loanId}`);
+  return { data };
 }

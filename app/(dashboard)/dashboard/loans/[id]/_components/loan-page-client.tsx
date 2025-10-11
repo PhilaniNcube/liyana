@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+"use client";
+
+import { useState, useTransition } from "react";
 import {
   Card,
   CardContent,
@@ -31,6 +33,8 @@ import { SendToMaxMoneyDialog } from "./send-to-maxmoney-dialog";
 import { MaxMoneySearchDialog } from "./maxmoney-search-dialog";
 import SmsApplication from "@/components/sms-application";
 import type { EmailWithDetails } from "@/lib/queries/emails";
+import { updateLoanAmount, updateLoanTerm } from "@/lib/actions/loans";
+import { toast } from "sonner";
 
 interface LoanPageClientProps {
   loan: any; // We'll type this properly based on your getLoan return type
@@ -41,12 +45,14 @@ interface LoanPageClientProps {
 }
 
 export function LoanPageClient({
-  loan,
+  loan: initialLoan,
   emailHistory,
   borrowerEmail,
   borrowerName,
   apiChecks = [],
 }: LoanPageClientProps) {
+  const [loan, setLoan] = useState(initialLoan);
+  const [isPending, startTransition] = useTransition();
   const [maxMoneyClientNumber, setMaxMoneyClientNumber] = useState<string>(
     loan.application?.max_money_id || ""
   );
@@ -55,6 +61,30 @@ export function LoanPageClient({
     if (clientData.client_no) {
       setMaxMoneyClientNumber(clientData.client_no);
     }
+  };
+
+  const handleAmountChange = (newAmount: number) => {
+    startTransition(async () => {
+      const result = await updateLoanAmount(loan.id, newAmount);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        setLoan(result.data);
+        toast.success("Loan amount updated successfully");
+      }
+    });
+  };
+
+  const handleTermChange = (newTerm: number) => {
+    startTransition(async () => {
+      const result = await updateLoanTerm(loan.id, newTerm);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        setLoan(result.data);
+        toast.success("Loan term updated successfully");
+      }
+    });
   };
 
   return (
@@ -84,7 +114,9 @@ export function LoanPageClient({
               <div className="flex flex-col items-end gap-3">
                 {maxMoneyClientNumber && (
                   <div className="text-right">
-                    <p className="text-xs text-muted-foreground">MaxMoney Client ID:</p>
+                    <p className="text-xs text-muted-foreground">
+                      MaxMoney Client ID:
+                    </p>
                     <Badge variant="secondary" className="font-mono">
                       {maxMoneyClientNumber}
                     </Badge>
@@ -98,8 +130,8 @@ export function LoanPageClient({
                     currentMaxMoneyId={loan.application?.max_money_id}
                     onClientFound={handleClientFound}
                   >
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       disabled={!loan.application?.id_number}
                     >
@@ -115,7 +147,7 @@ export function LoanPageClient({
                       profile_id: loan.profile_id,
                       loan_amount: loan.approved_loan_amount || 0,
                       term: loan.loan_term_days || 30,
-                      max_money_id: loan.application?.max_money_id
+                      max_money_id: loan.application?.max_money_id,
                     }}
                     maxMoneyClientNumber={maxMoneyClientNumber}
                     onSuccess={() => window.location.reload()}
@@ -129,7 +161,8 @@ export function LoanPageClient({
 
                 {!loan.application?.id_number && (
                   <p className="text-xs text-orange-600 text-right max-w-48">
-                    No ID number available from the original application. Cannot search MaxMoney.
+                    No ID number available from the original application. Cannot
+                    search MaxMoney.
                   </p>
                 )}
               </div>
@@ -172,7 +205,12 @@ export function LoanPageClient({
               )}
 
               <TabsContent value="loan-details" className="mt-4 space-y-4">
-                <LoanOverview loan={loan} />
+                <LoanOverview
+                  loan={loan}
+                  onAmountChange={handleAmountChange}
+                  onTermChange={handleTermChange}
+                  isPending={isPending}
+                />
                 <div className="pt-2 border-t">
                   <div className="flex gap-2 flex-wrap bg-yellow-200 p-3 w-fit">
                     <DownloadAgreementButton loanId={loan.id} />
@@ -196,6 +234,7 @@ export function LoanPageClient({
                     value="loan-banking-info"
                     className="mt-4 space-y-4"
                   >
+.
                     <LoanBankingInfoCard
                       application={loan.application as any}
                     />
@@ -226,7 +265,11 @@ export function LoanPageClient({
                     applicationId={loan.application.id}
                     profileId={loan.profile_id}
                     phoneNumber={loan.application.profile.phone_number}
-                    applicantName={loan.application.profile.full_name || borrowerName || "Applicant"}
+                    applicantName={
+                      loan.application.profile.full_name ||
+                      borrowerName ||
+                      "Applicant"
+                    }
                   />
                 ) : (
                   <Card>
@@ -241,7 +284,7 @@ export function LoanPageClient({
             </Tabs>
           </CardContent>
         </Card>
-        
+
         {!loan.application && (
           <p className="text-sm text-muted-foreground mt-4">
             No application data linked to this loan.

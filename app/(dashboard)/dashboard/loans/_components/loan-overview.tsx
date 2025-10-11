@@ -8,6 +8,7 @@ import { PaydayLoanCalculator } from "@/lib/utils/loancalculator";
 import { formatDate } from "date-fns";
 import { InfoRow } from "./info-row";
 import { Database } from "@/lib/types";
+import { EditableStat } from "./editable-stat";
 
 type LoanWithApplication =
   Database["public"]["Tables"]["approved_loans"]["Row"] & {
@@ -16,9 +17,12 @@ type LoanWithApplication =
 
 type Props = {
   loan: LoanWithApplication;
+  onAmountChange: (newAmount: number) => void;
+  onTermChange: (newTerm: number) => void;
+  isPending: boolean;
 };
 
-export function LoanOverview({ loan }: Props) {
+export function LoanOverview({ loan, onAmountChange, onTermChange, isPending }: Props) {
   const {
     id,
     application_id,
@@ -96,11 +100,14 @@ export function LoanOverview({ loan }: Props) {
 
       {/* Key stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Stat
+        <EditableStat
           icon={CoinsIcon}
           label="Loan Amount"
-          value={formatCurrency(approved_loan_amount ?? 0)}
+          value={approved_loan_amount ?? 0}
+          displayValue={formatCurrency(approved_loan_amount ?? 0)}
           hint={`${numberOfPayments} installments`}
+          onSave={onAmountChange}
+          isPending={isPending}
         />
         <Stat
           icon={CoinsIcon}
@@ -114,12 +121,14 @@ export function LoanOverview({ loan }: Props) {
           value={`${interest_rate.toFixed(2)}%`}
           hint="Fixed"
         />
-        <Stat
+        <EditableStat
           icon={Clock}
           label="Term"
-          value={`${loan_term_days} days`}
+          value={loan_term_days}
+          displayValue={`${loan_term_days} days`}
           hint={`${clamp(daysElapsed, 0, daysTotal)} of ${daysTotal} days`}
-          progress={progress}
+          onSave={onTermChange}
+          isPending={isPending}
         />
         <Stat
           icon={CalendarDays}
