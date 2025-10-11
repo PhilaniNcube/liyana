@@ -3,6 +3,7 @@ import { createClient } from "@/lib/server";
 import { z } from "zod";
 import { PaydayLoanCalculator } from "@/lib/utils/loancalculator";
 import { getCurrentUser } from "@/lib/queries";
+import { getAdminUser } from "@/lib/utils/admin-auth";
 
 const approvalSchema = z.object({
   loan_amount: z.number().min(500).max(5000),
@@ -14,22 +15,16 @@ const approvalSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
     const resolvedParams = await params;
     const applicationId = resolvedParams.id;
 
-    // Get the current user and check if they're an admin
-const user = await getCurrentUser();
+    const isAdmin = await supabase.rpc("is_admin");
 
-    if ( !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-
-    if (!user || user.role !== "admin") {
+    if (!isAdmin || !isAdmin.data || isAdmin.error) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -46,7 +41,7 @@ const user = await getCurrentUser();
     if (fetchError || !application) {
       return NextResponse.json(
         { error: "Application not found" },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -57,7 +52,7 @@ const user = await getCurrentUser();
     ) {
       return NextResponse.json(
         { error: "Application has already been processed" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -78,7 +73,7 @@ const user = await getCurrentUser();
       console.error("Error updating application:", updateError);
       return NextResponse.json(
         { error: "Failed to approve application" },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
@@ -125,7 +120,7 @@ const user = await getCurrentUser();
 
       return NextResponse.json(
         { error: "Failed to create approved loan record" },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
@@ -141,13 +136,13 @@ const user = await getCurrentUser();
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid request data", details: error.issues },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
