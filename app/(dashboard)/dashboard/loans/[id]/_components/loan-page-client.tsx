@@ -29,6 +29,7 @@ import { ProfileDocumentUpload } from "../../_components/profile-document-upload
 import LoanEmailTab from "./loan-email-tab";
 import { SendToMaxMoneyDialog } from "./send-to-maxmoney-dialog";
 import { MaxMoneySearchDialog } from "./maxmoney-search-dialog";
+import SmsApplication from "@/components/sms-application";
 import type { EmailWithDetails } from "@/lib/queries/emails";
 
 interface LoanPageClientProps {
@@ -158,6 +159,7 @@ export function LoanPageClient({
                 )}
                 <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="emails">Emails</TabsTrigger>
+                <TabsTrigger value="sms">SMS</TabsTrigger>
               </TabsList>
 
               {loan.application && (
@@ -216,6 +218,25 @@ export function LoanPageClient({
                   borrowerName={borrowerName}
                   emailHistory={emailHistory}
                 />
+              </TabsContent>
+
+              <TabsContent value="sms" className="mt-4 w-full">
+                {loan.application && loan.application.profile?.phone_number ? (
+                  <SmsApplication
+                    applicationId={loan.application.id}
+                    profileId={loan.profile_id}
+                    phoneNumber={loan.application.profile.phone_number}
+                    applicantName={loan.application.profile.full_name || borrowerName || "Applicant"}
+                  />
+                ) : (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <p className="text-muted-foreground text-center">
+                        No phone number available for this loan applicant.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
