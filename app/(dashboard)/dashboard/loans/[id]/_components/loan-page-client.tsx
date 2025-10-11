@@ -36,6 +36,7 @@ interface LoanPageClientProps {
   emailHistory: EmailWithDetails[];
   borrowerEmail?: string;
   borrowerName?: string;
+  apiChecks?: any[];
 }
 
 export function LoanPageClient({
@@ -43,6 +44,7 @@ export function LoanPageClient({
   emailHistory,
   borrowerEmail,
   borrowerName,
+  apiChecks = [],
 }: LoanPageClientProps) {
   const [maxMoneyClientNumber, setMaxMoneyClientNumber] = useState<string>(
     loan.application?.max_money_id || ""
@@ -162,7 +164,7 @@ export function LoanPageClient({
                 <TabsContent value="personal-info" className="mt-4 space-y-4">
                   <PersonalInfoCard
                     application={loan.application as any}
-                    apiChecks={[]}
+                    apiChecks={apiChecks}
                   />
                 </TabsContent>
               )}

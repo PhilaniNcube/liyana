@@ -54,6 +54,17 @@ const LoanPage = async ({ params }: PageProps) => {
     borrowerProfile = profile;
   }
 
+  // Fetch API checks for the loan application
+  let apiChecks: any[] = [];
+  if (loan.application?.id) {
+    const { data: checks } = await supabase
+      .from("api_checks")
+      .select("*")
+      .eq("application_id", loan.application.id)
+      .order("created_at", { ascending: false });
+    apiChecks = checks || [];
+  }
+
   // Get borrower email from auth user if profile doesn't have it
   let borrowerEmail = borrowerProfile?.email;
   let borrowerName = borrowerProfile?.full_name;
@@ -77,6 +88,7 @@ const LoanPage = async ({ params }: PageProps) => {
       emailHistory={emailHistory}
       borrowerEmail={borrowerEmail || undefined}
       borrowerName={borrowerName || undefined}
+      apiChecks={apiChecks}
     />
   );
 };

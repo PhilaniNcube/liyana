@@ -10,10 +10,7 @@ export async function getLoan(id: number) {
         .select(
             `
             *,
-            application:applications(
-                *,
-                profile:profiles(*)
-            )
+            application:applications(*)
         `
         )
         .eq("id", id)
@@ -36,36 +33,51 @@ export async function getLoan(id: number) {
         }
     }
 
-    // Handle profile structure and add email field to application
-    if (loan.application) {
-        const profileData = loan.application.profile as any;
-        let profile = null;
-        
-        // Handle both single profile object and array cases
-        if (Array.isArray(profileData)) {
-            profile = profileData[0] || null;
-        } else {
-            profile = profileData;
-        }
-        
-        // Set the profile as a single object for consistency with PersonalInfoCard expectations
-        (loan.application as any).profile = profile;
-        
-        // Set email - prioritize profile email, then auth email as fallback
-        if (profile?.email) {
-            (loan.application as any).email = profile.email;
-        } else {
-            // If no profile email, try to get it from auth user
-            try {
-                const { data: authUser } = await supabase.auth.admin.getUserById(
-                    loan.application.user_id
-                );
-                if (authUser?.user?.email) {
-                    (loan.application as any).email = authUser.user.email;
+    // Fetch profile separately and add to application
+    if (loan.application?.user_id) {
+        try {
+            const { data: profile, error: profileError } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("id", loan.application.user_id)
+                .single();
+            
+            if (!profileError && profile) {
+                // Set the profile as a single object for consistency with PersonalInfoCard expectations
+                (loan.application as any).profile = profile;
+                
+                // Set email - prioritize profile email, then auth email as fallback
+                if (profile.email) {
+                    (loan.application as any).email = profile.email;
+                } else {
+                    // If no profile email, try to get it from auth user
+                    try {
+                        const { data: authUser } = await supabase.auth.admin.getUserById(
+                            loan.application.user_id
+                        );
+                        if (authUser?.user?.email) {
+                            (loan.application as any).email = authUser.user.email;
+                        }
+                    } catch (error) {
+                        console.warn("Could not fetch auth user email for application");
+                    }
                 }
-            } catch (error) {
-                console.warn("Could not fetch auth user email for application");
+            } else {
+                console.warn("Could not fetch profile for application:", profileError?.message);
+                // Still try to get email from auth user as fallback
+                try {
+                    const { data: authUser } = await supabase.auth.admin.getUserById(
+                        loan.application.user_id
+                    );
+                    if (authUser?.user?.email) {
+                        (loan.application as any).email = authUser.user.email;
+                    }
+                } catch (error) {
+                    console.warn("Could not fetch auth user email for application");
+                }
             }
+        } catch (error) {
+            console.warn("Error fetching profile:", error);
         }
     }
 
