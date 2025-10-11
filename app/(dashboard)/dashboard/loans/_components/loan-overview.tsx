@@ -1,4 +1,4 @@
-import { CalendarDays, DollarSign, Percent, Clock } from "lucide-react";
+import { CalendarDays, DollarSign, Percent, Clock, CoinsIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { LoanStatusBadge } from "./loan-status-badg";
@@ -97,13 +97,13 @@ export function LoanOverview({ loan }: Props) {
       {/* Key stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Stat
-          icon={DollarSign}
+          icon={CoinsIcon}
           label="Loan Amount"
           value={formatCurrency(approved_loan_amount ?? 0)}
           hint={`${numberOfPayments} installments`}
         />
         <Stat
-          icon={DollarSign}
+          icon={CoinsIcon}
           label="Monthly payment"
           value={formatCurrency(monthlyPayment)}
           hint={`${numberOfPayments} installments`}

@@ -642,7 +642,6 @@ export function ApplicationDetailClient({
               isSendingOtv ||
               isSendingToLms ||
               application.status === "declined" ||
-              application.status === "approved" ||
               application.status === "submitted_to_lender"
             }
             className="w-[220px]"
