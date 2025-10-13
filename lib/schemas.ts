@@ -2144,16 +2144,23 @@ export const maxMoneyLoanApplicationInputSchema = z.object({
 export const maxMoneyLoanApplicationResponseSchema = z.object({
   return_code: z.number(),
   return_reason: z.string(),
-  loan_id: z.number().optional(),
+  loan_id: z.string().optional(),
   loan_no: z.string().optional(),
   summary_data: z.object({
-    loan_amount: z.number(),
-    interest: z.number(),
-    total_repayable: z.number(),
-    fees: z.number(),
-    instalment_amount: z.number(),
-    no_of_instalments: z.number(),
+    loan_amount: z.string(),
+    interest_amount: z.string(),
+    total_repayable: z.string(),
+    instalment_amount: z.string(),
+    first_instalment_date: z.string(),
+    service_fees: z.string(),
+    initiation_fees: z.string(),
+    administration_fees: z.string(),
+    preparation_of_business_plan_fees: z.string(),
+    variable_charges_fees: z.string(),
+    insurance_amount: z.string(),
+    principle_debt_amount: z.string(),
   }).optional(),
+  validation_errors: z.array(z.any()).optional(),
 });
 
 export type CreateMaxMoneyLoanApplication = z.infer<typeof createMaxMoneyLoanApplicationSchema>;
