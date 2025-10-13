@@ -47,7 +47,7 @@ export function SendToMaxMoneyDialog({
     client_number: maxMoneyClientNumber || loan.max_money_id || "",
     loan_product_id: 14723, // Default value
     loan_purpose_id: 1, // Default value - Personal loan
-    no_of_instalment: loan.term || 30,
+    no_of_instalment: 1,
     loan_amount: loan.loan_amount || 1000,
   });
 
