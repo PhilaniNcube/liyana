@@ -47,6 +47,7 @@ export function SendToMaxMoneyDialog({
     client_number: maxMoneyClientNumber || loan.max_money_id || "",
     loan_product_id: 14723, // Default value
     cashbox_id: 1, // Default value
+    cashbox_password: "", // Default value
     loan_purpose_id: 1, // Default value - Personal loan
     no_of_instalment: loan.term || 30,
     loan_amount: loan.loan_amount || 1000,
@@ -70,6 +71,11 @@ export function SendToMaxMoneyDialog({
       return;
     }
 
+    if (!formData.cashbox_password) {
+      toast.error("Cashbox password is required.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -88,7 +94,8 @@ export function SendToMaxMoneyDialog({
       }
 
       if (result.return_code === 0) {
-        toast.success(`Loan application created successfully! Loan ID: ${result.loan_id}, Loan No: ${result.loan_no}`);
+        const cashboxInfo = result.cashbox_info ? ` (Cashbox: ${result.cashbox_info.selected_cashbox_name})` : '';
+        toast.success(`Loan application created successfully! Loan ID: ${result.loan_id}, Loan No: ${result.loan_no}${cashboxInfo}`);
         setIsOpen(false);
         onSuccess?.();
       } else {
@@ -193,9 +200,7 @@ export function SendToMaxMoneyDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Standard Loan</SelectItem>
-                  <SelectItem value="2">Premium Loan</SelectItem>
-                  <SelectItem value="3">Quick Loan</SelectItem>
+                  <SelectItem value="14723">Standard Loan</SelectItem>                  
                 </SelectContent>
               </Select>
             </div>
@@ -215,6 +220,18 @@ export function SendToMaxMoneyDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cashbox_password">Cashbox Password *</Label>
+            <Input
+              id="cashbox_password"
+              type="password"
+              value={formData.cashbox_password}
+              onChange={(e) => handleInputChange('cashbox_password', e.target.value)}
+              placeholder="Enter cashbox password"
+              required
+            />
           </div>
 
           <div className="space-y-2">

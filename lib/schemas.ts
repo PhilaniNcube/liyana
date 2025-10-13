@@ -1829,6 +1829,24 @@ export const maxMoneyCashboxListResponseSchema = z.object({
 
 export type MaxMoneyCashboxListResponse = z.infer<typeof maxMoneyCashboxListResponseSchema>;
 
+// Max Money Cashbox Login Request Schema
+export const maxMoneyCashboxLoginRequestSchema = z.object({
+  cashbox_id: z.number(),
+  cashbox_password: z.string(),
+  user_id: z.number(),
+  login_token: z.string(),
+});
+
+export type MaxMoneyCashboxLoginRequest = z.infer<typeof maxMoneyCashboxLoginRequestSchema>;
+
+// Max Money Cashbox Login Response Schema
+export const maxMoneyCashboxLoginResponseSchema = z.object({
+  return_reason: z.string(),
+  return_code: z.number(),
+});
+
+export type MaxMoneyCashboxLoginResponse = z.infer<typeof maxMoneyCashboxLoginResponseSchema>;
+
 // Max Money Client Search Request Schema
 export const maxMoneyClientSearchSchema = z.object({
   mle_id: z.number(),
@@ -2118,6 +2136,7 @@ export const maxMoneyLoanApplicationInputSchema = z.object({
   client_number: z.string().min(1, "Client number is required"),
   loan_product_id: z.number().min(1, "Loan product ID is required"),
   cashbox_id: z.number().min(1, "Cashbox ID is required"), 
+  cashbox_password: z.string().min(1, "Cashbox password is required"),
   loan_purpose_id: z.number().min(1, "Loan purpose ID is required"),
   no_of_instalment: z.number().min(1, "Number of installments must be at least 1"),
   loan_amount: z.number().min(1, "Loan amount must be greater than 0"),
