@@ -11,10 +11,29 @@ import {
   maxMoneyCashboxLoginResponseSchema,
   type MaxMoneyLoanApplicationInput,
 } from "@/lib/schemas";
+import { createClient } from "@/lib/server";
 
 const MAX_MONEY_URL = process.env.MAX_MONEY_URL;
 const MAX_MONEY_USERNAME = process.env.MAX_MONEY_API_USERNAME;
 const MAX_MONEY_PASSWORD = process.env.MAX_MONEY_API_PASSWORD;
+
+async function getLoanApplicationByMaxMoneyClientId(clientNumber: string) {
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("applications")
+    .select("*")
+    .eq("max_money_id", clientNumber)
+    .single();
+
+  if (error) {
+    console.error("Error fetching loan application:", error);
+    throw new Error("Failed to fetch loan application");
+  }
+
+  return data;
+}
 
 async function login() {
   if (!MAX_MONEY_URL || !MAX_MONEY_USERNAME || !MAX_MONEY_PASSWORD) {
@@ -428,6 +447,10 @@ async function performCashboxLogin(loginData: {
   }
 }
 
+
+
+
+
 export async function POST(request: Request) {
   try {
     console.log("Starting Max Money loan application creation process...");
@@ -464,6 +487,18 @@ export async function POST(request: Request) {
 
     console.log("Cashbox login successful", cashboxLoginData);
 
+    const loanApplication = await getLoanApplicationByMaxMoneyClientId(
+      validatedInput.data.client_number
+    );
+
+    if (!loanApplication) {
+      console.error("No loan application found for client:", validatedInput.data.client_number);
+      throw new Error("No loan application found");
+    }
+
+
+
+
     // Create the loan application payload (excluding cashbox_password which is only for login)
     const { ...inputDataWithoutPassword } = validatedInput.data;
     const loanApplicationPayload = {
@@ -497,6 +532,29 @@ export async function POST(request: Request) {
       "Creating loan application with payload:",
       validatedLoanApplicationPayload.data
     );
+
+
+    const loanPurposeList = await fetch(`${MAX_MONEY_URL}/MaxIntegrate/loan_purpose_list`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mle_id: loginData.mle_id,
+        user_id: loginData.user_id,
+        login_token: loginData.login_token,
+      })
+    });
+
+    const loanPurposeData = await loanPurposeList.json();
+    console.log("Loan purpose list data:", loanPurposeData);
+
+    console.log("Loan Application", {
+      purpose: loanApplication.loan_purpose,
+      affordability: loanApplication.affordability,
+    })
+
+
 
     // Make the API call to create loan application
     const createLoanApplicationResponse = await fetch(
