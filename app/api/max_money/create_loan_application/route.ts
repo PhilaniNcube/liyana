@@ -472,7 +472,7 @@ export async function POST(request: Request) {
       mbr_id: loginData.branch_id,
       user_id: loginData.user_id,
       login_token: loginData.login_token,
-      cashbox_id: process.env.CASHBOX_ID!, // Use preselected cashbox if available
+      cashbox_id: Number(process.env.CASHBOX_ID!), // Use preselected cashbox if available
     };
 
     // Validate the complete payload
