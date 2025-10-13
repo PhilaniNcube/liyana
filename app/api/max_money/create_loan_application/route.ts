@@ -301,7 +301,7 @@ async function performCashboxLogin(loginData: {
   console.log("Attempting cashbox login to Max Money:", cashboxLoginUrl);
 
   const cashboxLoginPayload = {
-    cashbox_id: process.env.CASHBOX_ID!,
+    cashbox_id: Number(process.env.CASHBOX_ID!),
     cashbox_password: process.env.CASHBOX_PASSWORD!,
     user_id: loginData.user_id,
     login_token: loginData.login_token,
