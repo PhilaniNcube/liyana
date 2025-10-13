@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SendHorizonal, Search } from "lucide-react";
+import { SendHorizonal, Search, Upload } from "lucide-react";
 import { LoanOverview } from "../../_components/loan-overview";
 import { DownloadAgreementButton } from "./download-agreement-button";
 import { DownloadCreditAgreementButton } from "./download-credit-agreement-button";
@@ -56,6 +56,7 @@ export function LoanPageClient({
   const [maxMoneyClientNumber, setMaxMoneyClientNumber] = useState<string>(
     loan.application?.max_money_id || ""
   );
+  const [isUploadingDocuments, setIsUploadingDocuments] = useState(false);
 
   const handleClientFound = (clientData: any) => {
     if (clientData.client_no) {
@@ -85,6 +86,55 @@ export function LoanPageClient({
         toast.success("Loan term updated successfully");
       }
     });
+  };
+
+  const handleUploadDocuments = async () => {
+    if (!maxMoneyClientNumber) {
+      toast.error("No MaxMoney client number available");
+      return;
+    }
+
+    setIsUploadingDocuments(true);
+    
+    try {
+      const response = await fetch("/api/max_money/upload_documents", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          max_money_id: maxMoneyClientNumber,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to upload documents");
+      }
+
+      const { results, total_documents, successful_uploads } = result;
+      
+      if (successful_uploads === total_documents) {
+        toast.success(`All ${total_documents} documents uploaded successfully`);
+      } else if (successful_uploads > 0) {
+        toast.warning(`${successful_uploads} of ${total_documents} documents uploaded successfully`);
+      } else {
+        toast.error("No documents were uploaded successfully");
+      }
+
+      // Show detailed results if there are failures
+      const failures = results.filter((r: any) => !r.success);
+      if (failures.length > 0) {
+        console.error("Document upload failures:", failures);
+      }
+
+    } catch (error) {
+      console.error("Error uploading documents:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to upload documents");
+    } finally {
+      setIsUploadingDocuments(false);
+    }
   };
 
   return (
@@ -123,7 +173,7 @@ export function LoanPageClient({
                   </div>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {/* Search MaxMoney Client */}
                   <MaxMoneySearchDialog
                     idNumber={loan.application?.id_number}
@@ -139,6 +189,17 @@ export function LoanPageClient({
                       Search Client
                     </Button>
                   </MaxMoneySearchDialog>
+
+                  {/* Upload Documents to MaxMoney */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUploadDocuments}
+                    disabled={!maxMoneyClientNumber || isUploadingDocuments}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {isUploadingDocuments ? "Uploading..." : "Upload Docs"}
+                  </Button>
 
                   {/* Send to MaxMoney */}
                   <SendToMaxMoneyDialog
