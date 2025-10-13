@@ -45,7 +45,7 @@ export function SendToMaxMoneyDialog({
   const [formData, setFormData] = useState<MaxMoneyLoanApplicationInput>({
     application_id: loan.id,
     client_number: maxMoneyClientNumber || loan.max_money_id || "",
-    loan_product_id: 1, // Default value
+    loan_product_id: 14723, // Default value
     cashbox_id: 1, // Default value
     loan_purpose_id: 1, // Default value - Personal loan
     no_of_instalment: loan.term || 30,
