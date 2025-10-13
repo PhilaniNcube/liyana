@@ -46,8 +46,6 @@ export function SendToMaxMoneyDialog({
     application_id: loan.id,
     client_number: maxMoneyClientNumber || loan.max_money_id || "",
     loan_product_id: 14723, // Default value
-    cashbox_id: 1, // Default value
-    cashbox_password: "", // Default value
     loan_purpose_id: 1, // Default value - Personal loan
     no_of_instalment: loan.term || 30,
     loan_amount: loan.loan_amount || 1000,
@@ -71,11 +69,6 @@ export function SendToMaxMoneyDialog({
       return;
     }
 
-    if (!formData.cashbox_password) {
-      toast.error("Cashbox password is required.");
-      return;
-    }
-
     setIsLoading(true);
 
     try {
@@ -94,8 +87,7 @@ export function SendToMaxMoneyDialog({
       }
 
       if (result.return_code === 0) {
-        const cashboxInfo = result.cashbox_info ? ` (Cashbox: ${result.cashbox_info.selected_cashbox_name})` : '';
-        toast.success(`Loan application created successfully! Loan ID: ${result.loan_id}, Loan No: ${result.loan_no}${cashboxInfo}`);
+        toast.success(`Loan application created successfully! Loan ID: ${result.loan_id}, Loan No: ${result.loan_no}`);
         setIsOpen(false);
         onSuccess?.();
       } else {
@@ -189,49 +181,19 @@ export function SendToMaxMoneyDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="loan_product_id">Loan Product</Label>
-              <Select
-                value={formData.loan_product_id.toString()}
-                onValueChange={(value) => handleInputChange('loan_product_id', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="14723">Standard Loan</SelectItem>                  
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="cashbox_id">Cashbox</Label>
-              <Select
-                value={formData.cashbox_id.toString()}
-                onValueChange={(value) => handleInputChange('cashbox_id', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Main Cashbox</SelectItem>
-                  <SelectItem value="2">Secondary Cashbox</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
           <div className="space-y-2">
-            <Label htmlFor="cashbox_password">Cashbox Password *</Label>
-            <Input
-              id="cashbox_password"
-              type="password"
-              value={formData.cashbox_password}
-              onChange={(e) => handleInputChange('cashbox_password', e.target.value)}
-              placeholder="Enter cashbox password"
-              required
-            />
+            <Label htmlFor="loan_product_id">Loan Product</Label>
+            <Select
+              value={formData.loan_product_id.toString()}
+              onValueChange={(value) => handleInputChange('loan_product_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="14723">Standard Loan</SelectItem>                  
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

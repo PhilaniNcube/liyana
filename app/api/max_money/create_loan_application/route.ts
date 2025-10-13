@@ -34,16 +34,19 @@ async function login() {
   });
 
   const startTime = Date.now();
-  console.log("Starting Max Money login request at:", new Date(startTime).toISOString());
-  
+  console.log(
+    "Starting Max Money login request at:",
+    new Date(startTime).toISOString()
+  );
+
   const loginPayload = {
     user_name: MAX_MONEY_USERNAME,
     password: MAX_MONEY_PASSWORD,
   };
-  
+
   console.log("Login payload (password hidden):", {
     ...loginPayload,
-    password: "[HIDDEN]"
+    password: "[HIDDEN]",
   });
 
   try {
@@ -62,9 +65,16 @@ async function login() {
     clearTimeout(timeoutId);
 
     const endTime = Date.now();
-    console.log("Max Money login response received in:", endTime - startTime, "ms");
+    console.log(
+      "Max Money login response received in:",
+      endTime - startTime,
+      "ms"
+    );
     console.log("Login response status:", response.status);
-    console.log("Login response headers:", Object.fromEntries(response.headers.entries()));
+    console.log(
+      "Login response headers:",
+      Object.fromEntries(response.headers.entries())
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -87,8 +97,14 @@ async function login() {
 
     if (!validatedLogin.success) {
       console.error("Max Money login validation error:", validatedLogin.error);
-      console.error("Raw response data that failed validation:", JSON.stringify(data, null, 2));
-      console.error("Validation error details:", validatedLogin.error.flatten());
+      console.error(
+        "Raw response data that failed validation:",
+        JSON.stringify(data, null, 2)
+      );
+      console.error(
+        "Validation error details:",
+        validatedLogin.error.flatten()
+      );
       throw new Error("Failed to validate Max Money login response.");
     }
 
@@ -102,22 +118,32 @@ async function login() {
       );
     }
 
-    console.log("Max Money login successful for user_id:", validatedLogin.data.user_id);
+    console.log(
+      "Max Money login successful for user_id:",
+      validatedLogin.data.user_id
+    );
 
     return validatedLogin.data;
   } catch (fetchError) {
     console.error("Network error during login:", fetchError);
     if (fetchError instanceof TypeError) {
-      console.error("This might be a network connectivity issue or invalid URL");
+      console.error(
+        "This might be a network connectivity issue or invalid URL"
+      );
     }
-    if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+    if (fetchError instanceof Error && fetchError.name === "AbortError") {
       console.error("Login request timed out after 30 seconds");
     }
     throw fetchError;
   }
 }
 
-async function getCashboxList(loginData: { mle_id: number; branch_id: number; user_id: number; login_token: string }) {
+async function getCashboxList(loginData: {
+  mle_id: number;
+  branch_id: number;
+  user_id: number;
+  login_token: string;
+}) {
   if (!MAX_MONEY_URL) {
     throw new Error("Missing Max Money URL environment variable");
   }
@@ -133,17 +159,24 @@ async function getCashboxList(loginData: { mle_id: number; branch_id: number; us
   };
 
   // Validate the request payload
-  const validatedCashboxPayload = maxMoneyCashboxListRequestSchema.safeParse(cashboxPayload);
+  const validatedCashboxPayload =
+    maxMoneyCashboxListRequestSchema.safeParse(cashboxPayload);
 
   if (!validatedCashboxPayload.success) {
-    console.error("Cashbox list request validation error:", validatedCashboxPayload.error);
+    console.error(
+      "Cashbox list request validation error:",
+      validatedCashboxPayload.error
+    );
     throw new Error("Failed to validate cashbox list request payload");
   }
 
   console.log("Cashbox list request payload:", validatedCashboxPayload.data);
 
   const startTime = Date.now();
-  console.log("Starting cashbox list request at:", new Date(startTime).toISOString());
+  console.log(
+    "Starting cashbox list request at:",
+    new Date(startTime).toISOString()
+  );
 
   try {
     const controller = new AbortController();
@@ -161,13 +194,23 @@ async function getCashboxList(loginData: { mle_id: number; branch_id: number; us
     clearTimeout(timeoutId);
 
     const endTime = Date.now();
-    console.log("Cashbox list response received in:", endTime - startTime, "ms");
+    console.log(
+      "Cashbox list response received in:",
+      endTime - startTime,
+      "ms"
+    );
     console.log("Cashbox response status:", response.status);
-    console.log("Cashbox response headers:", Object.fromEntries(response.headers.entries()));
+    console.log(
+      "Cashbox response headers:",
+      Object.fromEntries(response.headers.entries())
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Cashbox list request failed with status:", response.status);
+      console.error(
+        "Cashbox list request failed with status:",
+        response.status
+      );
       console.error("Error response:", errorText);
       throw new Error(`Cashbox list request failed: ${response.statusText}`);
     }
@@ -176,7 +219,9 @@ async function getCashboxList(loginData: { mle_id: number; branch_id: number; us
     if (!contentType || !contentType.includes("application/json")) {
       const responseText = await response.text();
       console.error("Cashbox list response is not JSON:", responseText);
-      throw new Error("Max Money API returned non-JSON response for cashbox list");
+      throw new Error(
+        "Max Money API returned non-JSON response for cashbox list"
+      );
     }
 
     const data = await response.json();
@@ -186,8 +231,14 @@ async function getCashboxList(loginData: { mle_id: number; branch_id: number; us
 
     if (!validatedCashbox.success) {
       console.error("Cashbox list validation error:", validatedCashbox.error);
-      console.error("Raw response data that failed validation:", JSON.stringify(data, null, 2));
-      console.error("Validation error details:", validatedCashbox.error.flatten());
+      console.error(
+        "Raw response data that failed validation:",
+        JSON.stringify(data, null, 2)
+      );
+      console.error(
+        "Validation error details:",
+        validatedCashbox.error.flatten()
+      );
       throw new Error("Failed to validate cashbox list response.");
     }
 
@@ -202,7 +253,10 @@ async function getCashboxList(loginData: { mle_id: number; branch_id: number; us
     }
 
     // Check if we have any cashboxes
-    if (!validatedCashbox.data.result_items || validatedCashbox.data.result_items.length === 0) {
+    if (
+      !validatedCashbox.data.result_items ||
+      validatedCashbox.data.result_items.length === 0
+    ) {
       console.error("No cashboxes available for the user");
       throw new Error("No cashboxes available for the user");
     }
@@ -224,20 +278,21 @@ async function getCashboxList(loginData: { mle_id: number; branch_id: number; us
   } catch (fetchError) {
     console.error("Network error during cashbox list request:", fetchError);
     if (fetchError instanceof TypeError) {
-      console.error("This might be a network connectivity issue or invalid URL");
+      console.error(
+        "This might be a network connectivity issue or invalid URL"
+      );
     }
-    if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+    if (fetchError instanceof Error && fetchError.name === "AbortError") {
       console.error("Cashbox list request timed out after 30 seconds");
     }
     throw fetchError;
   }
 }
 
-async function performCashboxLogin(
-  cashboxId: number, 
-  cashboxPassword: string, 
-  loginData: { user_id: number; login_token: string }
-) {
+async function performCashboxLogin(loginData: {
+  user_id: number;
+  login_token: string;
+}) {
   if (!MAX_MONEY_URL) {
     throw new Error("Missing Max Money URL environment variable");
   }
@@ -246,27 +301,34 @@ async function performCashboxLogin(
   console.log("Attempting cashbox login to Max Money:", cashboxLoginUrl);
 
   const cashboxLoginPayload = {
-    cashbox_id: cashboxId,
-    cashbox_password: cashboxPassword,
+    cashbox_id: process.env.CASHBOX_ID!,
+    cashbox_password: process.env.CASHBOX_PASSWORD!,
     user_id: loginData.user_id,
     login_token: loginData.login_token,
   };
 
   // Validate the request payload
-  const validatedCashboxLoginPayload = maxMoneyCashboxLoginRequestSchema.safeParse(cashboxLoginPayload);
+  const validatedCashboxLoginPayload =
+    maxMoneyCashboxLoginRequestSchema.safeParse(cashboxLoginPayload);
 
   if (!validatedCashboxLoginPayload.success) {
-    console.error("Cashbox login request validation error:", validatedCashboxLoginPayload.error);
+    console.error(
+      "Cashbox login request validation error:",
+      validatedCashboxLoginPayload.error
+    );
     throw new Error("Failed to validate cashbox login request payload");
   }
 
   console.log("Cashbox login request payload:", {
     ...validatedCashboxLoginPayload.data,
-    cashbox_password: "[HIDDEN]"
+    cashbox_password: "[HIDDEN]",
   });
 
   const startTime = Date.now();
-  console.log("Starting cashbox login request at:", new Date(startTime).toISOString());
+  console.log(
+    "Starting cashbox login request at:",
+    new Date(startTime).toISOString()
+  );
 
   try {
     const controller = new AbortController();
@@ -284,13 +346,23 @@ async function performCashboxLogin(
     clearTimeout(timeoutId);
 
     const endTime = Date.now();
-    console.log("Cashbox login response received in:", endTime - startTime, "ms");
+    console.log(
+      "Cashbox login response received in:",
+      endTime - startTime,
+      "ms"
+    );
     console.log("Cashbox login response status:", response.status);
-    console.log("Cashbox login response headers:", Object.fromEntries(response.headers.entries()));
+    console.log(
+      "Cashbox login response headers:",
+      Object.fromEntries(response.headers.entries())
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Cashbox login request failed with status:", response.status);
+      console.error(
+        "Cashbox login request failed with status:",
+        response.status
+      );
       console.error("Error response:", errorText);
       throw new Error(`Cashbox login request failed: ${response.statusText}`);
     }
@@ -299,18 +371,30 @@ async function performCashboxLogin(
     if (!contentType || !contentType.includes("application/json")) {
       const responseText = await response.text();
       console.error("Cashbox login response is not JSON:", responseText);
-      throw new Error("Max Money API returned non-JSON response for cashbox login");
+      throw new Error(
+        "Max Money API returned non-JSON response for cashbox login"
+      );
     }
 
     const data = await response.json();
     console.log("Cashbox login response data:", data);
 
-    const validatedCashboxLogin = maxMoneyCashboxLoginResponseSchema.safeParse(data);
+    const validatedCashboxLogin =
+      maxMoneyCashboxLoginResponseSchema.safeParse(data);
 
     if (!validatedCashboxLogin.success) {
-      console.error("Cashbox login validation error:", validatedCashboxLogin.error);
-      console.error("Raw response data that failed validation:", JSON.stringify(data, null, 2));
-      console.error("Validation error details:", validatedCashboxLogin.error.flatten());
+      console.error(
+        "Cashbox login validation error:",
+        validatedCashboxLogin.error
+      );
+      console.error(
+        "Raw response data that failed validation:",
+        JSON.stringify(data, null, 2)
+      );
+      console.error(
+        "Validation error details:",
+        validatedCashboxLogin.error.flatten()
+      );
       throw new Error("Failed to validate cashbox login response.");
     }
 
@@ -324,15 +408,20 @@ async function performCashboxLogin(
       );
     }
 
-    console.log("Cashbox login successful for cashbox_id:", cashboxId);
+    console.log(
+      "Cashbox login successful for cashbox_id:",
+      process.env.CASHBOX_ID
+    );
 
     return validatedCashboxLogin.data;
   } catch (fetchError) {
     console.error("Network error during cashbox login request:", fetchError);
     if (fetchError instanceof TypeError) {
-      console.error("This might be a network connectivity issue or invalid URL");
+      console.error(
+        "This might be a network connectivity issue or invalid URL"
+      );
     }
-    if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+    if (fetchError instanceof Error && fetchError.name === "AbortError") {
       console.error("Cashbox login request timed out after 30 seconds");
     }
     throw fetchError;
@@ -345,21 +434,18 @@ export async function POST(request: Request) {
     console.log("Environment check:", {
       MAX_MONEY_URL: !!MAX_MONEY_URL,
       MAX_MONEY_USERNAME: !!MAX_MONEY_USERNAME,
-      MAX_MONEY_PASSWORD: !!MAX_MONEY_PASSWORD
+      MAX_MONEY_PASSWORD: !!MAX_MONEY_PASSWORD,
     });
 
     // Login to Max Money API first
     const loginData = await login();
-
-    // Get cashbox list after successful login and use the first one
-    const cashboxData = await getCashboxList(loginData);
 
     const body = await request.json();
     console.log("Received request body:", Object.keys(body));
 
     // Validate input data first
     const validatedInput = maxMoneyLoanApplicationInputSchema.safeParse(body);
-    
+
     if (!validatedInput.success) {
       console.error("Input validation error:", validatedInput.error);
       return NextResponse.json(
@@ -374,38 +460,30 @@ export async function POST(request: Request) {
     console.log("Input data validated successfully:", validatedInput.data);
 
     // Perform cashbox login with the provided password
-    const cashboxLoginData = await performCashboxLogin(
-      cashboxData.cashbox_id || validatedInput.data.cashbox_id,
-      validatedInput.data.cashbox_password,
-      loginData
-    );
+    const cashboxLoginData = await performCashboxLogin(loginData);
 
-    console.log("Cashbox login successful");
+    console.log("Cashbox login successful", cashboxLoginData);
 
     // Create the loan application payload (excluding cashbox_password which is only for login)
-    const { cashbox_password, ...inputDataWithoutPassword } = validatedInput.data;
+    const { ...inputDataWithoutPassword } = validatedInput.data;
     const loanApplicationPayload = {
       ...inputDataWithoutPassword,
       mle_id: loginData.mle_id,
       mbr_id: loginData.branch_id,
       user_id: loginData.user_id,
       login_token: loginData.login_token,
-      cashbox_id: cashboxData.cashbox_id || validatedInput.data.cashbox_id, // Use preselected cashbox if available
+      cashbox_id: process.env.CASHBOX_ID!, // Use preselected cashbox if available
     };
 
-    console.log("Using cashbox:", {
-      selected_cashbox_id: cashboxData.cashbox_id,
-      selected_cashbox_name: cashboxData.cashbox_name,
-      total_available_cashboxes: cashboxData.available_cashboxes?.length || 0,
-      input_cashbox_id: validatedInput.data.cashbox_id,
-      final_cashbox_id: loanApplicationPayload.cashbox_id,
-    });
-
     // Validate the complete payload
-    const validatedLoanApplicationPayload = createMaxMoneyLoanApplicationSchema.safeParse(loanApplicationPayload);
+    const validatedLoanApplicationPayload =
+      createMaxMoneyLoanApplicationSchema.safeParse(loanApplicationPayload);
 
     if (!validatedLoanApplicationPayload.success) {
-      console.error("Max Money loan application validation error:", validatedLoanApplicationPayload.error);
+      console.error(
+        "Max Money loan application validation error:",
+        validatedLoanApplicationPayload.error
+      );
       return NextResponse.json(
         {
           message: "Invalid loan application data payload.",
@@ -415,7 +493,10 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log("Creating loan application with payload:", validatedLoanApplicationPayload.data);
+    console.log(
+      "Creating loan application with payload:",
+      validatedLoanApplicationPayload.data
+    );
 
     // Make the API call to create loan application
     const createLoanApplicationResponse = await fetch(
@@ -429,43 +510,73 @@ export async function POST(request: Request) {
       }
     );
 
-    console.log("Create loan application response status:", createLoanApplicationResponse.status);
-    console.log("Create loan application response headers:", Object.fromEntries(createLoanApplicationResponse.headers.entries()));
+    console.log(
+      "Create loan application response status:",
+      createLoanApplicationResponse.status
+    );
+    console.log(
+      "Create loan application response headers:",
+      Object.fromEntries(createLoanApplicationResponse.headers.entries())
+    );
 
     if (!createLoanApplicationResponse.ok) {
       const errorText = await createLoanApplicationResponse.text();
       console.error("Create loan application failed:", errorText);
       return NextResponse.json(
-        { message: `Failed to create loan application in Max Money: ${createLoanApplicationResponse.statusText}` },
+        {
+          message: `Failed to create loan application in Max Money: ${createLoanApplicationResponse.statusText}`,
+        },
         { status: createLoanApplicationResponse.status }
       );
     }
 
-    const contentType = createLoanApplicationResponse.headers.get("content-type");
+    const contentType =
+      createLoanApplicationResponse.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
       const responseText = await createLoanApplicationResponse.text();
-      console.error("Create loan application response is not JSON:", responseText);
+      console.error(
+        "Create loan application response is not JSON:",
+        responseText
+      );
       return NextResponse.json(
-        { message: "Max Money API returned non-JSON response for create loan application" },
+        {
+          message:
+            "Max Money API returned non-JSON response for create loan application",
+        },
         { status: 500 }
       );
     }
 
-    const createLoanApplicationData = await createLoanApplicationResponse.json();
-    console.log("Create loan application response data:", createLoanApplicationData);
+    const createLoanApplicationData =
+      await createLoanApplicationResponse.json();
+    console.log(
+      "Create loan application response data:",
+      createLoanApplicationData
+    );
 
     // Validate the response data
-    const validatedResponse = maxMoneyLoanApplicationResponseSchema.safeParse(createLoanApplicationData);
+    const validatedResponse = maxMoneyLoanApplicationResponseSchema.safeParse(
+      createLoanApplicationData
+    );
 
     if (!validatedResponse.success) {
-      console.error("Max Money loan application response validation error:", validatedResponse.error);
-      console.error("Raw response data that failed validation:", JSON.stringify(createLoanApplicationData, null, 2));
+      console.error(
+        "Max Money loan application response validation error:",
+        validatedResponse.error
+      );
+      console.error(
+        "Raw response data that failed validation:",
+        JSON.stringify(createLoanApplicationData, null, 2)
+      );
       // Return the raw data if validation fails, as the API might be working but schema is wrong
       return NextResponse.json(createLoanApplicationData);
     }
 
     if (validatedResponse.data.return_code !== 0) {
-      console.error("Max Money loan application creation failed:", validatedResponse.data.return_reason);
+      console.error(
+        "Max Money loan application creation failed:",
+        validatedResponse.data.return_reason
+      );
       return NextResponse.json(
         {
           message: `Failed to create loan application in Max Money: ${validatedResponse.data.return_reason}`,
@@ -477,22 +588,10 @@ export async function POST(request: Request) {
     console.log("Loan application created successfully:", {
       loan_id: validatedResponse.data.loan_id,
       loan_no: validatedResponse.data.loan_no,
-      cashbox_id: cashboxData.cashbox_id,
-      cashbox_name: cashboxData.cashbox_name,
     });
 
-    // Include cashbox information in the response
-    const responseWithCashbox = {
-      ...validatedResponse.data,
-      cashbox_info: {
-        selected_cashbox_id: cashboxData.cashbox_id,
-        selected_cashbox_name: cashboxData.cashbox_name,
-        total_available_cashboxes: cashboxData.available_cashboxes?.length || 0,
-        available_cashboxes: cashboxData.available_cashboxes,
-      },
-    };
 
-    return NextResponse.json(responseWithCashbox);
+    return NextResponse.json(validatedResponse.data);
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred.";
