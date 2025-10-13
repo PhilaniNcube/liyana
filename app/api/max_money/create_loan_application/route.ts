@@ -5,6 +5,8 @@ import {
   maxMoneyLoginResponseSchema,
   maxMoneyLoanApplicationInputSchema,
   maxMoneyLoanApplicationResponseSchema,
+  maxMoneyCashboxPreselectedRequestSchema,
+  maxMoneyCashboxPreselectedResponseSchema,
   type MaxMoneyLoanApplicationInput,
 } from "@/lib/schemas";
 
@@ -113,6 +115,108 @@ async function login() {
   }
 }
 
+async function getCashboxPreselected(loginData: { mle_id: number; branch_id: number; user_id: number; login_token: string }) {
+  if (!MAX_MONEY_URL) {
+    throw new Error("Missing Max Money URL environment variable");
+  }
+
+  const cashboxUrl = `${MAX_MONEY_URL}/MaxIntegrate/cashbox_preselected`;
+  console.log("Attempting to get preselected cashbox from Max Money:", cashboxUrl);
+
+  const cashboxPayload = {
+    mle_id: loginData.mle_id,
+    branch_id: loginData.branch_id,
+    user_id: loginData.user_id,
+    login_token: loginData.login_token,
+  };
+
+  // Validate the request payload
+  const validatedCashboxPayload = maxMoneyCashboxPreselectedRequestSchema.safeParse(cashboxPayload);
+
+  if (!validatedCashboxPayload.success) {
+    console.error("Cashbox preselected request validation error:", validatedCashboxPayload.error);
+    throw new Error("Failed to validate cashbox preselected request payload");
+  }
+
+  console.log("Cashbox preselected request payload:", validatedCashboxPayload.data);
+
+  const startTime = Date.now();
+  console.log("Starting cashbox preselected request at:", new Date(startTime).toISOString());
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+    const response = await fetch(cashboxUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(validatedCashboxPayload.data),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    const endTime = Date.now();
+    console.log("Cashbox preselected response received in:", endTime - startTime, "ms");
+    console.log("Cashbox response status:", response.status);
+    console.log("Cashbox response headers:", Object.fromEntries(response.headers.entries()));
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Cashbox preselected request failed with status:", response.status);
+      console.error("Error response:", errorText);
+      throw new Error(`Cashbox preselected request failed: ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const responseText = await response.text();
+      console.error("Cashbox preselected response is not JSON:", responseText);
+      throw new Error("Max Money API returned non-JSON response for cashbox preselected");
+    }
+
+    const data = await response.json();
+    console.log("Cashbox preselected response data:", data);
+
+    const validatedCashbox = maxMoneyCashboxPreselectedResponseSchema.safeParse(data);
+
+    if (!validatedCashbox.success) {
+      console.error("Cashbox preselected validation error:", validatedCashbox.error);
+      console.error("Raw response data that failed validation:", JSON.stringify(data, null, 2));
+      console.error("Validation error details:", validatedCashbox.error.flatten());
+      throw new Error("Failed to validate cashbox preselected response.");
+    }
+
+    if (validatedCashbox.data.return_code !== 0) {
+      console.error(
+        "Cashbox preselected request failed:",
+        validatedCashbox.data.return_reason
+      );
+      throw new Error(
+        `Cashbox preselected request failed: ${validatedCashbox.data.return_reason}`
+      );
+    }
+
+    console.log("Cashbox preselected retrieved successfully:", {
+      cashbox_id: validatedCashbox.data.cashbox_id,
+      cashbox_name: validatedCashbox.data.cashbox_name,
+    });
+
+    return validatedCashbox.data;
+  } catch (fetchError) {
+    console.error("Network error during cashbox preselected request:", fetchError);
+    if (fetchError instanceof TypeError) {
+      console.error("This might be a network connectivity issue or invalid URL");
+    }
+    if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+      console.error("Cashbox preselected request timed out after 30 seconds");
+    }
+    throw fetchError;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     console.log("Starting Max Money loan application creation process...");
@@ -124,6 +228,9 @@ export async function POST(request: Request) {
 
     // Login to Max Money API first
     const loginData = await login();
+
+    // Get preselected cashbox after successful login
+    const cashboxData = await getCashboxPreselected(loginData);
 
     const body = await request.json();
     console.log("Received request body:", Object.keys(body));
@@ -151,7 +258,15 @@ export async function POST(request: Request) {
       mbr_id: loginData.branch_id,
       user_id: loginData.user_id,
       login_token: loginData.login_token,
+      cashbox_id: cashboxData.cashbox_id || validatedInput.data.cashbox_id, // Use preselected cashbox if available
     };
+
+    console.log("Using cashbox:", {
+      preselected_cashbox_id: cashboxData.cashbox_id,
+      preselected_cashbox_name: cashboxData.cashbox_name,
+      input_cashbox_id: validatedInput.data.cashbox_id,
+      final_cashbox_id: loanApplicationPayload.cashbox_id,
+    });
 
     // Validate the complete payload
     const validatedLoanApplicationPayload = createMaxMoneyLoanApplicationSchema.safeParse(loanApplicationPayload);
@@ -229,9 +344,20 @@ export async function POST(request: Request) {
     console.log("Loan application created successfully:", {
       loan_id: validatedResponse.data.loan_id,
       loan_no: validatedResponse.data.loan_no,
+      cashbox_id: cashboxData.cashbox_id,
+      cashbox_name: cashboxData.cashbox_name,
     });
 
-    return NextResponse.json(validatedResponse.data);
+    // Include cashbox information in the response
+    const responseWithCashbox = {
+      ...validatedResponse.data,
+      cashbox_info: {
+        cashbox_id: cashboxData.cashbox_id,
+        cashbox_name: cashboxData.cashbox_name,
+      },
+    };
+
+    return NextResponse.json(responseWithCashbox);
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred.";
