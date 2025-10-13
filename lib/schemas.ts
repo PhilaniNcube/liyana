@@ -1805,25 +1805,29 @@ export const maxMoneyLoginResponseSchema = z.object({
 
 export type MaxMoneyLoginResponse = z.infer<typeof maxMoneyLoginResponseSchema>;
 
-// Max Money Cashbox Preselected Request Schema
-export const maxMoneyCashboxPreselectedRequestSchema = z.object({
+// Max Money Cashbox List Request Schema
+export const maxMoneyCashboxListRequestSchema = z.object({
   mle_id: z.number(),
   branch_id: z.number(),
   user_id: z.number(),
   login_token: z.string(),
 });
 
-export type MaxMoneyCashboxPreselectedRequest = z.infer<typeof maxMoneyCashboxPreselectedRequestSchema>;
+export type MaxMoneyCashboxListRequest = z.infer<typeof maxMoneyCashboxListRequestSchema>;
 
-// Max Money Cashbox Preselected Response Schema
-export const maxMoneyCashboxPreselectedResponseSchema = z.object({
+// Max Money Cashbox List Response Schema
+export const maxMoneyCashboxListResponseSchema = z.object({
   return_reason: z.string(),
   return_code: z.number(),
-  cashbox_id: z.number().optional(),
-  cashbox_name: z.string().optional(),
+  result_items: z.array(
+    z.object({
+      id: z.number(),
+      description: z.string(),
+    })
+  ).optional(),
 });
 
-export type MaxMoneyCashboxPreselectedResponse = z.infer<typeof maxMoneyCashboxPreselectedResponseSchema>;
+export type MaxMoneyCashboxListResponse = z.infer<typeof maxMoneyCashboxListResponseSchema>;
 
 // Max Money Client Search Request Schema
 export const maxMoneyClientSearchSchema = z.object({

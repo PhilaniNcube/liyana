@@ -5,8 +5,8 @@ import {
   maxMoneyLoginResponseSchema,
   maxMoneyLoanApplicationInputSchema,
   maxMoneyLoanApplicationResponseSchema,
-  maxMoneyCashboxPreselectedRequestSchema,
-  maxMoneyCashboxPreselectedResponseSchema,
+  maxMoneyCashboxListRequestSchema,
+  maxMoneyCashboxListResponseSchema,
   type MaxMoneyLoanApplicationInput,
 } from "@/lib/schemas";
 
@@ -115,13 +115,13 @@ async function login() {
   }
 }
 
-async function getCashboxPreselected(loginData: { mle_id: number; branch_id: number; user_id: number; login_token: string }) {
+async function getCashboxList(loginData: { mle_id: number; branch_id: number; user_id: number; login_token: string }) {
   if (!MAX_MONEY_URL) {
     throw new Error("Missing Max Money URL environment variable");
   }
 
-  const cashboxUrl = `${MAX_MONEY_URL}/MaxIntegrate/cashbox_preselected`;
-  console.log("Attempting to get preselected cashbox from Max Money:", cashboxUrl);
+  const cashboxUrl = `${MAX_MONEY_URL}/MaxIntegrate/cashbox_list`;
+  console.log("Attempting to get cashbox list from Max Money:", cashboxUrl);
 
   const cashboxPayload = {
     mle_id: loginData.mle_id,
@@ -131,17 +131,17 @@ async function getCashboxPreselected(loginData: { mle_id: number; branch_id: num
   };
 
   // Validate the request payload
-  const validatedCashboxPayload = maxMoneyCashboxPreselectedRequestSchema.safeParse(cashboxPayload);
+  const validatedCashboxPayload = maxMoneyCashboxListRequestSchema.safeParse(cashboxPayload);
 
   if (!validatedCashboxPayload.success) {
-    console.error("Cashbox preselected request validation error:", validatedCashboxPayload.error);
-    throw new Error("Failed to validate cashbox preselected request payload");
+    console.error("Cashbox list request validation error:", validatedCashboxPayload.error);
+    throw new Error("Failed to validate cashbox list request payload");
   }
 
-  console.log("Cashbox preselected request payload:", validatedCashboxPayload.data);
+  console.log("Cashbox list request payload:", validatedCashboxPayload.data);
 
   const startTime = Date.now();
-  console.log("Starting cashbox preselected request at:", new Date(startTime).toISOString());
+  console.log("Starting cashbox list request at:", new Date(startTime).toISOString());
 
   try {
     const controller = new AbortController();
@@ -159,59 +159,73 @@ async function getCashboxPreselected(loginData: { mle_id: number; branch_id: num
     clearTimeout(timeoutId);
 
     const endTime = Date.now();
-    console.log("Cashbox preselected response received in:", endTime - startTime, "ms");
+    console.log("Cashbox list response received in:", endTime - startTime, "ms");
     console.log("Cashbox response status:", response.status);
     console.log("Cashbox response headers:", Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Cashbox preselected request failed with status:", response.status);
+      console.error("Cashbox list request failed with status:", response.status);
       console.error("Error response:", errorText);
-      throw new Error(`Cashbox preselected request failed: ${response.statusText}`);
+      throw new Error(`Cashbox list request failed: ${response.statusText}`);
     }
 
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
       const responseText = await response.text();
-      console.error("Cashbox preselected response is not JSON:", responseText);
-      throw new Error("Max Money API returned non-JSON response for cashbox preselected");
+      console.error("Cashbox list response is not JSON:", responseText);
+      throw new Error("Max Money API returned non-JSON response for cashbox list");
     }
 
     const data = await response.json();
-    console.log("Cashbox preselected response data:", data);
+    console.log("Cashbox list response data:", data);
 
-    const validatedCashbox = maxMoneyCashboxPreselectedResponseSchema.safeParse(data);
+    const validatedCashbox = maxMoneyCashboxListResponseSchema.safeParse(data);
 
     if (!validatedCashbox.success) {
-      console.error("Cashbox preselected validation error:", validatedCashbox.error);
+      console.error("Cashbox list validation error:", validatedCashbox.error);
       console.error("Raw response data that failed validation:", JSON.stringify(data, null, 2));
       console.error("Validation error details:", validatedCashbox.error.flatten());
-      throw new Error("Failed to validate cashbox preselected response.");
+      throw new Error("Failed to validate cashbox list response.");
     }
 
     if (validatedCashbox.data.return_code !== 0) {
       console.error(
-        "Cashbox preselected request failed:",
+        "Cashbox list request failed:",
         validatedCashbox.data.return_reason
       );
       throw new Error(
-        `Cashbox preselected request failed: ${validatedCashbox.data.return_reason}`
+        `Cashbox list request failed: ${validatedCashbox.data.return_reason}`
       );
     }
 
-    console.log("Cashbox preselected retrieved successfully:", {
-      cashbox_id: validatedCashbox.data.cashbox_id,
-      cashbox_name: validatedCashbox.data.cashbox_name,
+    // Check if we have any cashboxes
+    if (!validatedCashbox.data.result_items || validatedCashbox.data.result_items.length === 0) {
+      console.error("No cashboxes available for the user");
+      throw new Error("No cashboxes available for the user");
+    }
+
+    // Use the first cashbox from the list
+    const firstCashbox = validatedCashbox.data.result_items[0];
+
+    console.log("Cashbox list retrieved successfully. Using first cashbox:", {
+      cashbox_id: firstCashbox.id,
+      cashbox_name: firstCashbox.description,
+      total_available: validatedCashbox.data.result_items.length,
     });
 
-    return validatedCashbox.data;
+    return {
+      cashbox_id: firstCashbox.id,
+      cashbox_name: firstCashbox.description,
+      available_cashboxes: validatedCashbox.data.result_items,
+    };
   } catch (fetchError) {
-    console.error("Network error during cashbox preselected request:", fetchError);
+    console.error("Network error during cashbox list request:", fetchError);
     if (fetchError instanceof TypeError) {
       console.error("This might be a network connectivity issue or invalid URL");
     }
     if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-      console.error("Cashbox preselected request timed out after 30 seconds");
+      console.error("Cashbox list request timed out after 30 seconds");
     }
     throw fetchError;
   }
@@ -229,8 +243,8 @@ export async function POST(request: Request) {
     // Login to Max Money API first
     const loginData = await login();
 
-    // Get preselected cashbox after successful login
-    const cashboxData = await getCashboxPreselected(loginData);
+    // Get cashbox list after successful login and use the first one
+    const cashboxData = await getCashboxList(loginData);
 
     const body = await request.json();
     console.log("Received request body:", Object.keys(body));
@@ -262,8 +276,9 @@ export async function POST(request: Request) {
     };
 
     console.log("Using cashbox:", {
-      preselected_cashbox_id: cashboxData.cashbox_id,
-      preselected_cashbox_name: cashboxData.cashbox_name,
+      selected_cashbox_id: cashboxData.cashbox_id,
+      selected_cashbox_name: cashboxData.cashbox_name,
+      total_available_cashboxes: cashboxData.available_cashboxes?.length || 0,
       input_cashbox_id: validatedInput.data.cashbox_id,
       final_cashbox_id: loanApplicationPayload.cashbox_id,
     });
@@ -352,8 +367,10 @@ export async function POST(request: Request) {
     const responseWithCashbox = {
       ...validatedResponse.data,
       cashbox_info: {
-        cashbox_id: cashboxData.cashbox_id,
-        cashbox_name: cashboxData.cashbox_name,
+        selected_cashbox_id: cashboxData.cashbox_id,
+        selected_cashbox_name: cashboxData.cashbox_name,
+        total_available_cashboxes: cashboxData.available_cashboxes?.length || 0,
+        available_cashboxes: cashboxData.available_cashboxes,
       },
     };
 
