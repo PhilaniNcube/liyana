@@ -30,7 +30,7 @@ const FuneralPolicyBanner = () => {
 
       {/* Right side: Yellow content with curved left edge */}
       <div
-        className="relative flex-none w-3/5 md:w-1/2 bg-yellow-600/90 text-white pl-16 p-8 flex items-center justify-end z-10"
+        className="relative flex-none w-3/5 md:w-1/2 bg-[#f7e306]/90 text-white pl-16 p-8 flex items-center justify-end z-10"
         style={{
           clipPath: "url(#curveClip)",
         }}
