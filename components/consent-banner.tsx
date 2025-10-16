@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Cookie } from "lucide-react";
+import Link from "next/link";
 
 export function ConsentBanner() {
   const [isVisible, setIsVisible] = useState(false);
@@ -77,21 +78,21 @@ export function ConsentBanner() {
                 We use cookies and similar technologies for essential functionality, analytics, 
                 and service improvement. You have the right to access, correct, or delete your 
                 personal information. For details on how we process your data, please read our{" "}
-                <a 
+                <Link 
                   href="/privacy-policy" 
                   className="underline hover:no-underline"
                   style={{ color: '#f7e306' }}
                 >
                   Privacy Policy
-                </a>
+                </Link>
                 {" "}and{" "}
-                <a 
-                  href="/popi-notice" 
+                <Link
+                  href="/popi-notice"
                   className="underline hover:no-underline"
                   style={{ color: '#f7e306' }}
                 >
                   POPI Notice
-                </a>
+                </Link>
                 .
               </p>
             </div>
