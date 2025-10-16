@@ -24,6 +24,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
+import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DocumentUploadForm } from "@/components/document-upload-form";
 import { CreditCheckStep } from "@/components/credit-check-step";
 import {
@@ -195,6 +197,92 @@ interface LoanApplicationFormProps {
   prefillIdNumber?: string | null;
 }
 
+// POPI Consent Component
+function PopiConsentCheckboxes({
+  popiConsent,
+  privacyConsent,
+  onPopiConsentChange,
+  onPrivacyConsentChange,
+}: {
+  popiConsent: boolean;
+  privacyConsent: boolean;
+  onPopiConsentChange: (checked: boolean) => void;
+  onPrivacyConsentChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="space-y-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+      <h3 className="font-semibold text-gray-900 mb-3">Data Protection Consent</h3>
+      <p className="text-sm text-gray-600 mb-4">
+        Before proceeding with your loan application, please review and accept our data protection policies:
+      </p>
+      
+      <div className="space-y-3">
+        <div className="flex items-start space-x-3">
+          <Checkbox
+            id="popi-consent"
+            checked={popiConsent}
+            onCheckedChange={onPopiConsentChange}
+            className="mt-0.5"
+          />
+          <label
+            htmlFor="popi-consent"
+            className="text-sm text-gray-700 leading-relaxed cursor-pointer"
+          >
+            I acknowledge that I have read and understood the{" "}
+            <Link
+              href="/popi-notice"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 underline"
+              style={{ color: '#f7e306' }}
+            >
+              POPI Notice
+            </Link>
+            {" "}and consent to the processing of my personal information as described therein, 
+            including for credit assessment, loan processing, and regulatory compliance purposes.
+          </label>
+        </div>
+        
+        <div className="flex items-start space-x-3">
+          <Checkbox
+            id="privacy-consent"
+            checked={privacyConsent}
+            onCheckedChange={onPrivacyConsentChange}
+            className="mt-0.5"
+          />
+          <label
+            htmlFor="privacy-consent"
+            className="text-sm text-gray-700 leading-relaxed cursor-pointer"
+          >
+            I agree to the terms outlined in the{" "}
+            <Link
+              href="/privacy-policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 underline"
+              style={{ color: '#f7e306' }}
+            >
+              Privacy Policy
+            </Link>
+            {" "}and consent to the use of cookies and similar technologies for website functionality, 
+            analytics, and service improvement.
+          </label>
+        </div>
+      </div>
+      
+      {(!popiConsent || !privacyConsent) && (
+        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+          <p className="text-sm text-yellow-800">
+            <strong>Note:</strong> Both consents are required to proceed with your loan application. 
+            This ensures compliance with South African data protection laws and our commitment to 
+            protecting your personal information.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Step Indicator Component
 export function StepIndicator({
   currentStep,
@@ -296,6 +384,10 @@ export function LoanApplicationForm({
     "idle" | "loading" | "success" | "failed"
   >("idle");
   const [creditCheckResults, setCreditCheckResults] = useState<any>(null);
+
+  // POPI consent state
+  const [popiConsent, setPopiConsent] = useState(false);
+  const [privacyConsent, setPrivacyConsent] = useState(false);
 
   const [state, formAction] = useActionState<LoanApplicationState, FormData>(
     submitLoanApplication,
@@ -536,6 +628,15 @@ export function LoanApplicationForm({
   ]);
 
   const handleNext = async () => {
+    // Check POPI consent for first step (credit or personal if skipCreditCheck)
+    const isFirstStep = (creditStepPresent && currentStepDef?.key === "credit") || 
+                       (skipCreditCheck && currentStepDef?.key === "personal");
+    
+    if (isFirstStep && (!popiConsent || !privacyConsent)) {
+      // Could add toast notification here if you have toast system
+      return;
+    }
+
     // Only enforce credit check if present
     if (creditStepPresent && currentStepDef?.key === "credit") {
       if (
@@ -674,17 +775,37 @@ export function LoanApplicationForm({
     switch (currentStepDef.key) {
       case "credit":
         return (
-          <CreditCheckStep
-            onCheckComplete={async (idNumber: string) => {
-              await performCreditCheck(idNumber);
-            }}
-            status={creditCheckStatus}
-            results={creditCheckResults}
-            form={form}
-          />
+          <div className="space-y-6">
+            <PopiConsentCheckboxes
+              popiConsent={popiConsent}
+              privacyConsent={privacyConsent}
+              onPopiConsentChange={setPopiConsent}
+              onPrivacyConsentChange={setPrivacyConsent}
+            />
+            <CreditCheckStep
+              onCheckComplete={async (idNumber: string) => {
+                await performCreditCheck(idNumber);
+              }}
+              status={creditCheckStatus}
+              results={creditCheckResults}
+              form={form}
+            />
+          </div>
         );
       case "personal":
-        return <PersonalInfoStep form={form} showIdFields={skipCreditCheck} />;
+        return (
+          <div className="space-y-6">
+            {skipCreditCheck && (
+              <PopiConsentCheckboxes
+                popiConsent={popiConsent}
+                privacyConsent={privacyConsent}
+                onPopiConsentChange={setPopiConsent}
+                onPrivacyConsentChange={setPrivacyConsent}
+              />
+            )}
+            <PersonalInfoStep form={form} showIdFields={skipCreditCheck} />
+          </div>
+        );
       case "employment":
         return <EmploymentInfoStep form={form} />;
       case "loan":
@@ -777,10 +898,16 @@ export function LoanApplicationForm({
               onClick={handleNext}
               disabled={
                 isPending ||
+                // POPI consent check for first step
+                ((creditStepPresent && currentStepDef?.key === "credit") || 
+                 (skipCreditCheck && currentStepDef?.key === "personal")) &&
+                (!popiConsent || !privacyConsent) ||
+                // Credit check validation
                 (creditStepPresent &&
                   currentStepDef?.key === "credit" &&
                   (creditCheckStatus !== "success" ||
                     creditCheckResults?.creditScoreFailed)) ||
+                // Employment validation
                 (currentStepDef?.key === "employment" &&
                   form.watch("employment_type") === "unemployed")
               }
