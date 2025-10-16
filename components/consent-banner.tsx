@@ -99,33 +99,40 @@ export function ConsentBanner() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
-            <button
-              onClick={handleDecline}
-              className="w-full sm:flex-1 md:flex-none px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
-            >
-              Decline Non-Essential
-            </button>
-            <button
-              onClick={handleAccept}
-              className="w-full sm:flex-1 md:flex-none px-4 py-2 text-sm font-medium text-black rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-              style={{ backgroundColor: '#f7e306' }}
-            >
-              Accept All
-            </button>
-            <button
-              onClick={() => window.open('/cookie-preferences', '_blank')}
-              className="w-full sm:flex-1 md:flex-none px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
-            >
-              Manage Preferences
-            </button>
-            <button
-              onClick={handleClose}
-              className="flex-shrink-0 p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
-              aria-label="Close banner"
-            >
-              <X className="h-4 w-4" />
-            </button>
+          <div className="flex flex-col gap-3 w-full md:w-auto md:min-w-[280px]">
+            {/* Main action buttons - stacked vertically */}
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleAccept}
+                className="w-full px-4 py-2 text-sm font-medium text-black rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                style={{ backgroundColor: '#f7e306' }}
+              >
+                Accept All
+              </button>
+              <button
+                onClick={handleDecline}
+                className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+              >
+                Decline Non-Essential
+              </button>
+              <button
+                onClick={() => window.open('/cookie-preferences', '_blank')}
+                className="w-full px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+              >
+                Manage Preferences
+              </button>
+            </div>
+            
+            {/* Close button - separate row */}
+            <div className="flex justify-end">
+              <button
+                onClick={handleClose}
+                className="flex-shrink-0 p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
+                aria-label="Close banner"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
