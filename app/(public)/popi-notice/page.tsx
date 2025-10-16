@@ -43,16 +43,16 @@ export default function PopiNoticePage() {
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-2">Company Information</h3>
                     <p className="text-gray-700"><strong>Name:</strong> Liyana Finance (Pty) Ltd</p>
-                    <p className="text-gray-700"><strong>Registration No:</strong> [Company Registration Number]</p>
-                    <p className="text-gray-700"><strong>NCR Registration:</strong> [NCR Number]</p>
-                    <p className="text-gray-700"><strong>FSP License:</strong> [FSP Number]</p>
+                    <p className="text-gray-700"><strong>Registration No:</strong> 2023/790223/07</p>
+                    <p className="text-gray-700"><strong>NCR Registration:</strong> NCRCP18217</p>
+                    
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-2">Contact Details</h3>
-                    <p className="text-gray-700"><strong>Physical Address:</strong><br />[Complete Physical Address]</p>
-                    <p className="text-gray-700"><strong>Postal Address:</strong><br />[Complete Postal Address]</p>
+                    <p className="text-gray-700"><strong>Physical Address:</strong><br />1 Hunter Street, Nelspruit</p>
+                    <p className="text-gray-700"><strong>Postal Address:</strong><br />1 Hunter Street, Nelspruit</p>
                     <p className="text-gray-700"><strong>Email:</strong> info@liyanafinance.co.za</p>
-                    <p className="text-gray-700"><strong>Phone:</strong> [Phone Number]</p>
+                    <p className="text-gray-700"><strong>Phone:</strong> 012 004 0889</p>
                   </div>
                 </div>
               </div>
@@ -61,11 +61,11 @@ export default function PopiNoticePage() {
             <section>
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">2. Information Officer Details</h2>
               <div className="bg-gray-50 p-6 rounded-lg">
-                <p className="text-gray-700"><strong>Name:</strong> [Information Officer Name]</p>
-                <p className="text-gray-700"><strong>Position:</strong> [Position/Title]</p>
-                <p className="text-gray-700"><strong>Email:</strong> privacy@liyanafinance.co.za</p>
-                <p className="text-gray-700"><strong>Phone:</strong> [Phone Number]</p>
-                <p className="text-gray-700"><strong>Address:</strong> [Physical Address]</p>
+                <p className="text-gray-700"><strong>Name:</strong> Philani Ncube</p>
+                <p className="text-gray-700"><strong>Position:</strong> Data Officer</p>
+                <p className="text-gray-700"><strong>Email:</strong> hello@liyanafinance.co.za</p>
+                <p className="text-gray-700"><strong>Phone:</strong> 012 004 0889</p>
+                <p className="text-gray-700"><strong>Address:</strong> 9 Athlone Street, Port Elizabeth</p>
               </div>
             </section>
 
