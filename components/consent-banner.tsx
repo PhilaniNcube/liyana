@@ -9,19 +9,38 @@ export function ConsentBanner() {
 
   useEffect(() => {
     // Check if consent has already been given
-    const consentGiven = localStorage.getItem("liyana-consent");
-    if (!consentGiven) {
+    const consentData = localStorage.getItem("liyana-consent");
+    if (!consentData) {
       setIsVisible(true);
+    } else {
+      try {
+        const parsedConsent = JSON.parse(consentData);
+        // Check if consent is still valid (you might want to add expiry logic)
+        if (!parsedConsent.status) {
+          setIsVisible(true);
+        }
+      } catch {
+        // If parsing fails, show banner again
+        setIsVisible(true);
+      }
     }
   }, []);
 
   const handleAccept = () => {
-    localStorage.setItem("liyana-consent", "accepted");
+    localStorage.setItem("liyana-consent", JSON.stringify({
+      status: "accepted",
+      timestamp: new Date().toISOString(),
+      version: "1.0"
+    }));
     handleClose();
   };
 
   const handleDecline = () => {
-    localStorage.setItem("liyana-consent", "declined");
+    localStorage.setItem("liyana-consent", JSON.stringify({
+      status: "declined",
+      timestamp: new Date().toISOString(),
+      version: "1.0"
+    }));
     handleClose();
   };
 
@@ -50,12 +69,14 @@ export function ConsentBanner() {
             </div>
             <div className="flex-1">
               <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                We value your privacy
+                Personal Information Protection Notice
               </h3>
               <p className="text-sm text-gray-600 leading-relaxed">
-                We use cookies and similar technologies to enhance your experience, 
-                analyze usage, and provide personalized content. By continuing to use 
-                our services, you consent to our use of cookies as described in our{" "}
+                In compliance with the Protection of Personal Information Act (POPI), 
+                we collect and process your personal information to provide our financial services. 
+                We use cookies and similar technologies for essential functionality, analytics, 
+                and service improvement. You have the right to access, correct, or delete your 
+                personal information. For details on how we process your data, please read our{" "}
                 <a 
                   href="/privacy-policy" 
                   className="underline hover:no-underline"
@@ -63,25 +84,39 @@ export function ConsentBanner() {
                 >
                   Privacy Policy
                 </a>
+                {" "}and{" "}
+                <a 
+                  href="/popi-notice" 
+                  className="underline hover:no-underline"
+                  style={{ color: '#f7e306' }}
+                >
+                  POPI Notice
+                </a>
                 .
               </p>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
             <button
               onClick={handleDecline}
-              className="flex-1 md:flex-none px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+              className="w-full sm:flex-1 md:flex-none px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
             >
-              Decline
+              Decline Non-Essential
             </button>
             <button
               onClick={handleAccept}
-              className="flex-1 md:flex-none px-4 py-2 text-sm font-medium text-black rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              className="w-full sm:flex-1 md:flex-none px-4 py-2 text-sm font-medium text-black rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
               style={{ backgroundColor: '#f7e306' }}
             >
               Accept All
+            </button>
+            <button
+              onClick={() => window.open('/cookie-preferences', '_blank')}
+              className="w-full sm:flex-1 md:flex-none px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            >
+              Manage Preferences
             </button>
             <button
               onClick={handleClose}
