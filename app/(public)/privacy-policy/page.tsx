@@ -221,11 +221,11 @@ export default function PrivacyPolicyPage() {
                   If you have any questions about this Privacy Policy or wish to exercise your rights, please contact us:
                 </p>
                 <div className="space-y-2 text-gray-700">
-                  <p><strong>Information Officer:</strong> [Name]</p>
+                  <p><strong>Information Officer:</strong> Philani Ncube</p>
                   <p><strong>Company:</strong> Liyana Finance (Pty) Ltd</p>
-                  <p><strong>Email:</strong> privacy@liyanafinance.co.za</p>
-                  <p><strong>Phone:</strong> [Phone Number]</p>
-                  <p><strong>Address:</strong> [Physical Address]</p>
+                  <p><strong>Email:</strong> hello@liyanafinance.co.za</p>
+                  <p><strong>Phone:</strong> 012 004 0889</p>
+                  <p><strong>Address:</strong> 9 Athlone Street, Port Elizabeth</p>
                 </div>
                 <p className="text-gray-700 leading-relaxed mt-4">
                   You may also contact the Information Regulator of South Africa:
