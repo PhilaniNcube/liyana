@@ -1,4 +1,5 @@
 import { Navigation } from "@/components/navigation";
+import { ConsentBanner } from "@/components/consent-banner";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export default function PublicLayout({
     <>
       <Navigation />
       {children}
+      <ConsentBanner />
     </>
   );
 }
