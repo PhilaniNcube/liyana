@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/server";
+import { createServiceClient } from "@/lib/service";
 import { Tables } from "@/lib/types";
 import { z } from "zod";
 
@@ -16,17 +16,16 @@ export const getApplicationsByDateRangeSchema = z.object({
 
 // Analytics and reporting functions
 export async function getDashboardStats() {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   // Get applications count by status
   const { data: applications, error: appError } = await supabase
     .from("applications")
-    .select("*")
-    .returns<Pick<Tables<"applications">, "status" | "application_amount" | "created_at">[]>();
+    .select("*");
 
   if (appError) {
-    console.error("Error fetching applications for dashboard:", appError);
-return [];
+    console.log("Error fetching applications for dashboard:", appError);
+    return [];
   }
 
   // Get API checks count by status
@@ -43,8 +42,7 @@ return [];
   // Get documents count
   const { data: documents, error: docError } = await supabase
     .from("documents")
-    .select("document_type")
-    .returns<Pick<Tables<"documents">, "document_type">[]>();
+    .select("document_type");
 
   if (docError) {
     console.error("Error fetching documents for dashboard:", docError);
@@ -223,7 +221,7 @@ export async function getApplicationsOverTime(
   endDate: string,
   groupBy: "day" | "week" | "month" = "day"
 ) {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   const { data, error } = await supabase
     .from("applications")
@@ -238,68 +236,74 @@ export async function getApplicationsOverTime(
   }
 
   // Group applications by time period
-  const grouped = data.reduce((acc, app) => {
-    const date = new Date(app.created_at);
-    let key: string;
+  const grouped = data.reduce(
+    (acc, app) => {
+      const date = new Date(app.created_at);
+      let key: string;
 
-    switch (groupBy) {
-      case "month":
-        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-          2,
-          "0"
-        )}`;
-        break;
-      case "week":
-        // Get week number
-        const weekNumber = getWeekNumber(date);
-        key = `${date.getFullYear()}-W${String(weekNumber).padStart(2, "0")}`;
-        break;
-      default:
-        key = date.toISOString().split("T")[0];
-    }
+      switch (groupBy) {
+        case "month":
+          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+            2,
+            "0"
+          )}`;
+          break;
+        case "week":
+          // Get week number
+          const weekNumber = getWeekNumber(date);
+          key = `${date.getFullYear()}-W${String(weekNumber).padStart(2, "0")}`;
+          break;
+        default:
+          key = date.toISOString().split("T")[0];
+      }
 
-    if (!acc[key]) {
-      acc[key] = {
-        date: key,
-        total: 0,
-        approved: 0,
-        declined: 0,
-        pending: 0,
-        inReview: 0,
-      };
-    }
+      if (!acc[key]) {
+        acc[key] = {
+          date: key,
+          total: 0,
+          approved: 0,
+          declined: 0,
+          pending: 0,
+          inReview: 0,
+        };
+      }
 
-    acc[key].total += 1;
+      acc[key].total += 1;
 
-    switch (app.status) {
-      case "approved":
-        acc[key].approved += 1;
-        break;
-      case "declined":
-        acc[key].declined += 1;
-        break;
-      case "in_review":
-        acc[key].inReview += 1;
-        break;
-      default:
-        acc[key].pending += 1;
-    }
+      switch (app.status) {
+        case "approved":
+          acc[key].approved += 1;
+          break;
+        case "declined":
+          acc[key].declined += 1;
+          break;
+        case "in_review":
+          acc[key].inReview += 1;
+          break;
+        default:
+          acc[key].pending += 1;
+      }
 
-    return acc;
-  }, {} as Record<string, {
-    date: string;
-    total: number;
-    approved: number;
-    declined: number;
-    pending: number;
-    inReview: number;
-  }>);
+      return acc;
+    },
+    {} as Record<
+      string,
+      {
+        date: string;
+        total: number;
+        approved: number;
+        declined: number;
+        pending: number;
+        inReview: number;
+      }
+    >
+  );
 
   return Object.values(grouped);
 }
 
 export async function getApplicationTrends() {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
 
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -335,7 +339,10 @@ export async function getApplicationTrends() {
   }
 
   const calculateStats = (
-    applications: Pick<Tables<"applications">, "status" | "application_amount">[]
+    applications: Pick<
+      Tables<"applications">,
+      "status" | "application_amount"
+    >[]
   ) => {
     return applications.reduce(
       (acc, app) => {

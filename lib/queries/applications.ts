@@ -130,6 +130,11 @@ export async function getAllApplications(
 ): Promise<ApplicationWithProfile[]> {
   const supabase = await createClient();
 
+  // Debug: Check current user session
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  console.log("getAllApplications - Current user:", user ? { id: user.id, email: user.email } : null);
+  console.log("getAllApplications - User error:", userError);
+
   let query = supabase
     .from("applications")
     .select("*")
@@ -150,6 +155,7 @@ export async function getAllApplications(
   const { data: applications, error } = await query;
 
   if (error) {
+    console.log("Error fetching applications:", error);
     throw new Error(`Failed to fetch applications: ${error.message}`);
   }
 
