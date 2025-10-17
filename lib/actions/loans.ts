@@ -211,7 +211,7 @@ export async function submitLoanApplication(
       .single();
 
     if (error) {
-      console.error("Database error:", error);
+      console.log("Database error:", error);
       return {
         errors: {
           _form: ["Failed to submit loan application. Please try again."],

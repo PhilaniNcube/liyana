@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (docError) {
-      console.error("Database error:", docError);
+      console.log("Database error:", docError);
       // Try to clean up uploaded file
       await supabase.storage.from("documents").remove([uploadData.path]);
       return NextResponse.json(

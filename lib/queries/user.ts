@@ -48,7 +48,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     const { data, error } = await supabase.auth.getClaims();
 
     if (error || !data) {
-      console.error("Error fetching user:", error);
+      console.log("Error fetching user:", error);
       return null;
     }
 
@@ -60,7 +60,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     const createdAt = claims.iat ? new Date(claims.iat * 1000).toISOString() : new Date().toISOString();
 
     if (!userId) {
-      console.error("No user ID found in claims");
+      console.log("No user ID found in claims");
       return null;
     }
 
@@ -73,7 +73,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     };
   } catch (error) {
     // Log the error for debugging but don't throw it
-    console.error("Error fetching current user:", error);
+    console.log("Error fetching current user:", error);
     return null;
   }
 });
@@ -87,7 +87,8 @@ export const getUserProfile = cache(async (id: string) =>  {
     .eq("id", id)
     .single();
 
-  if (error) {
+  if (error || !data) {
+    console.log("Error fetching user profile:", { error, data });
     throw new Error(`Failed to fetch user profile: ${error.message}`);
   }
 
@@ -103,7 +104,8 @@ export async function getAllUserProfiles() {
     .neq("role", "admin") // Exclude admin users
     .order("created_at", { ascending: false });
 
-  if (error) {
+  if (error || !data) {
+    console.log("Error fetching user profiles:", { error, data });
     throw new Error(`Failed to fetch user profiles: ${error.message}`);
   }
 
