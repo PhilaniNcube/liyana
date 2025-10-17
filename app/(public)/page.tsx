@@ -133,7 +133,7 @@ export default async function Home() {
                 <ul className="space-y-2 text-sm text-gray-600 mb-4">
                   <li>• Family coverage options</li>
                   <li>• Immediate cover</li>
-                  <li>• No waiting periods for <strong>accidental death only</strong></li>
+                  <li>• No waiting period for <strong>accidental death only</strong></li>
                   <li>• 24/7 support</li>
                 </ul>
                 <Button asChild className="w-full bg-black">
