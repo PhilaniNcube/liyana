@@ -35,6 +35,7 @@ import SmsApplication from "@/components/sms-application";
 import type { EmailWithDetails } from "@/lib/queries/emails";
 import { updateLoanAmount, updateLoanTerm } from "@/lib/actions/loans";
 import { toast } from "sonner";
+import Link from "next/link";
 
 interface LoanPageClientProps {
   loan: any; // We'll type this properly based on your getLoan return type
@@ -156,7 +157,10 @@ export function LoanPageClient({
               <div>
                 <CardTitle className="text-xl">Approved Loan</CardTitle>
                 <CardDescription>
-                  Application and repayment details for the selected record.
+                  Application and repayment details for the selected record. <br />
+                  <Link className="underline text-blue-500" href={`/dashboard/applications/${loan.application_id}`}>
+                    Application  Details
+                  </Link>
                 </CardDescription>
               </div>
 
