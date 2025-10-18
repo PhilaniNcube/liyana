@@ -14,9 +14,10 @@ export async function GET(request: Request) {
     },
     body: JSON.stringify({
       mle_id: loginDetails.mle_id,
-      mbr_id: loginDetails.branch_id,
+    //   mbr_id: loginDetails.branch_id,
       user_id: loginDetails.user_id,
       login_token: loginDetails.login_token,
+      branch_id: loginDetails.branch_id,
     }),
   });
 
