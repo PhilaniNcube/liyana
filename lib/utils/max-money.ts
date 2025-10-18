@@ -258,3 +258,70 @@ export async function searchMaxMoneyClientByClientNumber(clientNumber: string): 
   
   return searchMaxMoneyClient({ client_number: clientNumber.trim() });
 }
+
+
+/**
+ * Create a MaxMoney client budget
+ * @param clientNumber - The client number to create a budget for
+ * @param grossIncome - The gross income amount
+ * @param netIncome - The net income amount
+ * @param livingExpenses - The living expenses amount
+ * @param mle - The MLE (returned from login)
+ * @param mbr - The MBR (returned from login)
+ * @param user_id - The user ID (returned from login)
+ * @param login_token - The login token (returned from login)
+ * @returns Promise<void>
+ */
+
+export async function createMaxMoneyClientBudget({
+  clientNumber,
+  grossIncome,
+  netIncome,
+  livingExpenses,
+  mle,
+  mbr,
+  user_id,
+  login_token
+}: {
+  clientNumber: string;
+  grossIncome: number;
+  netIncome: number;
+  livingExpenses: number;
+  mle: number;
+  mbr: number;
+  user_id: number;
+  login_token: string;
+}): Promise<void> {
+  if (!clientNumber || !mle || !mbr || !user_id || !login_token) {
+    throw new Error("All parameters are required");
+  }
+
+  const budgetData = {
+    client_number: clientNumber,
+    gross_income: grossIncome,
+    net_income: netIncome,
+    living_expenses: livingExpenses,
+    mle,
+    mbr,
+    user_id,
+    login_token,
+  };
+
+  const response = await fetch(`${MAX_MONEY_URL}/MaxIntegrate/create_client_budget`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(budgetData),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Create client budget request failed:", errorText);
+    throw new Error("Failed to create client budget");
+  }
+
+  console.log("Create client budget response status:", response.status, response.statusText);
+
+  console.log("Client budget created successfully");
+}

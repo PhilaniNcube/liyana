@@ -9,8 +9,8 @@ import {
 import { GENDERS, ID_TYPES } from "@/lib/enums";
 import { extractGenderFromSAID } from "@/lib/utils/sa-id";
 import { createClient } from "@/lib/server";
-
-
+import { createMaxMoneyClientBudget } from "@/lib/utils/max-money";
+import { validate } from "uuid";
 
 const MAX_MONEY_URL = process.env.MAX_MONEY_URL;
 const MAX_MONEY_USERNAME = process.env.MAX_MONEY_API_USERNAME;
@@ -34,22 +34,25 @@ async function login() {
   });
 
   const startTime = Date.now();
-  console.log("Starting Max Money login request at:", new Date(startTime).toISOString());
-  
+  console.log(
+    "Starting Max Money login request at:",
+    new Date(startTime).toISOString()
+  );
+
   const loginPayload = {
     user_name: MAX_MONEY_USERNAME,
     password: MAX_MONEY_PASSWORD,
   };
-  
+
   console.log("Login payload (password hidden):", {
     ...loginPayload,
-    password: "[HIDDEN]"
+    password: "[HIDDEN]",
   });
 
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-    
+
     const response = await fetch(loginUrl, {
       method: "POST",
       headers: {
@@ -60,17 +63,25 @@ async function login() {
     });
 
     clearTimeout(timeoutId);
-    
+
     const endTime = Date.now();
     console.log(`Login request completed in ${endTime - startTime}ms`);
     console.log("Login response status:", response.status, response.statusText);
-    console.log("Login response headers:", Object.fromEntries(response.headers.entries()));
+    console.log(
+      "Login response headers:",
+      Object.fromEntries(response.headers.entries())
+    );
 
     if (!response.ok) {
-      console.error("Max Money login request failed with status:", response.status);
+      console.error(
+        "Max Money login request failed with status:",
+        response.status
+      );
       const errorText = await response.text();
       console.error("Login error response body:", errorText);
-      throw new Error(`Login failed: ${response.status} ${response.statusText} - ${errorText}`);
+      throw new Error(
+        `Login failed: ${response.status} ${response.statusText} - ${errorText}`
+      );
     }
 
     // Check if response is JSON
@@ -84,26 +95,32 @@ async function login() {
 
     const data = await response.json();
     console.log("Login response data:", data);
-    
+
     // Log the expected schema for comparison
     console.log("Expected login response schema:", {
       return_reason: "string",
-      return_code: "number", 
+      return_code: "number",
       login_token: "string",
       user_id: "number",
       user_name: "string",
       count_branches: "number",
       branch_id: "number",
       mle_id: "number",
-      country_code: "string"
+      country_code: "string",
     });
 
     const validatedLogin = maxMoneyLoginResponseSchema.safeParse(data);
 
     if (!validatedLogin.success) {
       console.error("Max Money login validation error:", validatedLogin.error);
-      console.error("Raw response data that failed validation:", JSON.stringify(data, null, 2));
-      console.error("Validation error details:", validatedLogin.error.flatten());
+      console.error(
+        "Raw response data that failed validation:",
+        JSON.stringify(data, null, 2)
+      );
+      console.error(
+        "Validation error details:",
+        validatedLogin.error.flatten()
+      );
       throw new Error("Failed to validate Max Money login response.");
     }
 
@@ -117,22 +134,25 @@ async function login() {
       );
     }
 
-    console.log("Max Money login successful for user_id:", validatedLogin.data.user_id);
+    console.log(
+      "Max Money login successful for user_id:",
+      validatedLogin.data.user_id
+    );
 
     return validatedLogin.data;
   } catch (fetchError) {
     console.error("Network error during login:", fetchError);
     if (fetchError instanceof TypeError) {
-      console.error("This might be a network connectivity issue or invalid URL");
+      console.error(
+        "This might be a network connectivity issue or invalid URL"
+      );
     }
-    if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+    if (fetchError instanceof Error && fetchError.name === "AbortError") {
       console.error("Login request timed out after 30 seconds");
     }
     throw fetchError;
   }
 }
-
-
 
 export async function POST(request: Request) {
   try {
@@ -140,7 +160,7 @@ export async function POST(request: Request) {
     console.log("Environment check:", {
       MAX_MONEY_URL: !!MAX_MONEY_URL,
       MAX_MONEY_USERNAME: !!MAX_MONEY_USERNAME,
-      MAX_MONEY_PASSWORD: !!MAX_MONEY_PASSWORD
+      MAX_MONEY_PASSWORD: !!MAX_MONEY_PASSWORD,
     });
 
     const loginData = await login();
@@ -151,7 +171,7 @@ export async function POST(request: Request) {
 
     // Validate input data first
     const validatedInput = maxMoneyClientInputSchema.safeParse(body);
-    
+
     if (!validatedInput.success) {
       console.error("Input validation error:", validatedInput.error);
       return NextResponse.json(
@@ -166,39 +186,61 @@ export async function POST(request: Request) {
     console.log("Input data validated successfully:", validatedInput.data);
 
     // Extract gender from SA ID number instead of using input gender
-    const extractedGender = extractGenderFromSAID(validatedInput.data.id_number);
-    console.log("Gender extracted from SA ID:", extractedGender, "from ID:", validatedInput.data.id_number);
-    
+    const extractedGender = extractGenderFromSAID(
+      validatedInput.data.id_number
+    );
+    console.log(
+      "Gender extracted from SA ID:",
+      extractedGender,
+      "from ID:",
+      validatedInput.data.id_number
+    );
+
     // Map extracted gender to Max Money gender values
     let genderValue: number;
     if (extractedGender === "M") {
-      genderValue = GENDERS.find(g => g.description.toLowerCase() === "male")?.value || 1;
+      genderValue =
+        GENDERS.find((g) => g.description.toLowerCase() === "male")?.value || 1;
       console.log("Using Male gender from SA ID extraction");
     } else if (extractedGender === "F") {
-      genderValue = GENDERS.find(g => g.description.toLowerCase() === "female")?.value || 2;
+      genderValue =
+        GENDERS.find((g) => g.description.toLowerCase() === "female")?.value ||
+        2;
       console.log("Using Female gender from SA ID extraction");
     } else {
       // Fallback to input gender if SA ID extraction fails
-      console.warn("Failed to extract gender from SA ID, falling back to input gender");
+      console.warn(
+        "Failed to extract gender from SA ID, falling back to input gender"
+      );
       console.log("Input gender provided:", validatedInput.data.gender);
-      genderValue = GENDERS.find(
-        (g) => g.description.toLowerCase() === (validatedInput.data.gender || "male").toLowerCase()
-      )?.value || 1;
+      genderValue =
+        GENDERS.find(
+          (g) =>
+            g.description.toLowerCase() ===
+            (validatedInput.data.gender || "male").toLowerCase()
+        )?.value || 1;
       console.log("Using fallback gender value:", genderValue);
     }
-    
+
     console.log("Final gender value for Max Money API:", genderValue);
     console.log("Available GENDERS enum:", GENDERS);
-    
-    const idTypeValue = ID_TYPES.find(
-      (i) => i.description.toLowerCase() === (validatedInput.data.id_type || "rsa id").toLowerCase()
-    )?.value || 1; // Default to RSA Id if not found
+
+    const idTypeValue =
+      ID_TYPES.find(
+        (i) =>
+          i.description.toLowerCase() ===
+          (validatedInput.data.id_type || "rsa id").toLowerCase()
+      )?.value || 1; // Default to RSA Id if not found
 
     // Truncate address lines to 35 characters to comply with MaxMoney requirements
-    const truncateAddressLine = (line: string | undefined): string | undefined => {
+    const truncateAddressLine = (
+      line: string | undefined
+    ): string | undefined => {
       if (!line) return line;
       if (line.length > 35) {
-        console.log(`Truncating address line from ${line.length} to 35 characters: "${line}" -> "${line.substring(0, 35)}"`);
+        console.log(
+          `Truncating address line from ${line.length} to 35 characters: "${line}" -> "${line.substring(0, 35)}"`
+        );
         return line.substring(0, 35);
       }
       return line;
@@ -213,16 +255,25 @@ export async function POST(request: Request) {
       gender: genderValue,
       id_type: idTypeValue,
       // Truncate address lines to MaxMoney's 35-character limit
-      physical_address_line_1: truncateAddressLine(validatedInput.data.physical_address_line_1),
-      physical_address_line_2: truncateAddressLine(validatedInput.data.physical_address_line_2),
-      physical_address_line_3: truncateAddressLine(validatedInput.data.physical_address_line_3),
+      physical_address_line_1: truncateAddressLine(
+        validatedInput.data.physical_address_line_1
+      ),
+      physical_address_line_2: truncateAddressLine(
+        validatedInput.data.physical_address_line_2
+      ),
+      physical_address_line_3: truncateAddressLine(
+        validatedInput.data.physical_address_line_3
+      ),
     };
 
     const validatedClientPayload =
       createMaxMoneyClientSchema.safeParse(clientPayload);
 
     if (!validatedClientPayload.success) {
-      console.error("Max Money client validation error:", validatedClientPayload.error);
+      console.error(
+        "Max Money client validation error:",
+        validatedClientPayload.error
+      );
       return NextResponse.json(
         {
           message: "Invalid client data payload.",
@@ -246,13 +297,18 @@ export async function POST(request: Request) {
     );
 
     console.log("Create client response status:", createClientResponse.status);
-    console.log("Create client response headers:", Object.fromEntries(createClientResponse.headers.entries()));
+    console.log(
+      "Create client response headers:",
+      Object.fromEntries(createClientResponse.headers.entries())
+    );
 
     if (!createClientResponse.ok) {
       const errorText = await createClientResponse.text();
       console.error("Create client failed:", errorText);
       return NextResponse.json(
-        { message: `Failed to create client in Max Money: ${createClientResponse.statusText}` },
+        {
+          message: `Failed to create client in Max Money: ${createClientResponse.statusText}`,
+        },
         { status: createClientResponse.status }
       );
     }
@@ -262,7 +318,9 @@ export async function POST(request: Request) {
       const responseText = await createClientResponse.text();
       console.error("Create client response is not JSON:", responseText);
       return NextResponse.json(
-        { message: "Max Money API returned non-JSON response for create client" },
+        {
+          message: "Max Money API returned non-JSON response for create client",
+        },
         { status: 500 }
       );
     }
@@ -272,20 +330,23 @@ export async function POST(request: Request) {
 
     if (createClientData.return_code !== 0) {
       // Check if it's a validation error
-      if (createClientData.validation_errors && createClientData.validation_errors.length > 0) {
-        const validationErrors = createClientData.validation_errors.map((err: any) => 
-          `${err.field_name}: ${err.error}`
-        ).join(', ');
-        
+      if (
+        createClientData.validation_errors &&
+        createClientData.validation_errors.length > 0
+      ) {
+        const validationErrors = createClientData.validation_errors
+          .map((err: any) => `${err.field_name}: ${err.error}`)
+          .join(", ");
+
         return NextResponse.json(
           {
             message: `Validation error from Max Money: ${validationErrors}`,
-            validation_errors: createClientData.validation_errors
+            validation_errors: createClientData.validation_errors,
           },
           { status: 400 }
         );
       }
-      
+
       return NextResponse.json(
         {
           message: `Failed to create client in Max Money: ${createClientData.return_reason}`,
@@ -295,15 +356,28 @@ export async function POST(request: Request) {
     }
 
     // Client created successfully in MaxMoney, now update the applications table
-    console.log("MaxMoney client created successfully, updating applications table...");
-    
+    console.log(
+      "MaxMoney client created successfully, updating applications table..."
+    );
+
     try {
       const supabase = await createClient();
-      
+
       // Extract client_number from MaxMoney response
       const clientNumber = createClientData.client_number;
       const applicationId = validatedInput.data.application_id;
-      
+
+      await createMaxMoneyClientBudget({
+        clientNumber,
+        grossIncome: validatedClientPayload.data.gross_salary,
+        netIncome: validatedClientPayload.data.net_salary,
+        livingExpenses: validatedClientPayload.data.total_expenses || 0,
+        mle: loginData.mle_id,
+        mbr: loginData.branch_id,
+        user_id: loginData.user_id,
+        login_token: loginData.login_token,
+      });
+
       if (clientNumber && applicationId) {
         const { data: updateData, error: updateError } = await supabase
           .from("applications")
@@ -312,17 +386,26 @@ export async function POST(request: Request) {
           .select();
 
         if (updateError) {
-          console.error("Failed to update application with max_money_id:", updateError);
+          console.error(
+            "Failed to update application with max_money_id:",
+            updateError
+          );
           // Don't fail the entire request, just log the error
           // The MaxMoney client was created successfully
         } else {
-          console.log("Successfully updated application with max_money_id:", clientNumber);
+          console.log(
+            "Successfully updated application with max_money_id:",
+            clientNumber
+          );
         }
       } else {
-        console.warn("Missing client_number or application_id for database update:", {
-          clientNumber,
-          applicationId,
-        });
+        console.warn(
+          "Missing client_number or application_id for database update:",
+          {
+            clientNumber,
+            applicationId,
+          }
+        );
       }
     } catch (dbError) {
       console.error("Database update error:", dbError);

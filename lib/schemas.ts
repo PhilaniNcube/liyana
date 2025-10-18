@@ -1761,6 +1761,7 @@ export const createMaxMoneyClientSchema = z.object({
   department: z.string().max(30, "Department cannot exceed 30 characters").optional(),
   gross_salary: z.number().min(1, "Gross salary is required"),
   net_salary: z.number().min(1, "Net salary is required"),
+  total_expenses: z.number().min(0, "Total expenses cannot be negative").optional(),
 
   // Banking and Payment
   bank_account_type: z.number().optional(),
@@ -1919,6 +1920,7 @@ export const maxMoneyClientInputSchema = z.object({
   employee_no: z.string().optional(),
   gross_salary: z.number().min(0, "Gross salary must be positive"),
   net_salary: z.number().min(0, "Net salary must be positive"),
+  total_expenses: z.number().min(0, "Total expenses must be positive").optional(),
 
   // Banking details
   bank_account_no: z.string().optional(),

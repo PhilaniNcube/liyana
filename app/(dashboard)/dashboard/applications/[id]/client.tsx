@@ -347,6 +347,7 @@ export function ApplicationDetailClient({
         gross_salary: application.monthly_income || 0,
         // Net salary calculated from affordability data (monthly_income + additional_income - deductions)
         net_salary: affordabilityCalculation.netIncome,
+        total_expenses: affordabilityCalculation.totalExpenses,
 
         // Banking details
         bank_account_no: application.bank_account_number || "",
