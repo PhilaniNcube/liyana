@@ -299,8 +299,8 @@ export async function createMaxMoneyClientBudget({
   const budgetData = {
     client_number: clientNumber,
     gross_income: grossIncome,
-    net_income: netIncome,
-    living_expenses: livingExpenses,
+    nett_income: netIncome,
+    living_expense: livingExpenses,
     mle,
     mbr,
     user_id,
