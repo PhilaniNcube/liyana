@@ -15,7 +15,7 @@ const MAX_MONEY_PASSWORD = process.env.MAX_MONEY_API_PASSWORD;
  * Login to MaxMoney API and get authentication token
  * @returns Promise<MaxMoneyLoginResponse>
  */
-async function loginToMaxMoney() {
+export async function loginToMaxMoney() {
   if (!MAX_MONEY_URL || !MAX_MONEY_USERNAME || !MAX_MONEY_PASSWORD) {
     console.error("Missing Max Money environment variables:", {
       MAX_MONEY_URL: !!MAX_MONEY_URL,
