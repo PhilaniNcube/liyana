@@ -28,6 +28,7 @@ import LoanEmailTab from "./_components/loan-email-tab";
 import { createClient } from "@/lib/server";
 import { getEmailsForLoanWithDetails } from "@/lib/queries/emails";
 import { LoanPageClient } from "./_components/loan-page-client";
+import { getMaxMoneyCashBoxes } from "@/lib/utils/max-money";
 
 
 interface PageProps {
@@ -37,6 +38,10 @@ interface PageProps {
 const LoanPage = async ({ params }: PageProps) => {
   const { id } = await params;
   const loan = await getLoan(id);
+
+  const cashboxes = await getMaxMoneyCashBoxes();
+
+  console.log("Cashboxes:", cashboxes);
 
   // Fetch email history for this loan
   const emailHistory = await getEmailsForLoanWithDetails(id);

@@ -1,5 +1,7 @@
 import { getApprovedApplications } from "@/lib/queries/approved_loans";
 import { LoansPageClient } from "./loans-page-client";
+import { get } from "http";
+import { getMaxMoneyCashBoxes } from "@/lib/utils/max-money";
 
 interface LoansPageProps {
   searchParams: Promise<{
@@ -17,6 +19,8 @@ export default async function LoansPage({ searchParams }: LoansPageProps) {
     fromDate,
     toDate,
   });
+
+  
 
   return <LoansPageClient initialLoans={approvedLoans} />;
 }

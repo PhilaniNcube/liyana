@@ -29,8 +29,11 @@ export async function loginToMaxMoney() {
   console.log("Attempting to login to Max Money:", loginUrl);
 
   const startTime = Date.now();
-  console.log("Starting Max Money login request at:", new Date(startTime).toISOString());
-  
+  console.log(
+    "Starting Max Money login request at:",
+    new Date(startTime).toISOString()
+  );
+
   const loginPayload = {
     user_name: MAX_MONEY_USERNAME,
     password: MAX_MONEY_PASSWORD,
@@ -39,7 +42,7 @@ export async function loginToMaxMoney() {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-    
+
     const response = await fetch(loginUrl, {
       method: "POST",
       headers: {
@@ -50,16 +53,21 @@ export async function loginToMaxMoney() {
     });
 
     clearTimeout(timeoutId);
-    
+
     const endTime = Date.now();
     console.log(`Login request completed in ${endTime - startTime}ms`);
     console.log("Login response status:", response.status, response.statusText);
 
     if (!response.ok) {
-      console.error("Max Money login request failed with status:", response.status);
+      console.error(
+        "Max Money login request failed with status:",
+        response.status
+      );
       const errorText = await response.text();
       console.error("Login error response body:", errorText);
-      throw new Error(`Login failed: ${response.status} ${response.statusText} - ${errorText}`);
+      throw new Error(
+        `Login failed: ${response.status} ${response.statusText} - ${errorText}`
+      );
     }
 
     // Check if response is JSON
@@ -78,8 +86,14 @@ export async function loginToMaxMoney() {
 
     if (!validatedLogin.success) {
       console.error("Max Money login validation error:", validatedLogin.error);
-      console.error("Raw response data that failed validation:", JSON.stringify(data, null, 2));
-      console.error("Validation error details:", validatedLogin.error.flatten());
+      console.error(
+        "Raw response data that failed validation:",
+        JSON.stringify(data, null, 2)
+      );
+      console.error(
+        "Validation error details:",
+        validatedLogin.error.flatten()
+      );
       throw new Error("Failed to validate Max Money login response.");
     }
 
@@ -93,15 +107,20 @@ export async function loginToMaxMoney() {
       );
     }
 
-    console.log("Max Money login successful for user_id:", validatedLogin.data.user_id);
+    console.log(
+      "Max Money login successful for user_id:",
+      validatedLogin.data.user_id
+    );
 
     return validatedLogin.data;
   } catch (fetchError) {
     console.error("Network error during login:", fetchError);
     if (fetchError instanceof TypeError) {
-      console.error("This might be a network connectivity issue or invalid URL");
+      console.error(
+        "This might be a network connectivity issue or invalid URL"
+      );
     }
-    if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+    if (fetchError instanceof Error && fetchError.name === "AbortError") {
       console.error("Login request timed out after 30 seconds");
     }
     throw fetchError;
@@ -119,7 +138,7 @@ export async function searchMaxMoneyClient(params: {
 }): Promise<MaxMoneyClientSearchResponse> {
   try {
     console.log("Starting Max Money client search...");
-    
+
     // Validate that at least one search parameter is provided
     if (!params.id_number && !params.client_number) {
       throw new Error("Either id_number or client_number must be provided");
@@ -139,23 +158,27 @@ export async function searchMaxMoneyClient(params: {
     };
 
     // Validate the search payload
-    const validatedSearchPayload = maxMoneyClientSearchSchema.safeParse(searchPayload);
+    const validatedSearchPayload =
+      maxMoneyClientSearchSchema.safeParse(searchPayload);
 
     if (!validatedSearchPayload.success) {
-      console.error("Max Money client search validation error:", validatedSearchPayload.error);
+      console.error(
+        "Max Money client search validation error:",
+        validatedSearchPayload.error
+      );
       throw new Error("Invalid client search payload");
     }
 
     console.log("Searching for client with payload:", {
       ...validatedSearchPayload.data,
-      login_token: "[HIDDEN]"
+      login_token: "[HIDDEN]",
     });
 
     const searchUrl = `${MAX_MONEY_URL}/MaxIntegrate/client_search`;
     console.log("Max Money client search URL:", searchUrl);
 
     const startTime = Date.now();
-    
+
     const searchResponse = await fetch(searchUrl, {
       method: "POST",
       headers: {
@@ -166,29 +189,44 @@ export async function searchMaxMoneyClient(params: {
 
     const endTime = Date.now();
     console.log(`Client search request completed in ${endTime - startTime}ms`);
-    console.log("Client search response status:", searchResponse.status, searchResponse.statusText);
+    console.log(
+      "Client search response status:",
+      searchResponse.status,
+      searchResponse.statusText
+    );
 
     if (!searchResponse.ok) {
       const errorText = await searchResponse.text();
       console.error("Client search failed:", errorText);
-      throw new Error(`Failed to search client in Max Money: ${searchResponse.statusText} - ${errorText}`);
+      throw new Error(
+        `Failed to search client in Max Money: ${searchResponse.statusText} - ${errorText}`
+      );
     }
 
     const contentType = searchResponse.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
       const responseText = await searchResponse.text();
       console.error("Client search response is not JSON:", responseText);
-      throw new Error("Max Money API returned non-JSON response for client search");
+      throw new Error(
+        "Max Money API returned non-JSON response for client search"
+      );
     }
 
     const searchData = await searchResponse.json();
     console.log("Client search response data:", searchData);
 
-    const validatedSearchResponse = maxMoneyClientSearchResponseSchema.safeParse(searchData);
+    const validatedSearchResponse =
+      maxMoneyClientSearchResponseSchema.safeParse(searchData);
 
     if (!validatedSearchResponse.success) {
-      console.error("Max Money client search response validation error:", validatedSearchResponse.error);
-      console.error("Raw response data that failed validation:", JSON.stringify(searchData, null, 2));
+      console.error(
+        "Max Money client search response validation error:",
+        validatedSearchResponse.error
+      );
+      console.error(
+        "Raw response data that failed validation:",
+        JSON.stringify(searchData, null, 2)
+      );
       throw new Error("Failed to validate Max Money client search response");
     }
 
@@ -203,9 +241,12 @@ export async function searchMaxMoneyClient(params: {
     }
 
     console.log("Max Money client search successful.");
-    
+
     // Log client information if found
-    if (validatedSearchResponse.data.return_code === 0 && validatedSearchResponse.data.client_no) {
+    if (
+      validatedSearchResponse.data.return_code === 0 &&
+      validatedSearchResponse.data.client_no
+    ) {
       console.log("Found client:", {
         client_no: validatedSearchResponse.data.client_no,
         client_name: validatedSearchResponse.data.client_name,
@@ -218,12 +259,9 @@ export async function searchMaxMoneyClient(params: {
     }
 
     return validatedSearchResponse.data;
-
- 
-
-  
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+    const errorMessage =
+      error instanceof Error ? error.message : "An unknown error occurred.";
     console.error("Max Money client search error:", errorMessage);
     throw new Error(`Max Money client search failed: ${errorMessage}`);
   }
@@ -234,13 +272,15 @@ export async function searchMaxMoneyClient(params: {
  * @param idNumber - The ID number to search for
  * @returns Promise<MaxMoneyClientSearchResponse>
  */
-export async function searchMaxMoneyClientByIdNumber(idNumber: string): Promise<MaxMoneyClientSearchResponse> {
+export async function searchMaxMoneyClientByIdNumber(
+  idNumber: string
+): Promise<MaxMoneyClientSearchResponse> {
   if (!idNumber || idNumber.trim() === "") {
     throw new Error("ID number is required");
   }
 
   console.log("Searching for MaxMoney client by ID number:", idNumber);
-  
+
   return searchMaxMoneyClient({ id_number: idNumber.trim() });
 }
 
@@ -249,16 +289,17 @@ export async function searchMaxMoneyClientByIdNumber(idNumber: string): Promise<
  * @param clientNumber - The client number to search for
  * @returns Promise<MaxMoneyClientSearchResponse>
  */
-export async function searchMaxMoneyClientByClientNumber(clientNumber: string): Promise<MaxMoneyClientSearchResponse> {
+export async function searchMaxMoneyClientByClientNumber(
+  clientNumber: string
+): Promise<MaxMoneyClientSearchResponse> {
   if (!clientNumber || clientNumber.trim() === "") {
     throw new Error("Client number is required");
   }
 
   console.log("Searching for MaxMoney client by client number:", clientNumber);
-  
+
   return searchMaxMoneyClient({ client_number: clientNumber.trim() });
 }
-
 
 /**
  * Create a MaxMoney client budget
@@ -281,7 +322,7 @@ export async function createMaxMoneyClientBudget({
   mle,
   mbr,
   user_id,
-  login_token
+  login_token,
 }: {
   clientNumber: string;
   grossIncome: number;
@@ -307,13 +348,16 @@ export async function createMaxMoneyClientBudget({
     login_token,
   };
 
-  const response = await fetch(`${MAX_MONEY_URL}/MaxIntegrate/create_client_budget`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(budgetData),
-  });
+  const response = await fetch(
+    `${MAX_MONEY_URL}/MaxIntegrate/create_client_budget`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(budgetData),
+    }
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -321,7 +365,47 @@ export async function createMaxMoneyClientBudget({
     throw new Error("Failed to create client budget");
   }
 
-  console.log("Create client budget response status:", response.status, response.statusText);
+  console.log(
+    "Create client budget response status:",
+    response.status,
+    response.statusText
+  );
 
   console.log("Client budget created successfully");
+}
+
+/**
+ * get a list of MaxMoney Cash Boxes
+ */
+
+export async function getMaxMoneyCashBoxes(): Promise<{
+  id: number;
+  description: string;
+}[]> {
+  const loginData = await loginToMaxMoney();
+
+  const cashBoxListUrl = `${MAX_MONEY_URL}/MaxIntegrate/cashbox_list`;
+
+  const response = await fetch(cashBoxListUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      mle_id: loginData.mle_id,
+      branch_id: loginData.branch_id,
+      user_id: loginData.user_id,
+      login_token: loginData.login_token,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Get Cash Boxes request failed:", errorText);
+    throw new Error("Failed to get MaxMoney Cash Boxes");
+  }
+
+  const data = await response.json();
+
+  return data.result_items;
 }
