@@ -14,29 +14,25 @@ export function DownloadCreditAgreementButton({
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownloadCreditAgreement = async () => {
-    setIsDownloading(true);
-    try {
-      const response = await fetch(`/api/loans/${loanId}/credit-agreement`);
+    // setIsDownloading(true);
+    const response = await fetch(`/dashboard/loans/${loanId}/credit-agreement`);
 
-      if (!response.ok) {
-        throw new Error("Failed to download credit agreement");
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `credit-agreement-loan-${loanId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading credit agreement:", error);
-      alert("Failed to download credit agreement. Please try again.");
-    } finally {
+    if (!response.ok) {
+      // Handle error
+      console.error("Failed to download credit agreement");
       setIsDownloading(false);
+      return;
     }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(new Blob([blob]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `credit-agreement-loan-${loanId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   };
 
   return (

@@ -46,6 +46,7 @@ export function DeclinedLoansPagination({
 
   const generatePageNumbers = () => {
     const pages = [];
+    const minVisiblePages = 4;
     const maxVisiblePages = 5;
 
     if (totalPages <= maxVisiblePages) {
@@ -53,24 +54,22 @@ export function DeclinedLoansPagination({
         pages.push(i);
       }
     } else {
+      // Ensure we show at least 4 pages when we have 4 or more total pages
+      const pagesToShow = Math.max(minVisiblePages, Math.min(maxVisiblePages, totalPages));
+      
       if (currentPage <= 3) {
-        pages.push(1, 2, 3, 4, 5);
+        for (let i = 1; i <= pagesToShow; i++) {
+          pages.push(i);
+        }
       } else if (currentPage >= totalPages - 2) {
-        pages.push(
-          totalPages - 4,
-          totalPages - 3,
-          totalPages - 2,
-          totalPages - 1,
-          totalPages
-        );
+        for (let i = totalPages - pagesToShow + 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
       } else {
-        pages.push(
-          currentPage - 2,
-          currentPage - 1,
-          currentPage,
-          currentPage + 1,
-          currentPage + 2
-        );
+        const halfPages = Math.floor(pagesToShow / 2);
+        for (let i = currentPage - halfPages; i <= currentPage + halfPages; i++) {
+          pages.push(i);
+        }
       }
     }
 
