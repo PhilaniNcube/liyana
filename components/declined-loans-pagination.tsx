@@ -49,26 +49,32 @@ export function DeclinedLoansPagination({
     const minVisiblePages = 4;
     const maxVisiblePages = 5;
 
+    // If total pages is less than or equal to max, show all pages
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
-      // Ensure we show at least 4 pages when we have 4 or more total pages
-      const pagesToShow = Math.max(minVisiblePages, Math.min(maxVisiblePages, totalPages));
+      // For more than maxVisiblePages, ensure we show at least minVisiblePages
+      const pagesToShow = maxVisiblePages;
       
       if (currentPage <= 3) {
-        for (let i = 1; i <= pagesToShow; i++) {
+        // Show first 4-5 pages when near the beginning
+        for (let i = 1; i <= Math.min(pagesToShow, totalPages); i++) {
           pages.push(i);
         }
       } else if (currentPage >= totalPages - 2) {
-        for (let i = totalPages - pagesToShow + 1; i <= totalPages; i++) {
+        // Show last 4-5 pages when near the end
+        for (let i = Math.max(1, totalPages - pagesToShow + 1); i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
+        // Show pages centered around current page
         const halfPages = Math.floor(pagesToShow / 2);
         for (let i = currentPage - halfPages; i <= currentPage + halfPages; i++) {
-          pages.push(i);
+          if (i >= 1 && i <= totalPages) {
+            pages.push(i);
+          }
         }
       }
     }
@@ -94,6 +100,7 @@ export function DeclinedLoansPagination({
             </PaginationItem>
           )}
 
+          {/* Show page 1 and ellipsis only if we're not already showing it in pageNumbers */}
           {pageNumbers[0] > 1 && (
             <>
               <PaginationItem>
@@ -115,6 +122,7 @@ export function DeclinedLoansPagination({
             </>
           )}
 
+          {/* Always show the generated page numbers */}
           {pageNumbers.map((pageNumber) => (
             <PaginationItem key={pageNumber}>
               <PaginationLink
@@ -130,6 +138,7 @@ export function DeclinedLoansPagination({
             </PaginationItem>
           ))}
 
+          {/* Show ellipsis and last page only if we're not already showing it in pageNumbers */}
           {pageNumbers[pageNumbers.length - 1] < totalPages && (
             <>
               {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
