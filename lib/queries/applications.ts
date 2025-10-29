@@ -522,7 +522,13 @@ export async function getDeclinedApplications(
   // Pagination in memory
   const start = (page - 1) * per_page;
   const end = start + per_page;
-  return unifiedArray.slice(start, end);
+  const paginatedData = unifiedArray.slice(start, end);
+  
+  return {
+    data: paginatedData,
+    totalCount: unifiedArray.length,
+    totalPages: Math.ceil(unifiedArray.length / per_page),
+  };
 }
 
 // Incomplete application candidates:

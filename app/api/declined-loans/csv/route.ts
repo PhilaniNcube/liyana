@@ -29,20 +29,20 @@ export async function GET(request: NextRequest) {
     
     // Fetch all pages of data
     while (hasMoreData) {
-      const pageData = await getDeclinedApplications(
+      const result = await getDeclinedApplications(
         currentPage,
         100, // Fetch in chunks of 100
         startDateISO,
         endDateISO
       );
       
-      if (pageData.length === 0) {
+      if (result.data.length === 0) {
         hasMoreData = false;
       } else {
-        allDeclinedUsers.push(...pageData);
+        allDeclinedUsers.push(...result.data);
         currentPage++;
-        // Safety check to prevent infinite loops
-        if (currentPage > 100) {
+        // Safety check to prevent infinite loops or if we've reached the last page
+        if (currentPage > 100 || currentPage > result.totalPages) {
           hasMoreData = false;
         }
       }

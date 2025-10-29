@@ -48,12 +48,15 @@ export default async function DeclinedLoansPage(props: {
   const start_date = startDateObj.toISOString();
   const end_date = endDateObj.toISOString();
 
-  const declinedUsers = await getDeclinedApplications(
+  const declinedResult = await getDeclinedApplications(
     page,
     per_page,
     start_date,
     end_date
   );
+  
+  const declinedUsers = declinedResult.data;
+  const totalPages = declinedResult.totalPages;
 
   return (
     <div className="space-y-6">
@@ -177,14 +180,10 @@ export default async function DeclinedLoansPage(props: {
       </div>
 
       {/* Pagination Component */}
-      {declinedUsers.length > 0 && (
+      {totalPages > 1 && (
         <DeclinedLoansPagination
           currentPage={page}
-          totalPages={
-            // Estimate total pages: if we have a full page of results, assume there might be more
-            // This is a limitation of the current getDeclinedApplications function
-            declinedUsers.length === per_page ? page + 1 : page
-          }
+          totalPages={totalPages}
         />
       )}
     </div>

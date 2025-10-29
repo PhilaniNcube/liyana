@@ -49,22 +49,27 @@ export function DeclinedLoansPagination({
     const minVisiblePages = 4;
     const maxVisiblePages = 5;
 
-    // If total pages is less than or equal to max, show all pages
-    if (totalPages <= maxVisiblePages) {
+    // If total pages is 4 or less, show all pages
+    if (totalPages <= minVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else if (totalPages <= maxVisiblePages) {
+      // If total pages is 5, show all pages
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
-      // For more than maxVisiblePages, ensure we show at least minVisiblePages
+      // For more than 5 pages, show a sliding window
       const pagesToShow = maxVisiblePages;
       
       if (currentPage <= 3) {
-        // Show first 4-5 pages when near the beginning
+        // Show first 5 pages when near the beginning
         for (let i = 1; i <= Math.min(pagesToShow, totalPages); i++) {
           pages.push(i);
         }
       } else if (currentPage >= totalPages - 2) {
-        // Show last 4-5 pages when near the end
+        // Show last 5 pages when near the end
         for (let i = Math.max(1, totalPages - pagesToShow + 1); i <= totalPages; i++) {
           pages.push(i);
         }
