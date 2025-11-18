@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQueryState, parseAsInteger } from "nuqs";
 import FuneralCoverCalculator, {
   type ICalculationParams,
-  type RelationshipType,
 } from "@/lib/utils/funeralcover-calculator";
 import { FUNERAL_RATE_DATA } from "@/lib/data/funeral-rates";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
