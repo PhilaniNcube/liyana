@@ -38,10 +38,11 @@ const calculatorSchema = z.object({
     .number()
     .min(18, "Main member must be at least 18 years old")
     .max(100, "Maximum age is 100"),
-  coverAmount: z
-    .number()
-    .min(10000, "Minimum cover amount is R10,000")
-    .max(500000, "Maximum cover amount is R500,000"),
+  coverAmount: z.union([
+    z.literal(5000),
+    z.literal(10000),
+    z.literal(15000),
+  ]),
   additionalMembers: z
     .array(
       z.object({
@@ -86,14 +87,14 @@ export default function FuneralPremiumCalculator() {
   // URL state management for cover amount
   const [coverAmountFromUrl, setCoverAmountInUrl] = useQueryState(
     "coverAmount",
-    parseAsInteger.withDefault(50000)
+    parseAsInteger.withDefault(10000)
   );
 
   const form = useForm<CalculatorFormData>({
     resolver: zodResolver(calculatorSchema),
     defaultValues: {
       mainMemberAge: 35,
-      coverAmount: coverAmountFromUrl,
+      coverAmount: (coverAmountFromUrl === 5000 || coverAmountFromUrl === 10000 || coverAmountFromUrl === 15000) ? coverAmountFromUrl : 10000,
       additionalMembers: [],
     },
   });
@@ -204,20 +205,26 @@ export default function FuneralPremiumCalculator() {
               name="coverAmount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cover Amount (R)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="e.g., 50000"
-                      {...field}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value) || 0;
-                        field.onChange(value);
-                        // Update URL state when user changes the value
-                        setCoverAmountInUrl(value);
-                      }}
-                    />
-                  </FormControl>
+                  <FormLabel>Cover Amount</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      const intValue = parseInt(value);
+                      field.onChange(intValue);
+                      setCoverAmountInUrl(intValue);
+                    }}
+                    defaultValue={field.value?.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select cover amount" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="5000">R5,000</SelectItem>
+                      <SelectItem value="10000">R10,000</SelectItem>
+                      <SelectItem value="15000">R15,000</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
