@@ -363,8 +363,8 @@ export function ApplicationDetailClient({
         // References - using next of kin as reference
         reference_first_name: application.next_of_kin_name?.split(" ")[0] || "",
         reference_surname:
-          application.next_of_kin_name?.split(" ").slice(1).join(" ") || "",
-        reference_contact_no: application.next_of_kin_phone_number || "",
+          application.next_of_kin_name?.split(" ").slice(1).join(" ") || "not_provided",
+        reference_contact_no: application.next_of_kin_phone_number || "not_provided",
         reference_relationship: 1, // Default relationship type
 
         // Consents
