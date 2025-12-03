@@ -18,6 +18,7 @@ import { createClient } from "@/lib/client";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Database } from "@/lib/types";
+import { BankStatementAnalysisDialog } from "@/components/bank-statement-analysis-dialog";
 
 type Document = Database["public"]["Tables"]["documents"]["Row"];
 
@@ -304,6 +305,9 @@ export function DocumentsDisplayCard({
                             </div>
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
+                            {documentType === "bank_statement" && (
+                              <BankStatementAnalysisDialog document={doc} />
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"
