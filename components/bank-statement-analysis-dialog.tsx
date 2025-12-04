@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useChat, type UIMessage } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,37 +28,27 @@ interface BankStatementAnalysisDialogProps {
 export function BankStatementAnalysisDialog({
   document,
 }: BankStatementAnalysisDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [analysis, setAnalysis] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [abortController, setAbortController] = useState<AbortController | null>(null);
 
-  const handleStop = () => {
-    if (abortController) {
-      abortController.abort();
-      setAbortController(null);
-      setIsLoading(false);
-      toast.info("Analysis stopped");
-    }
-  };
+  const [isOpen, setIsOpen] = useState(false);
+  const { messages, status, stop, error, sendMessage, clearError, regenerate } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/google/bank-statement",
+    }),
+    onError: (error) => {
+      toast.error(error.message || "Failed to analyze bank statement");
+    },
+  });
+
+  const isLoading = status === 'streaming' || status === 'submitted';
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open && isLoading) {
-      handleStop();
+      stop();
     }
   };
 
   const handleAnalyze = async () => {
-    setIsLoading(true);
-    setAnalysis("");
-    setError(null);
-    const controller = new AbortController();
-    setAbortController(controller);
-
-    console.log("Starting analysis...");
-
     try {
       const supabase = createClient();
 
@@ -74,58 +66,42 @@ export function BankStatementAnalysisDialog({
       const buffer = await data.arrayBuffer();
       const base64 = Buffer.from(buffer).toString("base64");
       const mimeType = data.type;
-      const dataUri = `data:${mimeType};base64,${base64}`;
 
-      // 3. Send to API and stream response
-      console.log("Sending request to API...");
-      const response = await fetch("/api/google/bank-statement", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ document: dataUri }),
-        signal: controller.signal,
+      // 3. Send to API via useChat with file attachment
+      const dataUrl = `data:${mimeType};base64,${base64}`;
+      
+      sendMessage({
+        role: "user",
+        parts: [
+          {
+            type: "text",
+            text: "Please analyze this bank statement.",
+          },
+          {
+            type: "file",
+            url: dataUrl,
+            mediaType: mimeType,
+          },
+        ],
       });
 
-      console.log("Response received:", response.status, response.statusText);
-
-      if (!response.ok) {
-        throw new Error("Failed to analyze document");
-      }
-
-      if (!response.body) {
-        throw new Error("No response body");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      console.log("Starting stream reading...");
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-            console.log("Stream complete");
-            break;
-        }
-        const chunk = decoder.decode(value, { stream: true });
-        console.log("Received chunk length:", chunk.length);
-        setAnalysis((prev) => prev + chunk);
-      }
-
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        console.log("Request aborted by user");
-        return;
-      }
       console.error("Analysis error:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to analyze bank statement";
-      setError(errorMessage);
       toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-      setAbortController(null);
     }
   };
+
+  // Get the assistant message content to display
+  const assistantMessages = messages.filter(m => m.role === 'assistant');
+  const analysis = assistantMessages.length > 0 
+    ? assistantMessages.map(m => 
+        m.parts
+          .filter(p => p.type === 'text')
+          .map(p => p.text)
+          .join('')
+      ).join('\n') 
+    : "";  
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -150,15 +126,28 @@ export function BankStatementAnalysisDialog({
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
               <p className="font-medium">Analysis Failed</p>
-              <p>{error}</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleAnalyze}
-                className="mt-2 border-red-200 hover:bg-red-100 text-red-700"
-              >
-                Try Again
-              </Button>
+              <p>{error.message}</p>
+              <div className="flex gap-2 mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    clearError();
+                    regenerate();
+                  }}
+                  className="border-red-200 hover:bg-red-100 text-red-700"
+                >
+                  Try Again
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearError}
+                  className="text-red-700"
+                >
+                  Dismiss
+                </Button>
+              </div>
             </div>
           )}
 
@@ -187,7 +176,7 @@ export function BankStatementAnalysisDialog({
               <p className="text-sm text-muted-foreground">
                 Analyzing document...
               </p>
-              <Button variant="outline" size="sm" onClick={handleStop}>
+              <Button variant="outline" size="sm" onClick={stop}>
                 Stop Analysis
               </Button>
             </div>
@@ -206,7 +195,7 @@ export function BankStatementAnalysisDialog({
                             <Loader2 className="h-3 w-3 animate-spin" />
                             <span>Generating analysis...</span>
                         </div>
-                        <Button variant="ghost" size="sm" onClick={handleStop} className="h-6 text-xs text-red-500 hover:text-red-600 hover:bg-red-50">
+                        <Button variant="ghost" size="sm" onClick={stop} className="h-6 text-xs text-red-500 hover:text-red-600 hover:bg-red-50">
                             Stop
                         </Button>
                     </div>
