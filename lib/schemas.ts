@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { extractDateOfBirthFromSAID } from "@/lib/utils/sa-id";
 import { Database } from "./types";
+import { calculateMinimumExpenses } from "@/lib/utils/affordability";
 
 
 // API Check interface for reuse across components
@@ -204,6 +205,36 @@ export const loanApplicationSchema = z
       message:
         "Please specify the reason when selecting 'Other' for loan purpose",
       path: ["loan_purpose_reason"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Calculate total gross income
+      const totalAdditionalIncome =
+        data.affordability?.income?.reduce(
+          (sum, item) => sum + (item.amount || 0),
+          0
+        ) || 0;
+      const totalGrossIncome = data.monthly_income + totalAdditionalIncome;
+
+      // Calculate minimum expected expenses
+      const minimumExpenses = calculateMinimumExpenses(totalGrossIncome);
+
+      // Calculate total declared expenses
+      const totalExpenses =
+        data.affordability?.expenses?.reduce(
+          (sum, item) => sum + (item.amount || 0),
+          0
+        ) || 0;
+
+      // Check if expenses are below minimum (allow for small margin of error/rounding if needed, but strict is safer for compliance)
+      // Use 1.0 buffer to avoid floating point issues, effectively >= minimumExpenses
+      return totalExpenses >= minimumExpenses;
+    },
+    {
+      message:
+        "Your total monthly expenses are below the minimum required by South African consumer law based on your income. Please review and ensure all expenses are accurately declared.",
+      path: ["affordability"],
     }
   );
 

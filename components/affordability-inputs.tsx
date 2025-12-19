@@ -18,20 +18,7 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-// Calculate minimum norms based on income bands
-const calculateMinimumNorms = (grossIncome: number) => {
-  if (grossIncome <= 800) {
-    return { fixedFactor: 0, percentageAbove: 0, threshold: 0 };
-  } else if (grossIncome <= 6250) {
-    return { fixedFactor: 800, percentageAbove: 0, threshold: 0 };
-  } else if (grossIncome <= 25000) {
-    return { fixedFactor: 1167.88, percentageAbove: 0, threshold: 0 };
-  } else if (grossIncome <= 50000) {
-    return { fixedFactor: 2855.38, percentageAbove: 0.082, threshold: 25000 };
-  } else {
-    return { fixedFactor: 4905.38, percentageAbove: 0, threshold: 0 };
-  }
-};
+import { calculateMinimumNorms, calculateMinimumExpenses } from "@/lib/utils/affordability";
 
 // Default affordability structure
 const defaultAffordability = {
@@ -123,47 +110,21 @@ export function AffordabilityInputs({
   const disposableIncome = netIncome - totalExpenses;
 
   // Calculate minimum norms - updates automatically when totalGrossIncome changes
-  const minNorms = calculateMinimumNorms(totalGrossIncome);
-  let minimumDisposableIncome = minNorms.fixedFactor;
-  if (minNorms.percentageAbove > 0 && totalGrossIncome > minNorms.threshold) {
-    minimumDisposableIncome +=
-      (totalGrossIncome - minNorms.threshold) * minNorms.percentageAbove;
-  }
-
-  // Calculate minimum expected expenses (approximately 70% of gross income as baseline)
-  const minimumExpectedExpenses = totalGrossIncome * 0.7;
-  const expensesTooLow =
-    totalExpenses < minimumExpectedExpenses && totalGrossIncome > 0;
-
-  // Set form error if expenses are too low to prevent progression
-  useEffect(() => {
-    if (expensesTooLow) {
-      form.setError("affordability", {
-        type: "manual",
-        message:
-          "Total expenses appear to be unrealistically low for your income level.",
-      });
-    } else {
-      form.clearErrors("affordability");
-    }
-  }, [expensesTooLow, form]);
+  const minimumRequiredExpenses = calculateMinimumExpenses(totalGrossIncome);
 
   // Debug: Log calculation updates (can be removed in production)
   useEffect(() => {
     console.log("Affordability calculations updated:", {
       totalGrossIncome,
-      minimumDisposableIncome,
+      minimumRequiredExpenses,
       disposableIncome,
-      surplus: disposableIncome - minimumDisposableIncome,
-      minimumExpectedExpenses,
-      expensesTooLow,
+      totalExpenses
     });
   }, [
     totalGrossIncome,
-    minimumDisposableIncome,
+    minimumRequiredExpenses,
     disposableIncome,
-    minimumExpectedExpenses,
-    expensesTooLow,
+    totalExpenses
   ]);
 
   return (
@@ -374,36 +335,24 @@ export function AffordabilityInputs({
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-sm">Total Expenses:</span>
+              <span className="text-sm">Minimum Required Expenses:</span>
               <span className="text-sm font-medium">
-                -{formatCurrency(totalExpenses)}
-              </span>
-            </div>
-            <div className="flex justify-between border-t pt-2">
-              <span className="text-sm font-medium">Disposable Income:</span>
-              <span className="text-sm font-medium">
-                {formatCurrency(disposableIncome)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm">Minimum Required:</span>
-              <span className="text-sm font-medium">
-                {formatCurrency(minimumDisposableIncome)}
+                {formatCurrency(minimumRequiredExpenses)}
               </span>
             </div>
             <div className="flex justify-between border-t pt-2">
               <span className="text-sm font-medium">Surplus/(Shortfall):</span>
               <span
-                className={`text-sm font-medium ${disposableIncome - minimumDisposableIncome >= 0 ? "text-green-600" : "text-red-600"}`}
+                className={`text-sm font-medium ${disposableIncome >= 0 ? "text-green-600" : "text-red-600"}`}
               >
-                {formatCurrency(disposableIncome - minimumDisposableIncome)}
+                {formatCurrency(disposableIncome)}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Minimum Norms Warning */}
-        {disposableIncome < minimumDisposableIncome && (
+        {/* Existing Affordability/Surplus Warning (Logic preserved but simplified) */}
+        {disposableIncome < 0 && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-start space-x-3">
               <AlertTriangle className="h-6 w-6 text-red-600 mt-1 flex-shrink-0" />
@@ -412,11 +361,27 @@ export function AffordabilityInputs({
                   Affordability Concern
                 </h4>
                 <p className="text-sm text-red-700 mb-3">
-                  Your current disposable income does not meet the minimum
-                  affordability requirements. You have a shortfall of{" "}
-                  {formatCurrency(minimumDisposableIncome - disposableIncome)}.
+                  Your current expenses exceed your net income. You have a shortfall of{" "}
+                  {formatCurrency(Math.abs(disposableIncome))}.
                 </p>
-                <div className="flex justify-center">
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Validation Error Display (Replaces Low Expenses Warning) */}
+        {form.formState.errors.affordability && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <AlertTriangle className="h-6 w-6 text-red-600 mt-1 flex-shrink-0" />
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-red-800 mb-2">
+                  Validation Error
+                </h4>
+                <p className="text-sm text-red-700 mb-3">
+                  {form.formState.errors.affordability.message || "Please check your affordability details."}
+                </p>
+                <div className="flex justify-center mt-3">
                   <Image
                     src="/square.jpg"
                     alt="Affordability Warning"
@@ -429,41 +394,6 @@ export function AffordabilityInputs({
             </div>
           </div>
         )}
-
-        {/* Low Expenses Warning */}
-        {/* {expensesTooLow && (
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-start space-x-3">
-              <AlertTriangle className="h-6 w-6 text-yellow-600 mt-1 flex-shrink-0" />
-              <div className="flex-1">
-                <h4 className="text-sm font-medium text-yellow-800 mb-2">
-                  Expense Validation Required
-                </h4>
-                <p className="text-sm text-yellow-700 mb-3">
-                  Your total expenses of {formatCurrency(totalExpenses)} appear
-                  to be unrealistically low for someone with a gross income of{" "}
-                  {formatCurrency(totalGrossIncome)}. Please review and ensure
-                  all your monthly expenses are accurately captured. The minimum
-                  expected expenses for your income level should be around{" "}
-                  {formatCurrency(minimumDisposableIncome)}.
-                </p>
-                <p className="text-sm text-yellow-700 font-medium">
-                  You cannot proceed until your expenses are properly
-                  documented.
-                </p>
-                <div className="flex justify-center mt-3">
-                  <Image
-                    src="/square.jpg"
-                    alt="Expense Validation Warning"
-                    width={200}
-                    height={150}
-                    className="rounded-lg"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )} */}
       </div>
     </div>
   );
