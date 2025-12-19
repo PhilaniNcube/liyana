@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, Shield, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useState } from "react";
 import { WhoYouAccountVerificationInformation } from "@/lib/schemas";
+import { calculateMinimumExpenses } from "@/lib/utils/affordability";
 
 interface Application {
   id: number;
@@ -258,6 +259,47 @@ export function LoanBankingInfoCard({ application }: LoanBankingInfoCardProps) {
           </p>
           <p className="text-sm">{application.bank_account_number || "N/A"}</p>
         </div>
+
+        {(() => {
+          // Calculate affordability check
+          const monthlyIncome = application.monthly_income || 0;
+          const affordabilityData = application.affordability || {};
+          
+          const totalAdditionalIncome =
+            affordabilityData.income?.reduce(
+              (sum: number, item: any) => sum + (item.amount || 0),
+              0
+            ) || 0;
+          
+          const totalGrossIncome = monthlyIncome + totalAdditionalIncome;
+          
+          const totalExpenses =
+            affordabilityData.expenses?.reduce(
+              (sum: number, item: any) => sum + (item.amount || 0),
+              0
+            ) || 0;
+            
+          const minimumRequiredExpenses = calculateMinimumExpenses(totalGrossIncome);
+          
+          if (totalExpenses < minimumRequiredExpenses && totalGrossIncome > 0) {
+             return (
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <Shield className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-yellow-700">
+                      <span className="font-medium">Affordability Warning:</span> The declared expenses ({formatCurrency(totalExpenses)}) 
+                      are lower than the minimum required norms ({formatCurrency(minimumRequiredExpenses)}) for this income level.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
 
         <Separator />
 
