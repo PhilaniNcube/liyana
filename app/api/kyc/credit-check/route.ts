@@ -41,10 +41,12 @@ async function saveApiCheckResult(
 
     console.log("Saving API check result with profileId:", currentUser ? currentUser.id : null);
 
-    if(!currentUser) {
+    if (!currentUser) {
       console.warn("No current user found. Saving API check without profile association.");
       return null;
     }
+
+
 
     // Validate profile_id exists
     let validatedProfileId = null;
@@ -53,10 +55,20 @@ async function saveApiCheckResult(
       .select("id")
       .eq("id", currentUser.id)
       .single();
-    
-    if (profileError || !profileExists) {
-      console.warn(`Profile ID ${currentUser.id} does not exist. Saving API check without profile association.`);
-    } else {
+
+    // if the currentuser exists but the profile does not exist, create a new profile
+    if (!profileExists) {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles").insert({
+          id: currentUser.id,
+          id_number: encryptValue(idNumber),
+          full_name: currentUser.full_name,
+          email: currentUser.email,
+        })
+        .select("id")
+        .single();
+    }
+    else {
       validatedProfileId = currentUser.id;
     }
 
@@ -260,7 +272,7 @@ export async function GET(request: NextRequest) {
 
   // If the score is sufficient, return a success response
   // Save successful API check result
-const result = await saveApiCheckResult(idNumber, "passed", {
+  const result = await saveApiCheckResult(idNumber, "passed", {
     ...apiResponse,
     parsedData: data,
     creditScore: score,
@@ -269,8 +281,8 @@ const result = await saveApiCheckResult(idNumber, "passed", {
 
   // Update user profile with encrypted ID number
   await updateUserProfileWithIdNumber(idNumber);
- 
-  
+
+
 
   // Create a pre-application record
   if (result) {

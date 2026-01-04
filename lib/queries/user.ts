@@ -64,6 +64,11 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
       return null;
     }
 
+    console.log("User ID:", userId);
+    console.log("User Metadata:", userMetadata);
+    console.log("Email:", email);
+    console.log("Created At:", createdAt);
+
     return {
       id: userId,
       full_name: userMetadata?.full_name || "No Name",
