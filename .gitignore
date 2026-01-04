@@ -43,3 +43,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local seeding and debug files
+scripts/seed-local.mjs
+supabase/seed_data.sql
+status.json
