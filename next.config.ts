@@ -7,9 +7,8 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     browserDebugInfoInTerminal: true,
-    // ppr: true,
-    // clientSegmentCache: true,
-    // devtoolSegmentExplorer: true,
+    turbopackFileSystemCacheForDev: true,
+    turbopackFileSystemCacheForBuild: true,
     serverActions: {
       bodySizeLimit: "12mb",
     },

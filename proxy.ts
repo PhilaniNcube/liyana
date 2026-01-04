@@ -1,8 +1,9 @@
-import { updateSession } from "@/lib/middleware";
 import { type NextRequest } from "next/server";
+import { updateSession } from "@/lib/proxy";
 
-export async function middleware(request: NextRequest) {
-  return await updateSession(request);
+export async function proxy(request: NextRequest) {
+  // update user's auth session
+  return await updateSession(request)
 }
 
 export const config = {
