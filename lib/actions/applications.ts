@@ -47,12 +47,22 @@ export async function updateApplicationDetails(
   try {
     const value = formData.get(fieldName);
 
-    // We don't perform strict schema validation on single fields here because 
-    // partial validation can be tricky with dependent fields (like conditional gender_other).
-    // Instead we rely on the database and basic type coercion. 
-    // NOTE: In a more strict environment, we would use loanApplicationSchema.partial().parse({ [fieldName]: value })
-
     const supabase = await createClient();
+
+    const southAfricanBanks = [
+      { name: "ABSA Bank", code: "632005" },
+      { name: "African Bank", code: "430000" },
+      { name: "Bidvest Bank", code: "462005" },
+      { name: "Capitec Bank", code: "470010" },
+      { name: "Discovery Bank", code: "679000" },
+      { name: "FNB (First National Bank)", code: "250655" },
+      { name: "Investec Bank", code: "580105" },
+      { name: "Nedbank", code: "198765" },
+      { name: "Standard Bank", code: "051001" },
+      { name: "TymeBank", code: "678910" },
+      { name: "Ubank", code: "431010" },
+      { name: "VBS Mutual Bank", code: "588000" },
+    ];
 
     // Profile fields that reside in the 'profiles' table
     const profileFields = ["full_name", "first_name", "last_name", "email", "phone_number"];
@@ -69,15 +79,30 @@ export async function updateApplicationDetails(
         const emailValue = value?.toString() || "";
         const { error } = await supabase.from("profiles").update({ email: emailValue }).eq("id", userId);
         if (error) throw error;
-        // Also update application email if it exists for consistency? 
-        // Ideally we single source, but for now we update profile.
-        // We can also update application.email to keep them in sync if the column exists and is used.
-        // await supabase.from("applications").update({ email: emailValue }).eq("id", applicationId);
         console.log("Updated profile email:", emailValue);
       }
     } else {
       // Application fields
       let typedValue: any = value;
+
+      // Special handling for bank name to also update branch code
+      if (fieldName === 'bank_name') {
+        const bank = southAfricanBanks.find(b => b.name === value?.toString());
+        if (bank) {
+          const { error } = await supabase
+            .from("applications")
+            .update({
+              bank_name: bank.name,
+              branch_code: bank.code
+            })
+            .eq("id", applicationId);
+          if (error) throw error;
+
+          revalidatePath(`/dashboard/applications/${applicationId}`);
+          return { success: true };
+        }
+      }
+
       // Handle numeric conversions
       if (['monthly_income', 'dependants', 'application_amount', 'term', 'salary_date', 'payment_date'].includes(fieldName)) {
         typedValue = value ? Number(value) : null;

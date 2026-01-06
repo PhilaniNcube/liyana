@@ -19,6 +19,28 @@ import { calculateMinimumExpenses } from "@/lib/utils/affordability";
 import { updateApplicationDetails } from "@/lib/actions/applications";
 import { EditableRow } from "./editable-row";
 
+const southAfricanBanks = [
+  { name: "ABSA Bank", code: "632005" },
+  { name: "African Bank", code: "430000" },
+  { name: "Bidvest Bank", code: "462005" },
+  { name: "Capitec Bank", code: "470010" },
+  { name: "Discovery Bank", code: "679000" },
+  { name: "FNB (First National Bank)", code: "250655" },
+  { name: "Investec Bank", code: "580105" },
+  { name: "Nedbank", code: "198765" },
+  { name: "Standard Bank", code: "051001" },
+  { name: "TymeBank", code: "678910" },
+  { name: "Ubank", code: "431010" },
+  { name: "VBS Mutual Bank", code: "588000" },
+] as const;
+
+const bankAccountTypes = [
+  { label: "Savings", value: "savings" },
+  { label: "Current/Cheque", value: "current" },
+  { label: "Transaction", value: "transaction" },
+  { label: "Business", value: "business" },
+];
+
 interface Application {
   id: number;
   user_id: string;
@@ -252,6 +274,11 @@ export function LoanBankingInfoCard({ application }: LoanBankingInfoCardProps) {
               label="Bank Name"
               value={application.bank_name}
               fieldName="bank_name"
+              inputType="select"
+              options={southAfricanBanks.map((b) => ({
+                label: b.name,
+                value: b.name,
+              }))}
               action={bindAction("bank_name")}
             />
           </div>
@@ -260,7 +287,8 @@ export function LoanBankingInfoCard({ application }: LoanBankingInfoCardProps) {
               label="Account Type"
               value={application.bank_account_type}
               fieldName="bank_account_type"
-              // Could use Select for Cheque/Savings
+              inputType="select"
+              options={bankAccountTypes}
               action={bindAction("bank_account_type")}
             />
           </div>
