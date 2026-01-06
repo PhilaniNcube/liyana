@@ -18,6 +18,14 @@ interface EmploymentInfoCardProps {
   application: DecryptedApplication;
 }
 
+const employmentTypeOptions = [
+  { label: "Employed", value: "employed" },
+  { label: "Self Employed", value: "self_employed" },
+  { label: "Contract", value: "contract" },
+  { label: "Unemployed", value: "unemployed" },
+  { label: "Retired", value: "retired" },
+];
+
 export function EmploymentInfoCard({ application }: EmploymentInfoCardProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationData, setVerificationData] =
@@ -98,7 +106,8 @@ export function EmploymentInfoCard({ application }: EmploymentInfoCardProps) {
               label="Employment Type"
               value={application.employment_type}
               fieldName="employment_type"
-              inputType="text"
+              inputType="select"
+              options={employmentTypeOptions}
               action={bindAction("employment_type")}
             />
           </div>
