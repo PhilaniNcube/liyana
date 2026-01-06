@@ -1,8 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Phone } from "lucide-react";
+import { EditableRow } from "./editable-row";
+import { updateApplicationDetails } from "@/lib/actions/applications";
 
 interface Application {
+  id: number;
+  user_id: string;
   phone_number: string | null;
   next_of_kin_name: string | null;
   next_of_kin_phone_number: string | null;
@@ -14,6 +18,15 @@ interface ContactInfoCardProps {
 }
 
 export function ContactInfoCard({ application }: ContactInfoCardProps) {
+  const bindAction = (fieldName: string) => {
+    return updateApplicationDetails.bind(
+      null,
+      application.id,
+      application.user_id,
+      fieldName
+    );
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -24,10 +37,13 @@ export function ContactInfoCard({ application }: ContactInfoCardProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
-            Phone Number
-          </p>
-          <p className="text-sm">{application.phone_number || "N/A"}</p>
+          <EditableRow
+            label="Phone Number"
+            value={application.phone_number || "N/A"}
+            fieldName="phone_number"
+            inputType="tel"
+            action={bindAction("phone_number")}
+          />
         </div>
         <Separator />
         <div>
@@ -36,22 +52,30 @@ export function ContactInfoCard({ application }: ContactInfoCardProps) {
           </p>
           <div className="grid grid-cols-1 gap-2">
             <div>
-              <p className="text-xs font-medium text-muted-foreground">Name</p>
-              <p className="text-sm capitalize">
-                {application.next_of_kin_name || "N/A"}
-              </p>
+              <EditableRow
+                label="Name"
+                value={application.next_of_kin_name || "N/A"}
+                fieldName="next_of_kin_name"
+                action={bindAction("next_of_kin_name")}
+              />
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground">Phone</p>
-              <p className="text-sm">
-                {application.next_of_kin_phone_number || "N/A"}
-              </p>
+              <EditableRow
+                label="Phone"
+                value={application.next_of_kin_phone_number || "N/A"}
+                fieldName="next_of_kin_phone_number"
+                inputType="tel"
+                action={bindAction("next_of_kin_phone_number")}
+              />
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground">Email</p>
-              <p className="text-sm">
-                {application.next_of_kin_email || "N/A"}
-              </p>
+              <EditableRow
+                label="Email"
+                value={application.next_of_kin_email || "N/A"}
+                fieldName="next_of_kin_email"
+                inputType="email"
+                action={bindAction("next_of_kin_email")}
+              />
             </div>
           </div>
         </div>

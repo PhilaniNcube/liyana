@@ -28,11 +28,13 @@ import {
   WhoYouIdVerificationDetail,
 } from "@/lib/schemas";
 import { OtvResultsDialog } from "@/components/otv-results-dialog";
-import { toast } from "sonner";
 import type { Database } from "@/lib/types";
+import { EditableRow } from "./editable-row";
+import { updateApplicationDetails } from "@/lib/actions/applications";
 
 interface Application {
   id: number;
+  user_id: string; // Added user_id
   id_number_decrypted: string;
   email?: string | null;
   date_of_birth: string | null;
@@ -46,6 +48,7 @@ interface Application {
   city: string | null;
   postal_code: string | null;
   profile?: {
+    id: string; // Added profile id
     full_name: string;
     email?: string | null;
     phone_number?: string | null;
@@ -82,6 +85,26 @@ export function PersonalInfoCard({
   );
   const [isIdDialogOpen, setIsIdDialogOpen] = useState(false);
 
+  // Helper to bind action
+  const bindAction = (fieldName: string) => {
+    return updateApplicationDetails.bind(
+      null,
+      application.id,
+      application.user_id,
+      fieldName
+    );
+  };
+  
+  // For phone number (in profile)
+  const bindPhoneAction = () => {
+    return updateApplicationDetails.bind(
+       null,
+       application.id,
+       application.profile?.id || application.user_id,
+       "phone_number"
+    );
+  };
+
   const handleOtvRequest = async () => {
     if (onOtvRequest) {
       try {
@@ -99,6 +122,12 @@ export function PersonalInfoCard({
       month: "long",
       day: "numeric",
     });
+  };
+  
+  // Format for date input (YYYY-MM-DD)
+  const formatDateForInput = (date: string | null) => {
+     if (!date) return "";
+     return new Date(date).toISOString().split('T')[0];
   };
 
   const handleCellphoneVerification = async () => {
@@ -270,9 +299,19 @@ export function PersonalInfoCard({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Applicant Name</p>
-                  <p className="text-lg font-semibold">
-                    {application.profile.full_name || "Name not provided"}
-                  </p>
+                  <EditableRow
+                    label=""
+                    value={application.profile.full_name || "Name not provided"}
+                    fieldName="full_name"
+                    // initialValue={application.profile.full_name}
+                    action={updateApplicationDetails.bind(
+                      null,
+                      application.id,
+                      application.profile.id,
+                      "full_name"
+                    )}
+                    className="text-lg font-semibold min-h-[auto] py-0"
+                  />
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -671,64 +710,87 @@ export function PersonalInfoCard({
         <div className="grid grid-cols-3">
           <div className="grid grid-cols-2 col-span-2 gap-4">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                ID Number
-              </p>
-              <p className="text-sm">
-                {application.id_number_decrypted || "N/A"}
-              </p>
+              <EditableRow
+                label="ID Number"
+                value={application.id_number_decrypted || "N/A"}
+                fieldName="id_number"
+                action={bindAction("id_number")}
+                // ID Number editing kept as text, but might need encryption handling in future
+              />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Email Address
-              </p>
-              <p className="text-sm">
-                {application.profile?.email || application.email || "N/A"}
-              </p>
+              <EditableRow
+                label="Email Address"
+                value={application.profile?.email || application.email || "N/A"}
+                fieldName="email"
+                inputType="email"
+                action={bindAction("email")}
+              />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Date of Birth
-              </p>
-              <p className="text-sm">{formatDate(application.date_of_birth)}</p>
+              <EditableRow
+                label="Date of Birth"
+                value={application.date_of_birth}
+                displayValue={formatDate(application.date_of_birth)}
+                fieldName="date_of_birth"
+                inputType="date"
+                action={bindAction("date_of_birth")}
+              />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Gender
-              </p>
-              <p className="text-sm capitalize">
-                {application.gender || application.gender_other || "N/A"}
-              </p>
+              <EditableRow
+                label="Gender"
+                value={application.gender || application.gender_other || "N/A"}
+                fieldName="gender"
+                inputType="select"
+                options={[
+                  { label: "Male", value: "male" },
+                  { label: "Female", value: "female" },
+                  { label: "Other", value: "other" },
+                ]}
+                action={bindAction("gender")}
+              />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Marital Status
-              </p>
-              <p className="text-sm capitalize">
-                {application.marital_status || "N/A"}
-              </p>
+              <EditableRow
+                label="Marital Status"
+                value={application.marital_status || "N/A"}
+                fieldName="marital_status"
+                inputType="select"
+                options={[
+                  { label: "Single", value: "single" },
+                  { label: "Married", value: "married" },
+                  { label: "Divorced", value: "divorced" },
+                  { label: "Widowed", value: "widowed" },
+                  { label: "Life Partner", value: "life_partner" },
+                ]}
+                action={bindAction("marital_status")}
+              />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Nationality
-              </p>
-              <p className="text-sm capitalize">
-                {application.nationality || "N/A"}
-              </p>
+              <EditableRow
+                label="Nationality"
+                value={application.nationality || "N/A"}
+                fieldName="nationality"
+                action={bindAction("nationality")}
+              />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Language
-              </p>
-              <p className="text-sm capitalize">
-                {application.language || "N/A"}
-              </p>
+              <EditableRow
+                label="Language"
+                value={application.language || "N/A"}
+                fieldName="language"
+                action={bindAction("language")}
+              />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Dependants
-              </p>
-              <p className="text-sm">{application.dependants || "N/A"}</p>
+              <EditableRow
+                label="Dependants"
+                value={application.dependants || "N/A"}
+                fieldName="dependants"
+                inputType="number"
+                action={bindAction("dependants")}
+              />
             </div>
           </div>
           {idVerificationDetails?.hasPhoto && (
@@ -744,22 +806,29 @@ export function PersonalInfoCard({
 
         <Separator />
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
-            Home Address
-          </p>
-          <p className="text-sm capitalize">
-            {application.home_address || "N/A"}
-          </p>
+          <EditableRow
+            label="Home Address"
+            value={application.home_address || "N/A"}
+            fieldName="home_address"
+            action={bindAction("home_address")}
+          />
         </div>
         <div>
-          <p className="text-sm font-medium text-muted-foreground">City</p>
-          <p className="text-sm capitalize">{application.city || "N/A"}</p>
+           <EditableRow
+            label="City"
+            value={application.city || "N/A"}
+            fieldName="city"
+            action={bindAction("city")}
+          />
         </div>
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
-            Postal Code
-          </p>
-          <p className="text-sm">{application.postal_code || "N/A"}</p>
+           <EditableRow
+            label="Postal Code"
+            value={application.postal_code || "N/A"}
+            fieldName="postal_code"
+            inputType="number"
+            action={bindAction("postal_code")}
+          />
         </div>
 
         {/* Cellphone Information and Verification */}
@@ -770,9 +839,19 @@ export function PersonalInfoCard({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Phone Number</p>
-                  <p className="text-lg font-semibold">
-                    {application.profile.phone_number}
-                  </p>
+                  <EditableRow
+                    label=""
+                    value={application.profile.phone_number}
+                    fieldName="phone_number"
+                    inputType="tel"
+                    action={updateApplicationDetails.bind(
+                      null,
+                      application.id,
+                      application.profile.id,
+                      "phone_number"
+                    )}
+                    className="text-lg font-semibold min-h-[auto] py-0"
+                  />
                 </div>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <DialogTrigger asChild>
@@ -798,6 +877,7 @@ export function PersonalInfoCard({
                           <Button
                             onClick={handleCellphoneVerification}
                             disabled={isVerifying}
+
                             className="w-full"
                           >
                             {isVerifying ? (

@@ -16,6 +16,8 @@ import { CreditCard, Shield, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useState } from "react";
 import { WhoYouAccountVerificationInformation } from "@/lib/schemas";
 import { calculateMinimumExpenses } from "@/lib/utils/affordability";
+import { updateApplicationDetails } from "@/lib/actions/applications";
+import { EditableRow } from "./editable-row";
 
 interface Application {
   id: number;
@@ -98,6 +100,15 @@ export function LoanBankingInfoCard({ application }: LoanBankingInfoCardProps) {
       .trim();
   };
 
+  const bindAction = (fieldName: string) => {
+    return updateApplicationDetails.bind(
+      null,
+      application.id,
+      application.user_id,
+      fieldName
+    );
+  };
+
   const handleAccountVerification = async () => {
     if (!application.id) {
       setVerificationError("Application ID is required for verification");
@@ -171,26 +182,31 @@ export function LoanBankingInfoCard({ application }: LoanBankingInfoCardProps) {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Loan Amount
-            </p>
-            <p className="text-sm font-semibold">
-              {formatCurrency(application.application_amount)}
-            </p>
+            <EditableRow
+              label="Loan Amount"
+              value={application.application_amount}
+              displayValue={formatCurrency(application.application_amount)}
+              fieldName="application_amount"
+              inputType="number"
+              action={bindAction("application_amount")}
+            />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Loan Term
-            </p>
-            <p className="text-sm">{application.term} days</p>
+            <EditableRow
+              label="Loan Term (days)"
+              value={application.term}
+              displayValue={`${application.term} days`}
+              fieldName="term"
+              inputType="number"
+              action={bindAction("term")}
+            />
           </div>
           {application.salary_date && (
             <div className="col-span-2">
-              <p className="text-sm font-medium text-muted-foreground">
-                Salary Date
-              </p>
-              <p className="text-sm">
-                {(() => {
+              <EditableRow
+                label="Salary Date"
+                value={application.salary_date}
+                displayValue={(() => {
                   const d = application.salary_date!;
                   const suffix =
                     d % 10 === 1 && d % 100 !== 11
@@ -202,62 +218,76 @@ export function LoanBankingInfoCard({ application }: LoanBankingInfoCardProps) {
                           : "th";
                   return `${d}${suffix} of each month`;
                 })()}
-              </p>
+                fieldName="salary_date"
+                inputType="number"
+                action={bindAction("salary_date")}
+              />
             </div>
           )}
         </div>
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
-            Loan Purpose
-          </p>
-          <p className="text-sm capitalize">
-            {formatLoanPurpose(application.loan_purpose)}
-          </p>
+          <EditableRow
+            label="Loan Purpose"
+            value={application.loan_purpose}
+            displayValue={formatLoanPurpose(application.loan_purpose)}
+            fieldName="loan_purpose" // Might match schema "loan_purpose"
+            action={bindAction("loan_purpose")}
+          />
         </div>
         {application.loan_purpose_reason && (
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Loan Purpose Reason
-            </p>
-            <p className="text-sm capitalize">
-              {application.loan_purpose_reason}
-            </p>
+            <EditableRow
+              label="Loan Purpose Reason"
+              value={application.loan_purpose_reason}
+              fieldName="loan_purpose_reason"
+              action={bindAction("loan_purpose_reason")}
+            />
           </div>
         )}
         <Separator />
+        <Separator />
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Bank Name
-            </p>
-            <p className="text-sm">{application.bank_name || "N/A"}</p>
+            <EditableRow
+              label="Bank Name"
+              value={application.bank_name}
+              fieldName="bank_name"
+              action={bindAction("bank_name")}
+            />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Account Type
-            </p>
-            <p className="text-sm">{application.bank_account_type || "N/A"}</p>
+            <EditableRow
+              label="Account Type"
+              value={application.bank_account_type}
+              fieldName="bank_account_type"
+              // Could use Select for Cheque/Savings
+              action={bindAction("bank_account_type")}
+            />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Account Holder
-            </p>
-            <p className="text-sm">
-              {application.bank_account_holder || "N/A"}
-            </p>
+            <EditableRow
+              label="Account Holder"
+              value={application.bank_account_holder}
+              fieldName="bank_account_holder"
+              action={bindAction("bank_account_holder")}
+            />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Branch Code
-            </p>
-            <p className="text-sm">{application.branch_code || "N/A"}</p>
+            <EditableRow
+              label="Branch Code"
+              value={application.branch_code}
+              fieldName="branch_code"
+              action={bindAction("branch_code")}
+            />
           </div>
         </div>
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
-            Account Number
-          </p>
-          <p className="text-sm">{application.bank_account_number || "N/A"}</p>
+          <EditableRow
+            label="Account Number"
+            value={application.bank_account_number}
+            fieldName="bank_account_number"
+            action={bindAction("bank_account_number")}
+          />
         </div>
 
         {(() => {

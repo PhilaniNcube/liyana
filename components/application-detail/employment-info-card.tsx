@@ -8,9 +8,11 @@ import { useState } from "react";
 import { verifyEmployment } from "@/lib/actions/employment-verification";
 import { toast } from "sonner";
 import {
-  DecryptedApplication,
   EmploymentVerificationApiResponse,
+  DecryptedApplication,
 } from "@/lib/schemas";
+import { updateApplicationDetails } from "@/lib/actions/applications";
+import { EditableRow } from "./editable-row";
 
 interface EmploymentInfoCardProps {
   application: DecryptedApplication;
@@ -20,6 +22,15 @@ export function EmploymentInfoCard({ application }: EmploymentInfoCardProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationData, setVerificationData] =
     useState<EmploymentVerificationApiResponse | null>(null);
+
+  const bindAction = (fieldName: string) => {
+    return updateApplicationDetails.bind(
+      null,
+      application.id,
+      application.user_id,
+      fieldName
+    );
+  };
 
   const handleVerifyEmployment = async () => {
     setIsVerifying(true);
@@ -83,71 +94,77 @@ export function EmploymentInfoCard({ application }: EmploymentInfoCardProps) {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Employment Type
-            </p>
-            <p className="text-sm capitalize">
-              {application.employment_type || "N/A"}
-            </p>
+            <EditableRow
+              label="Employment Type"
+              value={application.employment_type}
+              fieldName="employment_type"
+              inputType="text"
+              action={bindAction("employment_type")}
+            />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Monthly Income
-            </p>
-            <p className="text-sm capitalize">
-              {formatCurrency(application.monthly_income)}
-            </p>
+            <EditableRow
+              label="Monthly Income"
+              value={application.monthly_income}
+              displayValue={formatCurrency(application.monthly_income)}
+              fieldName="monthly_income"
+              inputType="number"
+              action={bindAction("monthly_income")}
+            />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Job Title
-            </p>
-            <p className="text-sm capitalize">
-              {application.job_title || "N/A"}
-            </p>
+            <EditableRow
+              label="Job Title"
+              value={application.job_title}
+              fieldName="job_title"
+              action={bindAction("job_title")}
+            />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Work Experience
-            </p>
-            <p className="text-sm capitalize">
-              {application.work_experience || "N/A"}
-            </p>
+            <EditableRow
+              label="Work Experience"
+              value={application.work_experience}
+              fieldName="work_experience"
+              action={bindAction("work_experience")}
+            />
           </div>
         </div>
         <Separator />
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
-            Employer Name
-          </p>
-          <p className="text-sm capitalize">
-            {application.employer_name || "N/A"}
-          </p>
+          <EditableRow
+            label="Employer Name"
+            value={application.employer_name}
+            fieldName="employer_name"
+            action={bindAction("employer_name")}
+          />
         </div>
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
-            Employer Address
-          </p>
-          <p className="text-sm capitalize">
-            {application.employer_address || "N/A"}
-          </p>
+          <EditableRow
+            label="Employer Address"
+            value={application.employer_address}
+            fieldName="employer_address"
+            action={bindAction("employer_address")}
+          />
         </div>
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
-            Employer Contact
-          </p>
-          <p className="text-sm capitalize">
-            {application.employer_contact_number || "N/A"}
-          </p>
+          <EditableRow
+            label="Employer Contact"
+            value={application.employer_contact_number}
+            fieldName="employer_contact_number"
+            inputType="tel"
+            action={bindAction("employer_contact_number")}
+          />
         </div>
         {application.employment_end_date && (
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Employment End Date
-            </p>
-            <p className="text-sm capitalize">
-              {formatDate(application.employment_end_date)}
-            </p>
+            <EditableRow
+              label="Employment End Date"
+              value={application.employment_end_date}
+              displayValue={formatDate(application.employment_end_date)}
+              fieldName="employment_end_date"
+              inputType="date"
+              action={bindAction("employment_end_date")}
+            />
           </div>
         )}
 
