@@ -31,7 +31,7 @@ Provide a detailed summary including:
 - **Net Cash Flow**: Calculate the difference between total income and total expenses.
 
 Please provide the output in a structured markdown format.`,
-      messages: convertToModelMessages(messages),
+      messages: await convertToModelMessages(messages),
       onChunk: ({ chunk }) => {
           if (chunk.type === 'text-delta') {
             console.log('Chunk:', chunk.text);
