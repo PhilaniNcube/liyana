@@ -39,6 +39,7 @@ import {
 } from "@/components/application-detail";
 import ApiCheckCard from "./api-check-card";
 import { DocumentsDisplayCard } from "./documents-display-card";
+import { ApplicationChatbot } from "./application-chatbot";
 import { AdminDocumentUploadForm } from "@/components/admin-document-upload-form";
 import type { Database } from "@/lib/types";
 import type { MaxMoneyClientInput } from "@/lib/schemas";
@@ -429,7 +430,11 @@ export function ApplicationDetailClient({
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-6 space-y-6 relative">
+      <ApplicationChatbot
+        documents={currentDocuments}
+        applicationId={application.id}
+      />
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
@@ -1020,6 +1025,7 @@ export function ApplicationDetailClient({
           </div>
         </CardContent>
       </Card>
+      
     </div>
   );
 }

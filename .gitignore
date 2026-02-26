@@ -48,3 +48,4 @@ next-env.d.ts
 scripts/seed-local.mjs
 supabase/seed_data.sql
 status.json
+.devtools

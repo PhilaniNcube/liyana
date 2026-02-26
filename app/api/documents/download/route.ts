@@ -42,14 +42,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check if user has permission to download this file
-    // For profile documents, check if it's their own document or if they're admin/editor
-    const isAdminOrEditor =
-      currentUserProfile.role === "admin" ||
-      currentUserProfile.role === "editor";
-
     // Extract profile ID from file path (assuming path structure: profile-documents/{profileId}/...)
     const pathParts = filePath.split("/");
+    const role = currentUserProfile?.role;
+
+    // Check if user has permission to download this file
+    // For profile documents, check if it's their own document or if they're admin/editor
+    const isAdminOrEditor = role === "admin" || role === "editor";
+
     let hasPermission = isAdminOrEditor;
 
     if (
@@ -59,7 +59,18 @@ export async function GET(request: NextRequest) {
     ) {
       // Check if this is the user's own document
       hasPermission = pathParts[1] === user.id;
+    } else if (!hasPermission && pathParts[0] === user.id) {
+      // Check if this is the user's own application document (stored as user_id/filename)
+      hasPermission = true;
     }
+
+    console.log("Download Debug:", {
+      path: filePath,
+      userId: user.id,
+      role: role,
+      isAdminOrEditor,
+      hasPermission
+    });
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -68,21 +79,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Generate signed URL for download
-    const { data: signedUrlData, error: signedUrlError } =
-      await supabase.storage.from("documents").createSignedUrl(filePath, 3600); // 1 hour expiry
+    // Download file directly
+    const { data: fileData, error: downloadError } = await supabase.storage
+      .from("documents")
+      .download(filePath);
 
-    if (signedUrlError) {
-      console.error("Error creating signed URL:", signedUrlError);
+    if (downloadError || !fileData) {
+      console.error("Error downloading file:", downloadError);
       return NextResponse.json(
-        { error: "Failed to generate download URL" },
+        { error: "Failed to download file" },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      signedUrl: signedUrlData.signedUrl,
+    // Return file as response
+    const headers = new Headers();
+    headers.set("Content-Type", fileData.type);
+    headers.set("Content-Disposition", `attachment; filename="${pathParts[pathParts.length - 1]}"`);
+
+    return new NextResponse(fileData, {
+      status: 200,
+      headers,
     });
   } catch (error) {
     console.error("Error in download API:", error);
