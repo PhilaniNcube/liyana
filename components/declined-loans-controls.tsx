@@ -129,7 +129,7 @@ export function DeclinedLoansControls({
           Start Date
         </label>
         <div className="flex items-center gap-1">
-          {/* Backward controls – blue tones */}
+  
           <Button
             variant="outline"
             size="icon"
