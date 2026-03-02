@@ -1,13 +1,26 @@
 "use client";
 
-import React from "react";
-import { DateRange } from "react-day-picker";
+import React, { useState } from "react";
+import { format, subDays, addDays, subWeeks, addWeeks } from "date-fns";
 import { useQueryStates, parseAsInteger, parseAsIsoDate } from "nuqs";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Download, Loader2 } from "lucide-react";
-import { useState } from "react";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Download,
+  Loader2,
+  X,
+} from "lucide-react";
 
 // Query state configuration (must mirror server parsing keys)
 const queryConfig = {
@@ -27,14 +40,19 @@ export function DeclinedLoansControls({
     shallow: false, // full navigation so server refetch occurs
   });
   const [isDownloading, setIsDownloading] = useState(false);
+  const [startOpen, setStartOpen] = useState(false);
+  const [endOpen, setEndOpen] = useState(false);
 
   const { per_page, start_date, end_date } = values;
 
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-    setValues({
-      start_date: range?.from ?? null,
-      end_date: range?.to ?? null,
-    });
+  const handleStartDateChange = (date: Date | undefined) => {
+    setValues({ start_date: date ?? null });
+    setStartOpen(false);
+  };
+
+  const handleEndDateChange = (date: Date | undefined) => {
+    setValues({ end_date: date ?? null });
+    setEndOpen(false);
   };
 
   const handlePerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -46,15 +64,49 @@ export function DeclinedLoansControls({
     setValues({ start_date: null, end_date: null });
   };
 
+  // Shift start date earlier / later
+  const shiftStartBack1Day = () => {
+    const base = start_date ?? new Date();
+    setValues({ start_date: subDays(base, 1) });
+  };
+  const shiftStartForward1Day = () => {
+    const base = start_date ?? new Date();
+    setValues({ start_date: addDays(base, 1) });
+  };
+  const shiftStartBack1Week = () => {
+    const base = start_date ?? new Date();
+    setValues({ start_date: subWeeks(base, 1) });
+  };
+  const shiftStartForward1Week = () => {
+    const base = start_date ?? new Date();
+    setValues({ start_date: addWeeks(base, 1) });
+  };
+
+  // Shift end date earlier / later
+  const shiftEndBack1Day = () => {
+    const base = end_date ?? new Date();
+    setValues({ end_date: subDays(base, 1) });
+  };
+  const shiftEndForward1Day = () => {
+    const base = end_date ?? new Date();
+    setValues({ end_date: addDays(base, 1) });
+  };
+  const shiftEndBack1Week = () => {
+    const base = end_date ?? new Date();
+    setValues({ end_date: subWeeks(base, 1) });
+  };
+  const shiftEndForward1Week = () => {
+    const base = end_date ?? new Date();
+    setValues({ end_date: addWeeks(base, 1) });
+  };
+
   const handleDownloadCSV = async () => {
     setIsDownloading(true);
     try {
-      // Build query parameters for the CSV download
       const params = new URLSearchParams();
       if (start_date) params.append("start_date", start_date.toISOString());
       if (end_date) params.append("end_date", end_date.toISOString());
 
-      // Trigger download
       const url = `/api/declined-loans/csv?${params.toString()}`;
       window.open(url, "_blank");
     } catch (error) {
@@ -64,36 +116,173 @@ export function DeclinedLoansControls({
     }
   };
 
-  const dateRange: DateRange | undefined =
-    start_date || end_date
-      ? { from: start_date ?? undefined, to: end_date ?? undefined }
-      : undefined;
-
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 md:flex-row md:items-end md:justify-between",
+        "flex flex-col gap-4 md:flex-row md:items-end md:justify-between flex-wrap",
         className
       )}
     >
+      {/* Start Date */}
       <div className="flex flex-col gap-2">
         <label className="text-xs font-medium uppercase text-muted-foreground">
-          Date Range
+          Start Date
         </label>
-        <div className="flex items-end gap-2">
-          <DateRangePicker
-            dateRange={dateRange}
-            onDateRangeChange={handleDateRangeChange}
-            placeholder="Select date range"
-          />
-          {(start_date || end_date) && (
-            <Button variant="ghost" size="sm" onClick={handleClearDates}>
-              Clear
-            </Button>
-          )}
+        <div className="flex items-center gap-1">
+          {/* Backward controls – blue tones */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900"
+            onClick={shiftStartBack1Week}
+            title="Back 1 week"
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900"
+            onClick={shiftStartBack1Day}
+            title="Back 1 day"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          {/* Date picker trigger */}
+          <Popover open={startOpen} onOpenChange={setStartOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-42.5 justify-start text-left font-normal",
+                  !start_date && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {start_date ? format(start_date, "LLL dd, y") : "Pick start"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={start_date ?? undefined}
+                onSelect={handleStartDateChange}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+
+          {/* Forward controls – emerald / green tones */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-900"
+            onClick={shiftStartForward1Day}
+            title="Forward 1 day"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-900"
+            onClick={shiftStartForward1Week}
+            title="Forward 1 week"
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
+      {/* End Date */}
+      <div className="flex flex-col gap-2">
+        <label className="text-xs font-medium uppercase text-muted-foreground">
+          End Date
+        </label>
+        <div className="flex items-center gap-1">
+          {/* Backward controls – blue tones */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900"
+            onClick={shiftEndBack1Week}
+            title="Back 1 week"
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900"
+            onClick={shiftEndBack1Day}
+            title="Back 1 day"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          {/* Date picker trigger */}
+          <Popover open={endOpen} onOpenChange={setEndOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-42.5 justify-start text-left font-normal",
+                  !end_date && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {end_date ? format(end_date, "LLL dd, y") : "Pick end"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={end_date ?? undefined}
+                onSelect={handleEndDateChange}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+
+          {/* Forward controls – emerald / green tones */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-900"
+            onClick={shiftEndForward1Day}
+            title="Forward 1 day"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-900"
+            onClick={shiftEndForward1Week}
+            title="Forward 1 week"
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Clear dates */}
+      {(start_date || end_date) && (
+        <div className="flex items-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearDates}
+            className="text-destructive hover:text-destructive"
+          >
+            <X className="h-4 w-4 mr-1" />
+            Clear dates
+          </Button>
+        </div>
+      )}
+
+      {/* Per page & export */}
       <div className="flex items-end gap-4">
         <div className="flex flex-col gap-1">
           <label
