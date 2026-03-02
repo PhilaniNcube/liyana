@@ -22,7 +22,7 @@ import {
   X,
 } from "lucide-react";
 
-// Query state configuration (must mirror server parsing keys)
+
 const queryConfig = {
   per_page: parseAsInteger.withDefault(25),
   start_date: parseAsIsoDate, // Date | null
