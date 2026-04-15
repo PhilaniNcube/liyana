@@ -5,6 +5,8 @@ import { format, subDays, addDays, subWeeks, addWeeks } from "date-fns";
 import { useQueryStates, parseAsInteger, parseAsIsoDate } from "nuqs";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
@@ -53,6 +55,30 @@ export function DeclinedLoansControls({
   const handleEndDateChange = (date: Date | undefined) => {
     setValues({ end_date: date ?? null });
     setEndOpen(false);
+  };
+
+  const handleStartDateInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (!val) {
+      setValues({ start_date: null });
+      return;
+    }
+    const parsed = new Date(val + "T00:00:00");
+    if (!isNaN(parsed.getTime())) {
+      setValues({ start_date: parsed });
+    }
+  };
+
+  const handleEndDateInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (!val) {
+      setValues({ end_date: null });
+      return;
+    }
+    const parsed = new Date(val + "T00:00:00");
+    if (!isNaN(parsed.getTime())) {
+      setValues({ end_date: parsed });
+    }
   };
 
   const handlePerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -125,9 +151,9 @@ export function DeclinedLoansControls({
     >
       {/* Start Date */}
       <div className="flex flex-col gap-2">
-        <label className="text-xs font-medium uppercase text-muted-foreground">
+        <Label className="text-xs font-medium uppercase text-muted-foreground">
           Start Date
-        </label>
+        </Label>
         <div className="flex items-center gap-1">
   
           <Button
@@ -149,18 +175,24 @@ export function DeclinedLoansControls({
             <ChevronLeft className="h-4 w-4" />
           </Button>
 
-          {/* Date picker trigger */}
+          {/* Typed date input */}
+          <Input
+            type="date"
+            value={start_date ? format(start_date, "yyyy-MM-dd") : ""}
+            onChange={handleStartDateInput}
+            className="h-9 w-36"
+          />
+
+          {/* Calendar picker */}
           <Popover open={startOpen} onOpenChange={setStartOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className={cn(
-                  "w-42.5 justify-start text-left font-normal",
-                  !start_date && "text-muted-foreground"
-                )}
+                size="icon"
+                className="h-9 w-9"
+                title="Open calendar"
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {start_date ? format(start_date, "LLL dd, y") : "Pick start"}
+                <CalendarIcon className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -168,6 +200,7 @@ export function DeclinedLoansControls({
                 mode="single"
                 selected={start_date ?? undefined}
                 onSelect={handleStartDateChange}
+                defaultMonth={start_date ?? undefined}
                 initialFocus
               />
             </PopoverContent>
@@ -197,9 +230,9 @@ export function DeclinedLoansControls({
 
       {/* End Date */}
       <div className="flex flex-col gap-2">
-        <label className="text-xs font-medium uppercase text-muted-foreground">
+        <Label className="text-xs font-medium uppercase text-muted-foreground">
           End Date
-        </label>
+        </Label>
         <div className="flex items-center gap-1">
           {/* Backward controls – blue tones */}
           <Button
@@ -221,18 +254,24 @@ export function DeclinedLoansControls({
             <ChevronLeft className="h-4 w-4" />
           </Button>
 
-          {/* Date picker trigger */}
+          {/* Typed date input */}
+          <Input
+            type="date"
+            value={end_date ? format(end_date, "yyyy-MM-dd") : ""}
+            onChange={handleEndDateInput}
+            className="h-9 w-36"
+          />
+
+          {/* Calendar picker */}
           <Popover open={endOpen} onOpenChange={setEndOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className={cn(
-                  "w-42.5 justify-start text-left font-normal",
-                  !end_date && "text-muted-foreground"
-                )}
+                size="icon"
+                className="h-9 w-9"
+                title="Open calendar"
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {end_date ? format(end_date, "LLL dd, y") : "Pick end"}
+                <CalendarIcon className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -240,6 +279,7 @@ export function DeclinedLoansControls({
                 mode="single"
                 selected={end_date ?? undefined}
                 onSelect={handleEndDateChange}
+                defaultMonth={end_date ?? undefined}
                 initialFocus
               />
             </PopoverContent>
@@ -285,12 +325,12 @@ export function DeclinedLoansControls({
       {/* Per page & export */}
       <div className="flex items-end gap-4">
         <div className="flex flex-col gap-1">
-          <label
+          <Label
             htmlFor="per_page"
             className="text-xs font-medium uppercase text-muted-foreground"
           >
             Per Page
-          </label>
+          </Label>
           <select
             id="per_page"
             value={per_page}
