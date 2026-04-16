@@ -8,9 +8,7 @@ import { funeralPolicyLeadSchemaWithRefines as funeralPolicyLeadSchema, policyUp
 import { encryptValue, decryptValue } from "../encryption";
 import { sendSms } from "./sms";
 import { Resend } from "resend";
-import FuneralCoverCalculator, { type ICalculationParams, type IAdditionalFamilyMember } from "../utils/funeralcover-calculator";
-import { FUNERAL_RATE_DATA } from "../data/funeral-rates";
-import { calculateAgeFromSAID } from "../utils/sa-id";
+import { getPremiumByCoverAmount } from "../utils/funeralcover-calculator";
 import { requireAdminAuth } from "../utils/admin-auth";
 import type { Database } from "@/lib/types";
 
@@ -105,64 +103,14 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
       };
     }
 
-    // Calculate premium amount using FuneralCoverCalculator
+    // Look up premium from fixed package based on coverage amount
     let calculatedPremium: number | null = null;
     try {
-      // Calculate policy holder's age from date of birth
-      const policyHolderAge = validatedData.date_of_birth 
-        ? new Date().getFullYear() - new Date(validatedData.date_of_birth).getFullYear()
-        : null;
-
-      if (policyHolderAge && validatedData.coverage_amount) {
-        // Map beneficiaries to calculator format
-        const additionalMembers: IAdditionalFamilyMember[] = [];
-        
-        if (validatedData.beneficiaries && validatedData.beneficiaries.length > 0) {
-          validatedData.beneficiaries.forEach((ben: any) => {
-            const relationship = ben.relationship;
-            
-            // Map relationship types to calculator format
-            if (relationship === 'spouse') {
-              additionalMembers.push({ relationship: 'spouse' });
-            } else if (relationship === 'child') {
-              additionalMembers.push({ relationship: 'child' });
-            } else if (relationship === 'parent' || relationship === 'sibling' || relationship === 'extended') {
-              // Calculate actual age from ID number instead of estimating
-              let actualAge: number | null = null;
-              
-              if (ben.id_number && ben.id_number.length === 13) {
-                actualAge = calculateAgeFromSAID(ben.id_number);
-              }
-              
-              // If we can't calculate age from ID, fall back to estimation
-              if (actualAge === null) {
-                if (relationship === 'parent') {
-                  actualAge = (policyHolderAge || 30) + 25; // Estimate parent age
-                } else if (relationship === 'sibling') {
-                  actualAge = policyHolderAge || 30; // Assume similar age for siblings
-                } else { // extended
-                  actualAge = policyHolderAge || 40; // Default estimate for extended family
-                }
-              }
-              
-              additionalMembers.push({ 
-                relationship: 'extended',
-                age: actualAge
-              });
-            }
-          });
+      if (validatedData.coverage_amount) {
+        const result = getPremiumByCoverAmount(validatedData.coverage_amount);
+        if (result) {
+          calculatedPremium = result.monthlyPremium;
         }
-
-        // Initialize calculator and calculate premium
-        const calculator = new FuneralCoverCalculator(FUNERAL_RATE_DATA);
-        const calculationParams: ICalculationParams = {
-          mainMemberAge: policyHolderAge,
-          coverAmount: validatedData.coverage_amount,
-          additionalMembers: additionalMembers
-        };
-
-        const result = calculator.calculateTotalPremium(calculationParams);
-        calculatedPremium = result.totalPremium;
       }
     } catch (error) {
       console.error("Error calculating premium:", error);
@@ -503,73 +451,14 @@ export async function sendFuneralPolicyDetailsEmail(
     // Calculate premium amount if not already saved in database
     let calculatedPremium: number | null = null;
     let premiumCalculationError: string | null = null;
-    let policyHolderAge: number | null = null;
-    let additionalMembersCount = 0;
     
     if (!policy.premium_amount) {
       try {
-        // Calculate policy holder's age from date of birth
-        policyHolderAge = policy.policy_holder?.date_of_birth 
-          ? new Date().getFullYear() - new Date(policy.policy_holder.date_of_birth).getFullYear()
-          : null;
-
-        if (policyHolderAge && policy.coverage_amount) {
-          // Map beneficiaries to calculator format
-          const additionalMembers: IAdditionalFamilyMember[] = [];
-          
-          if (beneficiaries && beneficiaries.length > 0) {
-            beneficiaries.forEach((ben) => {
-              const relationship = ben.relation_type;
-              
-              // Map relationship types to calculator format
-              if (relationship === 'spouse') {
-                additionalMembers.push({ relationship: 'spouse' });
-              } else if (relationship === 'child') {
-                additionalMembers.push({ relationship: 'child' });
-              } else if (relationship === 'parent' || relationship === 'sibling') {
-                // Calculate actual age from ID number instead of estimating
-                let actualAge: number | null = null;
-                
-                if (ben.beneficiary?.id_number) {
-                  try {
-                    const decryptedIdNumber = decryptValue(ben.beneficiary.id_number);
-                    if (decryptedIdNumber && decryptedIdNumber.length === 13) {
-                      actualAge = calculateAgeFromSAID(decryptedIdNumber);
-                    }
-                  } catch (error) {
-                    console.error("Error decrypting beneficiary ID number:", error);
-                  }
-                }
-                
-                // If we can't calculate age from ID, fall back to estimation
-                if (actualAge === null) {
-                  if (relationship === 'parent') {
-                    actualAge = (policyHolderAge || 30) + 25; // Estimate parent age
-                  } else { // sibling
-                    actualAge = policyHolderAge || 30; // Assume similar age for siblings
-                  }
-                }
-                
-                additionalMembers.push({ 
-                  relationship: 'extended',
-                  age: actualAge
-                });
-              }
-            });
+        if (policy.coverage_amount) {
+          const result = getPremiumByCoverAmount(policy.coverage_amount);
+          if (result) {
+            calculatedPremium = result.monthlyPremium;
           }
-
-          additionalMembersCount = additionalMembers.length;
-
-          // Initialize calculator and calculate premium
-          const calculator = new FuneralCoverCalculator(FUNERAL_RATE_DATA);
-          const calculationParams: ICalculationParams = {
-            mainMemberAge: policyHolderAge,
-            coverAmount: policy.coverage_amount,
-            additionalMembers: additionalMembers
-          };
-
-          const result = calculator.calculateTotalPremium(calculationParams);
-          calculatedPremium = result.totalPremium;
         }
       } catch (error) {
         console.error("Error calculating premium:", error);
@@ -665,7 +554,7 @@ export async function sendFuneralPolicyDetailsEmail(
               <p style="margin: 0; font-weight: bold; color: #374151;">Monthly Premium:</p>
               <p style="margin: 5px 0 15px 0; font-size: 18px; font-weight: bold;">${premiumAmountWithIndicator}</p>
               ${premiumCalculationError ? `<p style="margin: 0; font-size: 12px; color: #dc2626; font-style: italic;">Calculation error: ${premiumCalculationError}</p>` : ''}
-              ${calculatedPremium ? `<p style="margin: 0; font-size: 12px; color: #059669; font-style: italic;">Premium calculated based on policy holder age (${policyHolderAge}) and ${additionalMembersCount} family member(s)</p>` : ''}
+              ${calculatedPremium ? `<p style="margin: 0; font-size: 12px; color: #059669; font-style: italic;">Premium based on selected funeral plan package</p>` : ''}
             </div>
             <div>
               <p style="margin: 0; font-weight: bold; color: #374151;">Policy Status:</p>

@@ -685,7 +685,7 @@ export const funeralPolicyLeadSchema = z
         message: "Please select a product",
       
       }),
-    coverage_amount: z.coerce.number().min(1000, "Coverage amount must be at least R1,000").max(100000, "Coverage amount cannot exceed R100,000"),
+    coverage_amount: z.coerce.number().refine((val) => [6000, 10000, 12000, 18500].includes(val), { message: "Please select a valid funeral plan package" }),
     start_date: z.string().min(1, "Start date is required").refine((date) => !isNaN(Date.parse(date)), { message: "Start date must be a valid date" }),
     // policy_type: z.enum(["individual", "family", "extended_family"], {
     //   message: "Policy type is required",

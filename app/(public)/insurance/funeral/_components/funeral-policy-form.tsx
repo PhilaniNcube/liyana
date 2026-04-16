@@ -37,9 +37,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Trash2, Plus, Upload, FileText, X } from "lucide-react";
+import { Trash2, Plus, Upload, FileText, X, Check } from "lucide-react";
 import { z } from "zod";
 import FuneralPremiumCalculatorDialog from "./funeral-premium-calculator-dialog";
+import { FUNERAL_PACKAGES, type FuneralPackage, type FuneralPackageId } from "@/lib/data/funeral-rates";
+import { cn } from "@/lib/utils";
 
 // South African banks with their branch codes
 const southAfricanBanks = [
@@ -57,10 +59,8 @@ const southAfricanBanks = [
   { name: "VBS Mutual Bank", code: "588000" },
 ] as const;
 
-// Available coverage amounts
-const coverageAmounts = [
-  5000, 10000, 15000
-];
+// Valid coverage amounts based on packages
+const validCoverageAmounts = FUNERAL_PACKAGES.map((pkg) => pkg.cover.principalMember);
 
 // Policy document types available for upload
 const POLICY_DOCUMENT_TYPES = {
@@ -86,12 +86,19 @@ interface PendingDocument {
   uploadedPath?: string;
 }
 
-// Helper function to find the closest coverage amount
+// Helper function to find the closest valid coverage amount
 const findClosestCoverageAmount = (targetAmount: number): number => {
-  return coverageAmounts.reduce((prev, curr) =>
+  return validCoverageAmounts.reduce((prev, curr) =>
     Math.abs(curr - targetAmount) < Math.abs(prev - targetAmount) ? curr : prev
   );
 };
+
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat("en-ZA", {
+    style: "currency",
+    currency: "ZAR",
+    minimumFractionDigits: 0,
+  }).format(amount);
 
 type FuneralForm = z.infer<typeof funeralPolicyLeadSchemaWithRefines>;
 
@@ -198,18 +205,11 @@ export default function FuneralPolicyForm() {
     name: "beneficiaries",
   });
 
-  // Watch coverage amount for URL updates
+  // Derive selected package from coverage amount
   const watchedCoverageAmount = form.watch("coverage_amount");
-
-  // Update URL when coverage amount changes
-  useEffect(() => {
-    if (
-      watchedCoverageAmount &&
-      watchedCoverageAmount !== coverageAmountFromUrl
-    ) {
-      setCoverageAmountInUrl(watchedCoverageAmount);
-    }
-  }, [watchedCoverageAmount, coverageAmountFromUrl, setCoverageAmountInUrl]);
+  const selectedPackage = FUNERAL_PACKAGES.find(
+    (pkg) => pkg.cover.principalMember === watchedCoverageAmount
+  ) ?? null;
 
   // Define steps with the fields they are responsible for (for per-step validation)
   const steps: {
@@ -487,7 +487,7 @@ export default function FuneralPolicyForm() {
             <div className="space-y-6">
               <Card className="p-6">
                 <CardHeader className="px-0 pt-0">
-                  <CardTitle>Coverage Selection</CardTitle>
+                  <CardTitle>Select Your Funeral Plan</CardTitle>
                 </CardHeader>
                 <CardContent className="px-0">
                   <FormField
@@ -495,29 +495,43 @@ export default function FuneralPolicyForm() {
                     name="coverage_amount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Coverage Amount</FormLabel>
-                        <FormControl>
-                          <Select
-                            onValueChange={(value) =>
-                              field.onChange(Number(value))
-                            }
-                            value={field.value?.toString() || ""}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select coverage amount" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {coverageAmounts.map((amount) => (
-                                <SelectItem
-                                  key={amount}
-                                  value={amount.toString()}
-                                >
-                                  R{amount.toLocaleString()}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
+                        <FormLabel>Choose a Package</FormLabel>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {FUNERAL_PACKAGES.map((pkg) => (
+                            <Card
+                              key={pkg.id}
+                              className={cn(
+                                "cursor-pointer transition-all hover:shadow-md relative p-4",
+                                field.value === pkg.cover.principalMember &&
+                                  "ring-2 ring-green-600 shadow-md"
+                              )}
+                              onClick={() => {
+                                field.onChange(pkg.cover.principalMember);
+                                setCoverageAmountInUrl(pkg.cover.principalMember);
+                              }}
+                            >
+                              {field.value === pkg.cover.principalMember && (
+                                <div className="absolute top-3 right-3">
+                                  <Check className="h-5 w-5 text-green-600" />
+                                </div>
+                              )}
+                              <Badge
+                                variant={pkg.type === "family" ? "secondary" : "outline"}
+                                className="mb-2"
+                              >
+                                {pkg.type === "family" ? "Family" : "Single Member"}
+                              </Badge>
+                              <p className="font-semibold text-sm">{pkg.name}</p>
+                              <p className="text-xl font-bold text-green-700">
+                                {formatCurrency(pkg.monthlyPremium)}
+                                <span className="text-xs font-normal text-muted-foreground">/month</span>
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Principal cover: {formatCurrency(pkg.cover.principalMember)}
+                              </p>
+                            </Card>
+                          ))}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}

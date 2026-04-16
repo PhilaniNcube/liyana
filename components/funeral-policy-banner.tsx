@@ -36,8 +36,8 @@ const FuneralPolicyBanner = () => {
         }}
       >
         <p className="relative z-10 text-xl font-bold leading-tight text-right pr-4">
-          With Instant Funeral Cover from Liyana Finance, you can get up to R130
-          000 in cover.
+          Affordable Funeral Cover from Liyana Finance — Family and Single
+          Member plans starting from just R67/month.
         </p>
       </div>
     </div>
