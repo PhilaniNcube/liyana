@@ -606,6 +606,12 @@ export function ApplicationDetailClient({
                       interest and you're welcome to reapply in future.
                       NCRCP18217
                     </SelectItem>
+                    <SelectItem
+                      className="w-full max-w-2xl"
+                      value="Thank you for your recent loan application with Liyana Finance. Due to a failed vetting, we cannot approve your application. NCRCP18217"
+                    >
+                      Thank you for your recent loan application with Liyana Finance. Due to a failed vetting, we cannot approve your application. NCRCP18217
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
