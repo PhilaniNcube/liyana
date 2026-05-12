@@ -1,17 +1,9 @@
 import React from "react";
 import FuneralPolicyForm from "./_components/funeral-policy-form";
-import FuneralPremiumCalculatorDialog from "./_components/funeral-premium-calculator-dialog";
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/queries";
 import Link from "next/link";
 import { Calculator, ArrowRight } from "lucide-react";
 
-export default async function Page() {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    redirect("/auth/login?next=/insurance/funeral");
-  }
+export default function Page() {
 
   return (
     <section className="py-8 space-y-8">
