@@ -227,7 +227,7 @@ export function SendClaimToLinarDialog({
         {children || (
           <Button size="sm">
             <Send className="h-4 w-4 mr-2" />
-            Send To Linar
+            Send To LifeWize
           </Button>
         )}
       </DialogTrigger>
@@ -428,7 +428,7 @@ export function SendClaimToLinarDialog({
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                Send to Linar
+                Send to LifeWize
               </>
             )}
           </Button>

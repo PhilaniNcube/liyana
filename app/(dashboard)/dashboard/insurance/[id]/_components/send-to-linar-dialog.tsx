@@ -315,7 +315,7 @@ export function SendToLinarDialog({
       <DialogTrigger asChild>
         <Button>
           <Send className="h-4 w-4 mr-2" />
-          Send To Linar
+          Send To LifeWize
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[500px] overflow-y-scroll">
@@ -359,183 +359,183 @@ export function SendToLinarDialog({
           {(policyDocuments.length > 0 ||
             applicationDocuments.length > 0 ||
             uploadedFiles.length > 0) && (
-            <div className="space-y-3">
-              <Label>Attach Documents (Optional)</Label>
+              <div className="space-y-3">
+                <Label>Attach Documents (Optional)</Label>
 
-              {/* Policy Documents Section */}
-              {policyDocuments.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground">
-                    Policy Documents
-                  </Label>
-                  <div className="border rounded-lg p-4 max-h-[150px] overflow-y-auto">
-                    {policyDocuments.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="flex items-center space-x-3 py-2"
-                      >
-                        <Checkbox
-                          id={`policy-doc-${doc.id}`}
-                          checked={selectedPolicyDocuments.includes(doc.id)}
-                          onCheckedChange={(checked) =>
-                            handlePolicyDocumentToggle(
-                              doc.id,
-                              checked as boolean
-                            )
-                          }
-                        />
-                        <div className="flex items-center space-x-2 flex-1">
-                          <FileText className="h-4 w-4 text-blue-500" />
-                          <Label
-                            htmlFor={`policy-doc-${doc.id}`}
-                            className="text-sm font-normal cursor-pointer flex-1"
-                          >
-                            {doc.document_type
-                              .replace(/_/g, " ")
-                              .replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                          </Label>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Application Documents Section */}
-              {applicationDocuments.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground">
-                    Application Documents
-                  </Label>
-                  <div className="border rounded-lg p-4 max-h-[150px] overflow-y-auto">
-                    {applicationDocuments.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="flex items-center space-x-3 py-2"
-                      >
-                        <Checkbox
-                          id={`app-doc-${doc.id}`}
-                          checked={selectedApplicationDocuments.includes(
-                            doc.id
-                          )}
-                          onCheckedChange={(checked) =>
-                            handleApplicationDocumentToggle(
-                              doc.id,
-                              checked as boolean
-                            )
-                          }
-                        />
-                        <div className="flex items-center space-x-2 flex-1">
-                          <FileText className="h-4 w-4 text-green-500" />
-                          <Label
-                            htmlFor={`app-doc-${doc.id}`}
-                            className="text-sm font-normal cursor-pointer flex-1"
-                          >
-                            {doc.document_type
-                              .replace(/_/g, " ")
-                              .replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                          </Label>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Upload from Device Section */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Upload from Device
-                </Label>
-                <div className="border rounded-lg p-4">
-                  <div className="flex flex-col space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center space-x-2"
-                      >
-                        <Upload className="h-4 w-4" />
-                        <span>Choose Files</span>
-                      </Button>
-                      <span className="text-xs text-muted-foreground">
-                        PDF, Word, or Image files (max 10MB each)
-                      </span>
-                    </div>
-
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                    />
-
-                    {/* Uploaded Files List */}
-                    {uploadedFiles.length > 0 && (
-                      <div className="space-y-2 max-h-[120px] overflow-y-auto">
-                        {uploadedFiles.map((uploadedFile, index) => (
-                          <div
-                            key={`${uploadedFile.name}-${index}`}
-                            className="flex items-center space-x-3 py-2 px-2 bg-gray-50 rounded border"
-                          >
-                            <div className="flex items-center space-x-2 flex-1">
-                              <FileText className="h-4 w-4 text-purple-500" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">
-                                  {uploadedFile.name}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {formatFileSize(uploadedFile.size)}
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                handleRemoveUploadedFile(uploadedFile.name)
-                              }
-                              className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                {/* Policy Documents Section */}
+                {policyDocuments.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">
+                      Policy Documents
+                    </Label>
+                    <div className="border rounded-lg p-4 max-h-[150px] overflow-y-auto">
+                      {policyDocuments.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="flex items-center space-x-3 py-2"
+                        >
+                          <Checkbox
+                            id={`policy-doc-${doc.id}`}
+                            checked={selectedPolicyDocuments.includes(doc.id)}
+                            onCheckedChange={(checked) =>
+                              handlePolicyDocumentToggle(
+                                doc.id,
+                                checked as boolean
+                              )
+                            }
+                          />
+                          <div className="flex items-center space-x-2 flex-1">
+                            <FileText className="h-4 w-4 text-blue-500" />
+                            <Label
+                              htmlFor={`policy-doc-${doc.id}`}
+                              className="text-sm font-normal cursor-pointer flex-1"
                             >
-                              <X className="h-3 w-3" />
-                            </Button>
+                              {doc.document_type
+                                .replace(/_/g, " ")
+                                .replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                            </Label>
                           </div>
-                        ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Application Documents Section */}
+                {applicationDocuments.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">
+                      Application Documents
+                    </Label>
+                    <div className="border rounded-lg p-4 max-h-[150px] overflow-y-auto">
+                      {applicationDocuments.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="flex items-center space-x-3 py-2"
+                        >
+                          <Checkbox
+                            id={`app-doc-${doc.id}`}
+                            checked={selectedApplicationDocuments.includes(
+                              doc.id
+                            )}
+                            onCheckedChange={(checked) =>
+                              handleApplicationDocumentToggle(
+                                doc.id,
+                                checked as boolean
+                              )
+                            }
+                          />
+                          <div className="flex items-center space-x-2 flex-1">
+                            <FileText className="h-4 w-4 text-green-500" />
+                            <Label
+                              htmlFor={`app-doc-${doc.id}`}
+                              className="text-sm font-normal cursor-pointer flex-1"
+                            >
+                              {doc.document_type
+                                .replace(/_/g, " ")
+                                .replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                            </Label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload from Device Section */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Upload from Device
+                  </Label>
+                  <div className="border rounded-lg p-4">
+                    <div className="flex flex-col space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex items-center space-x-2"
+                        >
+                          <Upload className="h-4 w-4" />
+                          <span>Choose Files</span>
+                        </Button>
+                        <span className="text-xs text-muted-foreground">
+                          PDF, Word, or Image files (max 10MB each)
+                        </span>
                       </div>
-                    )}
+
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+
+                      {/* Uploaded Files List */}
+                      {uploadedFiles.length > 0 && (
+                        <div className="space-y-2 max-h-[120px] overflow-y-auto">
+                          {uploadedFiles.map((uploadedFile, index) => (
+                            <div
+                              key={`${uploadedFile.name}-${index}`}
+                              className="flex items-center space-x-3 py-2 px-2 bg-gray-50 rounded border"
+                            >
+                              <div className="flex items-center space-x-2 flex-1">
+                                <FileText className="h-4 w-4 text-purple-500" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {uploadedFile.name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {formatFileSize(uploadedFile.size)}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  handleRemoveUploadedFile(uploadedFile.name)
+                                }
+                                className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Selected Documents Summary */}
-              {(selectedPolicyDocuments.length > 0 ||
-                selectedApplicationDocuments.length > 0 ||
-                uploadedFiles.length > 0) && (
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    {selectedPolicyDocuments.length +
-                      selectedApplicationDocuments.length +
-                      uploadedFiles.length}{" "}
-                    document(s) selected for attachment
-                  </p>
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="text-sm">
-                      {selectedPolicyDocuments.length +
-                        selectedApplicationDocuments.length +
-                        uploadedFiles.length}{" "}
-                      document(s) will be attached to the email sent to Linar.
-                    </AlertDescription>
-                  </Alert>
-                </div>
-              )}
-            </div>
-          )}
+                {/* Selected Documents Summary */}
+                {(selectedPolicyDocuments.length > 0 ||
+                  selectedApplicationDocuments.length > 0 ||
+                  uploadedFiles.length > 0) && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        {selectedPolicyDocuments.length +
+                          selectedApplicationDocuments.length +
+                          uploadedFiles.length}{" "}
+                        document(s) selected for attachment
+                      </p>
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                          {selectedPolicyDocuments.length +
+                            selectedApplicationDocuments.length +
+                            uploadedFiles.length}{" "}
+                          document(s) will be attached to the email sent to Linar.
+                        </AlertDescription>
+                      </Alert>
+                    </div>
+                  )}
+              </div>
+            )}
 
           {/* No Documents Available */}
           {policyDocuments.length === 0 &&
@@ -619,7 +619,7 @@ export function SendToLinarDialog({
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                Send to Linar
+                Send to LifeWize
               </>
             )}
           </Button>
