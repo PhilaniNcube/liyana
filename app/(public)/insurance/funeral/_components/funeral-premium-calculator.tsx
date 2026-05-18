@@ -32,14 +32,22 @@ function CoverBreakdown({ pkg }: { pkg: FuneralPackage }) {
   if (cover.studentChild21to25 != null) items.push({ label: "Student Child 21–25", amount: cover.studentChild21to25 });
 
   return (
-    <ul className="space-y-2 text-sm">
-      {items.map((item) => (
-        <li key={item.label} className="flex justify-between">
-          <span>{item.label}</span>
-          <span className="font-medium">{formatCurrency(item.amount)}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-3">
+      <ul className="space-y-2 text-sm">
+        {items.map((item) => (
+          <li key={item.label} className="flex justify-between">
+            <span>{item.label}</span>
+            <span className="font-medium">{formatCurrency(item.amount)}</span>
+          </li>
+        ))}
+      </ul>
+      {pkg.valueAddedProducts && (
+        <div className="text-xs text-muted-foreground pt-2 border-t border-slate-100">
+          <span className="font-semibold text-slate-700">Value Added Products included:</span>{" "}
+          {pkg.valueAddedProducts}
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import Image from "next/image";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -199,19 +200,10 @@ function PlanCard({
             </li>
           ))}
         </ul>
-
-        {isFamily && (
-          <div
-            className={cn(
-              "mt-4 rounded-xl px-3 py-2 text-xs",
-              selected
-                ? "bg-slate-900 text-white"
-                : "bg-slate-50 text-slate-500"
-            )}
-          >
-            <Info className="mr-1.5 inline h-3 w-3" />
-            Total possible family cover:{" "}
-            <span className="font-bold">{fmt(totalCover)}</span>
+        {pkg.valueAddedProducts && (
+          <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600 leading-relaxed border border-slate-100">
+            <span className="font-semibold text-slate-900 block mb-1">Value Added Products included:</span>
+            {pkg.valueAddedProducts}
           </div>
         )}
       </div>
@@ -307,6 +299,12 @@ function SummaryPanel({ pkg }: { pkg: FuneralPackage }) {
             <span className="font-semibold">{fmt(item.amount)}</span>
           </div>
         ))}
+        {pkg.valueAddedProducts && (
+          <div className="mt-4 rounded-xl bg-white/5 p-3 text-xs text-white/80 leading-relaxed border border-white/10">
+            <span className="font-semibold text-white block mb-1">Value Added Products included:</span>
+            {pkg.valueAddedProducts}
+          </div>
+        )}
       </div>
 
       {/* CTA */}
@@ -404,12 +402,17 @@ function ComparisonTable({
           ? fmt(p.cover.studentChild21to25)
           : "—"
       ),
+      note: "Full-time student only",
     },
     {
       label: "Still-Born Child",
       values: FUNERAL_PACKAGES.map((p) =>
         p.cover.stillBorn != null ? fmt(p.cover.stillBorn) : "—"
       ),
+    },
+    {
+      label: "Value Added Products",
+      values: FUNERAL_PACKAGES.map((p) => p.valueAddedProducts ? p.valueAddedProducts : "—"),
     },
   ];
 
@@ -461,8 +464,8 @@ function ComparisonTable({
                     selectedId === FUNERAL_PACKAGES[j].id
                       ? "bg-slate-900/5 font-semibold text-black"
                       : val === "—"
-                      ? "text-slate-300"
-                      : "text-slate-700",
+                        ? "text-slate-300"
+                        : "text-slate-700",
                     row.highlight && "text-base"
                   )}
                 >
@@ -609,6 +612,26 @@ export default function FuneralCalculatorClient() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Disclaimer */}
+      <div className="mt-8 mb-4 flex flex-col items-center text-center">
+        <div className="mb-4">
+          <Image
+            src="/images/clientele_life.webp"
+            alt="Clientèle Logo"
+            width={128}
+            height={48}
+            className="h-12 w-auto object-contain"
+          />
+        </div>
+        <p className="max-w-4xl text-[10px] leading-relaxed text-slate-500">
+          Funeral insurance products are underwritten by Clientèle Life Assurance Company Limited, a licensed life insurer
+          and authorised Financial Services Provider (FSP No. 15268). Liyana Finance (Pty) Ltd is a juristic
+          representative of Swift Underwriting Managers (Pty) Ltd, an authorised Financial Services Provider (FSP No.
+          49285). Liyana Finance markets and distributes funeral insurance products on behalf of the authorised entities.
+          No advice is provided. Terms and conditions apply.
+        </p>
       </div>
 
       {/* Bottom CTA */}

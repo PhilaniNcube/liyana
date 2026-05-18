@@ -18,6 +18,7 @@ export interface FuneralPackage {
   monthlyPremium: number;
   type: "family" | "single";
   cover: FuneralPackageCover;
+  valueAddedProducts?: string;
 }
 
 export const FUNERAL_PACKAGES: FuneralPackage[] = [
@@ -27,7 +28,7 @@ export const FUNERAL_PACKAGES: FuneralPackage[] = [
     monthlyPremium: 132.90,
     type: "family",
     cover: {
-      principalMember: 12000,
+      principalMember: 12350,
       spouse: 10000,
       stillBorn: 4000,
       childrenUnder6: 4000,
@@ -41,6 +42,7 @@ export const FUNERAL_PACKAGES: FuneralPackage[] = [
     name: "Ilifa Family Funeral Plan",
     monthlyPremium: 203.60,
     type: "family",
+    valueAddedProducts: "Trauma & Assault Assist | Funeral Repatriation | 24/7 Nurse on Call",
     cover: {
       principalMember: 18500,
       spouse: 10000,
@@ -65,6 +67,7 @@ export const FUNERAL_PACKAGES: FuneralPackage[] = [
     name: "Ilanga Single Member Funeral Plan",
     monthlyPremium: 139,
     type: "single",
+    valueAddedProducts: "Trauma & Assault Assist | Funeral Repatriation | 24/7 Nurse on Call | Accident Expert (Road Accident Fund)",
     cover: {
       principalMember: 10000,
     },
