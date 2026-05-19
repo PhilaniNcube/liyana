@@ -696,15 +696,9 @@ export const funeralPolicyLeadSchema = z
      
     // Employment details aligned with loanApplicationSchema
     employment_type: z.enum(
-      ["employed", "self_employed", "contract", "unemployed", "retired"],
+      ["employed", "self_employed", "contract", "unemployed", "retired", "sassa_old_age_grant", "sassa_disability_grant", "sassa_child_grant"],
       { message: "Employment status is required" }
     ),
-    employer_name: z.string().min(1, "Employer is required"),
-    job_title: z.string().min(1, "Job title is required"),
-    monthly_income: z.coerce.number().min(1, "Monthly income is required"),
-    employer_address: z.string().optional(),
-    employer_contact_number: z.string().optional(),
-    employment_end_date: z.string().optional(),
 
     // Required banking details for policy holder party.banking_details
     account_name: z.string().min(1, "Account name is required"),
@@ -718,9 +712,6 @@ export const funeralPolicyLeadSchema = z
       .max(6, "Branch code must be exactly 6 digits"),
     account_type: z.enum(["savings", "transaction", "current", "business"], {
       message: "Account type is required",
-    }),
-    payment_method: z.enum(["debit_order", "cash_deposit"], {
-      message: "Payment method is required",
     }),
     payment_date: z.coerce.number().min(1).max(28),
     beneficiaries: z
@@ -746,25 +737,13 @@ export const funeralPolicyLeadSchema = z
     privacy_policy: z.boolean().refine((v) => v === true, {
       message: "Privacy policy must be accepted",
     }),
+    mandate_accepted: z.boolean().refine((v) => v === true, {
+      message: "You must accept the authority and mandate for payment instructions",
+    }),
+    signature_name: z.string().min(1, "Signature name is required"),
+    signature_date: z.string().min(1, "Signature date is required"),
+    signature_svg: z.string().optional(),
   })
-  .refine(
-    (data) => {
-      // Require employment_end_date for contract and retired types
-      if (
-        (data.employment_type === "contract" ||
-          data.employment_type === "retired") &&
-        (!data.employment_end_date || data.employment_end_date.trim() === "")
-      ) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message:
-        "Employment end date is required for contract and retired employment types",
-      path: ["employment_end_date"],
-    }
-  )
   .refine(
     (data) => {
       // Prevent applications from unemployed individuals

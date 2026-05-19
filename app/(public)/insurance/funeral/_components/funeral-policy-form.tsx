@@ -51,9 +51,11 @@ const southAfricanBanks = [
   { name: "Capitec Bank", code: "470010" },
   { name: "Discovery Bank", code: "679000" },
   { name: "FNB (First National Bank)", code: "250655" },
+  { name: "Grindrod Bank", code: "584000" },
   { name: "Investec Bank", code: "580105" },
   { name: "Nedbank", code: "198765" },
   { name: "Standard Bank", code: "051001" },
+  { name: "Surecard", code: "410105" },
   { name: "TymeBank", code: "678910" },
   { name: "Ubank", code: "431010" },
   { name: "VBS Mutual Bank", code: "588000" },
@@ -172,19 +174,17 @@ export default function FuneralPolicyForm() {
       city: "",
       postal_code: "",
       employment_type: undefined as any,
-      employer_name: "",
-      job_title: "",
-      monthly_income: 0,
-      employer_address: "",
-      employer_contact_number: "",
-      employment_end_date: "",
       // Step 2: banking
       account_name: "",
       bank_name: "",
       account_number: "",
       branch_code: "",
       account_type: undefined as any,
-      payment_method: undefined as any,
+      payment_date: undefined as any,
+      mandate_accepted: false,
+      signature_name: "",
+      signature_date: "",
+      signature_svg: "",
       // Step 3: beneficiaries + declarations
       beneficiaries: [
         {
@@ -199,6 +199,108 @@ export default function FuneralPolicyForm() {
       privacy_policy: false,
     },
   });
+
+  // Signature method (drawing or typing)
+  const [sigMethod, setSigMethod] = useState<"draw" | "type">("draw");
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+
+  // Auto-populate signature date to today's date
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    form.setValue("signature_date", today);
+  }, [form]);
+
+  // Drawing pad logic
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    const rect = canvas.getBoundingClientRect();
+    let clientX = 0;
+    let clientY = 0;
+
+    if ("touches" in e) {
+      if (e.touches.length === 0) return;
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(clientX - rect.left, clientY - rect.top);
+    setIsDrawing(true);
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    if (e.cancelable) e.preventDefault();
+
+    const rect = canvas.getBoundingClientRect();
+    let clientX = 0;
+    let clientY = 0;
+
+    if ("touches" in e) {
+      if (e.touches.length === 0) return;
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    ctx.lineTo(clientX - rect.left, clientY - rect.top);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    if (!isDrawing) return;
+    setIsDrawing(false);
+    
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const dataUrl = canvas.toDataURL("image/png");
+      form.setValue("signature_svg", dataUrl);
+    }
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    form.setValue("signature_svg", "");
+  };
+
+  const handleTypedSignatureChange = (name: string) => {
+    form.setValue("signature_name", name);
+    if (name.trim()) {
+      // Create SVG data URL
+      const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="80" viewBox="0 0 300 80">
+        <text x="15" y="50" font-family="cursive, 'Brush Script MT', 'Dancing Script'" font-size="32" font-style="italic" fill="#1e3b8b">${name}</text>
+        <line x1="10" y1="65" x2="290" y2="65" stroke="#9ca3af" stroke-width="1" stroke-dasharray="4" />
+      </svg>`;
+      const dataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`;
+      form.setValue("signature_svg", dataUrl);
+    } else {
+      form.setValue("signature_svg", "");
+    }
+  };
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -217,59 +319,57 @@ export default function FuneralPolicyForm() {
     description?: string;
     fields: (keyof FuneralForm)[];
   }[] = [
-    {
-      title: "Coverage & Personal",
-      description: "Select coverage and provide your basic details",
-      fields: [
-        "coverage_amount",
-        "first_name",
-        "last_name",
-        "id_number",
-        "date_of_birth",
-        "start_date",
-        "phone_number",
-        "email",
-      ],
-    },
-    {
-      title: "Address & Employment",
-      description: "Where you live and work",
-      fields: [
-        "residential_address",
-        "city",
-        "postal_code",
-        "employment_type",
-        "employer_name",
-        "job_title",
-        "monthly_income",
-        "employer_address",
-        "employer_contact_number",
-        "employment_end_date",
-      ],
-    },
-    {
-      title: "Banking",
-      description: "Payment details",
-      fields: [
-        "account_name",
-        "bank_name",
-        "account_number",
-        "branch_code",
-        "account_type",
-        "payment_method",
-      ],
-    },
-    {
-      title: "Documents",
-      description: "Upload supporting documents",
-      fields: [], // No form fields, just document uploads
-    },
-    {
-      title: "Beneficiaries",
-      description: "Beneficiaries & declarations",
-      fields: ["beneficiaries", "terms_and_conditions", "privacy_policy"],
-    },
-  ];
+      {
+        title: "Coverage & Personal",
+        description: "Select coverage and provide your basic details",
+        fields: [
+          "coverage_amount",
+          "first_name",
+          "last_name",
+          "id_number",
+          "date_of_birth",
+          "start_date",
+          "phone_number",
+          "email",
+        ],
+      },
+      {
+        title: "Address & Employment",
+        description: "Where you live and work",
+        fields: [
+          "residential_address",
+          "city",
+          "postal_code",
+          "employment_type",
+        ],
+      },
+      {
+        title: "Banking",
+        description: "Payment details",
+        fields: [
+          "account_name",
+          "bank_name",
+          "account_number",
+          "branch_code",
+          "account_type",
+          "payment_date",
+          "mandate_accepted",
+          "signature_name",
+          "signature_date",
+          "signature_svg",
+        ],
+      },
+      {
+        title: "Documents",
+        description: "Upload supporting documents",
+        fields: [], // No form fields, just document uploads
+      },
+      {
+        title: "Beneficiaries",
+        description: "Beneficiaries & declarations",
+        fields: ["beneficiaries", "terms_and_conditions", "privacy_policy"],
+      },
+    ];
 
   const totalSteps = steps.length;
 
@@ -503,7 +603,7 @@ export default function FuneralPolicyForm() {
                               className={cn(
                                 "cursor-pointer transition-all hover:shadow-md relative p-4",
                                 field.value === pkg.cover.principalMember &&
-                                  "ring-2 ring-green-600 shadow-md"
+                                "ring-2 ring-green-600 shadow-md"
                               )}
                               onClick={() => {
                                 field.onChange(pkg.cover.principalMember);
@@ -540,7 +640,7 @@ export default function FuneralPolicyForm() {
               </Card>
               <Card className="p-6">
                 <CardHeader className="px-0 pt-0">
-                  <CardTitle>Personal Information</CardTitle>
+                  <CardTitle>Personal Information <small className="text-muted-foreground">(Person to be insured)</small></CardTitle>
                 </CardHeader>
                 <CardContent className="px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
@@ -633,7 +733,7 @@ export default function FuneralPolicyForm() {
                     name="start_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Policy Start Date</FormLabel>
+                        <FormLabel>Application Date</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -773,99 +873,17 @@ export default function FuneralPolicyForm() {
                                 Unemployed
                               </SelectItem>
                               <SelectItem value="retired">Retired</SelectItem>
+                              <SelectItem value="sassa_old_age_grant">
+                                SASSA Old Age Grant
+                              </SelectItem>
+                              <SelectItem value="sassa_disability_grant">
+                                SASSA Disability Grant
+                              </SelectItem>
+                              <SelectItem value="sassa_child_grant">
+                                SASSA Child Grant
+                              </SelectItem>
                             </SelectContent>
                           </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {(form.watch("employment_type") === "contract" ||
-                    form.watch("employment_type") === "retired") && (
-                    <FormField
-                      control={form.control}
-                      name="employment_end_date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Contract End Date/Retirement Date
-                          </FormLabel>
-                          <FormControl>
-                            <Input {...field} type="date" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                  <FormField
-                    control={form.control}
-                    name="employer_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Employer Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Employer name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="job_title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Job Title</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Job title" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="monthly_income"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Monthly Income</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            value={field.value || ""}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              field.onChange(value === "" ? 0 : Number(value));
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="employer_address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Employer Address</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Employer address" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="employer_contact_number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Employer Contact</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Contact number" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -877,7 +895,8 @@ export default function FuneralPolicyForm() {
           )}
 
           {currentStep === 2 && (
-            <Card className="p-6">
+            <>
+              <Card className="p-6">
               <CardHeader className="px-0 pt-0">
                 <CardTitle>Banking Details</CardTitle>
               </CardHeader>
@@ -983,34 +1002,7 @@ export default function FuneralPolicyForm() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="payment_method"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Preferred Payment Method</FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value || ""}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select payment method" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="debit_order">
-                              Debit Order
-                            </SelectItem>
-                            <SelectItem value="cash_deposit">
-                              Cash Deposit
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
                 <FormField
                   control={form.control}
                   name="payment_date"
@@ -1044,6 +1036,206 @@ export default function FuneralPolicyForm() {
                 />
               </CardContent>
             </Card>
+
+            {/* Authority & Mandate Card */}
+            <Card className="p-6 mt-6 border-slate-200 shadow-sm">
+              <CardHeader className="px-0 pt-0">
+                <CardTitle className="text-xl font-bold text-slate-800">
+                  Authority & Mandate for Payment Instructions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-0 space-y-6">
+                {/* Scrollable Mandate Text */}
+                <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-lg p-4 bg-slate-50/50 text-xs leading-relaxed text-slate-600 whitespace-pre-line font-sans shadow-inner">
+                  {`SIGNATURE FOR AUTHORITY AND MANDATE FOR PAYMENT INSTRUCTIONS:
+
+I / We hereby authorise Clientèle Life Assurance Company Limited or any of its legal representatives / agents (hereafter referred to as "you") to issue and deliver payment instructions to your banker for collection against my/our above mentioned account at my/our bank (or any other bank to which I/we may transfer my/our account) on condition that the sum of such payment instructions will never exceed my/our obligations as agreed to in the agreement and commencing on and continuing until this authority and mandate is terminated by me / us by giving you one calendar month's written notice.`}
+                  {" "}
+                  <span className="font-bold text-slate-900 bg-yellow-50 px-1.5 py-0.5 border border-yellow-100 rounded">
+                    {`The individual payment instructions so authorised to be issued must be issued and delivered monthly (on the ${
+                      form.watch("payment_date") 
+                        ? `${form.watch("payment_date")}${
+                            [1, 21, 31].includes(Number(form.watch("payment_date"))) ? 'st' :
+                            [2, 22].includes(Number(form.watch("payment_date"))) ? 'nd' :
+                            [3, 23].includes(Number(form.watch("payment_date"))) ? 'rd' : 'th'
+                          }` 
+                        : "__________"
+                    } day of every month).`}
+                  </span>
+                  {" "}
+                  {`In the event that the payment day falls on a Sunday, or recognised SA public holiday, the payment day will automatically be the previous ordinary business day.
+
+I / We understand that the withdrawals hereby authorised will be processed through a computerised system provided by the SA Banks. I also understand that details of each withdrawal will be printed on my bank statement (INLIFEWIZE). I / We acknowledge that all payment instructions issued by you shall be treated by my/our below mentioned bank as if the instructions have been issued by me/us personally. I / We agree that although this authority and mandate may be cancelled by me / us, such cancellation will not cancel the agreement. I / We shall not be entitled to any refund of amounts which you have withdrawn while this authority was in force, if such amounts were legally owing to you.
+
+I / We acknowledge that this authority may be ceded or assigned to a 3rd party if the agreement is also ceded or assigned to that 3rd party, but in the absence of such assignment of the agreement, this authority and mandate cannot be assigned to any 3rd party. I agree that it is my responsibility to ensure that all of my premiums, with regards to my Lifewize funeral policy, are paid up to date and that I will not hold Lifewize liable in any event, arising out of my premiums being unpaid.
+
+I acknowledge that this electronic acceptance, including confirmation digital signature, online checkbox, or electronic communication, constitutes my valid and legally binding consent in terms of the Electronic Communications and Transactions Act, 25 of 2002.`}
+                </div>
+
+                {/* Accept Checkbox */}
+                <FormField
+                  control={form.control}
+                  name="mandate_accepted"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border border-slate-200 p-4 bg-slate-50/20 hover:bg-slate-50/50 transition-colors">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                          className="h-4.5 w-4.5 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 transition-colors cursor-pointer"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-semibold text-slate-800 cursor-pointer">
+                          I / We accept the Authority and Mandate for Payment Instructions
+                        </FormLabel>
+                        <p className="text-xs text-slate-500">
+                          By checking this box, you confirm your legally binding consent to the terms of the mandate.
+                        </p>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Signature Interaction Panel */}
+                <div className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                  {/* Panel Tabs Header */}
+                  <div className="flex border-b border-slate-200 bg-slate-50">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSigMethod("draw");
+                        form.setValue("signature_svg", "");
+                      }}
+                      className={`flex-1 py-3 text-sm font-semibold border-b-2 transition-all ${
+                        sigMethod === "draw"
+                          ? "border-blue-600 text-blue-600 bg-white"
+                          : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
+                      }`}
+                    >
+                      Draw Signature
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSigMethod("type");
+                        form.setValue("signature_svg", "");
+                        const currentName = form.getValues("first_name") + " " + form.getValues("last_name");
+                        if (currentName.trim()) {
+                          handleTypedSignatureChange(currentName);
+                        }
+                      }}
+                      className={`flex-1 py-3 text-sm font-semibold border-b-2 transition-all ${
+                        sigMethod === "type"
+                          ? "border-blue-600 text-blue-600 bg-white"
+                          : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
+                      }`}
+                    >
+                      Type Signature
+                    </button>
+                  </div>
+
+                  <div className="p-6 space-y-4">
+                    {/* Canvas/Drawing Area */}
+                    {sigMethod === "draw" && (
+                      <div className="space-y-3">
+                        <div className="relative border border-dashed border-slate-300 rounded-lg bg-slate-50/50 flex flex-col items-center justify-center overflow-hidden h-[152px]">
+                          {!form.watch("signature_svg") && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-slate-400">
+                              <span className="text-xs uppercase tracking-wider font-semibold">Sign Here</span>
+                              <span className="text-[10px] text-slate-400 mt-1">Use your mouse or touch screen</span>
+                            </div>
+                          )}
+                          <canvas
+                            ref={canvasRef}
+                            width={500}
+                            height={150}
+                            onMouseDown={startDrawing}
+                            onMouseMove={draw}
+                            onMouseUp={stopDrawing}
+                            onMouseLeave={stopDrawing}
+                            onTouchStart={startDrawing}
+                            onTouchMove={draw}
+                            onTouchEnd={stopDrawing}
+                            className="w-full max-w-[500px] h-[150px] cursor-crosshair touch-none bg-transparent block"
+                          />
+                        </div>
+                        <div className="flex justify-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={clearCanvas}
+                            className="text-xs font-semibold text-slate-600 hover:text-slate-800"
+                          >
+                            Clear Signature
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Typed Script Area */}
+                    {sigMethod === "type" && (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <FormLabel className="text-sm font-medium text-slate-700">Enter Your Full Name</FormLabel>
+                          <Input
+                            type="text"
+                            value={form.watch("signature_name") || ""}
+                            onChange={(e) => handleTypedSignatureChange(e.target.value)}
+                            placeholder="e.g. John Doe"
+                            className="w-full"
+                          />
+                        </div>
+
+                        {form.watch("signature_name") && (
+                          <div className="border border-dashed border-slate-300 rounded-lg p-6 bg-slate-50/30 flex items-center justify-center h-[120px]">
+                            <div 
+                              style={{ fontFamily: "cursive, 'Brush Script MT', 'Dancing Script'" }}
+                              className="text-4xl text-blue-800 italic select-none tracking-wide text-center"
+                            >
+                              {form.watch("signature_name")}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Hidden Signature input to trigger validations */}
+                    <FormField
+                      control={form.control}
+                      name="signature_svg"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <input type="hidden" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Info & Date Block */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t border-slate-100 pt-4 gap-2 text-xs text-slate-500">
+                      <div>
+                        <span>Signed Date: </span>
+                        <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded">
+                          {form.watch("signature_date") || new Date().toISOString().split("T")[0]}
+                        </span>
+                        <span className="ml-1 text-slate-400 font-normal">(Auto-populated)</span>
+                      </div>
+                      <div className="flex items-center text-[10px] uppercase font-bold tracking-wider text-green-600 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full">
+                        <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse"></span>
+                        Secure Electronic Acceptance
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            </>
           )}
 
           {currentStep === 3 && (
@@ -1304,9 +1496,9 @@ export default function FuneralPolicyForm() {
                                   value={
                                     relationshipCategories[field.name] ||
                                     (field.value &&
-                                    (
-                                      immediateRelationships as readonly string[]
-                                    ).includes(field.value)
+                                      (
+                                        immediateRelationships as readonly string[]
+                                      ).includes(field.value)
                                       ? "immediate"
                                       : "extended")
                                   }
@@ -1374,9 +1566,9 @@ export default function FuneralPolicyForm() {
                                   <SelectContent>
                                     {(relationshipCategories[field.name] ||
                                       (field.value &&
-                                      (
-                                        immediateRelationships as readonly string[]
-                                      ).includes(field.value)
+                                        (
+                                          immediateRelationships as readonly string[]
+                                        ).includes(field.value)
                                         ? "immediate"
                                         : "extended")) === "immediate" ? (
                                       <>

@@ -96,12 +96,64 @@ export default function PolicyFinancialTab({
               </>
             )}
             {bankingDetails.branch_code && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Branch Code</p>
-                <p className="text-sm text-muted-foreground">
-                  {bankingDetails.branch_code}
-                </p>
-              </div>
+              <>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Branch Code</p>
+                  <p className="text-sm text-muted-foreground">
+                    {bankingDetails.branch_code}
+                  </p>
+                </div>
+              </>
+            )}
+            
+            {bankingDetails.mandate_accepted !== undefined && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold text-slate-800">Payment Mandate Authority</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">Mandate Status</p>
+                      <p className="text-sm font-semibold text-green-600 mt-0.5">
+                        {bankingDetails.mandate_accepted ? "✓ Accepted" : "✗ Not Accepted"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">Signature Date</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {bankingDetails.signature_date || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                  {bankingDetails.signature_name && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">Signed By</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {bankingDetails.signature_name}
+                      </p>
+                    </div>
+                  )}
+                  {bankingDetails.signature_svg && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Signature Image</p>
+                      <div className="border border-dashed rounded bg-slate-50/50 p-2 inline-block max-w-full">
+                        {bankingDetails.signature_svg.startsWith("data:") ? (
+                          <img
+                            src={bankingDetails.signature_svg}
+                            alt="Signature"
+                            className="max-h-[60px] object-contain block bg-transparent"
+                          />
+                        ) : (
+                          <div
+                            dangerouslySetInnerHTML={{ __html: bankingDetails.signature_svg }}
+                            className="max-h-[60px] inline-block bg-transparent"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

@@ -25,6 +25,9 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
     privacy_policy:
       (entries as any).privacy_policy === "true" ||
       (entries as any).privacy_policy === true,
+    mandate_accepted:
+      (entries as any).mandate_accepted === "true" ||
+      (entries as any).mandate_accepted === true,
   };
   
   // Pass through product_type string for zod enum validation
@@ -86,8 +89,11 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
           account_number: validatedData.account_number,
           branch_code: validatedData.branch_code,
           account_type: validatedData.account_type,
-          payment_method: validatedData.payment_method,
           payment_date: validatedData.payment_date || null,
+          mandate_accepted: (validatedData as any).mandate_accepted || false,
+          signature_name: (validatedData as any).signature_name || null,
+          signature_date: (validatedData as any).signature_date || null,
+          signature_svg: (validatedData as any).signature_svg || null,
         },
         party_type: "individual",
         profile_id: user.id,
@@ -133,12 +139,6 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
         user_id: user.id,
         employment_details: {
           employment_type: validatedData.employment_type,
-          employer_name: validatedData.employer_name,
-          job_title: validatedData.job_title,
-          monthly_income: validatedData.monthly_income,
-          employer_address: validatedData.employer_address || null,
-          employer_contact_number: validatedData.employer_contact_number || null,
-          employment_end_date: validatedData.employment_end_date || null,
         },
       })
       .select("id")
@@ -501,6 +501,10 @@ export async function sendFuneralPolicyDetailsEmail(
       account_type?: string;
       payment_method?: string;
       payment_date?: string;
+      mandate_accepted?: boolean;
+      signature_name?: string;
+      signature_date?: string;
+      signature_svg?: string;
     } | null;
 
     // Format beneficiaries list - include policy holder first, then beneficiaries
@@ -644,6 +648,29 @@ export async function sendFuneralPolicyDetailsEmail(
               <p style="margin: 0; font-weight: bold; color: #6b7280;">Preferred Payment Date:</p>
               <p style="margin: 5px 0 15px 0; color: #374151;">${bankingDetails.payment_date || 'N/A'}</p>
             </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Mandate Accepted:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${bankingDetails.mandate_accepted ? 'Accepted' : 'No'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Signature Date:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${bankingDetails.signature_date || 'N/A'}</p>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Signed By:</p>
+              <p style="margin: 5px 0 15px 0; color: #374151;">${bankingDetails.signature_name || 'N/A'}</p>
+            </div>
+            ${bankingDetails.signature_svg ? `
+            <div style="grid-column: span 2;">
+              <p style="margin: 0; font-weight: bold; color: #6b7280;">Digital Signature:</p>
+              <div style="margin-top: 5px; border: 1px solid #e5e7eb; padding: 10px; display: inline-block; background: #f9fafb; border-radius: 4px;">
+                ${bankingDetails.signature_svg.startsWith('data:') 
+                  ? `<img src="${bankingDetails.signature_svg}" alt="Signature" style="max-height: 80px; display: block;" />`
+                  : bankingDetails.signature_svg
+                }
+              </div>
+            </div>
+            ` : ''}
           </div>
         </div>
         ` : ''}
