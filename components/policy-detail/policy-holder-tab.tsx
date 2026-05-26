@@ -27,6 +27,7 @@ export default function PolicyHolderTab({ policy }: PolicyHolderTabProps) {
     [holder?.first_name, holder?.last_name].filter(Boolean).join(" ");
   const addressDetails = parseJsonField(holder?.address_details);
   const contactDetails = parseJsonField(holder?.contact_details);
+  const bankingDetails = parseJsonField(holder?.banking_details);
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -164,6 +165,57 @@ export default function PolicyHolderTab({ policy }: PolicyHolderTabProps) {
                   <p className="text-sm text-muted-foreground">
                     {addressDetails.postal_code}
                   </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {bankingDetails && (bankingDetails.mandate_accepted || bankingDetails.signature_svg) && (
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Mandate & Signature</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <p className="text-sm font-medium">Mandate Status</p>
+                <p className="text-sm font-semibold text-green-600 mt-1">
+                  {bankingDetails.mandate_accepted ? "✓ Accepted" : "✗ Not Accepted"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Signature Date</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {bankingDetails.signature_date || "N/A"}
+                </p>
+              </div>
+              {bankingDetails.signature_name && (
+                <div className="space-y-2 col-span-2">
+                  <p className="text-sm font-medium">Signed By</p>
+                  <p className="text-sm text-muted-foreground">
+                    {bankingDetails.signature_name}
+                  </p>
+                </div>
+              )}
+              {bankingDetails.signature_svg && (
+                <div className="space-y-2 col-span-2">
+                  <p className="text-sm font-medium mb-1">Signature Image</p>
+                  <div className="border border-dashed rounded bg-slate-50/50 p-3 inline-block max-w-full">
+                    {bankingDetails.signature_svg.startsWith("data:") ? (
+                      <img
+                        src={bankingDetails.signature_svg}
+                        alt="Signature"
+                        className="max-h-[100px] object-contain block bg-transparent"
+                      />
+                    ) : (
+                      <div
+                        dangerouslySetInnerHTML={{ __html: bankingDetails.signature_svg }}
+                        className="max-h-[100px] inline-block bg-transparent"
+                      />
+                    )}
+                  </div>
                 </div>
               )}
             </div>

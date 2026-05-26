@@ -723,14 +723,14 @@ export const funeralPolicyLeadSchema = z
             .string()
             .min(13, "SA ID Number must be 13 digits")
             .max(13, "SA ID Number must be 13 digits"),
-          relationship: z.enum(["spouse", "child", "parent", "sibling", "grandparent", "cousin", "in-law"], {
+          relationship: z.enum(["spouse", "child"], {
             message: "Relationship is required",
           }),
           percentage: z.number(),
         })
       )
-      .min(0, "Provide at least 5 beneficiaries")
-      .max(10, "No more than 10 beneficiaries allowed"),
+      .min(0, "Provide at least 5 dependants")
+      .max(10, "No more than 10 dependants allowed"),
     terms_and_conditions: z.boolean().refine((v) => v === true, {
       message: "Terms and conditions must be accepted",
     }),
@@ -743,6 +743,10 @@ export const funeralPolicyLeadSchema = z
     signature_name: z.string().min(1, "Signature name is required"),
     signature_date: z.string().min(1, "Signature date is required"),
     signature_svg: z.string().optional(),
+    beneficiary_name: z.string().min(1, "Beneficiary name & surname is required"),
+    beneficiary_dob_or_id: z.string().min(1, "Date of birth or ID number is required"),
+    beneficiary_relationship: z.string().min(1, "Relationship to principal insured is required"),
+    beneficiary_phone: z.string().min(10, "Cellphone number must be at least 10 digits"),
   })
   .refine(
     (data) => {

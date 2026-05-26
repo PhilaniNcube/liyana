@@ -8,6 +8,8 @@ import { funeralPolicyLeadSchemaWithRefines } from "@/lib/schemas";
 import { createFuneralPolicy } from "@/lib/actions/funeral-policy";
 import { useActionState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
 import { toast } from "sonner";
 import {
   Form,
@@ -66,14 +68,10 @@ const validCoverageAmounts = FUNERAL_PACKAGES.map((pkg) => pkg.cover.principalMe
 
 // Policy document types available for upload
 const POLICY_DOCUMENT_TYPES = {
-  birth_certificate: "Birth Certificate",
   death_certificate: "Death Certificate",
   marriage_certificate: "Marriage Certificate",
-  identity_document: "Identity Document",
-  passport: "Passport",
+  identity_document: "South African ID",
   proof_of_address: "Proof of Address",
-  payslip: "Payslip",
-  drivers_license: "Driver's License",
 } as const;
 
 type PolicyDocumentType = keyof typeof POLICY_DOCUMENT_TYPES;
@@ -185,7 +183,7 @@ export default function FuneralPolicyForm() {
       signature_name: "",
       signature_date: "",
       signature_svg: "",
-      // Step 3: beneficiaries + declarations
+      // Step 4: dependants + declarations
       beneficiaries: [
         {
           first_name: "",
@@ -197,6 +195,10 @@ export default function FuneralPolicyForm() {
       ],
       terms_and_conditions: false,
       privacy_policy: false,
+      beneficiary_name: "",
+      beneficiary_dob_or_id: "",
+      beneficiary_relationship: "",
+      beneficiary_phone: "",
     },
   });
 
@@ -365,9 +367,17 @@ export default function FuneralPolicyForm() {
         fields: [], // No form fields, just document uploads
       },
       {
-        title: "Beneficiaries",
-        description: "Beneficiaries & declarations",
-        fields: ["beneficiaries", "terms_and_conditions", "privacy_policy"],
+        title: selectedPackage?.type === "family" ? "Dependants & Beneficiary" : "Beneficiary & Declarations",
+        description: selectedPackage?.type === "family" ? "Dependants, beneficiary & declarations" : "Beneficiary & declarations",
+        fields: [
+          "beneficiaries",
+          "beneficiary_name",
+          "beneficiary_dob_or_id",
+          "beneficiary_relationship",
+          "beneficiary_phone",
+          "terms_and_conditions",
+          "privacy_policy",
+        ],
       },
     ];
 
@@ -463,20 +473,7 @@ export default function FuneralPolicyForm() {
     }
   };
 
-  // Relationship category handling (UI-only; not part of schema submission)
-  const immediateRelationships = ["spouse", "child"] as const;
-  // NOTE: Only parent & sibling are currently supported extended values in schema/DB.
-  // Future values requested (cousin, in_laws, grandparent) require enum + DB migration.
-  const extendedRelationships = [
-    "parent",
-    "sibling",
-    "grandparent",
-    "cousin",
-    "in-law",
-  ] as const;
-  const [relationshipCategories, setRelationshipCategories] = useState<
-    Record<string, "immediate" | "extended">
-  >({});
+
 
   // Auto-populate branch code when bank is selected
   useEffect(() => {
@@ -489,6 +486,28 @@ export default function FuneralPolicyForm() {
       form.setValue("branch_code", selectedBank.code);
     }
   }, [form.watch("bank_name"), form]);
+
+  // Handle dependants list based on family vs single plan type
+  useEffect(() => {
+    if (selectedPackage && selectedPackage.type === "single") {
+      // If single member plan, clear beneficiaries so validation passes
+      form.setValue("beneficiaries", []);
+    } else if (selectedPackage && selectedPackage.type === "family") {
+      // If family plan and beneficiaries is empty, initialize with one empty dependant
+      const currentBens = form.getValues("beneficiaries");
+      if (!currentBens || currentBens.length === 0) {
+        form.setValue("beneficiaries", [
+          {
+            first_name: "",
+            last_name: "",
+            id_number: "",
+            relationship: undefined as any,
+            percentage: 0,
+          },
+        ]);
+      }
+    }
+  }, [selectedPackage, form]);
 
   const onSubmit = (values: FuneralForm) => {
     console.log("onSubmit called with values:", values);
@@ -1366,14 +1385,11 @@ I acknowledge that this electronic acceptance, including confirmation digital si
                 <div className="bg-muted/50 rounded-lg p-4 text-xs">
                   <h4 className="font-medium mb-2">Required Documents</h4>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <p>Identity Documents Accepted</p>
                       <ul className="list-disc list-inside">
                         <li>South African ID</li>
-                        <li>Passport</li>
-                        <li>Driver's License</li>
-                        <li>Birth Certificate</li>
                       </ul>
                     </div>
 
@@ -1384,12 +1400,6 @@ I acknowledge that this electronic acceptance, including confirmation digital si
                         <li>Bank Statement</li>
                       </ul>
                     </div>
-                    <div>
-                      <p>Proof of Employment</p>
-                      <ul className="list-disc list-inside">
-                        <li>Recent Pay Slip</li>
-                      </ul>
-                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -1398,10 +1408,91 @@ I acknowledge that this electronic acceptance, including confirmation digital si
 
           {currentStep === 4 && (
             <div className="space-y-6">
+              {/* Policy Beneficiary Section */}
               <Card className="p-6">
+                <CardHeader className="px-0 pt-0">
+                  <CardTitle>Policy Beneficiary</CardTitle>
+                  <p className="text-muted-foreground text-sm">
+                    Specify the person who will receive the claim payout amount when the principal member is deceased. Required for all policies.
+                  </p>
+                </CardHeader>
+                <CardContent className="px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="beneficiary_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name & Surname</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Full name & surname" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="beneficiary_dob_or_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Date of Birth OR ID Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Date of birth or 13-digit ID number" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="beneficiary_relationship"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Relationship to Principal Insured</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || ""}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select relationship" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="spouse">Spouse</SelectItem>
+                              <SelectItem value="child">Child</SelectItem>
+                              <SelectItem value="parent">Parent</SelectItem>
+                              <SelectItem value="sibling">Sibling</SelectItem>
+                              <SelectItem value="extended_family">Extended Family</SelectItem>
+                              <SelectItem value="friend">Friend</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="beneficiary_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cellphone Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="e.g. 0821234567" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {selectedPackage?.type === "family" && (
+                <Card className="p-6">
                 <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
                   <CardTitle>
-                    {fields.length > 1 ? `Covered Persons ` : "Covered Person"}
+                    {fields.length > 1 ? `Dependants` : "Dependant"}
                   </CardTitle>
                   <div className="flex gap-2">
                     <Button
@@ -1419,7 +1510,7 @@ I acknowledge that this electronic acceptance, including confirmation digital si
                       }
                       disabled={fields.length >= 10}
                     >
-                      <Plus className="h-4 w-4 mr-2" /> Add Beneficiary
+                      <Plus className="h-4 w-4 mr-2" /> Add Dependant
                     </Button>
                   </div>
                 </CardHeader>
@@ -1428,7 +1519,7 @@ I acknowledge that this electronic acceptance, including confirmation digital si
                     <Card key={field.id} className="p-4">
                       <div className="flex justify-between items-center mb-4">
                         <h4 className="font-medium">
-                          Covered Person {index + 1}
+                          Dependant {index + 1}
                         </h4>
                         {fields.length > 1 && (
                           <Button
@@ -1491,108 +1582,18 @@ I acknowledge that this electronic acceptance, including confirmation digital si
                           render={({ field }) => (
                             <FormItem className="col-span-full md:col-span-1">
                               <FormLabel>Relationship</FormLabel>
-                              <div className="space-y-3">
-                                <RadioGroup
-                                  className="flex flex-row gap-6"
-                                  value={
-                                    relationshipCategories[field.name] ||
-                                    (field.value &&
-                                      (
-                                        immediateRelationships as readonly string[]
-                                      ).includes(field.value)
-                                      ? "immediate"
-                                      : "extended")
-                                  }
-                                  onValueChange={(
-                                    val: "immediate" | "extended"
-                                  ) => {
-                                    setRelationshipCategories((prev) => ({
-                                      ...prev,
-                                      [field.name]: val,
-                                    }));
-                                    const current = field.value as
-                                      | string
-                                      | undefined;
-                                    if (
-                                      val === "immediate" &&
-                                      (!current ||
-                                        !(
-                                          immediateRelationships as readonly string[]
-                                        ).includes(current))
-                                    ) {
-                                      field.onChange("spouse");
-                                    } else if (
-                                      val === "extended" &&
-                                      (!current ||
-                                        !(
-                                          extendedRelationships as readonly string[]
-                                        ).includes(current))
-                                    ) {
-                                      field.onChange("parent");
-                                    }
-                                  }}
-                                >
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem
-                                      value="immediate"
-                                      id={`immediate-${index}`}
-                                    />
-                                    <label
-                                      htmlFor={`immediate-${index}`}
-                                      className="text-sm font-medium leading-none"
-                                    >
-                                      Immediate
-                                    </label>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem
-                                      value="extended"
-                                      id={`extended-${index}`}
-                                    />
-                                    <label
-                                      htmlFor={`extended-${index}`}
-                                      className="text-sm font-medium leading-none"
-                                    >
-                                      Extended
-                                    </label>
-                                  </div>
-                                </RadioGroup>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  value={field.value || ""}
-                                >
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select relationship" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {(relationshipCategories[field.name] ||
-                                      (field.value &&
-                                        (
-                                          immediateRelationships as readonly string[]
-                                        ).includes(field.value)
-                                        ? "immediate"
-                                        : "extended")) === "immediate" ? (
-                                      <>
-                                        {immediateRelationships.map((r) => (
-                                          <SelectItem key={r} value={r}>
-                                            {r.charAt(0).toUpperCase() +
-                                              r.slice(1).replace("_", " ")}
-                                          </SelectItem>
-                                        ))}
-                                      </>
-                                    ) : (
-                                      <>
-                                        {extendedRelationships.map((r) => (
-                                          <SelectItem key={r} value={r}>
-                                            {r.charAt(0).toUpperCase() +
-                                              r.slice(1).replace("_", " ")}
-                                          </SelectItem>
-                                        ))}
-                                      </>
-                                    )}
-                                  </SelectContent>
-                                </Select>
-                              </div>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value || ""}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select relationship" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="spouse">Spouse</SelectItem>
+                                  <SelectItem value="child">Child</SelectItem>
+                                </SelectContent>
+                              </Select>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -1602,41 +1603,69 @@ I acknowledge that this electronic acceptance, including confirmation digital si
                   ))}
                 </CardContent>
               </Card>
-              <Card className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="terms_and_conditions"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={field.value}
-                        onChange={(e) => field.onChange(e.target.checked)}
-                      />
-                      <FormLabel className="!m-0">
-                        I agree to the Terms & Conditions
-                      </FormLabel>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="privacy_policy"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={field.value}
-                        onChange={(e) => field.onChange(e.target.checked)}
-                      />
-                      <FormLabel className="!m-0">
-                        I agree to the Privacy Policy
-                      </FormLabel>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              )}
+              <Card className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="terms_and_conditions"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                          id="terms-checkbox"
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                        <FormLabel className="!m-0 cursor-pointer text-sm">
+                          I agree to the{" "}
+                          <Link
+                            href="/insurance/funeral/terms"
+                            className="text-blue-600 underline hover:text-blue-800"
+                            target="_blank"
+                          >
+                            Terms & Conditions
+                          </Link>
+                        </FormLabel>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="privacy_policy"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                          id="privacy-checkbox"
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                        <FormLabel className="!m-0 cursor-pointer text-sm">
+                          I agree to the{" "}
+                          <Link
+                            href="/insurance/funeral/privacy"
+                            className="text-blue-600 underline hover:text-blue-800"
+                            target="_blank"
+                          >
+                            Privacy Policy
+                          </Link>
+                        </FormLabel>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="mt-4 text-[10px] leading-relaxed text-muted-foreground border-t border-slate-100 pt-4 font-sans text-center md:text-left">
+                  I acknowledge that this electronic acceptance, including confirmation
+                  digital signature, online checkbox, or electronic communication,
+                  constitutes my valid and legally binding consent in terms of the
+                  Electronic Communications and Transactions Act, 25 of 2002.
+                </div>
               </Card>
             </div>
           )}
@@ -1684,6 +1713,26 @@ I acknowledge that this electronic acceptance, including confirmation digital si
           </div>
         </form>
       </Form>
+
+      {/* Clientele Life Logo and Disclaimer */}
+      <div className="mt-12 flex flex-col items-center text-center border-t border-slate-200 pt-8">
+        <div className="mb-4">
+          <Image
+            src="/images/clientele_life.webp"
+            alt="Clientèle Logo"
+            width={128}
+            height={48}
+            className="h-12 w-auto object-contain"
+          />
+        </div>
+        <p className="max-w-4xl text-[10px] leading-relaxed text-slate-500">
+          Funeral insurance products are underwritten by Clientèle Life Assurance Company Limited, a licensed life insurer
+          and authorised Financial Services Provider (FSP No. 15268). Liyana Finance (Pty) Ltd is a juristic
+          representative of Swift Underwriting Managers (Pty) Ltd, an authorised Financial Services Provider (FSP No.
+          49285). Liyana Finance markets and distributes funeral insurance products on behalf of the authorised entities.
+          No advice is provided. Terms and conditions apply.
+        </p>
+      </div>
     </div>
   );
 }

@@ -244,10 +244,10 @@ export default function PolicyBeneficiariesTab({
           <CardContent className="text-center py-12">
             <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">
-              No Beneficiaries Found
+              No Dependants Found
             </h3>
             <p className="text-muted-foreground">
-              There are no beneficiaries assigned to this policy.
+              There are no dependants assigned to this policy.
             </p>
           </CardContent>
         </Card>

@@ -149,13 +149,13 @@ export default function PolicyDetail({
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="holder">Policy Holder</TabsTrigger>
           <TabsTrigger value="financial">Financial Details</TabsTrigger>
-          <TabsTrigger value="employment">Employment</TabsTrigger>
+          <TabsTrigger value="employment">Employment & Beneficiary</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="claims">
             Claims {claims.length > 0 && `(${claims.length})`}
           </TabsTrigger>
           <TabsTrigger value="beneficiaries">
-            Covered People{" "}
+            Dependants{" "}
             {beneficiaries.length > 0 && `(${beneficiaries.length})`}
           </TabsTrigger>
         </TabsList>

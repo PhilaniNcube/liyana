@@ -145,6 +145,12 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
           employment_type: validatedData.employment_type,
           selected_plan: selectedPackageName,
           package_id: selectedPackageId,
+          beneficiary: {
+            name: validatedData.beneficiary_name,
+            dob_or_id: validatedData.beneficiary_dob_or_id,
+            relationship: validatedData.beneficiary_relationship,
+            phone: validatedData.beneficiary_phone,
+          },
         },
       })
       .select("id")
@@ -523,7 +529,7 @@ export async function sendFuneralPolicyDetailsEmail(
       signature_svg?: string;
     } | null;
 
-    // Format beneficiaries list - include policy holder first, then beneficiaries
+    // Format dependants list - include policy holder first, then dependants
     let beneficiariesList = '';
     
     // Add policy holder as first row
@@ -536,13 +542,13 @@ export async function sendFuneralPolicyDetailsEmail(
       </tr>
     `;
     
-    // Add beneficiaries
+    // Add dependants
     if (beneficiaries && beneficiaries.length > 0) {
       beneficiariesList += beneficiaries.map((ben, index) => `
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${index + 2}</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${ben.beneficiary?.first_name || ''} ${ben.beneficiary?.last_name || ''}</td>
-          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">Covered Person</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">Dependant</td>
           <td style="text-transform: capitalize; padding: 8px; border-bottom: 1px solid #e5e7eb;">${ben.relation_type || 'N/A'}</td>
         </tr>
       `).join('');
@@ -550,7 +556,7 @@ export async function sendFuneralPolicyDetailsEmail(
     
     // If no beneficiaries exist (only policy holder), add a note
     if (!beneficiaries || beneficiaries.length === 0) {
-      beneficiariesList += '<tr><td colspan="4" style="padding: 8px; text-align: center; color: #6b7280; font-style: italic;">No additional covered persons added yet</td></tr>';
+      beneficiariesList += '<tr><td colspan="4" style="padding: 8px; text-align: center; color: #6b7280; font-style: italic;">No additional dependants added yet</td></tr>';
     }
 
     // Create email HTML content
@@ -695,9 +701,9 @@ export async function sendFuneralPolicyDetailsEmail(
         </div>
         ` : ''}
 
-        <!-- Beneficiaries -->
+        <!-- Dependants -->
         <div style="padding: 30px; background: #f9fafb;">
-          <h2 style="margin: 0 0 20px 0; color: #374151; font-size: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Covered Persons</h2>
+          <h2 style="margin: 0 0 20px 0; color: #374151; font-size: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Dependants</h2>
           <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
               <thead>
