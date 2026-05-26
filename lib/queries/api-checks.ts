@@ -59,10 +59,20 @@ export async function getApiCheckById(id: number) {
 export async function getApiChecksByApplication(applicationId: number) {
   const supabase = await createServiceClient();
 
+  const { data: application, error: appError } = await supabase
+    .from("applications")
+    .select("user_id")
+    .eq("id", applicationId)
+    .single();
+
+  if (appError) {
+    throw new Error(`Failed to fetch application: ${appError.message}`);
+  }
+
   const { data, error } = await supabase
     .from("api_checks")
     .select("*")
-    .eq("application_id", applicationId)
+    .eq("profile_id", application.user_id)
     .order("checked_at", { ascending: false });
 
   if (error) {
@@ -191,10 +201,20 @@ export async function getApiChecksByApplicationAndType(
 ) {
   const supabase = await createServiceClient();
 
+  const { data: application, error: appError } = await supabase
+    .from("applications")
+    .select("user_id")
+    .eq("id", applicationId)
+    .single();
+
+  if (appError) {
+    throw new Error(`Failed to fetch application: ${appError.message}`);
+  }
+
   const { data, error } = await supabase
     .from("api_checks")
     .select("*")
-    .eq("application_id", applicationId)
+    .eq("profile_id", application.user_id)
     .eq("check_type", checkType)
     .order("checked_at", { ascending: false });
 
@@ -213,10 +233,20 @@ export async function getLatestApiCheckForApplication(
 ) {
   const supabase = await createServiceClient();
 
+  const { data: application, error: appError } = await supabase
+    .from("applications")
+    .select("user_id")
+    .eq("id", applicationId)
+    .single();
+
+  if (appError) {
+    throw new Error(`Failed to fetch application: ${appError.message}`);
+  }
+
   const { data, error } = await supabase
     .from("api_checks")
     .select("*")
-    .eq("application_id", applicationId)
+    .eq("profile_id", application.user_id)
     .eq("check_type", checkType)
     .order("checked_at", { ascending: false })
     .limit(1)

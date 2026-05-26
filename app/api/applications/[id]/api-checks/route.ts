@@ -52,11 +52,25 @@ export async function GET(
       );
     }
 
-    // Fetch API checks for this application
+    // Get the application to find the user_id (profile_id)
+    const { data: application, error: applicationError } = await supabase
+      .from("applications")
+      .select("user_id")
+      .eq("id", applicationId)
+      .single();
+
+    if (applicationError || !application) {
+      return NextResponse.json(
+        { error: "Application not found" },
+        { status: 404 }
+      );
+    }
+
+    // Fetch API checks for this application's profile
     const { data: apiChecks, error: apiCheckError } = await supabase
       .from("api_checks")
       .select("*")
-      .eq("application_id", applicationId)
+      .eq("profile_id", application.user_id)
       .order("checked_at", { ascending: false });
 
     if (apiCheckError) {

@@ -59,14 +59,14 @@ const LoanPage = async ({ params }: PageProps) => {
     borrowerProfile = profile;
   }
 
-  // Fetch API checks for the loan application
+  // Fetch API checks for the loan's profile
   let apiChecks: any[] = [];
-  if (loan.application?.id) {
+  if (loan.profile_id) {
     const { data: checks } = await supabase
       .from("api_checks")
       .select("*")
-      .eq("application_id", loan.application.id)
-      .order("created_at", { ascending: false });
+      .eq("profile_id", loan.profile_id)
+      .order("checked_at", { ascending: false });
     apiChecks = checks || [];
   }
 

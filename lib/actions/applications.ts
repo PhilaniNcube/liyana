@@ -108,7 +108,8 @@ export async function updateApplicationDetails(
         typedValue = value ? Number(value) : null;
       }
 
-      const { error } = await supabase.from("applications").update({ [fieldName]: typedValue }).eq("id", applicationId);
+      const updateData = { [fieldName]: typedValue } as any;
+      const { error } = await supabase.from("applications").update(updateData).eq("id", applicationId);
       if (error) throw error;
     }
 
