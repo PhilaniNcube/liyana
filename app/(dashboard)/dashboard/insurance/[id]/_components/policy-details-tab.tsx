@@ -253,6 +253,24 @@ export default function PolicyDetailsTab({ policy }: PolicyDetailsTabProps) {
                 <div>{formatDate(policy.created_at, "PP")}</div>
               </div>
             </div>
+            <div className="space-y-2">
+              {policy.employment_details?.selected_plan && (
+                <div>
+                  <div className="text-xs text-muted-foreground">Plan Package</div>
+                  <div className="font-medium">
+                    {policy.employment_details.selected_plan}
+                  </div>
+                </div>
+              )}
+              <div>
+                <div className="text-xs text-muted-foreground">Coverage Amount</div>
+                <div className="font-medium">
+                  {policy.coverage_amount
+                    ? formatCurrency(policy.coverage_amount)
+                    : "—"}
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

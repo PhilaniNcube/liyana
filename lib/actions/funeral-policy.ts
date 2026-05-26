@@ -111,11 +111,15 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
 
     // Look up premium from fixed package based on coverage amount
     let calculatedPremium: number | null = null;
+    let selectedPackageName: string | null = null;
+    let selectedPackageId: string | null = null;
     try {
       if (validatedData.coverage_amount) {
         const result = getPremiumByCoverAmount(validatedData.coverage_amount);
         if (result) {
           calculatedPremium = result.monthlyPremium;
+          selectedPackageName = result.packageName;
+          selectedPackageId = result.packageId;
         }
       }
     } catch (error) {
@@ -139,6 +143,8 @@ export async function createFuneralPolicy(prevState: any, formData: FormData) {
         user_id: user.id,
         employment_details: {
           employment_type: validatedData.employment_type,
+          selected_plan: selectedPackageName,
+          package_id: selectedPackageId,
         },
       })
       .select("id")
@@ -491,7 +497,17 @@ export async function sendFuneralPolicyDetailsEmail(
       employer_name?: string;
       job_title?: string;
       monthly_income?: number;
+      selected_plan?: string;
+      package_id?: string;
     } | null;
+
+    let planPackageName = employmentDetails?.selected_plan || "Funeral Plan";
+    if (planPackageName === "Funeral Plan" && policy.coverage_amount) {
+      const pkgResult = getPremiumByCoverAmount(policy.coverage_amount);
+      if (pkgResult) {
+        planPackageName = pkgResult.packageName;
+      }
+    }
 
     // Safely extract banking details
     const bankingDetails = policy.policy_holder?.banking_details as {
@@ -542,7 +558,7 @@ export async function sendFuneralPolicyDetailsEmail(
       <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; line-height: 1.6; color: #374151;">
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #1f2937 0%, #374151 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-          <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Funeral Cover Policy Details</h1>
+          <h1 style="margin: 0; font-size: 24px; font-weight: bold;">${planPackageName} Details</h1>
           <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Policy ID: #${policyId}</p>
         </div>
 
@@ -550,6 +566,10 @@ export async function sendFuneralPolicyDetailsEmail(
         <div style="background: #f9fafb; padding: 30px;">
           <h2 style="margin: 0 0 20px 0;  font-size: 20px;">Policy Summary</h2>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <p style="margin: 0; font-weight: bold; color: #374151;">Plan Package:</p>
+              <p style="margin: 5px 0 15px 0; font-size: 18px;  font-weight: bold;">${planPackageName}</p>
+            </div>
             <div>
               <p style="margin: 0; font-weight: bold; color: #374151;">Coverage Amount:</p>
               <p style="margin: 5px 0 15px 0; font-size: 18px;  font-weight: bold;">${coverageAmount}</p>
@@ -760,7 +780,7 @@ export async function sendFuneralPolicyDetailsEmail(
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: "Liyana Finance <noreply@liyanafinance.co.za>",
       to: [linarEmailAddress],
-      subject: `Funeral Policy Details - ${policyHolderName} (Policy #${policyId})`,
+      subject: `${planPackageName} Details - ${policyHolderName} (Policy #${policyId})`,
       html: emailHtml,
       attachments: emailAttachments.length > 0 ? emailAttachments : undefined,
     });
