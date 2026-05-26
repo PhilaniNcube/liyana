@@ -994,7 +994,6 @@ export default function FuneralPolicyForm() {
                             <SelectItem value="current">
                               Current/Cheque
                             </SelectItem>
-                            <SelectItem value="business">Business</SelectItem>
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -1018,15 +1017,17 @@ export default function FuneralPolicyForm() {
                             <SelectValue placeholder="Select payment date" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="28">28th</SelectItem>
-                            <SelectItem value="27">27th</SelectItem>
-                            <SelectItem value="26">26th</SelectItem>
-                            <SelectItem value="25">25th</SelectItem>
-                            <SelectItem value="24">24th</SelectItem>
-                            <SelectItem value="23">23rd</SelectItem>
-                            <SelectItem value="22">22nd</SelectItem>
-                            <SelectItem value="21">21st</SelectItem>
-                            <SelectItem value="20">20th</SelectItem>
+                            {Array.from({ length: 31 }, (_, i) => {
+                              const day = i + 1;
+                              const suffix = [1, 21, 31].includes(day) ? "st" :
+                                             [2, 22].includes(day) ? "nd" :
+                                             [3, 23].includes(day) ? "rd" : "th";
+                              return (
+                                <SelectItem key={day} value={day.toString()}>
+                                  {day}{suffix}
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                       </FormControl>

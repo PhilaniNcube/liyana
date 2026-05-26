@@ -710,10 +710,10 @@ export const funeralPolicyLeadSchema = z
       .string()
       .min(6, "Branch code must be at least 6 digits")
       .max(6, "Branch code must be exactly 6 digits"),
-    account_type: z.enum(["savings", "transaction", "current", "business"], {
+    account_type: z.enum(["savings", "transaction", "current"], {
       message: "Account type is required",
     }),
-    payment_date: z.coerce.number().min(1).max(28),
+    payment_date: z.coerce.number().min(1).max(31),
     beneficiaries: z
       .array(
         z.object({
