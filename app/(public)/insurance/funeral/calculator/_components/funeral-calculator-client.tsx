@@ -27,7 +27,7 @@ const fmt = (n: number) =>
   new Intl.NumberFormat("en-ZA", {
     style: "currency",
     currency: "ZAR",
-    minimumFractionDigits: 0,
+    minimumFractionDigits: 2,
   }).format(n);
 
 interface CoverItem {

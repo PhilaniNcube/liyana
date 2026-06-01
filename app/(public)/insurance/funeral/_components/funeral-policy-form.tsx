@@ -69,7 +69,7 @@ const validCoverageAmounts = FUNERAL_PACKAGES.map((pkg) => pkg.cover.principalMe
 // Policy document types available for upload
 const POLICY_DOCUMENT_TYPES = {
   death_certificate: "Death Certificate",
-  marriage_certificate: "Marriage Certificate",
+  // marriage_certificate: "Marriage Certificate",
   identity_document: "South African ID",
   proof_of_address: "Proof of Address",
 } as const;
@@ -97,7 +97,7 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("en-ZA", {
     style: "currency",
     currency: "ZAR",
-    minimumFractionDigits: 0,
+    minimumFractionDigits: 2,
   }).format(amount);
 
 type FuneralForm = z.infer<typeof funeralPolicyLeadSchemaWithRefines>;
@@ -1458,12 +1458,27 @@ I acknowledge that this electronic acceptance, including confirmation digital si
                               <SelectValue placeholder="Select relationship" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="spouse">Spouse</SelectItem>
+                              <SelectItem value="aunt">Aunt</SelectItem>
+                              <SelectItem value="brother">Brother</SelectItem>
+                              <SelectItem value="brother_in_law">Brother-in-law</SelectItem>
                               <SelectItem value="child">Child</SelectItem>
-                              <SelectItem value="parent">Parent</SelectItem>
-                              <SelectItem value="sibling">Sibling</SelectItem>
-                              <SelectItem value="extended_family">Extended Family</SelectItem>
+                              <SelectItem value="cousin">Cousin</SelectItem>
+                              <SelectItem value="ex_spouse">Ex-Spouse</SelectItem>
+                              <SelectItem value="father">Father</SelectItem>
+                              <SelectItem value="father_in_law">Father-in-law</SelectItem>
+                              <SelectItem value="foster_child">Foster Child</SelectItem>
                               <SelectItem value="friend">Friend</SelectItem>
+                              <SelectItem value="grandchild">Grandchild</SelectItem>
+                              <SelectItem value="grandmother">Grandmother</SelectItem>
+                              <SelectItem value="grandfather">Grandfather</SelectItem>
+                              <SelectItem value="mother">Mother</SelectItem>
+                              <SelectItem value="mother_in_law">Mother-in-law</SelectItem>
+                              <SelectItem value="nephew">Nephew</SelectItem>
+                              <SelectItem value="niece">Niece</SelectItem>
+                              <SelectItem value="sister">Sister</SelectItem>
+                              <SelectItem value="sister_in_law">Sister-in-law</SelectItem>
+                              <SelectItem value="spouse">Spouse</SelectItem>
+                              <SelectItem value="uncle">Uncle</SelectItem>
                               <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
                           </Select>

@@ -16,7 +16,7 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("en-ZA", {
     style: "currency",
     currency: "ZAR",
-    minimumFractionDigits: 0,
+    minimumFractionDigits: 2,
   }).format(amount);
 
 function CoverBreakdown({ pkg }: { pkg: FuneralPackage }) {
