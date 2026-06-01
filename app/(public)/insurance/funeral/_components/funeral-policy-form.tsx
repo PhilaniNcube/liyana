@@ -164,7 +164,7 @@ export default function FuneralPolicyForm() {
       last_name: "",
       id_number: "",
       date_of_birth: "",
-      start_date: "",
+      start_date: new Date().toISOString().split("T")[0],
       phone_number: "",
       email: "",
       // Step 1: address + employment
