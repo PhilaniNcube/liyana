@@ -137,6 +137,11 @@ export default function FuneralPremiumCalculator() {
                 <p className="text-sm">
                   Principal Member: <span className="font-medium">{formatCurrency(pkg.cover.principalMember)}</span>
                 </p>
+                {pkg.id === "ilanga" && (
+                  <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-slate-100">
+                    Value added products Trauma &amp; Assault/ Funeral Repatriation/24/7 Nurse on call/ Accident Expert (Road accident fund)
+                  </p>
+                )}
               </CardContent>
             </Card>
           ))}

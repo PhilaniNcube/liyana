@@ -44,6 +44,10 @@ function buildCoverItems(pkg: FuneralPackage): CoverItem[] {
       label: "Principal Member",
       amount: cover.principalMember,
       icon: <User className="h-4 w-4" />,
+      note:
+        pkg.id === "ilanga"
+          ? "Value added products Trauma & Assault/ Funeral Repatriation/24/7 Nurse on call/ Accident Expert (Road accident fund)"
+          : undefined,
     },
   ];
 
@@ -84,7 +88,7 @@ function buildCoverItems(pkg: FuneralPackage): CoverItem[] {
 
   if (cover.studentChild21to25 != null)
     items.push({
-      label: "Student Child (21 – 25)",
+      label: "Student Child (21 – 25) Full-time student only",
       amount: cover.studentChild21to25,
       icon: <GraduationCap className="h-4 w-4" />,
       note: "Full-time student only",
@@ -396,7 +400,7 @@ function ComparisonTable({
       ),
     },
     {
-      label: "Student Child (21–25)",
+      label: "Student Child (21–25) Full-time student only",
       values: FUNERAL_PACKAGES.map((p) =>
         p.cover.studentChild21to25 != null
           ? fmt(p.cover.studentChild21to25)
