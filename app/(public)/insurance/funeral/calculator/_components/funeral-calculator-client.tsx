@@ -620,7 +620,14 @@ export default function FuneralCalculatorClient() {
 
       {/* Disclaimer */}
       <div className="mt-8 mb-4 flex flex-col items-center text-center">
-        <div className="mb-4">
+        <p className="max-w-4xl text-[10px] leading-relaxed text-slate-500">
+          Funeral insurance products are underwritten by Clientèle Life Assurance Company Limited, a licensed life insurer
+          and authorised Financial Services Provider (FSP No. 15268). Liyana Finance (Pty) Ltd is a juristic
+          representative of Swift Underwriting Managers (Pty) Ltd, an authorised Financial Services Provider (FSP No.
+          49285). Liyana Finance markets and distributes funeral insurance products on behalf of the authorised entities.
+          No advice is provided. Terms and conditions apply.
+        </p>
+        <div className="mt-4">
           <Image
             src="/images/clientele_life.webp"
             alt="Clientèle Logo"
@@ -629,13 +636,6 @@ export default function FuneralCalculatorClient() {
             className="h-12 w-auto object-contain"
           />
         </div>
-        <p className="max-w-4xl text-[10px] leading-relaxed text-slate-500">
-          Funeral insurance products are underwritten by Clientèle Life Assurance Company Limited, a licensed life insurer
-          and authorised Financial Services Provider (FSP No. 15268). Liyana Finance (Pty) Ltd is a juristic
-          representative of Swift Underwriting Managers (Pty) Ltd, an authorised Financial Services Provider (FSP No.
-          49285). Liyana Finance markets and distributes funeral insurance products on behalf of the authorised entities.
-          No advice is provided. Terms and conditions apply.
-        </p>
       </div>
 
       {/* Bottom CTA */}
