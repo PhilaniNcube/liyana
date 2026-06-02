@@ -61,7 +61,7 @@ interface ClaimDetailsCardProps {
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   birth_certificate: "Birth Certificate",
   death_certificate: "Death Certificate",
-  marriage_certificate: "Marriage Certificate",
+  // marriage_certificate: "Marriage Certificate",
   identity_document: "Identity Document",
   passport: "Passport",
 };
