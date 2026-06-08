@@ -100,7 +100,10 @@ export default function FuneralTermsPage() {
                 <div>
                   <h4 className="font-semibold text-slate-900">Spouse Definition</h4>
                   <p className="mt-1">
-                    Legal or common-law spouse or life partner of the Principal Insured, or a person residing with the Principal Insured for longer than 6 calendar months who is normally regarded by the community as the Principal Insured’s husband/wife and nominated at the entry date or added in writing. Benefits will only be paid to the nominated beneficiary.
+                    Legal or common-law spouse or life partner of the Principal Insured, or a person residing with the Principal Insured for longer than 6 calendar months who is normally regarded by the community as the Principal Insured's husband/wife and nominated at the entry date or added in writing. Benefits will only be paid to the nominated beneficiary.
+                  </p>
+                  <p className="mt-2 text-amber-700 bg-amber-50/50 border border-amber-100 rounded-lg p-2.5">
+                    <strong>Important:</strong> Single member cover does not include spouse cover. Spouse cover is only available on family plans.
                   </p>
                 </div>
               </div>
@@ -247,7 +250,7 @@ export default function FuneralTermsPage() {
                   </div>
                   <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-150">
                     <span className="h-5 w-5 flex items-center justify-center rounded-full bg-slate-200 text-slate-700 font-bold text-[10px]">5</span>
-                    Copy of Beneficiary ID &amp; stamped bank statement
+                    Copy of Beneficiary ID
                   </div>
                   <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-150">
                     <span className="h-5 w-5 flex items-center justify-center rounded-full bg-slate-200 text-slate-700 font-bold text-[10px]">6</span>
@@ -255,10 +258,6 @@ export default function FuneralTermsPage() {
                   </div>
                   <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-150">
                     <span className="h-5 w-5 flex items-center justify-center rounded-full bg-slate-200 text-slate-700 font-bold text-[10px]">7</span>
-                    Bank statement of deceased (stamped by bank)
-                  </div>
-                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-150">
-                    <span className="h-5 w-5 flex items-center justify-center rounded-full bg-slate-200 text-slate-700 font-bold text-[10px]">8</span>
                     Any other document required by Lifewize
                   </div>
                 </div>

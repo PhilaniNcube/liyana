@@ -268,7 +268,7 @@ export function SendClaimToLinarDialog({
           {relevantDocuments.length > 0 && (
             <div className="space-y-3">
               <Label>Attach Documents (Optional)</Label>
-              <div className="border rounded-lg p-4 max-h-[200px] overflow-y-auto">
+              <div className="border rounded-lg p-4 max-h-50 overflow-y-auto">
                 {relevantDocuments.map((doc) => (
                   <div
                     key={doc.id}
