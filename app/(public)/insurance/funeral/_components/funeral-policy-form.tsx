@@ -184,15 +184,7 @@ export default function FuneralPolicyForm() {
       signature_date: "",
       signature_svg: "",
       // Step 4: dependants + declarations
-      beneficiaries: [
-        {
-          first_name: "",
-          last_name: "",
-          id_number: "",
-          relationship: undefined as any,
-          percentage: 0,
-        },
-      ],
+      beneficiaries: [],
       terms_and_conditions: false,
       privacy_policy: false,
       beneficiary_name: "",
@@ -367,8 +359,8 @@ export default function FuneralPolicyForm() {
         fields: [], // No form fields, just document uploads
       },
       {
-        title: selectedPackage?.type === "family" ? "Dependants & Beneficiary" : "Beneficiary & Declarations",
-        description: selectedPackage?.type === "family" ? "Dependants, beneficiary & declarations" : "Beneficiary & declarations",
+        title: "Beneficiary & Dependants",
+        description: "Beneficiary, optional dependants & declarations",
         fields: [
           "beneficiaries",
           "beneficiary_name",
@@ -487,27 +479,7 @@ export default function FuneralPolicyForm() {
     }
   }, [form.watch("bank_name"), form]);
 
-  // Handle dependants list based on family vs single plan type
-  useEffect(() => {
-    if (selectedPackage && selectedPackage.type === "single") {
-      // If single member plan, clear beneficiaries so validation passes
-      form.setValue("beneficiaries", []);
-    } else if (selectedPackage && selectedPackage.type === "family") {
-      // If family plan and beneficiaries is empty, initialize with one empty dependant
-      const currentBens = form.getValues("beneficiaries");
-      if (!currentBens || currentBens.length === 0) {
-        form.setValue("beneficiaries", [
-          {
-            first_name: "",
-            last_name: "",
-            id_number: "",
-            relationship: undefined as any,
-            percentage: 0,
-          },
-        ]);
-      }
-    }
-  }, [selectedPackage, form]);
+  // Dependants are optional - no auto-initialization needed
 
   const onSubmit = (values: FuneralForm) => {
     console.log("onSubmit called with values:", values);
@@ -1503,11 +1475,10 @@ I acknowledge that this electronic acceptance, including confirmation digital si
                 </CardContent>
               </Card>
 
-              {selectedPackage?.type === "family" && (
-                <Card className="p-6">
+              <Card className="p-6">
                 <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
                   <CardTitle>
-                    {fields.length > 1 ? `Dependants` : "Dependant"}
+                    Dependants <span className="text-sm font-normal text-muted-foreground">(optional)</span>
                   </CardTitle>
                   <div className="flex gap-2">
                     <Button
@@ -1530,13 +1501,18 @@ I acknowledge that this electronic acceptance, including confirmation digital si
                   </div>
                 </CardHeader>
                 <CardContent className="px-0 space-y-4">
+                  {fields.length === 0 && (
+                    <p className="text-sm text-muted-foreground py-4 text-center">
+                      No dependants added. You can optionally add dependants to this policy.
+                    </p>
+                  )}
                   {fields.map((field, index) => (
                     <Card key={field.id} className="p-4">
                       <div className="flex justify-between items-center mb-4">
                         <h4 className="font-medium">
                           Dependant {index + 1}
                         </h4>
-                        {fields.length > 1 && (
+                        {fields.length >= 1 && (
                           <Button
                             type="button"
                             variant="destructive"
@@ -1618,7 +1594,6 @@ I acknowledge that this electronic acceptance, including confirmation digital si
                   ))}
                 </CardContent>
               </Card>
-              )}
               <Card className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
