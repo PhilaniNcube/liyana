@@ -1475,6 +1475,7 @@ I acknowledge that this electronic acceptance, including confirmation digital si
                 </CardContent>
               </Card>
 
+              {selectedPackage?.id !== "ukuthula" && selectedPackage?.id !== "ilanga" && (
               <Card className="p-6">
                 <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
                   <CardTitle>
@@ -1594,6 +1595,7 @@ I acknowledge that this electronic acceptance, including confirmation digital si
                   ))}
                 </CardContent>
               </Card>
+              )}
               <Card className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
