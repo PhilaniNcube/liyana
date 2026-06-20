@@ -11,7 +11,7 @@ import {
 import { getCurrentUser } from "@/lib/queries/user";
 import Link from "next/link";
 
-import { CheckCircle, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 
 export default async function Home() {
   const currentUser = await getCurrentUser();
@@ -31,15 +31,15 @@ export default async function Home() {
                   <span className="font-normal">NCRCP18217</span>
                 </Badge>
                 <h1 className="text-3xl font-bold tracking-tighter font-sans sm:text-5xl xl:text-6xl/none">
-                  Complete financial solutions for{" "}
+                  Dignified funeral cover for{" "}
                   <span className="text-[#f8e306]">
                     life's important moments
                   </span>
                 </h1>
                 <p className="max-w-[600px] mx-auto text-gray-500 md:text-xl">
-                  Liyana Finance offers comprehensive financial services
-                  including payday loans and funeral policies to protect what
-                  matters most.
+                  Liyana Finance offers comprehensive funeral cover to protect
+                  what matters most, giving you and your loved ones peace of
+                  mind when it counts.
                 </p>
               </div>
             </div>
@@ -54,14 +54,10 @@ export default async function Home() {
                         Welcome back, {currentUser.full_name}!
                       </CardTitle>
                       <CardDescription>
-                        Choose from our range of financial services to get
-                        started.
+                        Apply for funeral cover to protect what matters most.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Button asChild size="lg" className="w-full">
-                        <Link href="/apply">Apply for Loan</Link>
-                      </Button>
                       <Button asChild size="lg" className="w-full">
                         <Link href="/insurance/funeral">
                           Apply for Funeral Cover
@@ -91,34 +87,9 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-2">
-            {/* Loans Card */}
-            <Card className="relative overflow-hidden">
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-6 w-6 text-[#f8e306]" />
-                  <CardTitle>Quick Loans</CardTitle>
-                </div>
-                <CardDescription>
-                  Fast and convenient payday loans for life's unexpected
-                  financial challenges
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm text-gray-600 mb-4">
-                  <li>• Quick approval process</li>
-                  <li>• Competitive interest rates</li>
-                  <li>• Flexible repayment terms</li>
-                  <li>• Online application</li>
-                </ul>
-                <Button asChild className="w-full">
-                  <Link href="/apply">Apply Now</Link>
-                </Button>
-              </CardContent>
-            </Card>
-
+          <div className="grid gap-8 md:grid-cols-2 lg:max-w-2xl lg:mx-auto">
             {/* Funeral Policy Card */}
-            <Card className="relative overflow-hidden">
+            <Card className="relative overflow-hidden md:col-span-2">
               <CardHeader>
                 <div className="flex items-center space-x-2">
                   <Shield className="h-6 w-6 text-blue-500" />
