@@ -42,8 +42,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Trash2, Plus, Upload, FileText, X, Check } from "lucide-react";
 import { z } from "zod";
 import FuneralPremiumCalculatorDialog from "./funeral-premium-calculator-dialog";
-import { FUNERAL_PACKAGES, type FuneralPackage, type FuneralPackageId } from "@/lib/data/funeral-rates";
+import { FUNERAL_PACKAGES, countCoveredDependents } from "@/lib/data/funeral-rates";
 import { cn } from "@/lib/utils";
+import {
+  trackApplicationStart,
+  trackApplicationStepComplete,
+  trackApplicationSubmit,
+  trackApplicationSuccess,
+  trackApplicationError,
+  trackPlanSelected,
+} from "@/lib/analytics";
 
 // South African banks with their branch codes
 const southAfricanBanks = [
@@ -128,9 +136,23 @@ export default function FuneralPolicyForm() {
     coverageAmountFromUrl
   );
 
+  // Track application start once on mount
+  const startTrackedRef = useRef(false);
+  useEffect(() => {
+    if (startTrackedRef.current) return;
+    startTrackedRef.current = true;
+    trackApplicationStart({ product: "funeral_policy" });
+  }, []);
+
   // Handle successful submission
   useEffect(() => {
-    if (state && !state.error && state.message && !isPending) {
+    if (!state || isPending) return;
+    if (state.error) {
+      trackApplicationError({ product: "funeral_policy", message: state.message });
+      return;
+    }
+    if (state.message) {
+      trackApplicationSuccess({ product: "funeral_policy" });
       toast.success("Application submitted successfully!", {
         description: state.message,
         duration: 5000,
@@ -379,11 +401,23 @@ export default function FuneralPolicyForm() {
     const stepFields = steps[currentStep].fields;
     // For document step (step 3), no form validation needed
     if (currentStep === 3) {
+      trackApplicationStepComplete({
+        product: "funeral_policy",
+        stepIndex: currentStep + 1,
+        stepName: steps[currentStep].title,
+        stepTotal: totalSteps,
+      });
       if (currentStep < totalSteps - 1) setCurrentStep((s) => s + 1);
       return;
     }
     const valid = await form.trigger(stepFields as any, { shouldFocus: true });
     if (!valid) return;
+    trackApplicationStepComplete({
+      product: "funeral_policy",
+      stepIndex: currentStep + 1,
+      stepName: steps[currentStep].title,
+      stepTotal: totalSteps,
+    });
     if (currentStep < totalSteps - 1) setCurrentStep((s) => s + 1);
   };
 
@@ -482,6 +516,7 @@ export default function FuneralPolicyForm() {
   // Dependants are optional - no auto-initialization needed
 
   const onSubmit = (values: FuneralForm) => {
+    trackApplicationSubmit({ product: "funeral_policy" });
     console.log("onSubmit called with values:", values);
     console.log("isPending:", isPending);
     console.log("state:", state);
@@ -599,6 +634,14 @@ export default function FuneralPolicyForm() {
                               onClick={() => {
                                 field.onChange(pkg.cover.principalMember);
                                 setCoverageAmountInUrl(pkg.cover.principalMember);
+                                trackPlanSelected({
+                                  packageId: pkg.id,
+                                  packageName: pkg.name,
+                                  planType: pkg.type,
+                                  coverAmount: pkg.cover.principalMember,
+                                  monthlyPremium: pkg.monthlyPremium,
+                                  dependentsCovered: countCoveredDependents(pkg),
+                                });
                               }}
                             >
                               {field.value === pkg.cover.principalMember && (

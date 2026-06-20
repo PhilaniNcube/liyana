@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import { Geist_Mono, DM_Sans } from "next/font/google";
+import { GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 import { Navigation } from "@/components/navigation";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Providers } from "@/components/providers";
+import { RouteChangeTracker } from "@/components/route-change-tracker";
 import { Toaster } from "sonner";
+
+const GTM_ID = "GTM-MQMJTTXR";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -39,8 +43,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${dmSans.variable} ${geistMono.variable} antialiased`}>
+        <GoogleTagManager gtmId={GTM_ID} />
         <Providers>
-          <NuqsAdapter>{children}</NuqsAdapter>
+          <NuqsAdapter>
+            {children}
+            <RouteChangeTracker />
+          </NuqsAdapter>
         </Providers>
         <Toaster />
       </body>

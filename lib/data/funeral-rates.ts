@@ -83,3 +83,16 @@ export function getPackageById(id: FuneralPackageId): FuneralPackage | undefined
 export function getPackageByCoverAmount(coverAmount: number): FuneralPackage | undefined {
   return FUNERAL_PACKAGES.find((pkg) => pkg.cover.principalMember === coverAmount);
 }
+
+/** Count the number of non-principal cover categories included in a package */
+export function countCoveredDependents(pkg: FuneralPackage): number {
+  const c = pkg.cover;
+  return [
+    c.spouse,
+    c.stillBorn,
+    c.childrenUnder6,
+    c.children6to13,
+    c.children14to21,
+    c.studentChild21to25,
+  ].filter((v): v is number => v != null).length;
+}

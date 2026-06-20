@@ -25,6 +25,7 @@ import { useActionState, useTransition, useState } from "react";
 import { z } from "zod";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { loginAction, type LoginState } from "@/lib/actions/auth";
+import { trackLoginSubmit } from "@/lib/analytics";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -67,6 +68,7 @@ export function LoginForm({
   };
 
   const onSubmit = (data: LoginFormData) => {
+    trackLoginSubmit();
     const formData = new FormData();
     formData.append("email", data.email);
     formData.append("password", data.password);

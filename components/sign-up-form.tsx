@@ -24,6 +24,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useActionState, useTransition, useState } from "react";
 import { z } from "zod";
 import { signUpAction, type SignUpState } from "@/lib/actions/auth";
+import { trackSignUpSubmit } from "@/lib/analytics";
 import { Eye, EyeOff } from "lucide-react";
 
 const signUpSchema = z
@@ -74,6 +75,7 @@ export function SignUpForm({
   });
 
   const onSubmit = (data: SignUpFormData) => {
+    trackSignUpSubmit({ location: typeof window !== "undefined" ? window.location.pathname : "" });
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       formData.append(key, value);

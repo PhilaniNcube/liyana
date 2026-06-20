@@ -5,12 +5,14 @@ import {
   FUNERAL_PACKAGES,
   type FuneralPackage,
   type FuneralPackageId,
+  countCoveredDependents,
 } from "@/lib/data/funeral-rates";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Check, Users, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { trackPlanSelected } from "@/lib/analytics";
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("en-ZA", {
@@ -73,7 +75,17 @@ export default function FuneralPremiumCalculator() {
                 "cursor-pointer transition-all hover:shadow-md relative",
                 selectedId === pkg.id && "ring-2 ring-green-600 shadow-md"
               )}
-              onClick={() => setSelectedId(pkg.id)}
+              onClick={() => {
+                setSelectedId(pkg.id);
+                trackPlanSelected({
+                  packageId: pkg.id,
+                  packageName: pkg.name,
+                  planType: pkg.type,
+                  coverAmount: pkg.cover.principalMember,
+                  monthlyPremium: pkg.monthlyPremium,
+                  dependentsCovered: countCoveredDependents(pkg),
+                });
+              }}
             >
               {selectedId === pkg.id && (
                 <div className="absolute top-3 right-3">
@@ -114,7 +126,17 @@ export default function FuneralPremiumCalculator() {
                 "cursor-pointer transition-all hover:shadow-md relative",
                 selectedId === pkg.id && "ring-2 ring-green-600 shadow-md"
               )}
-              onClick={() => setSelectedId(pkg.id)}
+              onClick={() => {
+                setSelectedId(pkg.id);
+                trackPlanSelected({
+                  packageId: pkg.id,
+                  packageName: pkg.name,
+                  planType: pkg.type,
+                  coverAmount: pkg.cover.principalMember,
+                  monthlyPremium: pkg.monthlyPremium,
+                  dependentsCovered: countCoveredDependents(pkg),
+                });
+              }}
             >
               {selectedId === pkg.id && (
                 <div className="absolute top-3 right-3">
