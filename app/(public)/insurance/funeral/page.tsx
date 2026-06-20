@@ -1,9 +1,19 @@
 import React from "react";
 import FuneralPolicyForm from "./_components/funeral-policy-form";
 import Link from "next/link";
-import { Calculator, ArrowRight } from "lucide-react";
+import { Calculator, ArrowRight, ShieldCheck, LogIn, UserPlus } from "lucide-react";
+import { getCurrentUser } from "@/lib/queries";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-export default function Page() {
+export default async function Page() {
+  const user = await getCurrentUser();
 
   return (
     <section className="py-8 space-y-8">
@@ -32,9 +42,50 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Policy Application Form */}
+      {/* Policy Application Form or Auth Gate */}
       <div className="container mx-auto px-4">
-        <FuneralPolicyForm />
+        {user ? (
+          <FuneralPolicyForm />
+        ) : (
+          <div className="mx-auto max-w-lg">
+            <Card className="border-slate-200">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
+                  <ShieldCheck className="h-6 w-6 text-blue-500" />
+                </div>
+                <CardTitle className="text-2xl">Apply for Funeral Cover</CardTitle>
+                <CardDescription>
+                  Sign up or log in to start your funeral cover application. It
+                  only takes a few minutes, and your details stay secure.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button asChild size="lg" className="w-full">
+                  <Link href="/auth/sign-up?next=/insurance/funeral">
+                    <UserPlus className="h-4 w-4" />
+                    Sign up to apply
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="w-full">
+                  <Link href="/auth/login?next=/insurance/funeral">
+                    <LogIn className="h-4 w-4" />
+                    Log in
+                  </Link>
+                </Button>
+                <p className="pt-2 text-center text-xs text-muted-foreground">
+                  You can still use the{" "}
+                  <Link
+                    href="/insurance/funeral/calculator"
+                    className="underline underline-offset-4"
+                  >
+                    calculator
+                  </Link>{" "}
+                  to compare plans before signing up.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </section>
   );

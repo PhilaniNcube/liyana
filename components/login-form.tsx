@@ -35,8 +35,9 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginForm({
   className,
+  next,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: React.ComponentPropsWithoutRef<"div"> & { next?: string }) {
   const [state, formAction] = useActionState<LoginState, FormData>(
     loginAction,
     {}
@@ -69,6 +70,7 @@ export function LoginForm({
     const formData = new FormData();
     formData.append("email", data.email);
     formData.append("password", data.password);
+    if (next) formData.append("next", next);
     startTransition(() => {
       console.log("Submitting login form with data:", formData);
       formAction(formData);
@@ -228,7 +230,14 @@ export function LoginForm({
 
           <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
-            <Link href="/auth/sign-up" className="underline underline-offset-4">
+            <Link
+              href={
+                next
+                  ? `/auth/sign-up?next=${encodeURIComponent(next)}`
+                  : "/auth/sign-up"
+              }
+              className="underline underline-offset-4"
+            >
               Sign up
             </Link>
           </div>

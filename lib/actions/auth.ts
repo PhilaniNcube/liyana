@@ -159,13 +159,24 @@ export async function loginAction(
     };
   }
 
+  // Resolve a safe return destination from the optional `next` field.
+  // Only allow relative, single-slash paths to prevent open-redirect abuse.
+  const nextRaw = formData.get("next");
+  const safeNext =
+    typeof nextRaw === "string" &&
+    nextRaw.startsWith("/") &&
+    !nextRaw.startsWith("//") &&
+    nextRaw.length > 1
+      ? nextRaw
+      : null;
+
   // Check if user is a staff member and redirect accordingly
   if (email.endsWith("@liyanafinance.co.za")) {
     revalidatePath("/dashboard", "layout");
     redirect("/dashboard");
   } else {
     revalidatePath("/", "layout");
-    redirect("/profile");
+    redirect(safeNext ?? "/profile");
   }
 }
 

@@ -50,8 +50,9 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 
 export function SignUpForm({
   className,
+  next,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: React.ComponentPropsWithoutRef<"div"> & { next?: string }) {
   const [state, formAction] = useActionState<SignUpState, FormData>(
     signUpAction,
     {}
@@ -244,7 +245,14 @@ export function SignUpForm({
 
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
-            <Link href="/auth/login" className="underline underline-offset-4">
+            <Link
+              href={
+                next
+                  ? `/auth/login?next=${encodeURIComponent(next)}`
+                  : "/auth/login"
+              }
+              className="underline underline-offset-4"
+            >
               Login
             </Link>
           </div>
