@@ -72,7 +72,7 @@ export default function FuneralPremiumCalculator() {
             <Card
               key={pkg.id}
               className={cn(
-                "cursor-pointer transition-all hover:shadow-md relative",
+                "cursor-pointer transition-all hover:shadow-md relative h-full flex flex-col justify-start",
                 selectedId === pkg.id && "ring-2 ring-green-600 shadow-md"
               )}
               onClick={() => {
@@ -123,7 +123,7 @@ export default function FuneralPremiumCalculator() {
             <Card
               key={pkg.id}
               className={cn(
-                "cursor-pointer transition-all hover:shadow-md relative",
+                "cursor-pointer transition-all hover:shadow-md relative h-full flex flex-col justify-start",
                 selectedId === pkg.id && "ring-2 ring-green-600 shadow-md"
               )}
               onClick={() => {
