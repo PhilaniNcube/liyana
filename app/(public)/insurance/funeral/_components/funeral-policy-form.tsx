@@ -286,7 +286,7 @@ export default function FuneralPolicyForm() {
   const stopDrawing = () => {
     if (!isDrawing) return;
     setIsDrawing(false);
-    
+
     const canvas = canvasRef.current;
     if (canvas) {
       const dataUrl = canvas.toDataURL("image/png");
@@ -931,345 +931,341 @@ export default function FuneralPolicyForm() {
           {currentStep === 2 && (
             <>
               <Card className="p-6">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle>Banking Details</CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="account_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Account Holder Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Account holder name" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="bank_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bank Name</FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value || ""}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select your bank" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {southAfricanBanks.map((bank) => (
-                              <SelectItem key={bank.name} value={bank.name}>
-                                {bank.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="account_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Account Number</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Account number" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="branch_code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Branch Code</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Auto-filled based on bank selection"
-                          readOnly
-                          className="bg-gray-50 cursor-not-allowed"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="account_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Account Type</FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value || ""}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select account type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="savings">Savings</SelectItem>
-                            <SelectItem value="transaction">
-                              Transaction
-                            </SelectItem>
-                            <SelectItem value="current">
-                              Current/Cheque
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="payment_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Preferred Payment Date</FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value?.toString() || ""}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select payment date" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.from({ length: 31 }, (_, i) => {
-                              const day = i + 1;
-                              const suffix = [1, 21, 31].includes(day) ? "st" :
-                                             [2, 22].includes(day) ? "nd" :
-                                             [3, 23].includes(day) ? "rd" : "th";
-                              return (
-                                <SelectItem key={day} value={day.toString()}>
-                                  {day}{suffix}
+                <CardHeader className="px-0 pt-0">
+                  <CardTitle>Banking Details</CardTitle>
+                </CardHeader>
+                <CardContent className="px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="account_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account Holder Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Account holder name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="bank_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bank Name</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || ""}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select your bank" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {southAfricanBanks.map((bank) => (
+                                <SelectItem key={bank.name} value={bank.name}>
+                                  {bank.name}
                                 </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="account_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Account number" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="branch_code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Branch Code</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Auto-filled based on bank selection"
+                            readOnly
+                            className="bg-gray-50 cursor-not-allowed"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="account_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account Type</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || ""}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select account type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="savings">Savings</SelectItem>
+                              <SelectItem value="transaction">
+                                Transaction
+                              </SelectItem>
+                              <SelectItem value="current">
+                                Current/Cheque
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            {/* Authority & Mandate Card */}
-            <Card className="p-6 mt-6 border-slate-200 shadow-sm">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle className="text-xl font-bold text-slate-800">
-                  Authority & Mandate for Payment Instructions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 space-y-6">
-                {/* Scrollable Mandate Text */}
-                <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-lg p-4 bg-slate-50/50 text-xs leading-relaxed text-slate-600 whitespace-pre-line font-sans shadow-inner">
-                  {`SIGNATURE FOR AUTHORITY AND MANDATE FOR PAYMENT INSTRUCTIONS:
+                  <FormField
+                    control={form.control}
+                    name="payment_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Preferred Payment Date</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value?.toString() || ""}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select payment date" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 31 }, (_, i) => {
+                                const day = i + 1;
+                                const suffix = [1, 21, 31].includes(day) ? "st" :
+                                  [2, 22].includes(day) ? "nd" :
+                                    [3, 23].includes(day) ? "rd" : "th";
+                                return (
+                                  <SelectItem key={day} value={day.toString()}>
+                                    {day}{suffix}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Authority & Mandate Card */}
+              <Card className="p-6 mt-6 border-slate-200 shadow-sm">
+                <CardHeader className="px-0 pt-0">
+                  <CardTitle className="text-xl font-bold text-slate-800">
+                    Authority & Mandate for Payment Instructions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-0 space-y-6">
+                  {/* Scrollable Mandate Text */}
+                  <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-lg p-4 bg-slate-50/50 text-xs leading-relaxed text-slate-600 whitespace-pre-line font-sans shadow-inner">
+                    {`SIGNATURE FOR AUTHORITY AND MANDATE FOR PAYMENT INSTRUCTIONS:
 
 I / We hereby authorise Clientèle Life Assurance Company Limited or any of its legal representatives / agents (hereafter referred to as "you") to issue and deliver payment instructions to your banker for collection against my/our above mentioned account at my/our bank (or any other bank to which I/we may transfer my/our account) on condition that the sum of such payment instructions will never exceed my/our obligations as agreed to in the agreement and commencing on and continuing until this authority and mandate is terminated by me / us by giving you one calendar month's written notice.`}
-                  {" "}
-                  <span className="font-bold text-slate-900 bg-yellow-50 px-1.5 py-0.5 border border-yellow-100 rounded">
-                    {`The individual payment instructions so authorised to be issued must be issued and delivered monthly (on the ${
-                      form.watch("payment_date") 
-                        ? `${form.watch("payment_date")}${
-                            [1, 21, 31].includes(Number(form.watch("payment_date"))) ? 'st' :
-                            [2, 22].includes(Number(form.watch("payment_date"))) ? 'nd' :
+                    {" "}
+                    <span className="font-bold text-slate-900 bg-yellow-50 px-1.5 py-0.5 border border-yellow-100 rounded">
+                      {`The individual payment instructions so authorised to be issued must be issued and delivered monthly (on the ${form.watch("payment_date")
+                        ? `${form.watch("payment_date")}${[1, 21, 31].includes(Number(form.watch("payment_date"))) ? 'st' :
+                          [2, 22].includes(Number(form.watch("payment_date"))) ? 'nd' :
                             [3, 23].includes(Number(form.watch("payment_date"))) ? 'rd' : 'th'
-                          }` 
+                        }`
                         : "__________"
-                    } day of every month).`}
-                  </span>
-                  {" "}
-                  {`In the event that the payment day falls on a Sunday, or recognised SA public holiday, the payment day will automatically be the previous ordinary business day.
+                        } day of every month).`}
+                    </span>
+                    {" "}
+                    {`In the event that the payment day falls on a Sunday, or recognised SA public holiday, the payment day will automatically be the previous ordinary business day.
 
 I / We understand that the withdrawals hereby authorised will be processed through a computerised system provided by the SA Banks. I also understand that details of each withdrawal will be printed on my bank statement (INLIFEWIZE). I / We acknowledge that all payment instructions issued by you shall be treated by my/our below mentioned bank as if the instructions have been issued by me/us personally. I / We agree that although this authority and mandate may be cancelled by me / us, such cancellation will not cancel the agreement. I / We shall not be entitled to any refund of amounts which you have withdrawn while this authority was in force, if such amounts were legally owing to you.
 
 I / We acknowledge that this authority may be ceded or assigned to a 3rd party if the agreement is also ceded or assigned to that 3rd party, but in the absence of such assignment of the agreement, this authority and mandate cannot be assigned to any 3rd party. I agree that it is my responsibility to ensure that all of my premiums, with regards to my Lifewize funeral policy, are paid up to date and that I will not hold Lifewize liable in any event, arising out of my premiums being unpaid.
 
 I acknowledge that this electronic acceptance, including confirmation digital signature, online checkbox, or electronic communication, constitutes my valid and legally binding consent in terms of the Electronic Communications and Transactions Act, 25 of 2002.`}
-                </div>
-
-                {/* Accept Checkbox */}
-                <FormField
-                  control={form.control}
-                  name="mandate_accepted"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border border-slate-200 p-4 bg-slate-50/20 hover:bg-slate-50/50 transition-colors">
-                      <FormControl>
-                        <input
-                          type="checkbox"
-                          checked={field.value}
-                          onChange={(e) => field.onChange(e.target.checked)}
-                          className="h-4.5 w-4.5 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 transition-colors cursor-pointer"
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="text-sm font-semibold text-slate-800 cursor-pointer">
-                          I / We accept the Authority and Mandate for Payment Instructions
-                        </FormLabel>
-                        <p className="text-xs text-slate-500">
-                          By checking this box, you confirm your legally binding consent to the terms of the mandate.
-                        </p>
-                        <FormMessage />
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Signature Interaction Panel */}
-                <div className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                  {/* Panel Tabs Header */}
-                  <div className="flex border-b border-slate-200 bg-slate-50">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSigMethod("draw");
-                        form.setValue("signature_svg", "");
-                      }}
-                      className={`flex-1 py-3 text-sm font-semibold border-b-2 transition-all ${
-                        sigMethod === "draw"
-                          ? "border-blue-600 text-blue-600 bg-white"
-                          : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
-                      }`}
-                    >
-                      Draw Signature
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSigMethod("type");
-                        form.setValue("signature_svg", "");
-                        const currentName = form.getValues("first_name") + " " + form.getValues("last_name");
-                        if (currentName.trim()) {
-                          handleTypedSignatureChange(currentName);
-                        }
-                      }}
-                      className={`flex-1 py-3 text-sm font-semibold border-b-2 transition-all ${
-                        sigMethod === "type"
-                          ? "border-blue-600 text-blue-600 bg-white"
-                          : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
-                      }`}
-                    >
-                      Type Signature
-                    </button>
                   </div>
 
-                  <div className="p-6 space-y-4">
-                    {/* Canvas/Drawing Area */}
-                    {sigMethod === "draw" && (
-                      <div className="space-y-3">
-                        <div className="relative border border-dashed border-slate-300 rounded-lg bg-slate-50/50 flex flex-col items-center justify-center overflow-hidden h-[152px]">
-                          {!form.watch("signature_svg") && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-slate-400">
-                              <span className="text-xs uppercase tracking-wider font-semibold">Sign Here</span>
-                              <span className="text-[10px] text-slate-400 mt-1">Use your mouse or touch screen</span>
+                  {/* Accept Checkbox */}
+                  <FormField
+                    control={form.control}
+                    name="mandate_accepted"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border border-slate-200 p-4 bg-slate-50/20 hover:bg-slate-50/50 transition-colors">
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            checked={field.value}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                            className="h-4.5 w-4.5 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 transition-colors cursor-pointer"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-sm font-semibold text-slate-800 cursor-pointer">
+                            I / We accept the Authority and Mandate for Payment Instructions
+                          </FormLabel>
+                          <p className="text-xs text-slate-500">
+                            By checking this box, you confirm your legally binding consent to the terms of the mandate.
+                          </p>
+                          <FormMessage />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Signature Interaction Panel */}
+                  <div className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                    {/* Panel Tabs Header */}
+                    <div className="flex border-b border-slate-200 bg-slate-50">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSigMethod("draw");
+                          form.setValue("signature_svg", "");
+                        }}
+                        className={`flex-1 py-3 text-sm font-semibold border-b-2 transition-all ${sigMethod === "draw"
+                          ? "border-blue-600 text-blue-600 bg-white"
+                          : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
+                          }`}
+                      >
+                        Draw Signature
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSigMethod("type");
+                          form.setValue("signature_svg", "");
+                          const currentName = form.getValues("first_name") + " " + form.getValues("last_name");
+                          if (currentName.trim()) {
+                            handleTypedSignatureChange(currentName);
+                          }
+                        }}
+                        className={`flex-1 py-3 text-sm font-semibold border-b-2 transition-all ${sigMethod === "type"
+                          ? "border-blue-600 text-blue-600 bg-white"
+                          : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
+                          }`}
+                      >
+                        Type Signature
+                      </button>
+                    </div>
+
+                    <div className="p-6 space-y-4">
+                      {/* Canvas/Drawing Area */}
+                      {sigMethod === "draw" && (
+                        <div className="space-y-3">
+                          <div className="relative border border-dashed border-slate-300 rounded-lg bg-slate-50/50 flex flex-col items-center justify-center overflow-hidden h-[152px]">
+                            {!form.watch("signature_svg") && (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-slate-400">
+                                <span className="text-xs uppercase tracking-wider font-semibold">Sign Here</span>
+                                <span className="text-[10px] text-slate-400 mt-1">Use your mouse or touch screen</span>
+                              </div>
+                            )}
+                            <canvas
+                              ref={canvasRef}
+                              width={500}
+                              height={150}
+                              onMouseDown={startDrawing}
+                              onMouseMove={draw}
+                              onMouseUp={stopDrawing}
+                              onMouseLeave={stopDrawing}
+                              onTouchStart={startDrawing}
+                              onTouchMove={draw}
+                              onTouchEnd={stopDrawing}
+                              className="w-full max-w-[500px] h-[150px] cursor-crosshair touch-none bg-transparent block"
+                            />
+                          </div>
+                          <div className="flex justify-end">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={clearCanvas}
+                              className="text-xs font-semibold text-slate-600 hover:text-slate-800"
+                            >
+                              Clear Signature
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Typed Script Area */}
+                      {sigMethod === "type" && (
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <FormLabel className="text-sm font-medium text-slate-700">Enter Your Full Name</FormLabel>
+                            <Input
+                              type="text"
+                              value={form.watch("signature_name") || ""}
+                              onChange={(e) => handleTypedSignatureChange(e.target.value)}
+                              placeholder="e.g. John Doe"
+                              className="w-full"
+                            />
+                          </div>
+
+                          {form.watch("signature_name") && (
+                            <div className="border border-dashed border-slate-300 rounded-lg p-6 bg-slate-50/30 flex items-center justify-center h-[120px]">
+                              <div
+                                style={{ fontFamily: "cursive, 'Brush Script MT', 'Dancing Script'" }}
+                                className="text-4xl text-blue-800 italic select-none tracking-wide text-center"
+                              >
+                                {form.watch("signature_name")}
+                              </div>
                             </div>
                           )}
-                          <canvas
-                            ref={canvasRef}
-                            width={500}
-                            height={150}
-                            onMouseDown={startDrawing}
-                            onMouseMove={draw}
-                            onMouseUp={stopDrawing}
-                            onMouseLeave={stopDrawing}
-                            onTouchStart={startDrawing}
-                            onTouchMove={draw}
-                            onTouchEnd={stopDrawing}
-                            className="w-full max-w-[500px] h-[150px] cursor-crosshair touch-none bg-transparent block"
-                          />
                         </div>
-                        <div className="flex justify-end">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={clearCanvas}
-                            className="text-xs font-semibold text-slate-600 hover:text-slate-800"
-                          >
-                            Clear Signature
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Typed Script Area */}
-                    {sigMethod === "type" && (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <FormLabel className="text-sm font-medium text-slate-700">Enter Your Full Name</FormLabel>
-                          <Input
-                            type="text"
-                            value={form.watch("signature_name") || ""}
-                            onChange={(e) => handleTypedSignatureChange(e.target.value)}
-                            placeholder="e.g. John Doe"
-                            className="w-full"
-                          />
-                        </div>
-
-                        {form.watch("signature_name") && (
-                          <div className="border border-dashed border-slate-300 rounded-lg p-6 bg-slate-50/30 flex items-center justify-center h-[120px]">
-                            <div 
-                              style={{ fontFamily: "cursive, 'Brush Script MT', 'Dancing Script'" }}
-                              className="text-4xl text-blue-800 italic select-none tracking-wide text-center"
-                            >
-                              {form.watch("signature_name")}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Hidden Signature input to trigger validations */}
-                    <FormField
-                      control={form.control}
-                      name="signature_svg"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <input type="hidden" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
                       )}
-                    />
 
-                    {/* Info & Date Block */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t border-slate-100 pt-4 gap-2 text-xs text-slate-500">
-                      <div>
-                        <span>Signed Date: </span>
-                        <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded">
-                          {form.watch("signature_date") || new Date().toISOString().split("T")[0]}
-                        </span>
-                        <span className="ml-1 text-slate-400 font-normal">(Auto-populated)</span>
-                      </div>
-                      <div className="flex items-center text-[10px] uppercase font-bold tracking-wider text-green-600 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full">
-                        <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse"></span>
-                        Secure Electronic Acceptance
+                      {/* Hidden Signature input to trigger validations */}
+                      <FormField
+                        control={form.control}
+                        name="signature_svg"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <input type="hidden" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Info & Date Block */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t border-slate-100 pt-4 gap-2 text-xs text-slate-500">
+                        <div>
+                          <span>Signed Date: </span>
+                          <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded">
+                            {form.watch("signature_date") || new Date().toISOString().split("T")[0]}
+                          </span>
+                          <span className="ml-1 text-slate-400 font-normal">(Auto-populated)</span>
+                        </div>
+                        <div className="flex items-center text-[10px] uppercase font-bold tracking-wider text-green-600 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full">
+                          <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse"></span>
+                          Secure Electronic Acceptance
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             </>
           )}
 
@@ -1519,125 +1515,125 @@ I acknowledge that this electronic acceptance, including confirmation digital si
               </Card>
 
               {selectedPackage?.id !== "ukuthula" && selectedPackage?.id !== "ilanga" && (
-              <Card className="p-6">
-                <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
-                  <CardTitle>
-                    Dependants <span className="text-sm font-normal text-muted-foreground">(optional)</span>
-                  </CardTitle>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        append({
-                          first_name: "",
-                          last_name: "",
-                          id_number: "",
-                          relationship: undefined as any,
-                          percentage: 0,
-                        })
-                      }
-                      disabled={fields.length >= 10}
-                    >
-                      <Plus className="h-4 w-4 mr-2" /> Add Dependant
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="px-0 space-y-4">
-                  {fields.length === 0 && (
-                    <p className="text-sm text-muted-foreground py-4 text-center">
-                      No dependants added. You can optionally add dependants to this policy.
-                    </p>
-                  )}
-                  {fields.map((field, index) => (
-                    <Card key={field.id} className="p-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-medium">
-                          Dependant {index + 1}
-                        </h4>
-                        {fields.length >= 1 && (
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => remove(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <FormField
-                          control={form.control}
-                          name={`beneficiaries.${index}.first_name`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>First Name</FormLabel>
-                              <FormControl>
-                                <Input {...field} placeholder="First name" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
+                <Card className="p-6">
+                  <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
+                    <CardTitle>
+                      Dependants <span className="text-sm font-normal text-muted-foreground">(optional)</span>
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          append({
+                            first_name: "",
+                            last_name: "",
+                            id_number: "",
+                            relationship: undefined as any,
+                            percentage: 0,
+                          })
+                        }
+                        disabled={fields.length >= 10}
+                      >
+                        <Plus className="h-4 w-4 mr-2" /> Add Dependant
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-0 space-y-4">
+                    {fields.length === 0 && (
+                      <p className="text-sm text-muted-foreground py-4 text-center">
+                        No dependants added. You can optionally add dependants to this policy.
+                      </p>
+                    )}
+                    {fields.map((field, index) => (
+                      <Card key={field.id} className="p-4">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="font-medium">
+                            Dependant {index + 1}
+                          </h4>
+                          {fields.length >= 1 && (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => remove(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`beneficiaries.${index}.last_name`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Last Name</FormLabel>
-                              <FormControl>
-                                <Input {...field} placeholder="Last name" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`beneficiaries.${index}.id_number`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>ID Number</FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder="SA ID number"
-                                  maxLength={13}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`beneficiaries.${index}.relationship`}
-                          render={({ field }) => (
-                            <FormItem className="col-span-full md:col-span-1">
-                              <FormLabel>Relationship</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                value={field.value || ""}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select relationship" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="spouse">Spouse</SelectItem>
-                                  <SelectItem value="child">Child</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </Card>
-                  ))}
-                </CardContent>
-              </Card>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <FormField
+                            control={form.control}
+                            name={`beneficiaries.${index}.first_name`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>First Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="First name" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`beneficiaries.${index}.last_name`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Last Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="Last name" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`beneficiaries.${index}.id_number`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ID Number</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    placeholder="SA ID number"
+                                    maxLength={13}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`beneficiaries.${index}.relationship`}
+                            render={({ field }) => (
+                              <FormItem className="col-span-full md:col-span-1">
+                                <FormLabel>Relationship</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value || ""}
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select relationship" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="spouse">Spouse</SelectItem>
+                                    <SelectItem value="child">Child</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </Card>
+                    ))}
+                  </CardContent>
+                </Card>
               )}
               <Card className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1751,7 +1747,7 @@ I acknowledge that this electronic acceptance, including confirmation digital si
 
       {/* Clientele Life Logo and Disclaimer */}
       <div className="mt-12 flex flex-col items-center text-center border-t border-slate-200 pt-8">
-     
+
         <p className="max-w-4xl text-[10px] leading-relaxed text-slate-500 mb-4">
           Funeral insurance products are underwritten by Clientèle Life Assurance Company Limited, a licensed life insurer
           and authorised Financial Services Provider (FSP No. 15268). Liyana Finance (Pty) Ltd is a juristic
@@ -1759,13 +1755,20 @@ I acknowledge that this electronic acceptance, including confirmation digital si
           49285). Liyana Finance markets and distributes funeral insurance products on behalf of the authorised entities.
           No advice is provided. Terms and conditions apply.
         </p>
-           <div className="my-4">
+        <div className="my-4 flex justify-center">
           <Image
             src="/images/clientele_life.webp"
             alt="Clientèle Logo"
             width={128}
             height={48}
             className="h-12 w-auto object-contain"
+          />
+          <Image
+            src="/images/lifewize.jpg"
+            alt="Lifewize Logo"
+            width={128}
+            height={48}
+            className="w-44 object-contain"
           />
         </div>
       </div>

@@ -26,7 +26,7 @@ export default async function Page() {
             </div>
             <div>
               <p className="font-semibold">Not sure which plan to choose?</p>
-              <p className="text-sm text-emerald-100">
+              <p className="text-sm text-yellow-600">
                 Use our interactive calculator to compare plans and premiums.
               </p>
             </div>
