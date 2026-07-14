@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { Download, Settings } from "lucide-react";
+import { Download, Settings, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { exportDataToCSV } from "@/lib/actions/csv-export";
 import UpdatePolicyStatus from "@/app/(dashboard)/dashboard/insurance/[id]/_components/update-policy-status";
@@ -304,16 +304,29 @@ export function PoliciesDataTable({
           onChange={(e) => setGlobalFilter(e.target.value)}
           className="w-60"
         />
-        <Button
-          onClick={exportToCSV}
-          disabled={isExporting}
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        >
-          <Download className="h-4 w-4" />
-          {isExporting ? "Exporting..." : "Export CSV"}
-        </Button>
+        <div className="flex gap-2">
+          {exportFilters?.productType === "funeral_policy" && (
+            <Button
+              onClick={() => window.open("/dashboard/insurance/funeral/blank-form", "_blank")}
+              variant="outline"
+              size="sm"
+              className="gap-2 border-slate-300 text-slate-700 hover:bg-slate-50"
+            >
+              <Printer className="h-4 w-4" />
+              Print Blank Form
+            </Button>
+          )}
+          <Button
+            onClick={exportToCSV}
+            disabled={isExporting}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            {isExporting ? "Exporting..." : "Export CSV"}
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-md border">
