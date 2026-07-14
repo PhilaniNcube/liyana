@@ -25,7 +25,7 @@ export default function FuneralCalculatorPage() {
             </span>
             <h1 className="mt-4 text-4xl font-bold tracking-tight text-white md:text-5xl">
               Funeral Cover{" "}
-              <span className="text-white/60">Calculator</span>
+              <span className="text-white/60">Plans</span>
             </h1>
             <p className="mt-4 text-lg text-white/60">
               Compare our plans, see exactly what you&apos;re covered for, and

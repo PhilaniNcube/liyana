@@ -16,6 +16,7 @@ import {
   GraduationCap,
   Heart,
   Info,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -602,9 +603,9 @@ export default function FuneralCalculatorClient() {
               desc: "Claims handled quickly and with dignity",
             },
             {
-              icon: <Check className="h-6 w-6 text-slate-700" />,
-              title: "No Medical Exam",
-              desc: "Simple application, no health questionnaire required",
+              icon: <Clock className="h-6 w-6 text-slate-700" />,
+              title: "Up to age 84",
+              desc: "You can sign up until you turn 84",
             },
           ].map((item) => (
             <div key={item.title} className="flex flex-col items-center gap-2">
